@@ -39,3 +39,12 @@
 	   									(X.GLT_HOST_TS >= ?))) 
 								ORDER BY X.LDBID,X.ARF_IDFR,X.GLT_HOST_TS
                 ]]>
+
+
+LDBID         = 3750
+								AND ARF_IDFR        >= 461000000734180
+								AND ARF_IDFR        <= 461000000734185
+								AND (GLT_BKNG_DATE = 2027-11-29
+									AND ((GLT_HOST_TS >= 2024-07-01 19:22:52.00093  AND GLT_HOST_TS <= 2024-07-02 11:11:38.417655) 
+	   									  OR
+	   									(GLT_HOST_TS >= 2024-07-01 19:14:02.0))) 
