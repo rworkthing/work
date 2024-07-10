@@ -1,3 +1,6 @@
+The fetch query used in arrangement general ledger aggregation batch had a query which used OR clause which is used to take the transactions which comes up during the batch execution and add them to then next booking day.
+The changes that we implemented have removed The OR Clause and increasing the range for fetching the data which the batch execution will be taking the transaction
+
 <![CDATA[
                 	SELECT  
 					 	LDBID, 
