@@ -1,3 +1,8 @@
+The fetch query utilized in the arrangement general ledger aggregation batch previously included an OR clause. This clause was designed to capture transactions that emerged during the batch execution and add them to the subsequent booking day.
+
+The recent modifications we implemented have removed the OR clause. Instead, we have extended the range for data fetching during the batch execution, thereby capturing the relevant transactions more effectively.
+
+
 The fetch query used in arrangement general ledger aggregation batch had a query which used OR clause which is used to take the transactions which comes up during the batch execution and add them to then next booking day.
 The changes that we implemented have removed The OR Clause and increasing the range for fetching the data which the batch execution will be taking the transaction
 
