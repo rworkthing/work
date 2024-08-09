@@ -1,16 +1,26 @@
-DECLARE
-CNT INTEGER;
-BEGIN
- SELECT COUNT(*) INTO CNT FROM USER_INDEXES WHERE INDEX_NAME = 'XTRSH03';
- IF CNT > 0 THEN
-EXECUTE IMMEDIATE 'DROP INDEX XTRSH03';
-END IF;
- EXECUTE IMMEDIATE 'CREATE INDEX XTRSH03 ON TRANS_SCHDL (
-LDBID        ASC
-,ARF_IDFR      ASC
-,TRSH_EFCTV_DATE  ASC
-,TSLST_VALUE    ASC
-,TRSH_HOST_TS    ASC
-) COMPUTE STATISTICS '
-;
- END;
+private List<CustomerPOCDetails> getCustomerPOCDetailbByService(
+      final ThreadContext threadContext, final String customerExternalId)
+      throws TechnicalFailureException, BusinessException
+   {
+      LogUtility.entering(LOG, CLASS, "getCustomerPOCDetailbByService", threadContext, COMPONENT);
+
+      List<CustomerPOCDetails> result = null;
+      final CustomerConnector customerConnectorImpl = ConnectorService
+         .getImplementation(threadContext, CustomerConnector.class);
+
+      List<CustomerPOCDetails> detailList = customerConnectorImpl
+         .getCustomerPOCDetails(threadContext, customerExternalId);
+
+      if (Utility.isNotEmptyList(detailList))
+      {
+         result = new ArrayList<>();
+         // record the detail into DB
+         for (CustomerPOCDetails poc : detailList)
+         {
+            result = CustomerPOCDetailsPersistenceManager.getInstance()
+               .createCustomerPOCDetail(threadContext, detailList);
+         }
+      }
+      LogUtility.entering(LOG, CLASS, "getCustomerPOCDetailbByService", threadContext, COMPONENT);
+      return result;
+   }
