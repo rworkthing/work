@@ -1,26 +1,50 @@
-private List<CustomerPOCDetails> getCustomerPOCDetailbByService(
-      final ThreadContext threadContext, final String customerExternalId)
-      throws TechnicalFailureException, BusinessException
+public class ArrangementStatementSchedulePartitioner extends AbstractCursorPartitioner
+{
+
+   private ProcessingGrpIdentifierHelper processingGrpIdentifierHelper;
+
+   @Override
+   public void setValues(PreparedStatement ps, long fromIdfr, long toIdfr,
+      ThreadContext threadContext, PeriodDetails periodDetails, JobParameters jobParameters)
+      throws SQLException
    {
-      LogUtility.entering(LOG, CLASS, "getCustomerPOCDetailbByService", threadContext, COMPONENT);
+      String bookingDate = periodDetails.getCurrentBookingDate();
+      String prevBookingDate = null;
+      prevBookingDate = periodDetails.getPrevBookingDate();
 
-      List<CustomerPOCDetails> result = null;
-      final CustomerConnector customerConnectorImpl = ConnectorService
-         .getImplementation(threadContext, CustomerConnector.class);
-
-      List<CustomerPOCDetails> detailList = customerConnectorImpl
-         .getCustomerPOCDetails(threadContext, customerExternalId);
-
-      if (Utility.isNotEmptyList(detailList))
+      if (jobParameters.getParameters().get("STMNT_START_DATE") != null
+         && !jobParameters.getParameters().get("STMNT_START_DATE").toString().isEmpty()
+         && !jobParameters.getParameters().get("STMNT_START_DATE").toString()
+            .equalsIgnoreCase("null"))
       {
-         result = new ArrayList<>();
-         // record the detail into DB
-         for (CustomerPOCDetails poc : detailList)
-         {
-            result = CustomerPOCDetailsPersistenceManager.getInstance()
-               .createCustomerPOCDetail(threadContext, detailList);
-         }
+         prevBookingDate = jobParameters.getParameters().get("STMNT_START_DATE").toString();
       }
-      LogUtility.entering(LOG, CLASS, "getCustomerPOCDetailbByService", threadContext, COMPONENT);
-      return result;
+
+      long prcsGrpIdfr = processingGrpIdentifierHelper.getPrcsGroupIdentifier(threadContext, jobParameters);
+
+      Date bookingDte = null;
+      Date prevBookingDte = null;
+      if (bookingDate != null)
+      {
+         bookingDte = Date.valueOf(bookingDate);
+      }
+      if (prevBookingDate != null)
+      {
+         prevBookingDte = Date.valueOf(prevBookingDate);
+      }
+      ps.setInt(1, Integer.parseInt(getLdbid()));
+      ps.setLong(2, fromIdfr);
+      ps.setLong(3, toIdfr);
+      ps.setDate(4, bookingDte);
+      ps.setDate(5, prevBookingDte);
+      ps.setInt(6, Integer.parseInt(getLdbid()));
+      ps.setLong(7, prcsGrpIdfr);
    }
+
+   public void setProcessingGrpIdentifierHelper(
+      ProcessingGrpIdentifierHelper processingGrpIdentifierHelper)
+   {
+      this.processingGrpIdentifierHelper = processingGrpIdentifierHelper;
+   }
+
+}
