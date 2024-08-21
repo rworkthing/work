@@ -1,50 +1,28 @@
-public class ArrangementStatementSchedulePartitioner extends AbstractCursorPartitioner
-{
-
-   private ProcessingGrpIdentifierHelper processingGrpIdentifierHelper;
-
-   @Override
-   public void setValues(PreparedStatement ps, long fromIdfr, long toIdfr,
-      ThreadContext threadContext, PeriodDetails periodDetails, JobParameters jobParameters)
-      throws SQLException
-   {
-      String bookingDate = periodDetails.getCurrentBookingDate();
-      String prevBookingDate = null;
-      prevBookingDate = periodDetails.getPrevBookingDate();
-
-      if (jobParameters.getParameters().get("STMNT_START_DATE") != null
-         && !jobParameters.getParameters().get("STMNT_START_DATE").toString().isEmpty()
-         && !jobParameters.getParameters().get("STMNT_START_DATE").toString()
-            .equalsIgnoreCase("null"))
-      {
-         prevBookingDate = jobParameters.getParameters().get("STMNT_START_DATE").toString();
-      }
-
-      long prcsGrpIdfr = processingGrpIdentifierHelper.getPrcsGroupIdentifier(threadContext, jobParameters);
-
-      Date bookingDte = null;
-      Date prevBookingDte = null;
-      if (bookingDate != null)
-      {
-         bookingDte = Date.valueOf(bookingDate);
-      }
-      if (prevBookingDate != null)
-      {
-         prevBookingDte = Date.valueOf(prevBookingDate);
-      }
-      ps.setInt(1, Integer.parseInt(getLdbid()));
-      ps.setLong(2, fromIdfr);
-      ps.setLong(3, toIdfr);
-      ps.setDate(4, bookingDte);
-      ps.setDate(5, prevBookingDte);
-      ps.setInt(6, Integer.parseInt(getLdbid()));
-      ps.setLong(7, prcsGrpIdfr);
-   }
-
-   public void setProcessingGrpIdentifierHelper(
-      ProcessingGrpIdentifierHelper processingGrpIdentifierHelper)
-   {
-      this.processingGrpIdentifierHelper = processingGrpIdentifierHelper;
-   }
-
-}
+SELECT * FROM
+(SELECT A.ARF_IDFR,
+A.CDN_IDFR,
+A.CDAR_VALUE,
+A.APACR_CDN_SRC,
+A.OBJ_STATUS,
+A.APACR_EFCTV_DATE,
+A.CRUD_VALUE,
+A.APACR_USER_ID,
+A.APACR_WS_ID,
+A.APACR_LOCAL_TS,
+A.APACR_ACPT_TS,
+A.APACR_ACPT_TS_UTC_OFST,
+A.UUID,
+A.APACR_HOST_TS,
+A.RULE_SYSTEM_ID,
+A.LDBID,
+A.APACR_CDN_DATA,
+MAX(A.APACR_HOST_TS) over (partition by a.ldbid, a.arf_idfr, a.cdar_value, a.apacr_efctv_date, a.obj_status) as max_host
+FROM APD_AR_CD_RLTNP A
+WHERE A.LDBID = 3010
+AND A.ARF_IDFR = 553000758229604 
+AND A.CRUD_VALUE <> 'D'
+AND A.APACR_EFCTV_DATE <= '23-NOV-27'
+AND A.OBJ_STATUS = 'Approved'
+)
+WHERE APACR_HOST_TS = max_host
+ORDER BY APACR_HOST_TS DESC;
