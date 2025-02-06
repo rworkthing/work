@@ -1,34 +1,29 @@
-<div *ngIf="isValidValueTypes">
-  <bod-page-container title="Attribute Valid Values"></bod-page-container>
-  <bod-form [formGroup]="inputLayoutForm" [type]="formType" (onSubmit)="onAdd(inputLayoutForm.value)" (onReset)="onReset()" fisStyle>
-    <bod-input-layout col="2">
-      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.additionaldatavalue'" [forTextOnly]="true" [required]="true">
-        <mat-form-field appearance="outline" fisStyle>
-          <input type="text" matInput fisStyle formControlName="additionaldatavalue" name="additionaldatavalue" />
-        </mat-form-field>
-      </bod-control-group>
-      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.percentagevalue'" [forTextOnly]="true" [required]="false">
-        <mat-form-field appearance="outline" fisStyle>
-          <input type="text" matInput fisStyle formControlName="percentagevalue" name="percentagevalue" />
-        </mat-form-field>
-      </bod-control-group>
-      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.sequencenumber'" [forTextOnly]="true" [required]="false">
-        <mat-form-field appearance="outline" fisStyle>
-          <input type="text" matInput fisStyle formControlName="sequencenumber" name="sequencenumber" />
-        </mat-form-field>
-      </bod-control-group>
-      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.defaulatindicator'" [forTextOnly]="true" [required]="false">
-        <mat-slide-toggle fisStyle color="primary" formControlName="defaulatindicator" name="defaulatindicator"></mat-slide-toggle>
-      </bod-control-group>
-      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.primaryindicator'" [forTextOnly]="true" [required]="false">
-        <mat-slide-toggle fisStyle color="primary" formControlName="primaryindicator" name="primaryindicator"></mat-slide-toggle>
-      </bod-control-group>
-      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.overrideindicator'" [forTextOnly]="true" [required]="false">
-        <mat-slide-toggle fisStyle color="primary" formControlName="overrideindicator" name="overrideindicator"></mat-slide-toggle>
-      </bod-control-group>
-    </bod-input-layout>
-    <bod-input-layout col="1">
-      <bod-table rufId #balanceHoldsTabRef [data]="ValidvalueArray" [tableActions]="validvalueactions" [alignContent]="'top'"></bod-table>
-    </bod-input-layout>
-  </bod-form>
-</div>
+<bod-page-container [title]="'Editable Table'" [pageMode]="pageModeSimple" (pageAction)="onPageAction($event)" [messages]="messages" *ngIf="showEdit">
+  <bod-table [data]="tableWithSimpleEdit" [tableActions]="actionsForSimple" [modeOptions]="modeOptionsSimple" [singleRowEdit]="singleRowEdit" [customColumnTemplates]="customColumnTemplates" (inputValidationStatus)="checkStatus($event)" (editTableEvent)="onEditTableAction($event)" (onTableActionClick)="addTableData()" [primaryColumnName]="'id'" #simpleEditTableRef>
+    <ng-template #editActionsTemplate let-element="element" let-column="column" let-index="index">
+      <div *ngIf="!singleRowEdit.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <bod-table-actions [actions]="rowLevelActionsForBasicEdit" (onActionClick)="handleRowLevelActions($event.icon, index)"></bod-table-actions>
+      </div>
+      <div *ngIf="singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index">
+        <button matTooltip="Save" [matTooltipPosition]="'below'" mat-mini-fab color="primary" (click)="handleRowLevelActions('save', index)">
+          <mat-icon>check</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Cancel" [matTooltipPosition]="'below'" class="ruf-ghost-button" (click)="handleRowLevelActions('reset', index)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </ng-template>
+    <ng-template #inputTemplate let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <input [(ngModel)]="element[column.name]" [placeholder]="column.title">
+      </ng-container>
+      <ng-container *ngIf="!modeOptionsSimple.input && (!singleRowEdit?.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index))">
+        <div>{{ element[column.name] }}</div>
+      </ng-container>
+    </ng-template>
+  </bod-table>
+  <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
+    <button mat-raised-button type="button" color="primary" (click)="saveTableData()" [disabled]="!simpleEditTableRef.tableFormGroup.dirty">Save</button>
+    <button mat-stroked-button type="button" (click)="reset()">Reset</button>
+  </div>
+</bod-page-container>
