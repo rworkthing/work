@@ -124,19 +124,18 @@ export class MetadataConfigComponent implements OnInit {
   public balanceHoldsTableActions1: BodTableAction[] = TableLevelActions1;
   public validvalueactions: BodTableAction[] = TableLevelActions2;
   inputLayoutForm!: UntypedFormGroup;
-  formType: BodFormTypes = BodFormTypes.ADD;
 
   public translationKey = TranslationKey;
   bookingDate = '';
   amountIsRequired = true;
   isRequired = true;
-  public defaultCurrency: Currency;
-  selectedHoldId: string;
-  effectiveDate: string;
-  holdAllValue: boolean;
-  isExpireValue: boolean;
+  public defaultCurrency: Currency | undefined;
+  selectedHoldId: string | undefined;
+  effectiveDate: string | undefined;
+  holdAllValue: boolean | undefined;
+  isExpireValue: boolean | undefined;
 
-  referenceType: string;
+  referenceType: string | undefined;
 
   amountFieldValue: string | undefined;
   actionModes = EditTableAction;
@@ -145,7 +144,7 @@ export class MetadataConfigComponent implements OnInit {
   public isHoldExpirationDateTime = false;
   result: any;
 
-  public timeControl: UntypedFormControl;
+  public timeControl: UntypedFormControl | undefined;
   public addEditBalanceHoldFormGroup: UntypedFormGroup;
   public messages: NotificationMessage[] = [];
   isRelateToProductTemplate = false;
@@ -180,7 +179,7 @@ export class MetadataConfigComponent implements OnInit {
   public classificationtypes: any[] = [];
   public datatypes: any[] = [];
   public validvaluestypes: any[] = [];
-  public addEditBalanceHoldFormGroup1: UntypedFormGroup;
+  public addEditBalanceHoldFormGroup1: UntypedFormGroup | undefined;
 
   constructor(
     private fb: FormBuilder,
@@ -225,7 +224,7 @@ export class MetadataConfigComponent implements OnInit {
         }
       ],
       datasource: new MatTableDataSource<BodSampleTable1>(
-        this.result
+        this.dataWithValidvalues
       )
     };
     this.balanceHoldsTableMetaData1 = {
@@ -356,7 +355,7 @@ export class MetadataConfigComponent implements OnInit {
     };
 
     this.dataWithValidvalues.push(newValidValue);
-    this.result = this.dataWithValidvalues;
+    this.ValidvalueArray.datasource.data = this.dataWithValidvalues;
     this.inputLayoutForm.reset();
   }
 
