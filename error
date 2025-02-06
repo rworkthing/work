@@ -1,14 +1,3 @@
-Error: libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.html:6:10 - error TS2339: Property 'showEdit' does not exist on type 'MetadataConfigComponent'.
-
-6   *ngIf="showEdit"
-           ~~~~~~~~
-
-  libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:116:16
-    116   templateUrl: './metadata-config.component.html',
-                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Error occurs in the template of component MetadataConfigComponent.
-
-
 Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:229:7 - error TS2353: Object literal may only specify known properties, and 'action' does not exist in type 'BodTableAction'.
 
 229       action: () => this.addTableData()
@@ -39,7 +28,7 @@ Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component
           ~~~~~~
 
 
-Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:266:12 - error TS2339: Property 'setDataForSingleLineEditMode' does not exist on type 'TemplateSettingsComponent'.
+Error: [96mlibs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:266:12 - error TS2339: Property 'setDataForSingleLineEditMode' does not exist on type 'TemplateSettingsComponent'.
 
 266       this.setDataForSingleLineEditMode(index);
                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,3 +37,10 @@ Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component
 Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:367:89 - error TS2304: Cannot find name 'Validators'.
 
 367     formGroup.addControl(controlKey, new UntypedFormControl(defaultValue, isRequired ? [Validators.required] : []));
+                                                                                            ~~~~~~~~~~
+
+
+
+Build at: 2025-02-06T22:18:20.840Z - Hash: 2bd3108f342c0d2a - Time: 5985ms
+
+× Failed to compile.
