@@ -1,29 +1,208 @@
-<bod-page-container [title]="'Editable Table'" [pageMode]="pageModeSimple" (pageAction)="onPageAction($event)" [messages]="messages" *ngIf="showEdit">
-  <bod-table [data]="tableWithSimpleEdit" [tableActions]="actionsForSimple" [modeOptions]="modeOptionsSimple" [singleRowEdit]="singleRowEdit" [customColumnTemplates]="customColumnTemplates" (inputValidationStatus)="checkStatus($event)" (editTableEvent)="onEditTableAction($event)" (onTableActionClick)="addTableData()" [primaryColumnName]="'id'" #simpleEditTableRef>
-    <ng-template #editActionsTemplate let-element="element" let-column="column" let-index="index">
+<bod-page-container
+  [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <!-- Table Component -->
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="actionsForSimple"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'id', templateName: idTemplate1 },
+      { columnName: 'groupId', templateName: groupIdTemplate1 },
+      { columnName: 'groupName', templateName: groupNameTemplate1 },
+      { columnName: 'useExistingGroupId', templateName: useExistingGroupIdTemplate1 },
+      { columnName: 'overrideDefault', templateName: overrideDefaultTemplate1 },
+      { columnName: 'required', templateName: requiredTemplate1 },
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <!-- ID Column Template -->
+    <ng-template #idTemplate1 let-element="element" let-column="column" let-index="index">
+      <div>
+        {{ element[column.name] }}
+        <span *ngIf="element.required">*</span>
+      </div>
+    </ng-template>
+
+    <!-- Group ID Column Template -->
+    <ng-template #groupIdTemplate1 let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="searchFieldColumnForm">
+          <bod-search-field
+            [formControl]="searchFieldColumnForm.controls[column.name + index]"
+            [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+            [searchTableData]="searchFieldObjArr[index].searchTableData"
+            (selected)="
+              updateColumnData('groupId', $event.groupId, index, null, 'simpleEditTable');
+              updateColumnData('groupName', $event.groupName, index, null, 'simpleEditTable')
+            "
+          >
+            <button
+              infoIcon
+              mat-icon-button
+              [rufTrigger]="dropdownPanel"
+              #trigger="rufTrigger"
+              fisStyle
+              type="button"
+            >
+              <mat-icon fisIcon="information"></mat-icon>
+            </button>
+          </bod-search-field>
+        </form>
+        <ruf-dropdown-panel
+          [hasBackdrop]="false"
+          #dropdownPanel
+          [origin]="trigger"
+          [type]="panel.type"
+          xPosition="center"
+          yPosition="bottom"
+        >
+          <div popoverContent>
+            {{ 'mbpBod.demo.microsite.searchField.messages.popoverMessage' | translate }}
+          </div>
+        </ruf-dropdown-panel>
+      </ng-container>
+    </ng-template>
+
+    <!-- Group Name Column Template -->
+    <ng-template #groupNameTemplate1 let-element="element" let-column="column" let-index="index">
+      <div>
+        {{ element[column.name] }}
+      </div>
+    </ng-template>
+
+    <!-- Use Existing Group ID Column Template -->
+    <ng-template #useExistingGroupIdTemplate1 let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="useExistingColForm">
+          <mat-form-field class="editDiv" appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              (selectionChange)="
+                updateColumnData('useExistingGroupId', $event.value, index, null, 'simpleEditTable');
+                searchFieldObjArr[index].searchFieldData.disableSearch = $event.value === 'Yes' ? true : false
+              "
+              [formControl]="useExistingColForm.controls[column.name + index]"
+              [(value)]="element[column.name]"
+            >
+              <mat-option *ngFor="let val of ['Yes', 'No']" [value]="val">
+                {{ val }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </form>
+      </ng-container>
+    </ng-template>
+
+    <!-- Override Default Column Template -->
+    <ng-template #overrideDefaultTemplate1 let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] ? 'Yes' : 'No' }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="overrideDefaultColumnForm">
+          <mat-slide-toggle
+            fisStyle
+            color="primary"
+            [checked]="element[column.name]"
+            (change)="
+              updateColumnData(column.name, $event.checked, index, null, 'simpleEditTable')
+            "
+            [formControl]="overrideDefaultColumnForm.controls[column.name + index]"
+          ></mat-slide-toggle>
+        </form>
+      </ng-container>
+    </ng-template>
+
+    <!-- Required Column Template -->
+    <ng-template #requiredTemplate1 let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] ? 'Yes' : 'No' }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="requiredColumnForm">
+          <mat-checkbox
+            fisStyle
+            color="primary"
+            [formControl]="requiredColumnForm.controls[column.name + index]"
+            [checked]="element[column.name]"
+            (change)="
+              updateColumnData(column.name, $event.checked, index, null, 'simpleEditTable')
+            "
+          ></mat-checkbox>
+        </form>
+      </ng-container>
+    </ng-template>
+
+    <!-- Actions Column Template -->
+    <ng-template #editActionsTemplate1 let-element="element" let-column="column" let-index="index">
       <div *ngIf="!singleRowEdit.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
-        <bod-table-actions [actions]="rowLevelActionsForBasicEdit" (onActionClick)="handleRowLevelActions($event.icon, index)"></bod-table-actions>
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        ></bod-table-actions>
       </div>
       <div *ngIf="singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index">
-        <button matTooltip="Save" [matTooltipPosition]="'below'" mat-mini-fab color="primary" (click)="handleRowLevelActions('save', index)">
-          <mat-icon>check</mat-icon>
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          mat-mini-fab
+          color="primary"
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisIcon="check"></mat-icon>
         </button>
-        <button mat-icon-button matTooltip="Cancel" [matTooltipPosition]="'below'" class="ruf-ghost-button" (click)="handleRowLevelActions('reset', index)">
-          <mat-icon>close</mat-icon>
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          mat-icon-button
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon fisIcon="close"></mat-icon>
         </button>
       </div>
     </ng-template>
-    <ng-template #inputTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
-        <input [(ngModel)]="element[column.name]" [placeholder]="column.title">
-      </ng-container>
-      <ng-container *ngIf="!modeOptionsSimple.input && (!singleRowEdit?.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index))">
-        <div>{{ element[column.name] }}</div>
-      </ng-container>
-    </ng-template>
   </bod-table>
+
+  <!-- Edit Page Options -->
   <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
-    <button mat-raised-button type="button" color="primary" (click)="saveTableData()" [disabled]="!simpleEditTableRef.tableFormGroup.dirty">Save</button>
-    <button mat-stroked-button type="button" (click)="reset()">Reset</button>
+    <button
+      mat-raised-button
+      fisStyle
+      type="button"
+      color="primary"
+      (click)="saveTableData()"
+      [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+    >
+      {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+    </button>
+    <button mat-stroked-button fisStyle type="button" (click)="reset()">
+      {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+    </button>
   </div>
 </bod-page-container>
