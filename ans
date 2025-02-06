@@ -89,7 +89,6 @@ import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 export class TemplateSettingsComponent {
   private dataForReset: BodEditableSampleTable[] = [];
   public messages: NotificationMessage[] = [];
-  public showEdit: boolean = true; // Added to fix Error 1
 
   @ViewChild('simpleEditTableRef', { static: false })
   simpleEditTableRef: BodTableComponent;
@@ -363,4 +362,9 @@ export class TemplateSettingsComponent {
     this.addFormControl(this.requiredColumnForm, 'required', index, false, 'true');
   }
 
-  private addFormControl(formGroup: UntypedFormGroup, controlName: string, index: number, isRequired: boolean, defaultValue
+  private addFormControl(formGroup: UntypedFormGroup, controlName: string, index: number, isRequired: boolean, defaultValue: any) {
+    const controlKey = `${controlName}${index}`;
+    formGroup.addControl(controlKey, new UntypedFormControl(defaultValue, isRequired ? [Validators.required] : []));
+    return controlKey;
+  }
+}
