@@ -1,115 +1,35 @@
-import { CommonModule } from '@angular/common';
-import { Component, NO_ERRORS_SCHEMA, OnInit, ViewChild } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import {
-  BodFormModule,
-  BodPageContainerModule,
-  BodTableAction,
-  BodTableActionsModule,
-  BodTableMetadata,
-  BodTableModule,
-  ControlGroupModule,
-  InputLayoutModule,
-  MessageContainerModule,
-  SearchFieldModule
-} from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import {
-  FormsModule,
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  UntypedFormGroup
-} from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-import { BodEditableSampleTable } from '../bod-table-demo.model';
-
-@Component({
-  selector: 'bod-template-settings',
-  standalone: true,
-  imports: [
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    BodTableModule,
-    BodPageContainerModule,
-    TranslateModule,
-    BodFormModule,
-    BodTableActionsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    MatInputModule,
-    TranslateModule,
-    FormsModule,
-    SearchFieldModule,
-    MessageContainerModule
-  ],
-  templateUrl: './template-settings.component.html',
-  styleUrls: ['./template-settings.component.scss'],
-  schemas: [NO_ERRORS_SCHEMA]
-})
-export class TemplateSettingsComponent implements OnInit {
-  @ViewChild('simpleEditTableRef') simpleEditTableRef: any;
-
-  showEdit = true;
-  pageModeSimple = 'simple';
-  messages = [];
-
-  modeOptionsSimple = { input: false };
-  singleRowEdit = { modeOptions: { input: false, reset: false },index: 0 };
-  
-  searchFieldColumnForm: FormGroup;
-  useExistingColForm: FormGroup;
-  overrideDefaultColumnForm: FormGroup;
-  requiredColumnForm: FormGroup;
-  searchFieldObjArr = [];
-  useExistingArr = ['Yes', 'No'];
-  inputForSlideToggleValue = { options: [{ label: 'Yes' }, { label: 'No' }] };
-  inputForAuthorizeCheckboxValue = { options: [{ label: 'Required', value: true }, { label: 'Not Required', value: false }] };
-  requiredColFormCtrKeys = [];
-
-  public tableWithSimpleEdit: BodTableMetadata;
-
-  constructor(private fb: FormBuilder) {
-    this.tableWithSimpleEdit = {
-      columns: [
-        {
-          name: 'locale',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        }
-      ],
-      datasource: new MatTableDataSource<BodEditableSampleTable>(),
-      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-    };
+// Add this method to handle inline editing
+public handleRowLevelActions(action: string, index: number) {
+  if (action === 'edit') {
+    this.setDataForSingleLineEditMode(index); // Enable edit mode for the specific row
+  } else if (action === 'save') {
+    this.saveRow(index); // Save the edited row
+  } else if (action === 'delete') {
+    this.deleteRow(index); // Delete the row
+  } else if (action === 'reset') {
+    this.resetRow(index); // Reset the row to its original state
   }
-  
-  public actionsForSimple: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'add',
-      label: 'mbpBod.demo.microsite.tableActions.labels.add',
-      mostCommon: false
-    }
-  ];
-  ngOnInit() {
-    this.searchFieldColumnForm = this.fb.group({});
-    this.useExistingColForm = this.fb.group({});
-    this.overrideDefaultColumnForm = this.fb.group({});
-    this.requiredColumnForm = this.fb.group({});
-  }
+}
 
+// Method to save the edited row
+public saveRow(index: number) {
+  const updatedData = this.tableWithSimpleEdit.datasource.data;
+  // Perform any validation or data processing here
+  this.singleRowEdit.modeOptions.input = false; // Disable edit mode
+  this.simpleEditTableRef.updateDeltaForCustomColumn(EditTableAction.EDIT, index);
+}
+
+// Method to delete a row
+public deleteRow(index: number) {
+  const updatedData = this.tableWithSimpleEdit.datasource.data;
+  updatedData.splice(index, 1); // Remove the row
+  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = updatedData;
+}
+
+// Method to reset a row to its original state
+public resetRow(index: number) {
+  const updatedData = this.tableWithSimpleEdit.datasource.data;
+  updatedData[index] = { ...this.dataForReset[index] }; // Reset to original data
+  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = updatedData;
+  this.singleRowEdit.modeOptions.input = false; // Disable edit mode
 }
