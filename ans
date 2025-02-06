@@ -1,38 +1,370 @@
-public addTableData() {
-  const newRow: BodEditableSampleTable = {
-    id: ++this.lastModifiedIndex,
-    useExistingGroupId: 'Yes',
-    mailingType: this.inputForSelectKeyValue.options[0].value,
-    activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
-    verifiedAddress: true,
-    groupId: '123',
-    groupName: 'Insurance',
-    amount: new Amount(this.currencies[0], 1200),
-    country: this.inputForSingleSelectWithFlagIcon.options[2].value,
-    analyzedOn: new Date('Sep 10 2018'),
-    updatedOn: new Date('Sep 12 2018'),
-    deliveryMethod: 'email',
-    pointOfContact: 'Home',
-    authorizeCheckbox: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value),
-    usePreferred: 'No',
-    address: 'emily.daily@xyz.com',
-    time: moment(new Date()),
-    dateTime: new Date(),
-    addressOrder: Number('1'),
-    overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
-    required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+import { CommonModule } from '@angular/common';
+import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import {
+  Amount,
+  BodAutoCompleteMetadata,
+  BodFormModule,
+  BodKeyValuePairMetadata,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableDataSource,
+  BodTableFilterCriteria,
+  BodTableMetadata,
+  BodTableModule,
+  Column,
+  ControlGroupModule,
+  Currency,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  ListType,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  PageAction,
+  PageMode,
+  SearchFieldModule,
+  SingleRowEdit
+} from '@bod/common';
+
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormGroup,
+  UntypedFormControl
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import {
+  BodEditableSampleTable,
+  SearchFieldInputData
+} from '../bod-table-demo.model';
+import { take } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import moment from 'moment';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { HttpClient } from '@angular/common/http';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+
+@Component({
+  selector: 'bod-template-settings',
+  standalone: true,
+  imports: [
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    BodTableModule,
+    BodPageContainerModule,
+    TranslateModule,
+    BodFormModule,
+    BodTableActionsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    TranslateModule,
+    FormsModule,
+    SearchFieldModule,
+    MessageContainerModule
+  ],
+  templateUrl: './template-settings.component.html',
+  styleUrl: './template-settings.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class TemplateSettingsComponent {
+  private dataForReset: BodEditableSampleTable[] = [];
+  public messages: NotificationMessage[] = [];
+
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+
+  public tableWithSimpleEdit: BodTableMetadata;
+  public requiredColumnForm: UntypedFormGroup = new UntypedFormGroup({});
+  public searchFieldColumnForm: UntypedFormGroup = new UntypedFormGroup({});
+  public useExistingColForm: UntypedFormGroup = new UntypedFormGroup({});
+  public overrideDefaultColumnForm: UntypedFormGroup = new UntypedFormGroup({});
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+  public lastModifiedIndex: number;
+  public requiredColFormCtrKeys: string[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  public useExistingFormCtrlKeys: string[] = [];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  selectedTabIndex = 0;
+  showEdit = true;
+  public formStatus = false;
+  private subscriptions: Subscription = new Subscription();
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public modeOptionsSimple = this.modeOptions;
+
+  public currencies: Currency[] = [
+    new Currency('USD', 'United States Dollar', 2, ''),
+    new Currency('EUR', 'EURO', 2, ''),
+    new Currency('CRC', 'Costa Rican Colón', 2, ''),
+    new Currency('GBP', 'Pound Sterling', 2, ''),
+    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
+    new Currency('JPY', 'Japanese Yen', 0, ''),
+    new Currency('CNY', 'Chinese Yuan', 2, '')
+  ];
+
+  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      { value: true, label: 'Yes' },
+      { value: false, label: 'No' }
+    ]
+  };
+  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
+    options: [
+      { value: true, label: 'Yes' },
+      { value: false, label: 'No' }
+    ]
+  };
+  public inputForCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      { value: true, label: 'Active' },
+      { value: false, label: 'Inactive' }
+    ]
+  };
+  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
+    options: [
+      { value: '1', label: 'Primary Shipping' },
+      { value: '2', label: 'Primary Billing' }
+    ]
+  };
+  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
+    options: [
+      { value: 'MX', label: 'Mexico' },
+      { value: 'IN', label: 'India' },
+      { value: 'US', label: 'California United States of America USA' }
+    ],
+    type: ListType.COUNTRY,
+    required: true
   };
 
-  // Add the new row to the table
-  this.tableWithSimpleEdit.datasource.data.push(newRow);
-  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = this.tableWithSimpleEdit.datasource.data;
+  constructor(
+    private translate: TranslateService,
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient
+  ) {
+    this.tableWithSimpleEdit = {
+      columns: [
+        { name: 'id', title: 'ID', width: 5, widthUnit: 'rem' },
+        { name: 'groupId', title: 'Group ID', width: 10, widthUnit: 'rem' },
+        { name: 'groupName', title: 'Group Name', width: 12, widthUnit: 'rem' },
+        { name: 'useExistingGroupId', title: 'Use Existing', width: 10, widthUnit: 'rem' },
+        { name: 'overrideDefault', title: 'Override Default', width: 10, widthUnit: 'rem' },
+        { name: 'required', title: 'Required', width: 8, widthUnit: 'rem' },
+        { name: 'actions', title: 'Actions', width: 10, widthUnit: 'rem' }
+      ],
+      datasource: new MatTableDataSource<BodEditableSampleTable>(),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+    };
+  }
 
-  // Enable edit mode for the new row
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: this.tableWithSimpleEdit.datasource.data.length - 1
+  ngOnInit(): void {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
+          'mbpBod.demo.microsite.table.messages.reset'
+        ];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+            this.resetMsg.text = value[keys[1]];
+          });
+      })
+    );
+  }
+
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.success'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+  public resetMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
   };
 
-  // Update form controls for the new row
-  this.updateCustomColumnFormFields();
+  public onEditTableAction(event) {}
+  public checkStatus(status) {
+    this.formStatus = status;
+  }
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'mbpBod.demo.microsite.tableActions.labels.add',
+      mostCommon: false,
+      action: () => this.addTableData()
+    }
+  ];
+
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
+    {
+      id: 0,
+      icon: 'edit',
+      label: 'Edit',
+      mostCommon: true,
+      action: (index: number) => this.handleRowLevelActions('edit', index)
+    },
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'Delete',
+      mostCommon: false,
+      action: (index: number) => this.handleRowLevelActions('delete', index)
+    },
+    {
+      id: 2,
+      icon: 'save',
+      label: 'Save',
+      mostCommon: false,
+      action: (index: number) => this.handleRowLevelActions('save', index)
+    },
+    {
+      id: 3,
+      icon: 'close',
+      label: 'Cancel',
+      mostCommon: false,
+      action: (index: number) => this.handleRowLevelActions('reset', index)
+    }
+  ];
+
+  public handleRowLevelActions(action: string, index: number) {
+    if (action === 'edit') {
+      this.setDataForSingleLineEditMode(index);
+    } else if (action === 'save') {
+      this.saveRow(index);
+    } else if (action === 'delete') {
+      this.deleteRow(index);
+    } else if (action === 'reset') {
+      this.resetRow(index);
+    }
+  }
+
+  public saveRow(index: number) {
+    const updatedData = this.tableWithSimpleEdit.datasource.data;
+    this.singleRowEdit.modeOptions.input = false;
+    this.simpleEditTableRef.updateDeltaForCustomColumn(EditTableAction.EDIT, index);
+  }
+
+  public deleteRow(index: number) {
+    const updatedData = this.tableWithSimpleEdit.datasource.data;
+    updatedData.splice(index, 1);
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = updatedData;
+  }
+
+  public resetRow(index: number) {
+    const updatedData = this.tableWithSimpleEdit.datasource.data;
+    updatedData[index] = { ...this.dataForReset[index] };
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = updatedData;
+    this.singleRowEdit.modeOptions.input = false;
+  }
+
+  public addTableData() {
+    const newRow: BodEditableSampleTable = {
+      id: ++this.lastModifiedIndex,
+      useExistingGroupId: 'Yes',
+      mailingType: this.inputForSelectKeyValue.options[0].value,
+      activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
+      verifiedAddress: true,
+      groupId: '123',
+      groupName: 'Insurance',
+      amount: new Amount(this.currencies[0], 1200),
+      country: this.inputForSingleSelectWithFlagIcon.options[2].value,
+      analyzedOn: new Date('Sep 10 2018'),
+      updatedOn: new Date('Sep 12 2018'),
+      deliveryMethod: 'email',
+      pointOfContact: 'Home',
+      authorizeCheckbox: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value),
+      usePreferred: 'No',
+      address: 'emily.daily@xyz.com',
+      time: moment(new Date()),
+      dateTime: new Date(),
+      addressOrder: Number('1'),
+      overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
+      required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+    };
+
+    this.tableWithSimpleEdit.datasource.data.push(newRow);
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = this.tableWithSimpleEdit.datasource.data;
+
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: this.tableWithSimpleEdit.datasource.data.length - 1
+    };
+
+    this.updateCustomColumnFormFields();
+  }
+
+  public updateCustomColumnFormFields() {
+    const index = this.tableWithSimpleEdit.datasource.data.length - 1;
+
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.commonDataService.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+    });
+
+    this.addFormControl(this.searchFieldColumnForm, 'groupId', index, true, '');
+    this.addFormControl(this.useExistingColForm, 'useExisting', index, false, 'No');
+    this.addFormControl(this.overrideDefaultColumnForm, 'overrideDefault', index, false, 'true');
+    this.addFormControl(this.requiredColumnForm, 'required', index, false, 'true');
+  }
+
+  private addFormControl(formGroup: UntypedFormGroup, controlName: string, index: number, isRequired: boolean, defaultValue: any) {
+    const controlKey = `${controlName}${index}`;
+    formGroup.addControl(controlKey, new UntypedFormControl(defaultValue, isRequired ? [Validators.required] : []));
+    return controlKey;
+  }
 }
