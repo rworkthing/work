@@ -1,66 +1,38 @@
-import { Component, ViewChild } from '@angular/core';
-import { MatTableDataSource } from '@angular/material/table';
-import { BodTableComponent, BodTableMetadata, Column, ModeOptions, SingleRowEdit } from '@bod/common';
+public addTableData() {
+  const newRow: BodEditableSampleTable = {
+    id: ++this.lastModifiedIndex,
+    useExistingGroupId: 'Yes',
+    mailingType: this.inputForSelectKeyValue.options[0].value,
+    activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
+    verifiedAddress: true,
+    groupId: '123',
+    groupName: 'Insurance',
+    amount: new Amount(this.currencies[0], 1200),
+    country: this.inputForSingleSelectWithFlagIcon.options[2].value,
+    analyzedOn: new Date('Sep 10 2018'),
+    updatedOn: new Date('Sep 12 2018'),
+    deliveryMethod: 'email',
+    pointOfContact: 'Home',
+    authorizeCheckbox: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value),
+    usePreferred: 'No',
+    address: 'emily.daily@xyz.com',
+    time: moment(new Date()),
+    dateTime: new Date(),
+    addressOrder: Number('1'),
+    overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
+    required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+  };
 
-@Component({
-  selector: 'bod-template-settings',
-  templateUrl: './template-settings.component.html',
-  styleUrls: ['./template-settings.component.scss']
-})
-export class TemplateSettingsComponent {
-  @ViewChild('simpleEditTableRef', { static: false }) simpleEditTableRef: BodTableComponent;
+  // Add the new row to the table
+  this.tableWithSimpleEdit.datasource.data.push(newRow);
+  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = this.tableWithSimpleEdit.datasource.data;
 
-  public tableWithSimpleEdit: BodTableMetadata;
-  public pageModeSimple = 'inquiry';
-  public modeOptionsSimple: ModeOptions = { input: false, reset: false };
-  public singleRowEdit: SingleRowEdit = { modeOptions: { input: false, reset: false }, index: 0 };
-  public customColumnTemplates = [
-    { columnName: 'locale', templateName: 'inputTemplate' },
-    { columnName: 'displayname', templateName: 'inputTemplate' },
-    { columnName: 'description', templateName: 'inputTemplate' }
-  ];
+  // Enable edit mode for the new row
+  this.singleRowEdit = {
+    modeOptions: { input: true, reset: false },
+    index: this.tableWithSimpleEdit.datasource.data.length - 1
+  };
 
-  constructor() {
-    this.tableWithSimpleEdit = {
-      columns: [
-        { name: 'locale', title: 'Locale', width: 12, widthUnit: 'rem' },
-        { name: 'displayname', title: 'Display Name', width: 6, widthUnit: 'rem' },
-        { name: 'description', title: 'Description', width: 12, widthUnit: 'rem' }
-      ],
-      datasource: new MatTableDataSource<any>(),
-      noRecordsMessage: 'No records found'
-    };
-  }
-
-  public addTableData() {
-    const newRow = { id: this.tableWithSimpleEdit.datasource.data.length + 1, locale: '', displayname: '', description: '' };
-    this.tableWithSimpleEdit.datasource.data.push(newRow);
-    this.tableWithSimpleEdit.datasource = new MatTableDataSource(this.tableWithSimpleEdit.datasource.data);
-  }
-
-  public handleRowLevelActions(action: string, index: number) {
-    if (action === 'edit') {
-      this.singleRowEdit = { modeOptions: { input: true, reset: false }, index };
-    } else if (action === 'save') {
-      this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-    } else if (action === 'reset') {
-      this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-    }
-  }
-
-  public saveTableData() {
-    this.modeOptionsSimple = { input: false, reset: false };
-  }
-
-  public reset() {
-    this.modeOptionsSimple = { input: false, reset: true };
-  }
-
-  public onPageAction(event: string) {
-    if (event === 'edit') {
-      this.modeOptionsSimple = { input: true, reset: false };
-    } else {
-      this.modeOptionsSimple = { input: false, reset: true };
-    }
-  }
+  // Update form controls for the new row
+  this.updateCustomColumnFormFields();
 }
