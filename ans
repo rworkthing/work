@@ -1,116 +1,142 @@
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component, NO_ERRORS_SCHEMA, OnInit, ViewChild } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import {
-  BodFormModule,
-  BodPageContainerModule,
-  BodTableAction,
-  BodTableActionsModule,
-  BodTableMetadata,
-  BodTableModule,
-  ControlGroupModule,
-  InputLayoutModule,
-  MessageContainerModule,
-  SearchFieldModule
+import { 
+  BodPipeName, BodTableAction, BodTableComponent, BodTableDataSource, BodTableMetadata, 
+  Column, ColumnType, ModeOptions, PageMode, SingleRowEdit 
 } from '@bod/common';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import {
-  FormsModule,
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  FormArray
-} from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-import { BodEditableSampleTable } from '../bod-table-demo.model';
+import { BodEditableSampleTable, SearchFieldInputData } from '../bod-table-demo.model';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
-  selector: 'bod-template-settings',
+  selector: 'bod-tablecomponent',
   standalone: true,
-  imports: [
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    BodPageContainerModule,
-    BodFormModule,
-    BodTableActionsModule,
-    InputLayoutModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    MatInputModule,
-    FormsModule,
-    SearchFieldModule,
-    MessageContainerModule
-  ],
-  templateUrl: './template-settings.component.html',
-  styleUrls: ['./template-settings.component.scss'],
-  schemas: [NO_ERRORS_SCHEMA]
+  imports: [CommonModule],
+  templateUrl: './tablecomponent.component.html',
+  styleUrls: ['./tablecomponent.component.scss']
 })
-export class TemplateSettingsComponent implements OnInit {
-  @ViewChild('simpleEditTableRef') simpleEditTableRef: any;
+export class TablecomponentComponent implements OnInit {
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  public useExistingFormCtrlKeys: string[] = [];
+  public useExistingArr: string[] = ['Yes', 'No'];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+  public lastModifiedIndex: number = 0;
 
   showEdit = true;
-  pageModeSimple = 'simple';
-  messages = [];
+  selectedTabIndex = 0;
+  showExpandEdit = false;
+  showSingleSelect = false;
+  showMultiSelect = false;
+  showExpandSingleSelect = false;
+  showExpandMultiSelect = false;
 
-  modeOptionsSimple = { input: false };
-  singleRowEdit = { modeOptions: { input: false, reset: false }, index: 0 };
+  public searchFieldColumnForm!: FormGroup;
+  public useExistingColForm!: FormGroup;
+  public overrideDefaultColumnForm!: FormGroup;
+  public requiredColumnForm!: FormGroup;
 
-  form: FormGroup;
-  inputFields: any[] = [];
+  constructor(
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient,
+    private formBuilder: FormBuilder
+  ) {}
 
-  public tableWithSimpleEdit: BodTableMetadata;
+  private dataForReset: BodEditableSampleTable[] = [];
 
-  constructor(private fb: FormBuilder) {
-    this.form = this.fb.group({
-      inputArray: this.fb.array([])
-    });
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef!: BodTableComponent;
 
-    this.tableWithSimpleEdit = {
-      columns: [
-        {
-          name: 'locale',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        }
-      ],
-      datasource: new MatTableDataSource<BodEditableSampleTable>(),
-      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-    };
-  }
-
-  public actionsForSimple: BodTableAction[] = [
+  public columns: Column[] = [
+    { name: 'id', title: 'mbpBod.demo.microsite.label.id', width: 5 },
     {
-      id: 1,
-      icon: 'add',
-      label: 'mbpBod.demo.microsite.tableActions.labels.add',
-      mostCommon: false,
-      callback: () => this.addInputField()
+      name: 'deliveryMethod',
+      title: 'mbpBod.demo.microsite.table.deliveryMethod',
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: ['email', 'direct-mail', 'phone'],
+        isNotEditable: false,
+        existingDataNotEditable: false
+      }
+    },
+    {
+      name: 'usePreferred',
+      title: 'mbpBod.demo.microsite.table.usePreferred',
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: ['Yes', 'No'],
+        isNotEditable: false,
+        existingDataNotEditable: false
+      }
     }
   ];
 
-  ngOnInit() {}
+  public columnSimpleEdit = this.columns;
+  public dataWithSimpleEdit: BodEditableSampleTable[] = [
+    { id: 1, deliveryMethod: 'email', usePreferred: 'No' }
+  ];
 
-  get inputArray() {
-    return this.form.get('inputArray') as FormArray;
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'mbpBod.demo.microsite.table.tableWithEdit',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<BodEditableSampleTable>(
+      this.dataWithSimpleEdit
+    ),
+    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+  };
+
+  public actionsForSimple: BodTableAction[] = [
+    { id: 1, icon: 'add', label: 'mbpBod.demo.microsite.tableActions.labels.add', mostCommon: false }
+  ];
+
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+
+  ngOnInit(): void {
+    this.searchFieldColumnForm = this.formBuilder.group({});
+    this.useExistingColForm = this.formBuilder.group({});
+    this.overrideDefaultColumnForm = this.formBuilder.group({});
+    this.requiredColumnForm = this.formBuilder.group({});
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
   }
 
-  addInputField() {
-    this.inputArray.push(this.fb.control(''));
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    const updatedData: BodEditableSampleTable = {
+      id: ++this.lastModifiedIndex,
+      deliveryMethod: 'email',
+      usePreferred: 'No',
+    };
+
+    if (this.simpleEditTableRef) {
+      setTimeout(() => {
+        this.simpleEditTableRef.addRow(updatedData);
+      });
+    }
   }
 
-  removeInputField(index: number) {
-    this.inputArray.removeAt(index);
+  public addFormControl(
+    form: FormGroup,
+    columnName: string,
+    index: number,
+    isRequired: boolean,
+    defaultValue: string
+  ) {
+    const controlName = columnName + index;
+    if (form.controls[controlName]) {
+      form.removeControl(controlName);
+    }
+    form.addControl(controlName, new FormControl(defaultValue, isRequired ? Validators.required : null));
+    return Object.keys(form.controls);
   }
 }
