@@ -1,8 +1,34 @@
-<div *ngFor="let control of inputArray.controls; let i = index">
-  <mat-form-field>
-    <input matInput [formControl]="control" placeholder="Enter value">
-    <button mat-icon-button color="warn" (click)="removeInputField(i)">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </mat-form-field>
+<div *ngIf="isValidValueTypes">
+  <bod-page-container title="Attribute Valid Values"></bod-page-container>
+  <bod-form [formGroup]="inputLayoutForm" [type]="formType" (onSubmit)="onAdd(inputLayoutForm.value)" (onReset)="onReset()" fisStyle>
+    <bod-input-layout col="2">
+      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.additionaldatavalue'" [forTextOnly]="true" [required]="true">
+        <mat-form-field appearance="outline" fisStyle>
+          <input type="text" matInput fisStyle formControlName="additionaldatavalue" name="additionaldatavalue" />
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.percentagevalue'" [forTextOnly]="true" [required]="false">
+        <mat-form-field appearance="outline" fisStyle>
+          <input type="text" matInput fisStyle formControlName="percentagevalue" name="percentagevalue" />
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.sequencenumber'" [forTextOnly]="true" [required]="false">
+        <mat-form-field appearance="outline" fisStyle>
+          <input type="text" matInput fisStyle formControlName="sequencenumber" name="sequencenumber" />
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.defaulatindicator'" [forTextOnly]="true" [required]="false">
+        <mat-slide-toggle fisStyle color="primary" formControlName="defaulatindicator" name="defaulatindicator"></mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.primaryindicator'" [forTextOnly]="true" [required]="false">
+        <mat-slide-toggle fisStyle color="primary" formControlName="primaryindicator" name="primaryindicator"></mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.overrideindicator'" [forTextOnly]="true" [required]="false">
+        <mat-slide-toggle fisStyle color="primary" formControlName="overrideindicator" name="overrideindicator"></mat-slide-toggle>
+      </bod-control-group>
+    </bod-input-layout>
+    <bod-input-layout col="1">
+      <bod-table rufId #balanceHoldsTabRef [data]="ValidvalueArray" [tableActions]="validvalueactions" [alignContent]="'top'"></bod-table>
+    </bod-input-layout>
+  </bod-form>
 </div>
