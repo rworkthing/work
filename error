@@ -1,0 +1,4 @@
+Object literal may only specify known properties, and 'callback' does not exist in type 'BodTableAction'.
+
+99       callback: () => this.addInputField()
+         ~~~~~~~~
