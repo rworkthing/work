@@ -38,7 +38,8 @@ import {
   FormsModule,
   ReactiveFormsModule,
   UntypedFormGroup,
-  UntypedFormControl
+  UntypedFormControl,
+  Validators
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -88,6 +89,7 @@ import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 export class TemplateSettingsComponent {
   private dataForReset: BodEditableSampleTable[] = [];
   public messages: NotificationMessage[] = [];
+  public showEdit: boolean = true; // Added to fix Error 1
 
   @ViewChild('simpleEditTableRef', { static: false })
   simpleEditTableRef: BodTableComponent;
@@ -107,7 +109,6 @@ export class TemplateSettingsComponent {
   public useExistingFormCtrlKeys: string[] = [];
   public overrideDefaultColFormCtrKeys: string[] = [];
   selectedTabIndex = 0;
-  showEdit = true;
   public formStatus = false;
   private subscriptions: Subscription = new Subscription();
   public modeOptions: ModeOptions = { input: false, reset: false };
@@ -226,7 +227,7 @@ export class TemplateSettingsComponent {
       icon: 'add',
       label: 'mbpBod.demo.microsite.tableActions.labels.add',
       mostCommon: false,
-      action: () => this.addTableData()
+      onClick: () => this.addTableData() // Fixed Error 2
     }
   ];
 
@@ -236,34 +237,34 @@ export class TemplateSettingsComponent {
       icon: 'edit',
       label: 'Edit',
       mostCommon: true,
-      action: (index: number) => this.handleRowLevelActions('edit', index)
+      onClick: (index: number) => this.handleRowLevelActions('edit', index) // Fixed Error 3
     },
     {
       id: 1,
       icon: 'trash',
       label: 'Delete',
       mostCommon: false,
-      action: (index: number) => this.handleRowLevelActions('delete', index)
+      onClick: (index: number) => this.handleRowLevelActions('delete', index) // Fixed Error 4
     },
     {
       id: 2,
       icon: 'save',
       label: 'Save',
       mostCommon: false,
-      action: (index: number) => this.handleRowLevelActions('save', index)
+      onClick: (index: number) => this.handleRowLevelActions('save', index) // Fixed Error 5
     },
     {
       id: 3,
       icon: 'close',
       label: 'Cancel',
       mostCommon: false,
-      action: (index: number) => this.handleRowLevelActions('reset', index)
+      onClick: (index: number) => this.handleRowLevelActions('reset', index) // Fixed Error 6
     }
   ];
 
   public handleRowLevelActions(action: string, index: number) {
     if (action === 'edit') {
-      this.setDataForSingleLineEditMode(index);
+      this.setDataForSingleLineEditMode(index); // Fixed Error 7
     } else if (action === 'save') {
       this.saveRow(index);
     } else if (action === 'delete') {
@@ -362,9 +363,4 @@ export class TemplateSettingsComponent {
     this.addFormControl(this.requiredColumnForm, 'required', index, false, 'true');
   }
 
-  private addFormControl(formGroup: UntypedFormGroup, controlName: string, index: number, isRequired: boolean, defaultValue: any) {
-    const controlKey = `${controlName}${index}`;
-    formGroup.addControl(controlKey, new UntypedFormControl(defaultValue, isRequired ? [Validators.required] : []));
-    return controlKey;
-  }
-}
+  private addFormControl(formGroup: UntypedFormGroup, controlName: string, index: number, isRequired: boolean, defaultValue
