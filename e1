@@ -1,10 +1,13 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BodPipeName, BodTableAction, BodTableComponent, BodTableDataSource, BodTableMetadata, Column, ColumnType, ModeOptions, PageMode, SingleRowEdit } from '@bod/common';
+import { 
+  BodPipeName, BodTableAction, BodTableComponent, BodTableDataSource, BodTableMetadata, 
+  Column, ColumnType, ModeOptions, PageMode, SingleRowEdit 
+} from '@bod/common';
 import { MatTableDataSource } from '@angular/material/table';
 import { BodEditableSampleTable, SearchFieldInputData } from '../bod-table-demo.model';
 import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 import { HttpClient } from '@angular/common/http';
 
@@ -13,9 +16,9 @@ import { HttpClient } from '@angular/common/http';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './tablecomponent.component.html',
-  styleUrl: './tablecomponent.component.scss'
+  styleUrls: ['./tablecomponent.component.scss']
 })
-export class TablecomponentComponent {
+export class TablecomponentComponent implements OnInit {
 
   public searchFieldObjArr: SearchFieldInputData[] = [];
   public searchFieldFormCtrlKeys: string[] = [];
@@ -25,10 +28,8 @@ export class TablecomponentComponent {
   public requiredColFormCtrKeys: string[] = [];
   public pageMode = PageMode.INQUIRY;
   public pageModeSimple = this.pageMode;
-  
-  ngOnInit(): void {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-  }
+  public lastModifiedIndex: number = 0;
+
   showEdit = true;
   selectedTabIndex = 0;
   showExpandEdit = false;
@@ -36,25 +37,22 @@ export class TablecomponentComponent {
   showMultiSelect = false;
   showExpandSingleSelect = false;
   showExpandMultiSelect = false;
+
   constructor(
     public commonDataService: BodTableDemoCommonDataService,
-    public lastModifiedIndex: number,
     private http: HttpClient,
-    public searchFieldColumnForm: UntypedFormGroup,
-    public useExistingColForm: UntypedFormGroup,
-    public overrideDefaultColumnForm: UntypedFormGroup,
-    public requiredColumnForm: UntypedFormGroup,
-    private formBuilder: UntypedFormBuilder) {}
+    public searchFieldColumnForm: FormGroup,
+    public useExistingColForm: FormGroup,
+    public overrideDefaultColumnForm: FormGroup,
+    public requiredColumnForm: FormGroup,
+    private formBuilder: FormBuilder
+  ) {}
 
-  private dataForReset: BodEditableSampleTable[] = [];
   @ViewChild('simpleEditTableRef', { static: false })
   simpleEditTableRef!: BodTableComponent;
+
   public columns: Column[] = [
-    {
-      name: 'id',
-      title: 'mbpBod.demo.microsite.label.id',
-      width: 5
-    },
+    { name: 'id', title: 'mbpBod.demo.microsite.label.id', width: 5 },
     {
       name: 'deliveryMethod',
       title: 'mbpBod.demo.microsite.table.deliveryMethod',
@@ -76,13 +74,10 @@ export class TablecomponentComponent {
       }
     }
   ];
+
   public columnSimpleEdit = this.columns;
   public dataWithSimpleEdit: BodEditableSampleTable[] = [
-    {
-      id: 1,
-      deliveryMethod: 'email',
-      usePreferred: 'No'
-    }
+    { id: 1, deliveryMethod: 'email', usePreferred: 'No' }
   ];
 
   public tableWithSimpleEdit: BodTableMetadata = {
@@ -93,50 +88,35 @@ export class TablecomponentComponent {
     ),
     noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
   };
+
   public actionsForSimple: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'add',
-      label: 'mbpBod.demo.microsite.tableActions.labels.add',
-      mostCommon: false
-    }
+    { id: 1, icon: 'add', label: 'mbpBod.demo.microsite.tableActions.labels.add', mostCommon: false }
   ];
+
   public modeOptions: ModeOptions = { input: false, reset: false };
   public modeOptionsSimple = this.modeOptions;
   public singleRowEdit: SingleRowEdit = {
     modeOptions: { input: false, reset: false },
     index: 0
   };
-  public onEditTableAction(event: { currentChanges: any; completeDelta: any; }) {
-    this.commonDataService.updateMessage(
-      'mbpBod.demo.microsite.table.editTableEvent',
-      JSON.stringify(event.currentChanges)
-    );
-    console.log('CompleteDelta::', event.completeDelta);
+
+  ngOnInit(): void {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
   }
+
   public addTableData() {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.lastModifiedIndex =
-          this.tableWithSimpleEdit.datasource.data.length;
-        break;
-      }
-      default:
-        break;
-    }
-    const updatedData = {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+
+    const updatedData: BodEditableSampleTable = {
       id: ++this.lastModifiedIndex,
       deliveryMethod: 'email',
       usePreferred: 'No',
     };
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef.addRow(updatedData);
-        break;
-      }
-      default:
-        break;
+
+    if (this.simpleEditTableRef) {
+      this.simpleEditTableRef.addRow(updatedData);
     }
+
     if (this.modeOptionsSimple?.input) {
       this.updateCustomColumnFormFields();
     } else {
@@ -145,12 +125,14 @@ export class TablecomponentComponent {
         index: this.tableWithSimpleEdit.datasource.data.length - 1
       };
       this.setSearchFieldsData(false);
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
     }
   }
+
   public updateCustomColumnFormFields() {
-    let lastSearchFieldCtrl;
-    let index;
+    let index = this.searchFieldFormCtrlKeys.length > 0 
+      ? parseInt(this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1].replace(/\D/g, '')) + 1 
+      : 0;
+
     this.searchFieldObjArr.push({
       searchFieldData: {
         label: '',
@@ -165,240 +147,17 @@ export class TablecomponentComponent {
       searchTableData: {
         columns: this.commonDataService.columnsForDemoService,
         enablePagination: true,
-        paginationOptions: {
-          pageSize: 5,
-          length: 12
-        },
-        datasource: new BodTableDataSource<SampleEC>(
-          new DemoTableDataService(this.http)
-        ),
+        paginationOptions: { pageSize: 5, length: 12 },
+        datasource: new BodTableDataSource<SampleEC>(new DemoTableDataService(this.http)),
         noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
       }
     });
-    // logic to get index from last search field control key and create new search field control
-    switch (this.selectedTabIndex) {
-      case 0: {
-        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
-          lastSearchFieldCtrl =
-            this.searchFieldFormCtrlKeys[
-              this.searchFieldFormCtrlKeys.length - 1
-            ];
-          index =
-            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
-        } else {
-          index = 0;
-        }
-        break;
-      }
-      
-    this.searchFieldFormCtrlKeys = this.addFormControl(
-      this.searchFieldColumnForm,
-      'groupId',
-      index,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeys = this.addFormControl(
-      this.useExistingColForm,
-      'useExisting',
-      index,
-      false,
-      'No'
-    );
 
-    this.overrideDefaultColFormCtrKeys = this.addFormControl(
-      this.overrideDefaultColumnForm,
-      'overrideDefault',
-      index,
-      false,
-      'true'
-    );
-
-    this.requiredColFormCtrKeys = this.addFormControl(
-      this.requiredColumnForm,
-      'required',
-      index,
-      false,
-      'true'
-    );
+    this.searchFieldFormCtrlKeys = this.addFormControl(this.searchFieldColumnForm, 'groupId', index, true, '');
   }
-  public addFormControl(form: UntypedFormGroup, columnName: string, index: any, isRequired: boolean, defaultValue: string) {
-    isRequired
-      ? form.addControl(
-          columnName + index,
-          new UntypedFormControl(defaultValue, Validators.required)
-        )
-      : form.addControl(
-          columnName + index,
-          new UntypedFormControl(defaultValue)
-        );
+
+  public addFormControl(form: FormGroup, columnName: string, index: number, isRequired: boolean, defaultValue: string) {
+    form.addControl(columnName + index, new FormControl(defaultValue, isRequired ? Validators.required : undefined));
     return Object.keys(form.controls);
   }
-
-  public setSearchFieldsData(isReset: boolean) {
-    const useExistingFormCtrlObj = {};
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-      
-      default:
-        break;
-    }
-    data.forEach((row: { groupId: any; useExistingGroupId: string; }, ind: string | number) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
-          row.groupId,
-          Validators.required
-        );
-        useExistingFormCtrlObj['useExistingGroupId' + ind] =
-          new UntypedFormControl(row.useExistingGroupId);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'groupId',
-            descFieldName: 'groupName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
-            hideDescription: false
-          },
-          searchTableData: {
-            columns: this.commonDataService.columnsForDemoService,
-            enablePagination: true,
-            paginationOptions: {
-              pageSize: 5,
-              length: 12
-            },
-            datasource: new BodTableDataSource<SampleEC>(
-              new DemoTableDataService(this.http)
-            ),
-            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-          }
-        };
-      }
-    });
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(
-      this.searchFieldColumnForm.controls
-    );
-    this.useExistingFormCtrlKeys = Object.keys(
-      this.useExistingColForm.controls
-    );
-  }
-  setDataForSingleLineEditMode(editIndex: number) {
-    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-      ...obj
-    }));
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: editIndex
-    };
-
-    
-    this.pageModeSimple = PageMode.NONE;
-    this.setSearchFieldsData(false);
-    this.setOverrideDefaultFieldsData(false);
-    this.setRequiredFieldsData(false);
-  }
-  public setOverrideDefaultFieldsData(isReset: boolean) {
-    const overrideDefaultCtrlObj = {};
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-     
-      default:
-        break;
-    }
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        overrideDefaultCtrlObj['overrideDefault' + ind] =
-          new UntypedFormControl(row.overrideDefault);
-      }
-    });
-    this.overrideDefaultColumnForm = this.formBuilder.group(
-      overrideDefaultCtrlObj
-    );
-    this.overrideDefaultColFormCtrKeys = Object.keys(
-      this.overrideDefaultColumnForm.controls
-    );
-  }
-  public setRequiredFieldsData(isReset: boolean) {
-    const requiredCtrlObj = {};
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-      
-      default:
-        break;
-    }
-
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        requiredCtrlObj['required' + ind] = new UntypedFormControl(
-          row.required
-        );
-      }
-    });
-    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
-    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
-
-    // disable child (required) control based on the parent (overrideDefault) control value
-    if (this.singleRowEdit?.modeOptions?.input) {
-      if (
-        !this.overrideDefaultColumnForm.controls[
-          'overrideDefault' + this.singleRowEdit?.index
-        ].value
-      ) {
-        this.requiredColumnForm.controls[
-          'required' + this.singleRowEdit?.index
-        ].disable({
-          emitEvent: true
-        });
-      }
-    } else {
-      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
-        (key, ind) => {
-          if (!this.overrideDefaultColumnForm.controls[key].value) {
-            this.requiredColumnForm.controls['required' + ind].disable({
-              emitEvent: true
-            });
-          }
-        }
-      );
-    }
-  }
 }
-
-
