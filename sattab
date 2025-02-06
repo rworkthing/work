@@ -1,0 +1,12 @@
+onAdd(formValues: any) {
+    const newValidValue: BodSampleTable1 = {
+      additionaldatavalue: formValues.additionaldatavalue,
+      defaulatindicator: formValues.defaulatindicator,
+      primaryindicator: formValues.primaryindicator,
+      overrideindicator: formValues.overrideindicator
+    };
+
+    this.dataWithValidvalues.push(newValidValue);
+    this.result = this.dataWithValidvalues;
+    this.inputLayoutForm.reset();
+  }
