@@ -1,229 +1,379 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { 
-  BodPipeName, BodTableAction, BodTableComponent, BodTableDataSource, BodTableMetadata, 
-  Column, ColumnType, ModeOptions, PageMode, SingleRowEdit 
-} from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { BodEditableSampleTable, SearchFieldInputData } from '../bod-table-demo.model';
-import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { FormBuilder, FormControl, FormGroup, UntypedFormControl, Validators } from '@angular/forms';
-import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
-import { HttpClient } from '@angular/common/http';
+<bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeSimple"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showEdit"
+        >
+          <bod-table
+            [data]="tableWithSimpleEdit"
+            [tableActions]="actionsForSimple"
+            [modeOptions]="modeOptionsSimple"
+            [singleRowEdit]="singleRowEdit"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate1 },
+              { columnName: 'actions', templateName: editActionsTemplate1 },
+              { columnName: 'groupId', templateName: groupIdTemplate1 },
+              { columnName: 'groupName', templateName: groupNameTemplate1 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate1
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate1
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate1
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            #simpleEditTableRef
+          >
+            <ng-template
+              #editActionsTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div
+                *ngIf="
+                  !this.singleRowEdit.modeOptions?.input ||
+                  (this.singleRowEdit?.modeOptions?.input &&
+                    this.singleRowEdit?.index !== index)
+                "
+              >
+                <bod-table-actions
+                  [actions]="rowLevelActionsForBasicEdit"
+                  (onActionClick)="handleRowLevelActions($event.icon, index)"
+                >
+                </bod-table-actions>
+              </div>
+              <div
+                *ngIf="
+                  this.singleRowEdit?.modeOptions?.input &&
+                  this.singleRowEdit?.index === index
+                "
+              >
+                <button
+                  matTooltip="{{
+                    'mbpBod.demo.microsite.buttons.save' | translate
+                  }}"
+                  [matTooltipPosition]="'below'"
+                  rufId
+                  mat-mini-fab
+                  color="primary"
+                  fisStyle
+                  (click)="handleRowLevelActions('save', index)"
+                >
+                  <mat-icon
+                    fisStyle
+                    rufIconStyle="sm"
+                    fisIcon="check"
+                  ></mat-icon>
+                </button>
+                <button
+                  rufId
+                  fisStyle
+                  mat-icon-button
+                  matTooltip="{{
+                    'mbpBod.demo.microsite.buttons.cancel' | translate
+                  }}"
+                  [matTooltipPosition]="'below'"
+                  class="ruf-ghost-button"
+                  (click)="handleRowLevelActions('reset', index)"
+                >
+                  <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+                </button>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[column.name + index]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData(
+                        'groupId',
+                        $event.groupId,
+                        index,
+                        null,
+                        'simpleEditTable'
+                      );
+                      updateColumnData(
+                        'groupName',
+                        $event.groupName,
+                        index,
+                        null,
+                        'simpleEditTable'
+                      )
+                    "
+                  >
+                    <button
+                      infoIcon
+                      mat-icon-button
+                      [rufTrigger]="dropdownPanel"
+                      #trigger="rufTrigger"
+                      fisStyle
+                      type="button"
+                    >
+                      <mat-icon fisIcon="information"> </mat-icon>
+                    </button>
+                  </bod-search-field>
+                </form>
+                <ruf-dropdown-panel
+                  [hasBackdrop]="false"
+                  #dropdownPanel
+                  [origin]="trigger"
+                  [type]="panel.type"
+                  xPosition="center"
+                  yPosition="bottom"
+                >
+                  <div popoverContent>
+                    {{
+                      'mbpBod.demo.microsite.searchField.messages.popoverMessage'
+                        | translate
+                    }}
+                  </div>
+                </ruf-dropdown-panel>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index,
+                          null,
+                          'simpleEditTable'
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[column.name + index]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{
+                    element[column.name] == true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
 
-@Component({
-  selector: 'bod-tablecomponent',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './tablecomponent.component.html',
-  styleUrls: ['./tablecomponent.component.scss']
-})
-export class TablecomponentComponent implements OnInit {
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(
+                        column.name,
+                        $event.checked,
+                        index,
+                        null,
+                        'simpleEditTable'
+                      )
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[column.name + index]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
 
-  public searchFieldObjArr: SearchFieldInputData[] = [];
-  public searchFieldFormCtrlKeys: string[] = [];
-  public useExistingFormCtrlKeys: string[] = [];
-  public useExistingArr: string[] = ['Yes', 'No'];
-  public overrideDefaultColFormCtrKeys: string[] = [];
-  public requiredColFormCtrKeys: string[] = [];
-  public pageMode = PageMode.INQUIRY;
-  public pageModeSimple = this.pageMode;
-  public lastModifiedIndex: number = 0;
-
-  showEdit = true;
-  selectedTabIndex = 0;
-  showExpandEdit = false;
-  showSingleSelect = false;
-  showMultiSelect = false;
-  showExpandSingleSelect = false;
-  showExpandMultiSelect = false;
-
-  constructor(
-    public commonDataService: BodTableDemoCommonDataService,
-    private http: HttpClient,
-    public searchFieldColumnForm: FormGroup,
-    public useExistingColForm: FormGroup,
-    public overrideDefaultColumnForm: FormGroup,
-    public requiredColumnForm: FormGroup,
-    private formBuilder: FormBuilder
-  ) {}
-
-  private dataForReset: BodEditableSampleTable[] = [];
-
-  @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef!: BodTableComponent;
-
-  public columns: Column[] = [
-    { name: 'id', title: 'mbpBod.demo.microsite.label.id', width: 5 },
-    {
-      name: 'deliveryMethod',
-      title: 'mbpBod.demo.microsite.table.deliveryMethod',
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: ['email', 'direct-mail', 'phone'],
-        isNotEditable: false,
-        existingDataNotEditable: false
-      }
-    },
-    {
-      name: 'usePreferred',
-      title: 'mbpBod.demo.microsite.table.usePreferred',
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: ['Yes', 'No'],
-        isNotEditable: false,
-        existingDataNotEditable: false
-      }
-    }
-  ];
-
-  public columnSimpleEdit = this.columns;
-  public dataWithSimpleEdit: BodEditableSampleTable[] = [
-    { id: 1, deliveryMethod: 'email', usePreferred: 'No' }
-  ];
-
-  public tableWithSimpleEdit: BodTableMetadata = {
-    title: 'mbpBod.demo.microsite.table.tableWithEdit',
-    columns: this.columnSimpleEdit,
-    datasource: new MatTableDataSource<BodEditableSampleTable>(
-      this.dataWithSimpleEdit
-    ),
-    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-  };
-
-  public actionsForSimple: BodTableAction[] = [
-    { id: 1, icon: 'add', label: 'mbpBod.demo.microsite.tableActions.labels.add', mostCommon: false }
-  ];
-
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
-  };
-
-  ngOnInit(): void {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-  }
-
-  public addTableData() {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-
-    const updatedData: BodEditableSampleTable = {
-      id: ++this.lastModifiedIndex,
-      deliveryMethod: 'email',
-      usePreferred: 'No',
-    };
-
-    if (this.simpleEditTableRef) {
-      this.simpleEditTableRef.addRow(updatedData);
-    }
-
-    if (this.modeOptionsSimple?.input) {
-      this.updateCustomColumnFormFields();
-    } else {
-      this.singleRowEdit = {
-        modeOptions: { input: true, reset: false },
-        index: this.tableWithSimpleEdit.datasource.data.length - 1
-      };
-      this.setSearchFieldsData(false);
-    }
-  }
-  public setSearchFieldsData(isReset: boolean) {
-    const useExistingFormCtrlObj = {};
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-      
-      default:
-        break;
-    }
-    data.forEach((row: { groupId: any; useExistingGroupId: string; }, ind: string | number) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
-          row.groupId,
-          Validators.required
-        );
-        useExistingFormCtrlObj['useExistingGroupId' + ind] =
-          new UntypedFormControl(row.useExistingGroupId);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'groupId',
-            descFieldName: 'groupName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
-            hideDescription: false
-          },
-          searchTableData: {
-            columns: this.commonDataService.columnsForDemoService,
-            enablePagination: true,
-            paginationOptions: {
-              pageSize: 5,
-              length: 12
-            },
-            datasource: new BodTableDataSource<SampleEC>(
-              new DemoTableDataService(this.http)
-            ),
-            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-          }
-        };
-      }
-    });
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(
-      this.searchFieldColumnForm.controls
-    );
-    this.useExistingFormCtrlKeys = Object.keys(
-      this.useExistingColForm.controls
-    );
-  }
-
-  public updateCustomColumnFormFields() {
-    let index = this.searchFieldFormCtrlKeys.length > 0 
-      ? parseInt(this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1].replace(/\D/g, '')) + 1 
-      : 0;
-
-    this.searchFieldObjArr.push({
-      searchFieldData: {
-        label: '',
-        fieldName: 'groupId',
-        descFieldName: 'groupName',
-        required: true,
-        hideLabel: true,
-        hideFilterCriteria: true,
-        disableInput: true,
-        hideDescription: false
-      },
-      searchTableData: {
-        columns: this.commonDataService.columnsForDemoService,
-        enablePagination: true,
-        paginationOptions: { pageSize: 5, length: 12 },
-        datasource: new BodTableDataSource<SampleEC>(new DemoTableDataService(this.http)),
-        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-      }
-    });
-
-    this.searchFieldFormCtrlKeys = this.addFormControl(this.searchFieldColumnForm, 'groupId', index, true, '');
-  }
-
-  public addFormControl(form: FormGroup, columnName: string, index: number, isRequired: boolean, defaultValue: string) {
-    form.addControl(columnName + index, new FormControl(defaultValue, isRequired ? Validators.required : undefined));
-    return Object.keys(form.controls);
-  }
-}
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef1
+                    [formControl]="
+                      requiredColumnForm.controls[column.name + index]
+                    "
+                    [checked]="element[column.name]"
+                    [value]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      !requiredColumnForm.controls[column.name + index]
+                        ?.disabled
+                        ? this.updateColumnData(
+                            column.name,
+                            requiredColumnForm.controls[
+                              requiredColFormCtrKeys[index]
+                            ]?.value,
+                            index,
+                            checkboxRef1,
+                            'simpleEditTable'
+                          )
+                        : null
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
