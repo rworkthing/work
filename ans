@@ -1,3 +1,84 @@
+public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'locale',
+        descFieldName: 'displayName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      }
+    });
+    
+    if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+      lastSearchFieldCtrl =
+        this.searchFieldFormCtrlKeys[
+          this.searchFieldFormCtrlKeys.length - 1
+        ];
+      index =
+        parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+    } else {
+      index = 0;
+    }
+    
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'locale',
+      index,
+      true,
+      ''
+    );
+    this.displayNameFormCtrlKeys = this.addFormControl(
+      this.displayNameColumnForm,
+      'displayName',
+      index,
+      false,
+      ''
+    );
+    this.descriptionFormCtrlKeys = this.addFormControl(
+      this.descriptionColumnForm,
+      'description',
+      index,
+      false,
+      ''
+    );
+}
+
+public setSearchFieldsData(isReset) {
+    const searchFieldFormCtrlObj = {};
+    this.searchFieldObjArr = [];
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+    
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
+        this.searchFieldObjArr[ind] = {
+          searchFieldData: {
+            label: '',
+            fieldName: 'locale',
+            descFieldName: 'displayName',
+            required: true,
+            hideLabel: true,
+            hideFilterCriteria: true,
+            disableInput: true,
+            disableSearch: false,
+            hideDescription: false
+          }
+        };
+      }
+    });
+    
+    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+    this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+}
+
 public setOverrideDefaultFieldsData(isReset) {
     const overrideDefaultCtrlObj = {};
     let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
@@ -13,4 +94,38 @@ public setOverrideDefaultFieldsData(isReset) {
     
     this.overrideDefaultColumnForm = this.formBuilder.group(overrideDefaultCtrlObj);
     this.overrideDefaultColFormCtrKeys = Object.keys(this.overrideDefaultColumnForm.controls);
+}
+
+public setRequiredFieldsData(isReset) {
+    const requiredCtrlObj = {};
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        requiredCtrlObj['required' + ind] = new UntypedFormControl(row.required);
+      }
+    });
+    
+    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
+    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
+
+    // disable child (required) control based on the parent (overrideDefault) control value
+    if (this.singleRowEdit?.modeOptions?.input) {
+      if (!this.overrideDefaultColumnForm.controls['overrideDefault' + this.singleRowEdit?.index].value) {
+        this.requiredColumnForm.controls['required' + this.singleRowEdit?.index].disable({
+          emitEvent: true
+        });
+      }
+    } else {
+      Object.keys(this.overrideDefaultColumnForm.controls).forEach((key, ind) => {
+        if (!this.overrideDefaultColumnForm.controls[key].value) {
+          this.requiredColumnForm.controls['required' + ind].disable({
+            emitEvent: true
+          });
+        }
+      });
+    }
 }
