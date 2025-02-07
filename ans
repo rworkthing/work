@@ -1,6 +1,5 @@
-public setSearchFieldsData(isReset) {
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
+public setOverrideDefaultFieldsData(isReset) {
+    const overrideDefaultCtrlObj = {};
     let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
     
     data.forEach((row, ind) => {
@@ -8,23 +7,10 @@ public setSearchFieldsData(isReset) {
         this.modeOptionsSimple?.input ||
         (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
       ) {
-        searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'locale',
-            descFieldName: 'displayName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: false,
-            hideDescription: false
-          }
-        };
+        overrideDefaultCtrlObj['overrideDefault' + ind] = new UntypedFormControl(row.overrideDefault);
       }
     });
     
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+    this.overrideDefaultColumnForm = this.formBuilder.group(overrideDefaultCtrlObj);
+    this.overrideDefaultColFormCtrKeys = Object.keys(this.overrideDefaultColumnForm.controls);
 }
