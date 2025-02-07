@@ -1,2 +1,9 @@
-Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
-  No index signature with a parameter of type 'string' was found on type '{}'.ts(7053)
+Property 'searchTableData' is missing in type '{ searchFieldData: { label: string; fieldName: string; descFieldName: string; required: true; hideLabel: true; hideFilterCriteria: true; disableInput: true; disableSearch: false; hideDescription: false; }; }' but required in type 'SearchFieldInputData'.
+
+346         this.searchFieldObjArr[ind] = {
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  libs/sd-kit-staging/src/lib/bod-table-demo.model.ts:53:3
+    53   searchTableData: BodTableMetadata;
+         ~~~~~~~~~~~~~~~
+    'searchTableData' is declared here.
