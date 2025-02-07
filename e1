@@ -1,7 +1,5 @@
-public setSearchFieldsData(isReset) {
-    const useExistingFormCtrlObj = {};
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
+ public setOverrideDefaultFieldsData(isReset) {
+    const overrideDefaultCtrlObj = {};
     let data: any;
     switch (this.selectedTabIndex) {
       case 0: {
@@ -49,45 +47,14 @@ public setSearchFieldsData(isReset) {
         (this.singleRowEdit?.modeOptions?.input &&
           this.singleRowEdit?.index === ind)
       ) {
-        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
-          row.groupId,
-          Validators.required
-        );
-        useExistingFormCtrlObj['useExistingGroupId' + ind] =
-          new UntypedFormControl(row.useExistingGroupId);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'groupId',
-            descFieldName: 'groupName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
-            hideDescription: false
-          },
-          searchTableData: {
-            columns: this.commonDataService.columnsForDemoService,
-            enablePagination: true,
-            paginationOptions: {
-              pageSize: 5,
-              length: 12
-            },
-            datasource: new BodTableDataSource<SampleEC>(
-              new DemoTableDataService(this.http)
-            ),
-            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-          }
-        };
+        overrideDefaultCtrlObj['overrideDefault' + ind] =
+          new UntypedFormControl(row.overrideDefault);
       }
     });
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(
-      this.searchFieldColumnForm.controls
+    this.overrideDefaultColumnForm = this.formBuilder.group(
+      overrideDefaultCtrlObj
     );
-    this.useExistingFormCtrlKeys = Object.keys(
-      this.useExistingColForm.controls
+    this.overrideDefaultColFormCtrKeys = Object.keys(
+      this.overrideDefaultColumnForm.controls
     );
   }
