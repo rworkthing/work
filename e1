@@ -1,99 +1,141 @@
-public addTableData() {
+public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.commonDataService.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+    });
+    // logic to get index from last search field control key and create new search field control
     switch (this.selectedTabIndex) {
       case 0: {
-        this.lastModifiedIndex =
-          this.tableWithSimpleEdit.datasource.data.length;
+        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
+        }
         break;
       }
       case 1: {
-        this.lastModifiedIndex =
-          this.tableWithExpandEdit.datasource.data.length;
+        if (this.tableWithExpandEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
+        }
         break;
       }
       case 2: {
-        this.lastModifiedIndex =
-          this.tableWithSingleSelectEdit.datasource.data.length;
+        if (this.tableWithSingleSelectEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
+        }
         break;
       }
       case 3: {
-        this.lastModifiedIndex =
-          this.tableWithMultiSelectEdit.datasource.data.length;
+        if (this.tableWithMultiSelectEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
+        }
         break;
       }
       case 4: {
-        this.lastModifiedIndex =
-          this.tableWithExpandSingleSelectEdit.datasource.data.length;
+        if (this.tableWithExpandSingleSelectEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
+        }
         break;
       }
       case 5: {
-        this.lastModifiedIndex =
-          this.tableWithExpandMultiSelectEdit.datasource.data.length;
+        if (this.tableWithExpandMultiSelectEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
+        }
         break;
       }
       default:
         break;
     }
-    const updatedData = {
-      id: ++this.lastModifiedIndex,
-      useExistingGroupId: 'Yes',
-      mailingType: this.inputForSelectKeyValue.options[0].value,
-      activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
-      verifiedAddress: true,
-      groupId: '123',
-      groupName: 'Insurance',
-      amount: new Amount(this.currencies[0], 1200),
-      country: this.inputForSingleSelectWithFlagIcon.options[2].value,
-      analyzedOn: new Date('Sep 10 2018'),
-      updatedOn: new Date('Sep 12 2018'),
-      deliveryMethod: 'email',
-      pointOfContact: 'Home',
-      authorizeCheckbox: Boolean(
-        this.inputForAuthorizeCheckboxValue.options[0].value
-      ),
-      usePreferred: 'No',
-      address: 'emily.daily@xyz.com',
-      time: moment(new Date()),
-      dateTime: new Date(),
-      addressOrder: Number('1'),
-      overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
-      required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
-    };
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef.addRow(updatedData);
-        break;
-      }
-      case 1: {
-        this.expandEditTableRef.addRow(updatedData);
-        break;
-      }
-      case 2: {
-        this.singleSelectEditTableRef.addRow(updatedData);
-        break;
-      }
-      case 3: {
-        this.multiSelectEditTableRef.addRow(updatedData);
-        break;
-      }
-      case 4: {
-        this.expandSingleSelectEditTableRef.addRow(updatedData);
-        break;
-      }
-      case 5: {
-        this.expandMultiSelectEditTableRef.addRow(updatedData);
-        break;
-      }
-      default:
-        break;
-    }
-    if (this.modeOptionsSimple?.input) {
-      this.updateCustomColumnFormFields();
-    } else {
-      this.singleRowEdit = {
-        modeOptions: { input: true, reset: false },
-        index: this.tableWithSimpleEdit.datasource.data.length - 1
-      };
-      this.setSearchFieldsData(false);
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
-    }
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'groupId',
+      index,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeys = this.addFormControl(
+      this.useExistingColForm,
+      'useExisting',
+      index,
+      false,
+      'No'
+    );
+
+    this.overrideDefaultColFormCtrKeys = this.addFormControl(
+      this.overrideDefaultColumnForm,
+      'overrideDefault',
+      index,
+      false,
+      'true'
+    );
+
+    this.requiredColFormCtrKeys = this.addFormControl(
+      this.requiredColumnForm,
+      'required',
+      index,
+      false,
+      'true'
+    );
   }
