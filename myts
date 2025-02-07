@@ -1,83 +1,805 @@
-public setRequiredFieldsData(isReset) {
-    const requiredCtrlObj = {};
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-      case 1: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithExpandEdit.datasource.data;
-        break;
-      }
-      case 2: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSingleSelectEdit.datasource.data;
-        break;
-      }
-      case 3: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithMultiSelectEdit.datasource.data;
-        break;
-      }
-      case 4: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithExpandSingleSelectEdit.datasource.data;
-        break;
-      }
-      case 5: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithExpandMultiSelectEdit.datasource.data;
-        break;
-      }
-      default:
-        break;
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  Inject,
+  NO_ERRORS_SCHEMA,
+  OnInit,
+  ViewChild
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+
+import {
+  Amount,
+  BodFormModule,
+  BodPageContainerModule,
+  BodPipeName,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableDataSource,
+  BodTableFilterCriteria,
+  BodTableFilterUpdateButton,
+  BodTableMetadata,
+  BodTableModule,
+  Column,
+  ControlGroupModule,
+  BodCommonDialogModel,
+  Currency,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  MessageContainerModule,
+  NotificationMessage,
+  SearchFieldModule,
+  DirectivesModule,
+  BodDynamicFormModule,
+  SectionContainerModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BOD_DATE_RANGE,
+  BodCommonModule,
+  BodFormTypes,
+  ModeOptions,
+  SingleRowEdit,
+  PageMode
+} from '@bod/common';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  FormBuilder,
+  FormControl,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import {
+  metadataconfig,
+  TableLevelActions,
+  TranslationKey
+} from './codegen-config.constant';
+import { BodEditableSampleTable, BodLocaleTable, BodSampleTable, BodSampleTable1, SearchFieldInputData } from '../bod-table-demo.model';
+import { MatTabsModule } from '@angular/material/tabs';
+import {
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MetadataService } from './metada-config.service';
+import {
+  TableLevelActions1,
+  TableLevelActions2
+} from '../codegen-config/codegen-config.constant';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'bod-metadata-config',
+  standalone: true,
+  imports: [
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    BodFormModule,
+    BodTableActionsModule,
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    TranslateModule,
+    BodFormModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    SearchFieldModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './metadata-config.component.html',
+  styleUrl: './metadata-config.component.scss',
+
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class MetadataConfigComponent implements OnInit {
+  public addEditFormGroup: UntypedFormGroup | undefined;
+  public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
+  public balanceHoldsTableActions1: BodTableAction[] = TableLevelActions1;
+  public validvalueactions: BodTableAction[] = TableLevelActions2;
+  inputLayoutForm!: UntypedFormGroup;
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  
+
+  public translationKey = TranslationKey;
+  bookingDate = '';
+  amountIsRequired = true;
+  isRequired = true;
+  public defaultCurrency: Currency | undefined;
+  selectedHoldId: string | undefined;
+  effectiveDate: string | undefined;
+  holdAllValue: boolean | undefined;
+  isExpireValue: boolean | undefined;
+
+  referenceType: string | undefined;
+
+  amountFieldValue: string | undefined;
+  actionModes = EditTableAction;
+  currentMode: EditTableAction = EditTableAction.ADD;
+  public disableAmount = false;
+  public isHoldExpirationDateTime = false;
+  result: any;
+
+  public timeControl: UntypedFormControl | undefined;
+  public addEditBalanceHoldFormGroup: UntypedFormGroup;
+  public messages: NotificationMessage[] = [];
+  isRelateToProductTemplate = false;
+  isValidValueTypes = false;
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+  public formStatus = false;
+  private dataForReset: BodLocaleTable[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  public displayNameFormCtrlKeys: string[] = [];
+  public descriptionFormCtrlKeys: string[] = [];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+
+
+
+  public columns: Column[] = [
+    {
+      name: 'locale',
+      title: 'Locale',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'displayname',
+      title: 'Display Name',
+      truncate: true,
+      noOverflow: true,
+      width: 6,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'description',
+      title: 'Description',
+      truncate: true,
+      noOverflow: true,
+      width: 12,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
     }
+  ];
+  
+  public columnSimpleEdit = this.columns;
+  public dataWithSimpleEdit: BodLocaleTable[] = [
+    {
+      locale: 'en-US',
+      displayname: 'english',
+      description: 'english'
+    }
+  ];
+
+
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'mbpBod.demo.microsite.table.tableWithEdit',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<BodLocaleTable>(
+      this.dataWithSimpleEdit
+    ),
+    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+  };
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'mbpBod.demo.microsite.tableActions.labels.add',
+      mostCommon: false
+    }
+  ];
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  http: HttpClient;
+  formBuilder: any;
+  public checkStatus(status: boolean) {
+    this.formStatus = status;
+  }
+
+  public onEditTableAction(event: { currentChanges: any; completeDelta: any; }) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
+  }
+
+  public addTableData(){
+    const updatedData = {
+      locale: 'en-US',
+      displayName: 'English',
+      description: 'english'
+    };
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input){
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false},
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setSearchFieldsData(false);
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+    this.setSearchFieldsData(false);
+    this.setOverrideDefaultFieldsData(false);
+    this.setRequiredFieldsData(false);
+  }
+  public setRequiredFieldsData(isReset: boolean) {
+    const requiredCtrlObj = {};
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
 
     data.forEach((row, ind) => {
       if (
         this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
       ) {
-        requiredCtrlObj['required' + ind] = new UntypedFormControl(
-          row.required
-        );
+        requiredCtrlObj['required' + ind] = new UntypedFormControl(row.required);
       }
     });
+    
     this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
     this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
 
     // disable child (required) control based on the parent (overrideDefault) control value
     if (this.singleRowEdit?.modeOptions?.input) {
-      if (
-        !this.overrideDefaultColumnForm.controls[
-          'overrideDefault' + this.singleRowEdit?.index
-        ].value
-      ) {
-        this.requiredColumnForm.controls[
-          'required' + this.singleRowEdit?.index
-        ].disable({
+      if (!this.overrideDefaultColumnForm.controls['overrideDefault' + this.singleRowEdit?.index].value) {
+        this.requiredColumnForm.controls['required' + this.singleRowEdit?.index].disable({
           emitEvent: true
         });
       }
     } else {
-      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
-        (key, ind) => {
-          if (!this.overrideDefaultColumnForm.controls[key].value) {
-            this.requiredColumnForm.controls['required' + ind].disable({
-              emitEvent: true
-            });
-          }
+      Object.keys(this.overrideDefaultColumnForm.controls).forEach((key, ind) => {
+        if (!this.overrideDefaultColumnForm.controls[key].value) {
+          this.requiredColumnForm.controls['required' + ind].disable({
+            emitEvent: true
+          });
         }
-      );
+      });
     }
+}
+  public setOverrideDefaultFieldsData(isReset: boolean) {
+    const overrideDefaultCtrlObj = {};
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+    
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        overrideDefaultCtrlObj['overrideDefault' + ind] = new UntypedFormControl(row.overrideDefault);
+      }
+    });
+    
+    this.overrideDefaultColumnForm = this.formBuilder.group(overrideDefaultCtrlObj);
+    this.overrideDefaultColFormCtrKeys = Object.keys(this.overrideDefaultColumnForm.controls);
+}
+  
+  public setSearchFieldsData(isReset: boolean) {
+    const searchFieldFormCtrlObj = {};
+    this.searchFieldObjArr = [];
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+    
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
+        this.searchFieldObjArr[ind] = {
+          searchFieldData: {
+            label: '',
+            fieldName: 'locale',
+            descFieldName: 'displayName',
+            required: true,
+            hideLabel: true,
+            hideFilterCriteria: true,
+            disableInput: true,
+            disableSearch: false,
+            hideDescription: false
+          }
+        };
+      }
+    });
+    
+    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+    this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+}
+
+  public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'locale',
+        descFieldName: 'displayName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.commonDataService.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+      });
+    
+    if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+      lastSearchFieldCtrl =
+        this.searchFieldFormCtrlKeys[
+          this.searchFieldFormCtrlKeys.length - 1
+        ];
+      index =
+        parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+    } else {
+      index = 0;
+    }
+    
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'locale',
+      index,
+      true,
+      ''
+    );
+    this.displayNameFormCtrlKeys = this.addFormControl(
+      this.displayNameColumnForm,
+      'displayName',
+      index,
+      false,
+      ''
+    );
+    this.descriptionFormCtrlKeys = this.addFormControl(
+      this.descriptionColumnForm,
+      'description',
+      index,
+      false,
+      ''
+    );
+}
+public addFormControl(form, columnName, index, isRequired, defaultValue) {
+  isRequired
+    ? form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue, Validators.required)
+      )
+    : form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue)
+      );
+  return Object.keys(form.controls);
+}
+
+  onToggleChange(event: MatSlideToggleChange) {
+    this.isRelateToProductTemplate = event.checked;
   }
+  onValidValueTypesChange(event: MatSlideToggleChange) {
+    this.isValidValueTypes = event.checked;
+  }
+
+  // public inlineAddRowActionClick() {}
+  additionalValidValues: any[] = [];
+  public selectedFilters: BodTableFilterCriteria[] = [];
+  public onTableActionClicked(event: BodTableAction): void {}
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
+  // public inlineEditRowActionClick(_event: InlineEditOutput) {}
+  public balanceHoldsTableMetaData: BodTableMetadata;
+  public balanceHoldsTableMetaData1: BodTableMetadata;
+  public ValidvalueArray: BodTableMetadata;
+
+  // public types = [
+  //   { label: 'Arrangement', value: 'arrangement' },
+  //   { label: 'Charge Custom Parameter', value: 'ChargeCustomParameter' }
+  // ];
+  // public classificationtypes = [
+  //   { label: 'System Defined', value: 'SystemDefined' },
+  //   { label: 'User Defined', value: 'UserDefined' }
+  // ];
+  public types: any[] = [];
+  public classificationtypes: any[] = [];
+  public datatypes: any[] = [];
+  public validvaluestypes: any[] = [];
+  public addEditBalanceHoldFormGroup1: UntypedFormGroup | undefined;
+  public tableRefArray: any[] = [];
+
+  constructor(
+    public commonDataService: BodTableDemoCommonDataService,
+    private fb: FormBuilder,
+    private changeDetectorRef: ChangeDetectorRef,
+    private metadataService: MetadataService,
+    public searchFieldColumnForm: UntypedFormGroup,
+    public displayNameColumnForm: UntypedFormGroup,
+    public descriptionColumnForm: UntypedFormGroup,
+    public overrideDefaultColumnForm: UntypedFormGroup,
+    public requiredColumnForm: UntypedFormGroup,
+    
+    @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
+  ) {
+    this.ValidvalueArray = {
+      // title: 'Name and Description (Locales)',
+      columns: [
+        {
+          name: 'additionaldatavalue',
+          title: 'Value',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'defaulatindicator',
+          title: ' Default Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'primaryindicator',
+          title: 'Primary Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'overrideindicator',
+          title: 'Override Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable1>(
+        this.dataWithValidvalues
+      )
+    };
+    this.balanceHoldsTableMetaData1 = {
+      title: 'Name and Description (Locales)',
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'displayname',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable>()
+    };
+    this.balanceHoldsTableMetaData = {
+      title: 'Attribute Details',
+      columns: [
+        {
+          name: 'attCode',
+          title: 'Attributes',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable>()
+    };
+    this.balanceHoldsTableMetaData.datasource.data = metadataconfig;
+    console.log(this.balanceHoldsTableMetaData);
+  }
+  ngOnInit() {
+    this.inputLayoutForm = this.fb.group({
+      additionaldatavalue: ['', Validators.required],
+      percentagevalue: [''],
+      sequencenumber: [''],
+      defaulatindicator: [false],
+      primaryindicator: [false],
+      overrideindicator: [false]
+    });
+    this.loadDropdownData();
+    this.initForm();
+    this.addEditBalanceHoldFormGroup
+      .get('classificationtype')
+      ?.valueChanges.subscribe(value => {
+        this.updateRelateToProductTypeValidator(value);
+      });
+  }
+
+  public dataWithValidvalues: BodSampleTable1[] = [];
+  
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+
+  ngAfterViewInit() {
+    this.tableRefArray = [
+      this.simpleEditTableRef];
+    }
+
+  loadDropdownData(): void {
+    this.metadataService.getTypes().subscribe(data => {
+      this.types = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+
+      console.log('fetching data from API' + this.types);
+    });
+
+    this.metadataService
+      .getClassificationTypes()
+      .subscribe(data => (this.classificationtypes = data));
+    this.metadataService
+      .getDataTypes()
+      .subscribe(data => (this.datatypes = data));
+    this.metadataService
+      .getValidvalueTypes()
+      .subscribe(data => (this.validvaluestypes = data));
+  }
+  private updateRelateToProductTypeValidator(classificationType: string): void {
+    const relateToProductTypeControl = this.addEditBalanceHoldFormGroup.get(
+      'relatetoproducttype'
+    );
+    if (classificationType === 'systemDefined') {
+      relateToProductTypeControl?.setValidators([Validators.required]);
+    } else {
+      relateToProductTypeControl?.clearValidators();
+    }
+    relateToProductTypeControl?.updateValueAndValidity();
+  }
+
+  onSubmit(event: Event) {}
+  onReset() {}
+  // onAdd() {
+  //   if (this.inputLayoutForm.valid) {
+  //     const formData = this.inputLayoutForm.value;
+  //     this.additionalValidValues.push(formData);
+  //     const jsonData = JSON.stringify(this.additionalValidValues);
+  //     console.log('JSON Data:', jsonData);
+
+  //     // Store JSON data in local storage
+  //     localStorage.setItem('additionalValidValues', jsonData);
+  //   }
+  // }
+  onAdd(formValues: any) {
+    const newValidValue: BodSampleTable1 = {
+      additionaldatavalue: formValues.additionaldatavalue,
+      defaulatindicator: formValues.defaulatindicator,
+      primaryindicator: formValues.primaryindicator,
+      overrideindicator: formValues.overrideindicator
+    };
+
+    this.dataWithValidvalues.push(newValidValue);
+    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    this.inputLayoutForm.reset();
+  }
+
+  /** Initialize Add Balance Hold Form  */
+  private initForm(): void {
+    this.addEditBalanceHoldFormGroup1 = this.fb.group({});
+
+    this.addEditBalanceHoldFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [Validators.required]),
+      identifier: new UntypedFormControl(false, [Validators.required]),
+      description: new UntypedFormControl(''),
+      type: new UntypedFormControl(''),
+      datatype: new UntypedFormControl(''),
+      calculate: new UntypedFormControl(''),
+      searchable: new UntypedFormControl(''),
+      multivalueallowed: new UntypedFormControl(''),
+      percentageallowed: new UntypedFormControl(''),
+      classificationtype: new UntypedFormControl(''),
+      // validvaluestype: new UntypedFormControl(''),
+      relatetoproducttype: new UntypedFormControl(''),
+      low: [''],
+      high: [''],
+      name: [''],
+      descriptions: [''],
+      validvaluestype: [''],
+      productTypeCode: [{ value: '', disabled: true }],
+      max: [''],
+      min: [''],
+      GLcategorizationAllowed: [''],
+      validtype: ['']
+    });
+    this.addEditBalanceHoldFormGroup
+      .get('code')
+      ?.valueChanges.subscribe(value => {
+        this.addEditBalanceHoldFormGroup
+          .get('productTypeCode')
+          ?.setValue(value);
+      });
+
+    this.addEditBalanceHoldFormGroup
+      .get('relatetoproducttype')
+      ?.valueChanges.subscribe(value => {
+        this.isRelateToProductTemplate = value;
+        if (!value) {
+          this.isValidValueTypes = false;
+          this.addEditBalanceHoldFormGroup
+            .get('validtype')
+            ?.setValue(false, { emitEvent: false });
+        }
+      });
+
+    this.addEditBalanceHoldFormGroup
+      .get('validtype')
+      ?.valueChanges.subscribe(value => {
+        if (this.isRelateToProductTemplate) {
+          this.isValidValueTypes = value;
+        } else {
+          this.isValidValueTypes = false;
+        }
+      });
+  }
+
+  /** On click of Add Button*/
+  public inlineAddRowActionClick(): void {
+    this.updateMessages([]);
+    this.currentMode = EditTableAction.ADD;
+    this.disableAmount = false;
+    this.isRequired = true;
+    this.amountIsRequired = true;
+    this.isHoldExpirationDateTime = false;
+    this.addEditBalanceHoldFormGroup.reset();
+    this.addEditBalanceHoldFormGroup.addControl(
+      'referenceId',
+      new FormControl('')
+    );
+    this.addEditBalanceHoldFormGroup.addControl(
+      'referenceType',
+      new FormControl('', Validators.required)
+    );
+    this.addEditBalanceHoldFormGroup.get('expirationDate')?.enable();
+    this.addEditBalanceHoldFormGroup.get('amount')?.enable();
+    this.changeDetectorRef.detectChanges();
+    this.setDefaultFormValue();
+  }
+  private setDefaultFormValue(): void {
+    this.addEditBalanceHoldFormGroup.patchValue({
+      amount: new Amount(this.defaultCurrency, null),
+      isHoldAll: false,
+      isExpire: false
+    });
+    // this.effectiveDate = DateUtilityService.updateDateFormat(
+    //   new Date(this.bookingDate),
+    //   'MM/dd/YYYY'
+    // );
+    this.addEditBalanceHoldFormGroup.markAsUntouched();
+    this.addEditBalanceHoldFormGroup.markAsPristine();
+  }
+
+  public updateMessages(messages: NotificationMessage[]) {
+    // this.accountWorkspaceService.pageLevelMessages$.next(messages);
+  }
+
+  public inlineEditRowActionClick(event: InlineEditOutput): void {
+    this.updateMessages([]);
+    this.currentMode = EditTableAction.EDIT;
+    this.selectedHoldId = event.editRowElement['referenceId'];
+    this.changeDetectorRef.detectChanges();
+    const combinedDateTime = this.combineDateAndTime(
+      event.editRowElement['expirationDate'],
+      event.editRowElement['expirationTime']
+    );
+    // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
+    //   event.editRowElement['amount'].amount,
+    //   event.editRowElement['amount'].currency?.symbol
+    // );
+    // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
+    this.addEditBalanceHoldFormGroup.removeControl('referenceId');
+    this.addEditBalanceHoldFormGroup.removeControl('referenceType');
+    this.holdAllValue = event.editRowElement['isHoldAll'];
+    this.isExpireValue = event.editRowElement['isExpire'];
+    this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
+    // this.checkExpirationFieldVisibility();
+    // this.effectiveDate = DateUtilityService.updateDateFormat(
+    //   new Date(this.bookingDate),
+    //   'MM/dd/YYYY'
+    // );
+    this.addEditBalanceHoldFormGroup.setValue({
+      // amount: holdAmount,
+      reason: event.editRowElement['reasonDescription'],
+      description: event?.editRowElement['description']
+        ? event?.editRowElement['description']
+        : '',
+      isHoldAll: event.editRowElement['isHoldAll'],
+      isExpire: event.editRowElement['isExpire'],
+      effective: this.effectiveDate,
+      expirationDate: combinedDateTime
+    });
+
+    this.addEditBalanceHoldFormGroup.controls['effective'].clearValidators();
+    this.addEditBalanceHoldFormGroup.controls[
+      'effective'
+    ].updateValueAndValidity();
+  }
+
+  private combineDateAndTime(date: string, time: string): Date {
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    const dateObj = new Date(date);
+    dateObj.setHours(hours, minutes, seconds);
+    return dateObj;
+  }
+}
