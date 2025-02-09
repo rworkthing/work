@@ -1,25 +1,27 @@
 public saveTableData() {
-  // Update the table data with the form values
-  this.tableWithSimpleEdit.datasource.data = this.rows.controls.map((control, index) => ({
+  // Map form values to the table data
+  const updatedData = this.rows.controls.map((control, index) => ({
     id: control.get('id')?.value,
     locale: control.get('locale')?.value,
     displayName: control.get('displayName')?.value,
     description: control.get('description')?.value
   }));
 
-  // Force Angular to detect changes
-  this.tableWithSimpleEdit.datasource = new MatTableDataSource(this.tableWithSimpleEdit.datasource.data);
+  // Reassign MatTableDataSource (important for Angular change detection)
+  this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
 
-  // Log the saved data
-  console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+  // Log saved data
+  console.log('Table data saved:', updatedData);
 
-  // Reset form's dirty state
+  // Mark the form as pristine after saving
   this.rows.controls.forEach((control) => control.markAsPristine());
+
+  // Exit edit mode
+  this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
 }
 
-
 public addTableData() {
-  const newRow = {
+  const newRow: BodEditableSampleTable = {
     id: this.tableWithSimpleEdit.datasource.data.length + 1,
     locale: '',
     displayName: '',
@@ -29,18 +31,30 @@ public addTableData() {
   // Clone existing data and add new row
   const updatedData = [...this.tableWithSimpleEdit.datasource.data, newRow];
 
-  // Update table data source
+  // Update the table data source
   this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
 
   // Add new row to the form
   this.addRow(newRow);
 
-  // Enable edit mode for the new row
+  // Enable edit mode
   this.modeOptionsSimple = { input: true, reset: false };
   this.pageModeSimple = PageMode.INPUT;
 
+  // Set edit mode for the new row
   this.singleRowEdit = {
     modeOptions: { input: true, reset: false },
     index: updatedData.length - 1
   };
+}
+
+public addRow(row: any) {
+  const rowGroup = this.fb.group({
+    id: [row?.id || ''],
+    locale: [row?.locale || ''],
+    displayName: [row?.displayName || ''],
+    description: [row?.description || '']
+  });
+
+  this.rows.push(rowGroup);
 }
