@@ -31,7 +31,6 @@ import {
   SearchFieldModule,
   SingleRowEdit
 } from '@bod/common';
-
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import {
@@ -91,14 +90,11 @@ import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 export class TemplateSettingsComponent {
   private dataForReset: BodEditableSampleTable[] = [];
   public messages: NotificationMessage[] = [];
-
   @ViewChild('simpleEditTableRef', { static: false })
   simpleEditTableRef: BodTableComponent;
-
   public tableWithSimpleEdit: BodTableMetadata;
   public requiredColumnForm: UntypedFormGroup;
   public searchFieldObjArr: SearchFieldInputData[] = [];
-
   public pageMode = PageMode.INQUIRY;
   public pageModeSimple = this.pageMode;
   public lastModifiedIndex: number;
@@ -114,7 +110,6 @@ export class TemplateSettingsComponent {
     index: 0
   };
   public modeOptionsSimple = this.modeOptions;
-
   // Form Array to manage dynamic rows
   public tableForm: UntypedFormGroup;
 
@@ -170,36 +165,48 @@ export class TemplateSettingsComponent {
     return this.tableForm.get('rows') as FormArray;
   }
 
+  // Add a new row to the FormArray
+  public addRow(row: any) {
+    const rowGroup = this.fb.group({
+      id: [row.id],
+      locale: [row.locale],
+      displayName: [row.displayName],
+      description: [row.description]
+    });
+    this.rows.push(rowGroup);
+  }
+
   // Add a new row to the table and form
   public addTableData() {
     const newRow = {
-      id: this.tableWithSimpleEdit.datasource.data.length + 1,
+      id: this.tableWithSimpleEdit.datasource.data.length + 1, // Generate a unique ID
       locale: '',
       displayName: '',
       description: ''
     };
+
+    // Add the new row to the table data
     this.tableWithSimpleEdit.datasource.data.push(newRow);
+
+    // Update the MatTableDataSource to reflect the changes
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      [...this.tableWithSimpleEdit.datasource.data]; // Reassign to trigger change detection
+
+    // Add the new row to the FormArray
     this.addRow(newRow);
 
-    // Update the table datasource
-    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
-      this.tableWithSimpleEdit.datasource.data;
+    // Set edit mode for the table
+    this.modeOptionsSimple = { input: true, reset: false };
+    this.pageModeSimple = PageMode.INPUT;
 
     // Set edit mode for the new row
     this.singleRowEdit = {
       modeOptions: { input: true, reset: false },
       index: this.tableWithSimpleEdit.datasource.data.length - 1
     };
-  }
 
-  // Add a row to the FormArray
-  addRow(row: any) {
-    const rowGroup = this.fb.group({
-      locale: [row.locale],
-      displayName: [row.displayName],
-      description: [row.description]
-    });
-    this.rows.push(rowGroup);
+    // Mark the form as dirty
+    this.tableForm.markAsDirty();
   }
 
   // Get the FormGroup for a specific row
@@ -211,14 +218,40 @@ export class TemplateSettingsComponent {
   public updateColumnData(columnName: string, value: any, index: number) {
     const updatedData = this.tableWithSimpleEdit.datasource.data;
     updatedData[index][columnName] = value;
+
+    // Update the MatTableDataSource to reflect the changes
     (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
-      updatedData;
+      [...updatedData]; // Reassign to trigger change detection
+
+    // Update the corresponding form control
     this.getFormGroup(index).get(columnName)?.setValue(value);
+
+    // Mark the form as dirty
+    this.getFormGroup(index).markAsDirty();
   }
 
   // Save table data
   public saveTableData() {
+    // Update the table data with the form values
+    const updatedData = this.rows.controls.map((control) => ({
+      id: control.get('id').value,
+      locale: control.get('locale').value,
+      displayName: control.get('displayName').value,
+      description: control.get('description').value
+    }));
+
+    // Reassign the datasource to trigger change detection
+    this.tableWithSimpleEdit.datasource.data = updatedData;
+
+    // Log the saved data
     console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+
+    // Reset the form's dirty state
+    this.rows.controls.forEach((control) => control.markAsPristine());
+  }
+
+  public isFormDirty(): boolean {
+    return this.rows.controls.some((control) => control.dirty);
   }
 
   // Reset form data
@@ -229,9 +262,32 @@ export class TemplateSettingsComponent {
   // Handle row-level actions
   public handleRowLevelActions(action: string, index: number) {
     if (action === 'save') {
-      console.log('Row saved:', this.tableWithSimpleEdit.datasource.data[index]);
+      // Get the form group for the current row
+      const rowFormGroup = this.getFormGroup(index);
+
+      // Check if the form is valid before saving
+      if (rowFormGroup.valid) {
+        // Save the row data
+        const rowData = this.tableWithSimpleEdit.datasource.data[index];
+        console.log('Row saved:', rowData);
+
+        // Exit edit mode for this row
+        this.singleRowEdit = {
+          modeOptions: { input: false, reset: false },
+          index: -1
+        };
+      } else {
+        console.error('Form is invalid. Please fill all required fields.');
+      }
     } else if (action === 'reset') {
-      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]); // Reset row data
+      // Reset the form for the current row
+      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]);
+
+      // Exit edit mode for this row
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: -1
+      };
     }
   }
 
