@@ -1,60 +1,49 @@
- public setOverrideDefaultFieldsData(isReset) {
-    const overrideDefaultCtrlObj = {};
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-      case 1: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithExpandEdit.datasource.data;
-        break;
-      }
-      case 2: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSingleSelectEdit.datasource.data;
-        break;
-      }
-      case 3: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithMultiSelectEdit.datasource.data;
-        break;
-      }
-      case 4: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithExpandSingleSelectEdit.datasource.data;
-        break;
-      }
-      case 5: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithExpandMultiSelectEdit.datasource.data;
-        break;
-      }
-      default:
-        break;
+public setSearchFieldsData(isReset: boolean) {
+  const searchFieldFormCtrlObj = this.createSearchFieldControls(isReset);
+  this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+  this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+}
+
+private createSearchFieldControls(isReset: boolean): { [key: string]: UntypedFormControl } {
+  const searchFieldFormCtrlObj = {};
+  this.searchFieldObjArr = [];
+  const data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+
+  data.forEach((row, ind) => {
+    if (this.shouldCreateControl(ind)) {
+      searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
+      this.searchFieldObjArr[ind] = this.createSearchFieldObject();
     }
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        overrideDefaultCtrlObj['overrideDefault' + ind] =
-          new UntypedFormControl(row.overrideDefault);
-      }
-    });
-    this.overrideDefaultColumnForm = this.formBuilder.group(
-      overrideDefaultCtrlObj
-    );
-    this.overrideDefaultColFormCtrKeys = Object.keys(
-      this.overrideDefaultColumnForm.controls
-    );
-  }
+  });
+
+  return searchFieldFormCtrlObj;
+}
+
+private shouldCreateControl(index: number): boolean {
+  return (
+    this.modeOptionsSimple?.input ||
+    (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === index)
+  );
+}
+
+private createSearchFieldObject(): SearchFieldInputData {
+  return {
+    searchFieldData: {
+      label: '',
+      fieldName: 'locale',
+      descFieldName: 'displayName',
+      required: true,
+      hideLabel: true,
+      hideFilterCriteria: true,
+      disableInput: true,
+      disableSearch: false,
+      hideDescription: false
+    },
+    searchTableData: {
+      title: '', // Default title
+      columns: [], // Default columns
+      datasource: new MatTableDataSource<any>([]), // Default data source
+      noRecordsMessage: '' // Default message for no records
+    }
+  };
+}
