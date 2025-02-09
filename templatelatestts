@@ -1,0 +1,171 @@
+import { CommonModule } from '@angular/common';
+import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import {
+  BodFormModule,
+  BodPageContainerModule,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  SingleRowEdit
+} from '@bod/common';
+
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormGroup,
+  FormBuilder,
+  FormArray,
+  FormControl
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { Subscription } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+
+@Component({
+  selector: 'bod-template-settings',
+  standalone: true,
+  imports: [
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    BodFormModule,
+    BodTableActionsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    FormsModule
+  ],
+  templateUrl: './template-settings.component.html',
+  styleUrl: './template-settings.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class TemplateSettingsComponent {
+  public tableWithSimpleEdit: BodTableMetadata;
+  public tableForm: UntypedFormGroup;
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public subscriptions: Subscription = new Subscription();
+
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+
+  constructor(
+    private translate: TranslateService,
+    private http: HttpClient,
+    private fb: FormBuilder
+  ) {
+    this.tableForm = this.fb.group({
+      rows: this.fb.array([])
+    });
+
+    this.tableWithSimpleEdit = {
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'displayName',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: false,
+          noOverflow: false,
+          width: 12,
+          widthUnit: 'rem'
+        }
+      ],
+      datasource: new MatTableDataSource([]),
+      noRecordsMessage: 'No records available'
+    };
+  }
+
+  ngOnInit(): void {
+    this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
+  }
+
+  get rows(): FormArray {
+    return this.tableForm.get('rows') as FormArray;
+  }
+
+  public addTableData() {
+    const newRow = {
+      id: this.tableWithSimpleEdit.datasource.data.length + 1,
+      locale: '',
+      displayName: '',
+      description: ''
+    };
+
+    this.tableWithSimpleEdit.datasource.data.push(newRow);
+    this.addRow(newRow);
+
+    this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data];
+
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: this.tableWithSimpleEdit.datasource.data.length - 1
+    };
+  }
+
+  addRow(row: any) {
+    const rowGroup = this.fb.group({
+      locale: [row.locale],
+      displayName: [row.displayName],
+      description: [row.description]
+    });
+    this.rows.push(rowGroup);
+  }
+
+  getFormGroup(index: number): FormGroup {
+    return this.rows.at(index) as FormGroup;
+  }
+
+  public updateColumnData(columnName: string, value: any, index: number) {
+    this.tableWithSimpleEdit.datasource.data[index][columnName] = value;
+    this.getFormGroup(index).get(columnName)?.setValue(value);
+    this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data];
+  }
+
+  public saveTableData() {
+    console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+  }
+
+  public reset() {
+    this.tableForm.reset();
+  }
+
+  public handleRowLevelActions(action: string, index: number) {
+    if (action === 'save') {
+      console.log('Row saved:', this.tableWithSimpleEdit.datasource.data[index]);
+    } else if (action === 'reset') {
+      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]);
+    }
+  }
+
+  public onTableAction(event) {
+    if (event.id === 1) {
+      this.addTableData();
+    }
+  }
+}
