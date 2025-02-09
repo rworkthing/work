@@ -209,7 +209,7 @@ export class MetadataConfigComponent implements OnInit {
   public dataWithSimpleEdit: BodLocaleTable[] = [
     {
       locale: 'en-US',
-      displayname: 'english',
+      displayName: 'english',
       description: 'english'
     }
   ];
@@ -554,7 +554,7 @@ public addFormControl(form, columnName, index, isRequired, defaultValue) {
           widthUnit: 'rem'
         },
         {
-          name: 'displayname',
+          name: 'displayName',
           title: 'Display Name',
           truncate: true,
           noOverflow: true,
@@ -823,4 +823,3 @@ public addFormControl(form, columnName, index, isRequired, defaultValue) {
     return dateObj;
   }
 }
-
