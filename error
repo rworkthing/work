@@ -1,18 +1,10 @@
-bod-common.mjs:4346 TypeError: Cannot read properties of undefined (reading 'length')
-    at TemplateSettingsComponent.addTableData (template-settings.component.ts:167:62)
-    at TemplateSettingsComponent_bod_page_container_0_Template_bod_table_onTableActionClick_1_listener (template-settings.component.html:21:27)
-error	@	bod-common.mjs:4346
+Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:161:68 - error TS2339: Property 'addRow' does not exist on type 'TemplateSettingsComponent'.
 
-bod-common.mjs:4346 NullInjectorError: R3InjectorError(Standalone[CodegenConfigComponent])[FormGroup -> FormGroup -> FormGroup -> FormGroup -> FormGroup]: 
-  NullInjectorError: No provider for FormGroup!
-    at NullInjector.get (core.mjs:1659:27)
-    at R3Injector.get (core.mjs:3105:33)
-    at R3Injector.get (core.mjs:3105:33)
-    at R3Injector.get (core.mjs:3105:33)
-    at R3Injector.get (core.mjs:3105:33)
-    at R3Injector.get (core.mjs:3105:33)
-    at ChainedInjector.get (core.mjs:16599:36)
-    at lookupTokenUsingModuleInjector (core.mjs:5746:39)
-    at getOrCreateInjectable (core.mjs:5794:12)
-    at Module.ɵɵdirectiveInject (core.mjs:11232:19)
-error	@	bod-common.mjs:4346
+161     this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
+                                                                       ~~~~~~
+
+
+Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:186:10 - error TS2339: Property 'addRow' does not exist on type 'TemplateSettingsComponent'.
+
+186     this.addRow(newRow);
+             ~~~~~~
