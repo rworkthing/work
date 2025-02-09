@@ -27,6 +27,22 @@ public addTableData() {
   };
 }
 
+public saveTableData() {
+  // Update the table data with the form values
+  this.tableWithSimpleEdit.datasource.data = this.rows.controls.map((control) => ({
+    id: control.get('id').value,
+    locale: control.get('locale').value,
+    displayName: control.get('displayName').value,
+    description: control.get('description').value
+  }));
+
+  // Log the saved data
+  console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+
+  // Reset the form's dirty state
+  this.rows.controls.forEach((control) => control.markAsPristine());
+}
+
 public updateColumnData(columnName: string, value: any, index: number) {
   const updatedData = this.tableWithSimpleEdit.datasource.data;
   updatedData[index][columnName] = value;
@@ -39,10 +55,4 @@ public updateColumnData(columnName: string, value: any, index: number) {
 
 public isFormDirty(): boolean {
   return this.rows.controls.some((control) => control.dirty);
-}
-
-public saveTableData() {
-  console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
-  // Reset the form's dirty state
-  this.rows.controls.forEach((control) => control.markAsPristine());
 }
