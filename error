@@ -1,9 +1,18 @@
-Error: libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:346:9 - error TS2741: Property 'searchTableData' is missing in type '{ searchFieldData: { label: string; fieldName: string; descFieldName: string; required: true; hideLabel: true; hideFilterCriteria: true; disableInput: true; disableSearch: false; hideDescription: false; }; }' but required in type 'SearchFieldInputData'.
+bod-common.mjs:4346 TypeError: Cannot read properties of undefined (reading 'length')
+    at TemplateSettingsComponent.addTableData (template-settings.component.ts:167:62)
+    at TemplateSettingsComponent_bod_page_container_0_Template_bod_table_onTableActionClick_1_listener (template-settings.component.html:21:27)
+error	@	bod-common.mjs:4346
 
-346         this.searchFieldObjArr[ind] = {
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  libs/sd-kit-staging/src/lib/bod-table-demo.model.ts:53:3
-    53   searchTableData: BodTableMetadata;
-         ~~~~~~~~~~~~~~~
-    'searchTableData' is declared here.
+bod-common.mjs:4346 NullInjectorError: R3InjectorError(Standalone[CodegenConfigComponent])[FormGroup -> FormGroup -> FormGroup -> FormGroup -> FormGroup]: 
+  NullInjectorError: No provider for FormGroup!
+    at NullInjector.get (core.mjs:1659:27)
+    at R3Injector.get (core.mjs:3105:33)
+    at R3Injector.get (core.mjs:3105:33)
+    at R3Injector.get (core.mjs:3105:33)
+    at R3Injector.get (core.mjs:3105:33)
+    at R3Injector.get (core.mjs:3105:33)
+    at ChainedInjector.get (core.mjs:16599:36)
+    at lookupTokenUsingModuleInjector (core.mjs:5746:39)
+    at getOrCreateInjectable (core.mjs:5794:12)
+    at Module.ɵɵdirectiveInject (core.mjs:11232:19)
+error	@	bod-common.mjs:4346
