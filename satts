@@ -4,7 +4,8 @@ import {
   Component,
   Inject,
   NO_ERRORS_SCHEMA,
-  OnInit
+  OnInit,
+  ViewChild
 } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -38,7 +39,10 @@ import {
   BodDateRange,
   BOD_DATE_RANGE,
   BodCommonModule,
-  BodFormTypes
+  BodFormTypes,
+  ModeOptions,
+  SingleRowEdit,
+  PageMode
 } from '@bod/common';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -60,7 +64,7 @@ import {
   TableLevelActions,
   TranslationKey
 } from './codegen-config.constant';
-import { BodSampleTable, BodSampleTable1 } from '../bod-table-demo.model';
+import { BodEditableSampleTable, BodLocaleTable, BodSampleTable, BodSampleTable1, SearchFieldInputData } from '../bod-table-demo.model';
 import { MatTabsModule } from '@angular/material/tabs';
 import {
   MatSlideToggleChange,
@@ -73,6 +77,9 @@ import {
   TableLevelActions1,
   TableLevelActions2
 } from '../codegen-config/codegen-config.constant';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'bod-metadata-config',
@@ -124,6 +131,8 @@ export class MetadataConfigComponent implements OnInit {
   public balanceHoldsTableActions1: BodTableAction[] = TableLevelActions1;
   public validvalueactions: BodTableAction[] = TableLevelActions2;
   inputLayoutForm!: UntypedFormGroup;
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  
 
   public translationKey = TranslationKey;
   bookingDate = '';
@@ -149,6 +158,284 @@ export class MetadataConfigComponent implements OnInit {
   public messages: NotificationMessage[] = [];
   isRelateToProductTemplate = false;
   isValidValueTypes = false;
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+  public formStatus = false;
+  private dataForReset: BodLocaleTable[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  public displayNameFormCtrlKeys: string[] = [];
+  public descriptionFormCtrlKeys: string[] = [];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+
+
+
+  public columns: Column[] = [
+    {
+      name: 'locale',
+      title: 'Locale',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'displayname',
+      title: 'Display Name',
+      truncate: true,
+      noOverflow: true,
+      width: 6,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'description',
+      title: 'Description',
+      truncate: true,
+      noOverflow: true,
+      width: 12,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
+    }
+  ];
+  
+  public columnSimpleEdit = this.columns;
+  public dataWithSimpleEdit: BodLocaleTable[] = [
+    {
+      locale: 'en-US',
+      displayname: 'english',
+      description: 'english'
+    }
+  ];
+
+
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'mbpBod.demo.microsite.table.tableWithEdit',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<BodLocaleTable>(
+      this.dataWithSimpleEdit
+    ),
+    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+  };
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'mbpBod.demo.microsite.tableActions.labels.add',
+      mostCommon: false
+    }
+  ];
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  http: HttpClient;
+  formBuilder: any;
+  public checkStatus(status: boolean) {
+    this.formStatus = status;
+  }
+
+  public onEditTableAction(event: { currentChanges: any; completeDelta: any; }) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
+  }
+
+  public addTableData(){
+    const updatedData = {
+      locale: 'en-US',
+      displayName: 'English',
+      description: 'english'
+    };
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input){
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false},
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setSearchFieldsData(false);
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+    this.setSearchFieldsData(false);
+    this.setOverrideDefaultFieldsData(false);
+    this.setRequiredFieldsData(false);
+  }
+  public setRequiredFieldsData(isReset: boolean) {
+    const requiredCtrlObj = {};
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        requiredCtrlObj['required' + ind] = new UntypedFormControl(row.required);
+      }
+    });
+    
+    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
+    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
+
+    // disable child (required) control based on the parent (overrideDefault) control value
+    if (this.singleRowEdit?.modeOptions?.input) {
+      if (!this.overrideDefaultColumnForm.controls['overrideDefault' + this.singleRowEdit?.index].value) {
+        this.requiredColumnForm.controls['required' + this.singleRowEdit?.index].disable({
+          emitEvent: true
+        });
+      }
+    } else {
+      Object.keys(this.overrideDefaultColumnForm.controls).forEach((key, ind) => {
+        if (!this.overrideDefaultColumnForm.controls[key].value) {
+          this.requiredColumnForm.controls['required' + ind].disable({
+            emitEvent: true
+          });
+        }
+      });
+    }
+}
+  public setOverrideDefaultFieldsData(isReset: boolean) {
+    const overrideDefaultCtrlObj = {};
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+    
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        overrideDefaultCtrlObj['overrideDefault' + ind] = new UntypedFormControl(row.overrideDefault);
+      }
+    });
+    
+    this.overrideDefaultColumnForm = this.formBuilder.group(overrideDefaultCtrlObj);
+    this.overrideDefaultColFormCtrKeys = Object.keys(this.overrideDefaultColumnForm.controls);
+}
+  
+  public setSearchFieldsData(isReset: boolean) {
+    const searchFieldFormCtrlObj = {};
+    this.searchFieldObjArr = [];
+    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+    
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
+      ) {
+        searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
+        this.searchFieldObjArr[ind] = {
+          searchFieldData: {
+            label: '',
+            fieldName: 'locale',
+            descFieldName: 'displayName',
+            required: true,
+            hideLabel: true,
+            hideFilterCriteria: true,
+            disableInput: true,
+            disableSearch: false,
+            hideDescription: false
+          }
+        };
+      }
+    });
+    
+    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+    this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+}
+
+  public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'locale',
+        descFieldName: 'displayName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.commonDataService.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+      });
+    
+    if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+      lastSearchFieldCtrl =
+        this.searchFieldFormCtrlKeys[
+          this.searchFieldFormCtrlKeys.length - 1
+        ];
+      index =
+        parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+    } else {
+      index = 0;
+    }
+    
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'locale',
+      index,
+      true,
+      ''
+    );
+    this.displayNameFormCtrlKeys = this.addFormControl(
+      this.displayNameColumnForm,
+      'displayName',
+      index,
+      false,
+      ''
+    );
+    this.descriptionFormCtrlKeys = this.addFormControl(
+      this.descriptionColumnForm,
+      'description',
+      index,
+      false,
+      ''
+    );
+}
+public addFormControl(form, columnName, index, isRequired, defaultValue) {
+  isRequired
+    ? form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue, Validators.required)
+      )
+    : form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue)
+      );
+  return Object.keys(form.controls);
+}
 
   onToggleChange(event: MatSlideToggleChange) {
     this.isRelateToProductTemplate = event.checked;
@@ -180,11 +467,19 @@ export class MetadataConfigComponent implements OnInit {
   public datatypes: any[] = [];
   public validvaluestypes: any[] = [];
   public addEditBalanceHoldFormGroup1: UntypedFormGroup | undefined;
+  public tableRefArray: any[] = [];
 
   constructor(
+    public commonDataService: BodTableDemoCommonDataService,
     private fb: FormBuilder,
     private changeDetectorRef: ChangeDetectorRef,
     private metadataService: MetadataService,
+    public searchFieldColumnForm: UntypedFormGroup,
+    public displayNameColumnForm: UntypedFormGroup,
+    public descriptionColumnForm: UntypedFormGroup,
+    public overrideDefaultColumnForm: UntypedFormGroup,
+    public requiredColumnForm: UntypedFormGroup,
+    
     @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
   ) {
     this.ValidvalueArray = {
@@ -292,14 +587,15 @@ export class MetadataConfigComponent implements OnInit {
       });
   }
 
-  public dataWithValidvalues: BodSampleTable1[] = [
-    {
-      additionaldatavalue: 'a',
-      defaulatindicator: false,
-      primaryindicator: false,
-      overrideindicator: false
+  public dataWithValidvalues: BodSampleTable1[] = [];
+  
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+
+  ngAfterViewInit() {
+    this.tableRefArray = [
+      this.simpleEditTableRef];
     }
-  ];
 
   loadDropdownData(): void {
     this.metadataService.getTypes().subscribe(data => {
@@ -355,7 +651,7 @@ export class MetadataConfigComponent implements OnInit {
     };
 
     this.dataWithValidvalues.push(newValidValue);
-    this.ValidvalueArray.datasource.data = this.dataWithValidvalues;
+    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
     this.inputLayoutForm.reset();
   }
 
