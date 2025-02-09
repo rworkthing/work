@@ -158,8 +158,8 @@
     <ng-template #editActionsTemplate1 let-element="element" let-column="column" let-index="index">
       <div *ngIf="!singleRowEdit.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
         <bod-table-actions
-          [actions]="rowLevelActionsForBasicEdit"
-          (onActionClick)="handleRowLevelActions($event.icon, index)"
+          [actions]="actionsForSimple"
+          (onActionClick)="onTableAction($event)"
         ></bod-table-actions>
       </div>
       <div *ngIf="singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index">
