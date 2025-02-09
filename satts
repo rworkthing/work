@@ -1,58 +1,139 @@
-public addTableData() {
-  const newRow = {
-    id: this.tableWithSimpleEdit.datasource.data.length + 1, // Generate a unique ID
-    locale: '',
-    displayName: '',
-    description: ''
+import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, FormArray } from '@angular/forms';
+import { MatTableDataSource } from '@angular/material/table';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  BodEditableSampleTable,
+  BodTableMetadata,
+  PageMode,
+  ModeOptions,
+  SingleRowEdit,
+  NotificationMessage
+} from '@bod/common';
+
+@Component({
+  selector: 'bod-template-settings',
+  templateUrl: './template-settings.component.html',
+  styleUrls: ['./template-settings.component.scss'],
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class TemplateSettingsComponent {
+  public tableWithSimpleEdit: BodTableMetadata;
+  public tableForm: FormGroup;
+  public modeOptionsSimple: ModeOptions = { input: false, reset: false };
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
   };
+  public pageModeSimple = PageMode.INQUIRY;
 
-  // Add the new row to the table data
-  this.tableWithSimpleEdit.datasource.data.push(newRow);
+  constructor(private fb: FormBuilder, private translate: TranslateService) {
+    this.tableForm = this.fb.group({
+      rows: this.fb.array([]) // Initialize a FormArray for rows
+    });
 
-  // Update the MatTableDataSource to reflect the changes
-  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
-    this.tableWithSimpleEdit.datasource.data;
+    this.tableWithSimpleEdit = {
+      columns: [
+        { name: 'locale', title: 'Locale', width: '12rem' },
+        { name: 'displayName', title: 'Display Name', width: '6rem' },
+        { name: 'description', title: 'Description', width: '12rem' }
+      ],
+      datasource: new MatTableDataSource<BodEditableSampleTable>(),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+    };
+  }
 
-  // Add the new row to the FormArray
-  this.addRow(newRow);
+  ngOnInit(): void {
+    // Initialize form controls for existing rows
+    this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
+  }
 
-  // Set edit mode for the table
-  this.modeOptionsSimple = { input: true, reset: false };
-  this.pageModeSimple = PageMode.INPUT;
+  // Getter for the rows FormArray
+  get rows(): FormArray {
+    return this.tableForm.get('rows') as FormArray;
+  }
 
-  // Set edit mode for the new row
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: this.tableWithSimpleEdit.datasource.data.length - 1
-  };
-}
+  // Add a new row to the FormArray
+  public addRow(row: any) {
+    const rowGroup = this.fb.group({
+      id: [row.id],
+      locale: [row.locale],
+      displayName: [row.displayName],
+      description: [row.description]
+    });
+    this.rows.push(rowGroup);
+  }
 
-public saveTableData() {
-  // Update the table data with the form values
-  this.tableWithSimpleEdit.datasource.data = this.rows.controls.map((control) => ({
-    id: control.get('id').value,
-    locale: control.get('locale').value,
-    displayName: control.get('displayName').value,
-    description: control.get('description').value
-  }));
+  // Add a new row to the table and form
+  public addTableData() {
+    const newRow = {
+      id: this.tableWithSimpleEdit.datasource.data.length + 1, // Generate a unique ID
+      locale: '',
+      displayName: '',
+      description: ''
+    };
 
-  // Log the saved data
-  console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+    // Add the new row to the table data
+    this.tableWithSimpleEdit.datasource.data.push(newRow);
 
-  // Reset the form's dirty state
-  this.rows.controls.forEach((control) => control.markAsPristine());
-}
+    // Update the MatTableDataSource to reflect the changes
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      this.tableWithSimpleEdit.datasource.data;
 
-public updateColumnData(columnName: string, value: any, index: number) {
-  const updatedData = this.tableWithSimpleEdit.datasource.data;
-  updatedData[index][columnName] = value;
-  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
-    updatedData;
+    // Add the new row to the FormArray
+    this.addRow(newRow);
 
-  // Mark the form as dirty
-  this.getFormGroup(index).markAsDirty();
-}
+    // Set edit mode for the table
+    this.modeOptionsSimple = { input: true, reset: false };
+    this.pageModeSimple = PageMode.INPUT;
 
-public isFormDirty(): boolean {
-  return this.rows.controls.some((control) => control.dirty);
+    // Set edit mode for the new row
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: this.tableWithSimpleEdit.datasource.data.length - 1
+    };
+  }
+
+  // Save table data
+  public saveTableData() {
+    // Update the table data with the form values
+    this.tableWithSimpleEdit.datasource.data = this.rows.controls.map((control) => ({
+      id: control.get('id').value,
+      locale: control.get('locale').value,
+      displayName: control.get('displayName').value,
+      description: control.get('description').value
+    }));
+
+    // Log the saved data
+    console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+
+    // Reset the form's dirty state
+    this.rows.controls.forEach((control) => control.markAsPristine());
+  }
+
+  // Update column data
+  public updateColumnData(columnName: string, value: any, index: number) {
+    const updatedData = this.tableWithSimpleEdit.datasource.data;
+    updatedData[index][columnName] = value;
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      updatedData;
+
+    // Mark the form as dirty
+    this.getFormGroup(index).markAsDirty();
+  }
+
+  // Get the FormGroup for a specific row
+  public getFormGroup(index: number): FormGroup {
+    return this.rows.at(index) as FormGroup;
+  }
+
+  // Check if the form is dirty
+  public isFormDirty(): boolean {
+    return this.rows.controls.some((control) => control.dirty);
+  }
+
+  // Reset form data
+  public reset() {
+    this.tableForm.reset();
+  }
 }
