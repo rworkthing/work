@@ -1,107 +1,72 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  Inject,
-  NO_ERRORS_SCHEMA,
-  OnInit,
-  ViewChild
-} from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-
+import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   Amount,
+  BodAutoCompleteMetadata,
   BodFormModule,
+  BodKeyValuePairMetadata,
   BodPageContainerModule,
-  BodPipeName,
   BodTableAction,
+  BodTableActionType,
   BodTableActionsModule,
   BodTableComponent,
   BodTableDataSource,
   BodTableFilterCriteria,
-  BodTableFilterUpdateButton,
   BodTableMetadata,
   BodTableModule,
   Column,
   ControlGroupModule,
-  BodCommonDialogModel,
   Currency,
   EditTableAction,
   InlineEditOutput,
   InputLayoutModule,
+  ListType,
   MessageContainerModule,
-  NotificationMessage,
-  SearchFieldModule,
-  DirectivesModule,
-  BodDynamicFormModule,
-  SectionContainerModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BOD_DATE_RANGE,
-  BodCommonModule,
-  BodFormTypes,
   ModeOptions,
-  SingleRowEdit,
-  PageMode
+  NotificationMessage,
+  NotificationMessageType,
+  PageAction,
+  PageMode,
+  SearchFieldModule,
+  SingleRowEdit
 } from '@bod/common';
+
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import {
-  FormBuilder,
-  FormControl,
   FormsModule,
   ReactiveFormsModule,
-  UntypedFormControl,
-  UntypedFormGroup,
-  Validators
+  UntypedFormGroup
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import {
-  metadataconfig,
-  TableLevelActions,
-  TranslationKey
-} from './codegen-config.constant';
-import { BodEditableSampleTable, BodLocaleTable, BodSampleTable, BodSampleTable1, SearchFieldInputData } from '../bod-table-demo.model';
-import { MatTabsModule } from '@angular/material/tabs';
-import {
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MetadataService } from './metada-config.service';
-import {
-  TableLevelActions1,
-  TableLevelActions2
-} from '../codegen-config/codegen-config.constant';
+  BodEditableSampleTable,
+  SearchFieldInputData
+} from '../bod-table-demo.model';
+import { take } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import moment from 'moment';
 import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 import { HttpClient } from '@angular/common/http';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 
 @Component({
-  selector: 'bod-metadata-config',
+  selector: 'bod-template-settings',
   standalone: true,
   imports: [
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
     CommonModule,
     TranslateModule,
     BodPageContainerModule,
     BodTableModule,
-    BodFormModule,
-    BodTableActionsModule,
-    CommonModule,
     BodTableModule,
     BodPageContainerModule,
     TranslateModule,
     BodFormModule,
     BodTableActionsModule,
-    FormsModule,
     InputLayoutModule,
     BodFormModule,
     ControlGroupModule,
@@ -109,166 +74,194 @@ import { HttpClient } from '@angular/common/http';
     MatSelectModule,
     MatDatepickerModule,
     ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
     MatInputModule,
     TranslateModule,
+    FormsModule,
     SearchFieldModule,
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    MatDatepickerModule,
-    BodCommonModule
+    MessageContainerModule
   ],
-  templateUrl: './metadata-config.component.html',
-  styleUrl: './metadata-config.component.scss',
-
+  templateUrl: './template-settings.component.html',
+  styleUrl: './template-settings.component.scss',
   schemas: [NO_ERRORS_SCHEMA]
 })
-export class MetadataConfigComponent implements OnInit {
-  public addEditFormGroup: UntypedFormGroup | undefined;
-  public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
-  public balanceHoldsTableActions1: BodTableAction[] = TableLevelActions1;
-  public validvalueactions: BodTableAction[] = TableLevelActions2;
-  inputLayoutForm!: UntypedFormGroup;
-  public searchFieldObjArr: SearchFieldInputData[] = [];
-  
-
-  public translationKey = TranslationKey;
-  bookingDate = '';
-  amountIsRequired = true;
-  isRequired = true;
-  public defaultCurrency: Currency | undefined;
-  selectedHoldId: string | undefined;
-  effectiveDate: string | undefined;
-  holdAllValue: boolean | undefined;
-  isExpireValue: boolean | undefined;
-
-  referenceType: string | undefined;
-
-  amountFieldValue: string | undefined;
-  actionModes = EditTableAction;
-  currentMode: EditTableAction = EditTableAction.ADD;
-  public disableAmount = false;
-  public isHoldExpirationDateTime = false;
-  result: any;
-
-  public timeControl: UntypedFormControl | undefined;
-  public addEditBalanceHoldFormGroup: UntypedFormGroup;
+export class TemplateSettingsComponent {
+  private dataForReset: BodEditableSampleTable[] = [];
   public messages: NotificationMessage[] = [];
-  isRelateToProductTemplate = false;
-  isValidValueTypes = false;
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
-  public formStatus = false;
-  private dataForReset: BodLocaleTable[] = [];
-  public searchFieldFormCtrlKeys: string[] = [];
-  public displayNameFormCtrlKeys: string[] = [];
-  public descriptionFormCtrlKeys: string[] = [];
-  public overrideDefaultColFormCtrKeys: string[] = [];
-  public requiredColFormCtrKeys: string[] = [];
+
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+
+  public tableWithSimpleEdit: BodTableMetadata;
+  public requiredColumnForm: UntypedFormGroup;
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+
   public pageMode = PageMode.INQUIRY;
   public pageModeSimple = this.pageMode;
-
-
-
-  public columns: Column[] = [
-    {
-      name: 'locale',
-      title: 'Locale',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'displayname',
-      title: 'Display Name',
-      truncate: true,
-      noOverflow: true,
-      width: 6,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      truncate: true,
-      noOverflow: true,
-      width: 12,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true,
-      width: 7
-    }
-  ];
-  
-  public columnSimpleEdit = this.columns;
-  public dataWithSimpleEdit: BodLocaleTable[] = [
-    {
-      locale: 'en-US',
-      displayName: 'english',
-      description: 'english'
-    }
-  ];
-
-
-  public tableWithSimpleEdit: BodTableMetadata = {
-    title: 'mbpBod.demo.microsite.table.tableWithEdit',
-    columns: this.columnSimpleEdit,
-    datasource: new MatTableDataSource<BodLocaleTable>(
-      this.dataWithSimpleEdit
-    ),
-    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-  };
-
-  public actionsForSimple: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'add',
-      label: 'mbpBod.demo.microsite.tableActions.labels.add',
-      mostCommon: false
-    }
-  ];
+  public lastModifiedIndex: number;
+  public requiredColFormCtrKeys: string[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  selectedTabIndex = 0;
+  showEdit = true;
+  public formStatus = false;
+  private subscriptions: Subscription = new Subscription();
+  public modeOptions: ModeOptions = { input: false, reset: false };
   public singleRowEdit: SingleRowEdit = {
     modeOptions: { input: false, reset: false },
     index: 0
   };
-  http: HttpClient;
-  formBuilder: any;
-  public checkStatus(status: boolean) {
-    this.formStatus = status;
-  }
+  public modeOptionsSimple = this.modeOptions;
 
-  public onEditTableAction(event: { currentChanges: any; completeDelta: any; }) {
-    this.commonDataService.updateMessage(
-      'mbpBod.demo.microsite.table.editTableEvent',
-      JSON.stringify(event.currentChanges)
-    );
-    console.log('CompleteDelta::', event.completeDelta);
-  }
-
-  public addTableData(){
+  public addTableData() {
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.lastModifiedIndex =
+          this.tableWithSimpleEdit.datasource.data.length;
+        break;
+      }
+      default:
+        break;
+    }
     const updatedData = {
-      locale: 'en-US',
-      displayName: 'English',
-      description: 'english'
-    };
-    this.simpleEditTableRef.addRow(updatedData);
+      id: ++this.lastModifiedIndex,
+      useExistingGroupId: 'Yes',
+      mailingType: this.inputForSelectKeyValue.options[0].value,
+      activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
+      verifiedAddress: true,
+      groupId: '123',
+      groupName: 'Insurance',
+      amount: new Amount(this.currencies[0], 1200),
+      country: this.inputForSingleSelectWithFlagIcon.options[2].value,
 
-    if (this.modeOptionsSimple?.input){
+      analyzedOn: new Date('Sep 10 2018'),
+      updatedOn: new Date('Sep 12 2018'),
+      deliveryMethod: 'email',
+      pointOfContact: 'Home',
+      authorizeCheckbox: Boolean(
+        this.inputForAuthorizeCheckboxValue.options[0].value
+      ),
+      usePreferred: 'No',
+      address: 'emily.daily@xyz.com',
+      time: moment(new Date()),
+      dateTime: new Date(),
+      addressOrder: Number('1'),
+      overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
+      required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+    };
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.simpleEditTableRef.addRow(updatedData);
+        break;
+      }
+
+      default:
+        break;
+    }
+    switch (this.selectedTabIndex) {
+      case 0: {
+        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+          const lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          const index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          const index = 0;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+
+    if (this.modeOptionsSimple?.input) {
       this.updateCustomColumnFormFields();
     } else {
       this.singleRowEdit = {
-        modeOptions: { input: true, reset: false},
+        modeOptions: { input: true, reset: false },
         index: this.tableWithSimpleEdit.datasource.data.length - 1
       };
       this.setSearchFieldsData(false);
       this.setDataForSingleLineEditMode(this.singleRowEdit.index);
     }
   }
+  public currencies: Currency[] = [
+    new Currency('USD', 'United States Dollar', 2, ''),
+    new Currency('EUR', 'EURO', 2, ''),
+    new Currency('CRC', 'Costa Rican Colón', 2, ''),
+    new Currency('GBP', 'Pound Sterling', 2, ''),
+    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
+    new Currency('JPY', 'Japanese Yen', 0, ''),
+    new Currency('CNY', 'Chinese Yuan', 2, '')
+  ];
+
+  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Yes'
+      },
+      {
+        value: false,
+        label: 'No'
+      }
+    ]
+  };
+  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Yes'
+      },
+      {
+        value: false,
+        label: 'No'
+      }
+    ]
+  };
+  public inputForCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Active'
+      },
+      {
+        value: false,
+        label: 'Inactive'
+      }
+    ]
+  };
+  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: '1',
+        label: 'Primary Shipping'
+      },
+      {
+        value: '2',
+        label: 'Primary Billing'
+      }
+    ]
+  };
+  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
+    options: [
+      {
+        value: 'MX',
+        label: 'Mexico'
+      },
+      {
+        value: 'IN',
+        label: 'India'
+      },
+      {
+        value: 'US',
+        label: 'California United States of America USA '
+      }
+    ],
+    type: ListType.COUNTRY,
+    required: true
+  };
+
   setDataForSingleLineEditMode(editIndex: number) {
     this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
       ...obj
@@ -282,115 +275,14 @@ export class MetadataConfigComponent implements OnInit {
     this.setOverrideDefaultFieldsData(false);
     this.setRequiredFieldsData(false);
   }
-  public setRequiredFieldsData(isReset: boolean) {
-    const requiredCtrlObj = {};
-    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
-
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
-      ) {
-        requiredCtrlObj['required' + ind] = new UntypedFormControl(row.required);
-      }
-    });
-    
-    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
-    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
-
-    // disable child (required) control based on the parent (overrideDefault) control value
-    if (this.singleRowEdit?.modeOptions?.input) {
-      if (!this.overrideDefaultColumnForm.controls['overrideDefault' + this.singleRowEdit?.index].value) {
-        this.requiredColumnForm.controls['required' + this.singleRowEdit?.index].disable({
-          emitEvent: true
-        });
-      }
-    } else {
-      Object.keys(this.overrideDefaultColumnForm.controls).forEach((key, ind) => {
-        if (!this.overrideDefaultColumnForm.controls[key].value) {
-          this.requiredColumnForm.controls['required' + ind].disable({
-            emitEvent: true
-          });
-        }
-      });
-    }
-}
-  public setOverrideDefaultFieldsData(isReset: boolean) {
-    const overrideDefaultCtrlObj = {};
-    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
-    
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
-      ) {
-        overrideDefaultCtrlObj['overrideDefault' + ind] = new UntypedFormControl(row.overrideDefault);
-      }
-    });
-    
-    this.overrideDefaultColumnForm = this.formBuilder.group(overrideDefaultCtrlObj);
-    this.overrideDefaultColFormCtrKeys = Object.keys(this.overrideDefaultColumnForm.controls);
-}
-
-  
-public setSearchFieldsData(isReset: boolean) {
-  const searchFieldFormCtrlObj = this.createSearchFieldControls(isReset);
-  this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-  this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
-}
-
-private createSearchFieldControls(isReset: boolean): { [key: string]: UntypedFormControl } {
-  const searchFieldFormCtrlObj = {};
-  this.searchFieldObjArr = [];
-  const data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
-
-  data.forEach((row, ind) => {
-    if (this.shouldCreateControl(ind)) {
-      searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
-      this.searchFieldObjArr[ind] = this.createSearchFieldObject();
-    }
-  });
-
-  return searchFieldFormCtrlObj;
-}
-
-private shouldCreateControl(index: number): boolean {
-  return (
-    this.modeOptionsSimple?.input ||
-    (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === index)
-  );
-}
-
-private createSearchFieldObject(): SearchFieldInputData {
-  return {
-    searchFieldData: {
-      label: '',
-      fieldName: 'locale',
-      descFieldName: 'displayName',
-      required: true,
-      hideLabel: true,
-      hideFilterCriteria: true,
-      disableInput: true,
-      disableSearch: false,
-      hideDescription: false
-    },
-    searchTableData: {
-      title: '', // Default title
-      columns: [], // Default columns
-      datasource: new MatTableDataSource<any>([]), // Default data source
-      noRecordsMessage: '' // Default message for no records
-    }
-  };
-}
-
   public updateCustomColumnFormFields() {
     let lastSearchFieldCtrl;
     let index;
     this.searchFieldObjArr.push({
       searchFieldData: {
         label: '',
-        fieldName: 'locale',
-        descFieldName: 'displayName',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
         required: true,
         hideLabel: true,
         hideFilterCriteria: true,
@@ -409,152 +301,77 @@ private createSearchFieldObject(): SearchFieldInputData {
         ),
         noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
       }
-      });
-    
-    if (this.tableWithSimpleEdit.datasource.data.length > 1) {
-      lastSearchFieldCtrl =
-        this.searchFieldFormCtrlKeys[
-          this.searchFieldFormCtrlKeys.length - 1
-        ];
-      index =
-        parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
-    } else {
-      index = 0;
-    }
-    
-    this.searchFieldFormCtrlKeys = this.addFormControl(
-      this.searchFieldColumnForm,
-      'locale',
-      index,
-      true,
-      ''
-    );
-    this.displayNameFormCtrlKeys = this.addFormControl(
-      this.displayNameColumnForm,
-      'displayName',
-      index,
-      false,
-      ''
-    );
-    this.descriptionFormCtrlKeys = this.addFormControl(
-      this.descriptionColumnForm,
-      'description',
-      index,
-      false,
-      ''
-    );
-}
-public addFormControl(form, columnName, index, isRequired, defaultValue) {
-  isRequired
-    ? form.addControl(
-        columnName + index,
-        new UntypedFormControl(defaultValue, Validators.required)
-      )
-    : form.addControl(
-        columnName + index,
-        new UntypedFormControl(defaultValue)
-      );
-  return Object.keys(form.controls);
-}
-
-  onToggleChange(event: MatSlideToggleChange) {
-    this.isRelateToProductTemplate = event.checked;
-  }
-  onValidValueTypesChange(event: MatSlideToggleChange) {
-    this.isValidValueTypes = event.checked;
-  }
-
-  // public inlineAddRowActionClick() {}
-  additionalValidValues: any[] = [];
-  public selectedFilters: BodTableFilterCriteria[] = [];
-  public onTableActionClicked(event: BodTableAction): void {}
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
-  // public inlineEditRowActionClick(_event: InlineEditOutput) {}
-  public balanceHoldsTableMetaData: BodTableMetadata;
-  public balanceHoldsTableMetaData1: BodTableMetadata;
-  public ValidvalueArray: BodTableMetadata;
-
-  // public types = [
-  //   { label: 'Arrangement', value: 'arrangement' },
-  //   { label: 'Charge Custom Parameter', value: 'ChargeCustomParameter' }
-  // ];
-  // public classificationtypes = [
-  //   { label: 'System Defined', value: 'SystemDefined' },
-  //   { label: 'User Defined', value: 'UserDefined' }
-  // ];
-  public types: any[] = [];
-  public classificationtypes: any[] = [];
-  public datatypes: any[] = [];
-  public validvaluestypes: any[] = [];
-  public addEditBalanceHoldFormGroup1: UntypedFormGroup | undefined;
-  public tableRefArray: any[] = [];
-
-  constructor(
-    public commonDataService: BodTableDemoCommonDataService,
-    private fb: FormBuilder,
-    private changeDetectorRef: ChangeDetectorRef,
-    private metadataService: MetadataService,
-    public searchFieldColumnForm: UntypedFormGroup,
-    public displayNameColumnForm: UntypedFormGroup,
-    public descriptionColumnForm: UntypedFormGroup,
-    public overrideDefaultColumnForm: UntypedFormGroup,
-    public requiredColumnForm: UntypedFormGroup,
-    
-    @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
-  ) {
-    this.ValidvalueArray = {
-      // title: 'Name and Description (Locales)',
-      columns: [
-        {
-          name: 'additionaldatavalue',
-          title: 'Value',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'defaulatindicator',
-          title: ' Default Indicator',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'primaryindicator',
-          title: 'Primary Indiactor',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'overrideindicator',
-          title: 'Override Indiactor',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
+    });
+    // logic to get index from last search field control key and create new search field control
+    switch (this.selectedTabIndex) {
+      case 0: {
+        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+          lastSearchFieldCtrl =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          index =
+            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        } else {
+          index = 0;
         }
-      ],
-      datasource: new MatTableDataSource<BodSampleTable1>(
-        this.dataWithValidvalues
-      )
-    };
-    this.balanceHoldsTableMetaData1 = {
-      title: 'Name and Description (Locales)',
+        break;
+      }
+
+      default:
+        break;
+    }
+    // this.searchFieldFormCtrlKeys = this.addFormControl(
+    //   this.searchFieldColumnForm,
+    //   'groupId',
+    //   index,
+    //   true,
+    //   ''
+    // );
+    // this.useExistingFormCtrlKeys = this.addFormControl(
+    //   this.useExistingColForm,
+    //   'useExisting',
+    //   index,
+    //   false,
+    //   'No'
+    // );
+
+    // this.overrideDefaultColFormCtrKeys = this.addFormControl(
+    //   this.overrideDefaultColumnForm,
+    //   'overrideDefault',
+    //   index,
+    //   false,
+    //   'true'
+    // );
+
+    // this.requiredColFormCtrKeys = this.addFormControl(
+    //   this.requiredColumnForm,
+    //   'required',
+    //   index,
+    //   false,
+    //   'true'
+    // );
+  }
+  // public updateCustomColumnFormFields() {
+
+  // }
+  constructor(
+    private translate: TranslateService,
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient
+  ) {
+    this.tableWithSimpleEdit = {
       columns: [
         {
           name: 'locale',
           title: 'Locale',
           truncate: true,
           noOverflow: true,
-          width: 10,
+          width: 12,
           widthUnit: 'rem'
         },
         {
-          name: 'displayName',
+          name: 'displayname',
           title: 'Display Name',
           truncate: true,
           noOverflow: true,
@@ -570,256 +387,133 @@ public addFormControl(form, columnName, index, isRequired, defaultValue) {
           widthUnit: 'rem'
         }
       ],
-      datasource: new MatTableDataSource<BodSampleTable>()
+      datasource: new MatTableDataSource<BodEditableSampleTable>(),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
     };
-    this.balanceHoldsTableMetaData = {
-      title: 'Attribute Details',
-      columns: [
-        {
-          name: 'attCode',
-          title: 'Attributes',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        }
-      ],
-      datasource: new MatTableDataSource<BodSampleTable>()
-    };
-    this.balanceHoldsTableMetaData.datasource.data = metadataconfig;
-    console.log(this.balanceHoldsTableMetaData);
-  }
-  ngOnInit() {
-    this.inputLayoutForm = this.fb.group({
-      additionaldatavalue: ['', Validators.required],
-      percentagevalue: [''],
-      sequencenumber: [''],
-      defaulatindicator: [false],
-      primaryindicator: [false],
-      overrideindicator: [false]
-    });
-    this.loadDropdownData();
-    this.initForm();
-    this.addEditBalanceHoldFormGroup
-      .get('classificationtype')
-      ?.valueChanges.subscribe(value => {
-        this.updateRelateToProductTypeValidator(value);
-      });
   }
 
-  public dataWithValidvalues: BodSampleTable1[] = [];
-  
-  @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef: BodTableComponent;
-
-  ngAfterViewInit() {
-    this.tableRefArray = [
-      this.simpleEditTableRef];
-    }
-
-  loadDropdownData(): void {
-    this.metadataService.getTypes().subscribe(data => {
-      this.types = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-
-      console.log('fetching data from API' + this.types);
-    });
-
-    this.metadataService
-      .getClassificationTypes()
-      .subscribe(data => (this.classificationtypes = data));
-    this.metadataService
-      .getDataTypes()
-      .subscribe(data => (this.datatypes = data));
-    this.metadataService
-      .getValidvalueTypes()
-      .subscribe(data => (this.validvaluestypes = data));
-  }
-  private updateRelateToProductTypeValidator(classificationType: string): void {
-    const relateToProductTypeControl = this.addEditBalanceHoldFormGroup.get(
-      'relatetoproducttype'
+  ngOnInit(): void {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
+          'mbpBod.demo.microsite.table.messages.reset'
+        ];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+            this.resetMsg.text = value[keys[1]];
+          });
+      })
     );
-    if (classificationType === 'systemDefined') {
-      relateToProductTypeControl?.setValidators([Validators.required]);
+  }
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+  public resetMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+
+  public onEditTableAction(event) {}
+  public checkStatus(status) {
+    this.formStatus = status;
+  }
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'mbpBod.demo.microsite.tableActions.labels.add',
+      mostCommon: false
+    }
+  ];
+
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      switch (this.selectedTabIndex) {
+        case 0: {
+          this.modeOptionsSimple = { input: true, reset: false };
+          this.pageModeSimple = PageMode.INPUT;
+          this.rowLevelActionsForBasicEdit[0].disabled = true;
+          this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(
+            obj => ({
+              ...obj
+            })
+          );
+          break;
+        }
+        default:
+          break;
+      }
+      this.setSearchFieldsData(false);
+      this.setOverrideDefaultFieldsData(false);
+      this.setRequiredFieldsData(false);
     } else {
-      relateToProductTypeControl?.clearValidators();
+      this.checkStatus(false);
+      switch (this.selectedTabIndex) {
+        case 0: {
+          this.modeOptionsSimple = { input: false, reset: true };
+          this.pageModeSimple = PageMode.INQUIRY;
+          this.rowLevelActionsForBasicEdit[0].disabled = false;
+          break;
+        }
+
+        default:
+          break;
+      }
     }
-    relateToProductTypeControl?.updateValueAndValidity();
   }
 
-  onSubmit(event: Event) {}
-  onReset() {}
-  // onAdd() {
-  //   if (this.inputLayoutForm.valid) {
-  //     const formData = this.inputLayoutForm.value;
-  //     this.additionalValidValues.push(formData);
-  //     const jsonData = JSON.stringify(this.additionalValidValues);
-  //     console.log('JSON Data:', jsonData);
-
-  //     // Store JSON data in local storage
-  //     localStorage.setItem('additionalValidValues', jsonData);
-  //   }
-  // }
-  onAdd(formValues: any) {
-    const newValidValue: BodSampleTable1 = {
-      additionaldatavalue: formValues.additionaldatavalue,
-      defaulatindicator: formValues.defaulatindicator,
-      primaryindicator: formValues.primaryindicator,
-      overrideindicator: formValues.overrideindicator
-    };
-
-    this.dataWithValidvalues.push(newValidValue);
-    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
-    this.inputLayoutForm.reset();
+  public updateColumnData(columnName, value, index, checkboxRef?, tableName?) {
+    switch (tableName) {
+      case 'simpleEditTable': {
+        const updatedData = this.tableWithSimpleEdit.datasource.data;
+        updatedData[index][columnName] = checkboxRef
+          ? !checkboxRef.checked
+          : value;
+        (
+          this.tableWithSimpleEdit
+            .datasource as MatTableDataSource<BodEditableSampleTable>
+        ).data = updatedData;
+        this.simpleEditTableRef.updateDeltaForCustomColumn(
+          EditTableAction.EDIT,
+          index
+        );
+        break;
+      }
+      default:
+        break;
+    }
   }
-
-  /** Initialize Add Balance Hold Form  */
-  private initForm(): void {
-    this.addEditBalanceHoldFormGroup1 = this.fb.group({});
-
-    this.addEditBalanceHoldFormGroup = this.fb.group({
-      code: new UntypedFormControl('', [Validators.required]),
-      identifier: new UntypedFormControl(false, [Validators.required]),
-      description: new UntypedFormControl(''),
-      type: new UntypedFormControl(''),
-      datatype: new UntypedFormControl(''),
-      calculate: new UntypedFormControl(''),
-      searchable: new UntypedFormControl(''),
-      multivalueallowed: new UntypedFormControl(''),
-      percentageallowed: new UntypedFormControl(''),
-      classificationtype: new UntypedFormControl(''),
-      // validvaluestype: new UntypedFormControl(''),
-      relatetoproducttype: new UntypedFormControl(''),
-      low: [''],
-      high: [''],
-      name: [''],
-      descriptions: [''],
-      validvaluestype: [''],
-      productTypeCode: [{ value: '', disabled: true }],
-      max: [''],
-      min: [''],
-      GLcategorizationAllowed: [''],
-      validtype: ['']
-    });
-    this.addEditBalanceHoldFormGroup
-      .get('code')
-      ?.valueChanges.subscribe(value => {
-        this.addEditBalanceHoldFormGroup
-          .get('productTypeCode')
-          ?.setValue(value);
-      });
-
-    this.addEditBalanceHoldFormGroup
-      .get('relatetoproducttype')
-      ?.valueChanges.subscribe(value => {
-        this.isRelateToProductTemplate = value;
-        if (!value) {
-          this.isValidValueTypes = false;
-          this.addEditBalanceHoldFormGroup
-            .get('validtype')
-            ?.setValue(false, { emitEvent: false });
-        }
-      });
-
-    this.addEditBalanceHoldFormGroup
-      .get('validtype')
-      ?.valueChanges.subscribe(value => {
-        if (this.isRelateToProductTemplate) {
-          this.isValidValueTypes = value;
-        } else {
-          this.isValidValueTypes = false;
-        }
-      });
-  }
-
-  /** On click of Add Button*/
-  public inlineAddRowActionClick(): void {
-    this.updateMessages([]);
-    this.currentMode = EditTableAction.ADD;
-    this.disableAmount = false;
-    this.isRequired = true;
-    this.amountIsRequired = true;
-    this.isHoldExpirationDateTime = false;
-    this.addEditBalanceHoldFormGroup.reset();
-    this.addEditBalanceHoldFormGroup.addControl(
-      'referenceId',
-      new FormControl('')
-    );
-    this.addEditBalanceHoldFormGroup.addControl(
-      'referenceType',
-      new FormControl('', Validators.required)
-    );
-    this.addEditBalanceHoldFormGroup.get('expirationDate')?.enable();
-    this.addEditBalanceHoldFormGroup.get('amount')?.enable();
-    this.changeDetectorRef.detectChanges();
-    this.setDefaultFormValue();
-  }
-  private setDefaultFormValue(): void {
-    this.addEditBalanceHoldFormGroup.patchValue({
-      amount: new Amount(this.defaultCurrency, null),
-      isHoldAll: false,
-      isExpire: false
-    });
-    // this.effectiveDate = DateUtilityService.updateDateFormat(
-    //   new Date(this.bookingDate),
-    //   'MM/dd/YYYY'
-    // );
-    this.addEditBalanceHoldFormGroup.markAsUntouched();
-    this.addEditBalanceHoldFormGroup.markAsPristine();
-  }
-
-  public updateMessages(messages: NotificationMessage[]) {
-    // this.accountWorkspaceService.pageLevelMessages$.next(messages);
-  }
-
-  public inlineEditRowActionClick(event: InlineEditOutput): void {
-    this.updateMessages([]);
-    this.currentMode = EditTableAction.EDIT;
-    this.selectedHoldId = event.editRowElement['referenceId'];
-    this.changeDetectorRef.detectChanges();
-    const combinedDateTime = this.combineDateAndTime(
-      event.editRowElement['expirationDate'],
-      event.editRowElement['expirationTime']
-    );
-    // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
-    //   event.editRowElement['amount'].amount,
-    //   event.editRowElement['amount'].currency?.symbol
-    // );
-    // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
-    this.addEditBalanceHoldFormGroup.removeControl('referenceId');
-    this.addEditBalanceHoldFormGroup.removeControl('referenceType');
-    this.holdAllValue = event.editRowElement['isHoldAll'];
-    this.isExpireValue = event.editRowElement['isExpire'];
-    this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
-    // this.checkExpirationFieldVisibility();
-    // this.effectiveDate = DateUtilityService.updateDateFormat(
-    //   new Date(this.bookingDate),
-    //   'MM/dd/YYYY'
-    // );
-    this.addEditBalanceHoldFormGroup.setValue({
-      // amount: holdAmount,
-      reason: event.editRowElement['reasonDescription'],
-      description: event?.editRowElement['description']
-        ? event?.editRowElement['description']
-        : '',
-      isHoldAll: event.editRowElement['isHoldAll'],
-      isExpire: event.editRowElement['isExpire'],
-      effective: this.effectiveDate,
-      expirationDate: combinedDateTime
-    });
-
-    this.addEditBalanceHoldFormGroup.controls['effective'].clearValidators();
-    this.addEditBalanceHoldFormGroup.controls[
-      'effective'
-    ].updateValueAndValidity();
-  }
-
-  private combineDateAndTime(date: string, time: string): Date {
-    const [hours, minutes, seconds] = time.split(':').map(Number);
-    const dateObj = new Date(date);
-    dateObj.setHours(hours, minutes, seconds);
-    return dateObj;
-  }
+  public setRequiredFieldsData(isReset) {}
+  public setOverrideDefaultFieldsData(isReset) {}
+  public setSearchFieldsData(isReset) {}
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
+    {
+      id: 0,
+      icon: 'edit',
+      label: 'edit',
+      mostCommon: true
+    },
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'delete',
+      mostCommon: false
+    }
+  ];
 }
