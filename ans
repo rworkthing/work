@@ -1,60 +1,76 @@
-public saveTableData() {
-  // Map form values to the table data
-  const updatedData = this.rows.controls.map((control, index) => ({
-    id: control.get('id')?.value,
-    locale: control.get('locale')?.value,
-    displayName: control.get('displayName')?.value,
-    description: control.get('description')?.value
-  }));
+import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { BodTableComponent, BodTableMetadata, PageMode, ModeOptions, SingleRowEdit } from '@bod/common';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormBuilder, FormGroup, FormArray, FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 
-  // Reassign MatTableDataSource (important for Angular change detection)
-  this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
+@Component({
+  selector: 'bod-template-settings',
+  standalone: true,
+  templateUrl: './template-settings.component.html',
+  styleUrl: './template-settings.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class TemplateSettingsComponent {
+  private dataForReset: any[] = [];
+  public messages: any[] = [];
+  @ViewChild('simpleEditTableRef', { static: false }) simpleEditTableRef: BodTableComponent;
+  public tableWithSimpleEdit: BodTableMetadata;
+  public tableForm: FormGroup;
+  public singleRowEdit: SingleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
+  public modeOptionsSimple = { input: false, reset: false };
+  public pageModeSimple = PageMode.INQUIRY;
+  private subscriptions: Subscription = new Subscription();
 
-  // Log saved data
-  console.log('Table data saved:', updatedData);
+  constructor(
+    private translate: TranslateService,
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient,
+    private fb: FormBuilder
+  ) {
+    this.tableForm = this.fb.group({ rows: this.fb.array([]) });
+    this.tableWithSimpleEdit = {
+      columns: [
+        { name: 'locale', title: 'Locale', truncate: true, width: 12 },
+        { name: 'displayName', title: 'Display Name', truncate: true, width: 6 },
+        { name: 'description', title: 'Description', truncate: true, width: 12 },
+        { name: 'actions', title: 'Actions', width: 4 }
+      ],
+      datasource: new MatTableDataSource([]),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+    };
+  }
 
-  // Mark the form as pristine after saving
-  this.rows.controls.forEach((control) => control.markAsPristine());
+  get rows(): FormArray {
+    return this.tableForm.get('rows') as FormArray;
+  }
 
-  // Exit edit mode
-  this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-}
+  public addRow(row: any = {}): void {
+    this.rows.push(this.fb.group({
+      id: [row.id || ''],
+      locale: [row.locale || ''],
+      displayName: [row.displayName || ''],
+      description: [row.description || '']
+    }));
+  }
 
-public addTableData() {
-  const newRow: BodEditableSampleTable = {
-    id: this.tableWithSimpleEdit.datasource.data.length + 1,
-    locale: '',
-    displayName: '',
-    description: ''
-  };
+  public startEditing(index: number): void {
+    this.singleRowEdit = { modeOptions: { input: true, reset: false }, index };
+  }
 
-  // Clone existing data and add new row
-  const updatedData = [...this.tableWithSimpleEdit.datasource.data, newRow];
+  public saveRow(index: number): void {
+    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
+  }
 
-  // Update the table data source
-  this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
+  public cancelEditing(index: number): void {
+    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
+  }
 
-  // Add new row to the form
-  this.addRow(newRow);
-
-  // Enable edit mode
-  this.modeOptionsSimple = { input: true, reset: false };
-  this.pageModeSimple = PageMode.INPUT;
-
-  // Set edit mode for the new row
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: updatedData.length - 1
-  };
-}
-
-public addRow(row: any) {
-  const rowGroup = this.fb.group({
-    id: [row?.id || ''],
-    locale: [row?.locale || ''],
-    displayName: [row?.displayName || ''],
-    description: [row?.description || '']
-  });
-
-  this.rows.push(rowGroup);
+  public isEditing(index: number): boolean {
+    return this.singleRowEdit.index === index;
+  }
 }
