@@ -1,0 +1,132 @@
+<bod-page-container
+  [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <!-- Table Component -->
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="actionsForSimple"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'locale', templateName: localeTemplate },
+      { columnName: 'displayName', templateName: displayNameTemplate },
+      { columnName: 'description', templateName: descriptionTemplate }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <!-- Locale Column Template -->
+    <ng-template #localeTemplate let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="getFormGroup(index)">
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              matInput
+              formControlName="locale"
+              (input)="updateColumnData('locale', $event.target.value, index)"
+            />
+          </mat-form-field>
+        </form>
+      </ng-container>
+    </ng-template>
+
+    <!-- Display Name Column Template -->
+    <ng-template #displayNameTemplate let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="getFormGroup(index)">
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              matInput
+              formControlName="displayName"
+              (input)="updateColumnData('displayName', $event.target.value, index)"
+            />
+          </mat-form-field>
+        </form>
+      </ng-container>
+    </ng-template>
+
+    <!-- Description Column Template (Updated to Normal Input Field) -->
+    <ng-template #descriptionTemplate let-element="element" let-column="column" let-index="index">
+      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <div>
+          {{ element[column.name] }}
+        </div>
+      </ng-container>
+      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+        <form [formGroup]="getFormGroup(index)">
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              matInput
+              formControlName="description"
+              (input)="updateColumnData('description', $event.target.value, index)"
+            />
+          </mat-form-field>
+        </form>
+      </ng-container>
+    </ng-template>
+
+    <!-- Actions Column Template -->
+    <ng-template #editActionsTemplate1 let-element="element" let-column="column" let-index="index">
+      <div *ngIf="!singleRowEdit.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
+        <bod-table-actions
+          [actions]="actionsForSimple"
+          (onActionClick)="onTableAction($event)"
+        ></bod-table-actions>
+      </div>
+      <div *ngIf="singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index">
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          mat-mini-fab
+          color="primary"
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisIcon="check"></mat-icon>
+        </button>
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          mat-icon-button
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+  </bod-table>
+
+  <!-- Edit Page Options -->
+  <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
+    <button
+      mat-raised-button
+      fisStyle
+      type="button"
+      color="primary"
+      (click)="saveTableData()"
+      [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+    >
+      {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+    </button>
+    <button mat-stroked-button fisStyle type="button" (click)="reset()">
+      {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+    </button>
+  </div>
+</bod-page-container>
