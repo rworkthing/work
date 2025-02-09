@@ -1,29 +1,48 @@
-columns: [
-        {
-          name: 'locale',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'displayname',
-          title: 'Display Name',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'description',
-          title: 'Description',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        }
-      ],
-      datasource: new MatTableDataSource<BodEditableSampleTable>(),
-      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-    };
+public onPageAction(event) {
+  if (event === PageAction.ADD) {  
+    this.messages = [];
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.addTableData();  // Call addTableData when Add button is clicked
+        this.modeOptionsSimple = { input: true, reset: false };
+        this.pageModeSimple = PageMode.INPUT;
+        this.rowLevelActionsForBasicEdit[0].disabled = true;
+        this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
+        break;
+      }
+      default:
+        break;
+    }
+    this.setSearchFieldsData(false);
+    this.setOverrideDefaultFieldsData(false);
+    this.setRequiredFieldsData(false);
+  } else if (event === PageAction.EDIT) {
+    this.messages = [];
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.modeOptionsSimple = { input: true, reset: false };
+        this.pageModeSimple = PageMode.INPUT;
+        this.rowLevelActionsForBasicEdit[0].disabled = true;
+        this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
+        break;
+      }
+      default:
+        break;
+    }
+    this.setSearchFieldsData(false);
+    this.setOverrideDefaultFieldsData(false);
+    this.setRequiredFieldsData(false);
+  } else {
+    this.checkStatus(false);
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.modeOptionsSimple = { input: false, reset: true };
+        this.pageModeSimple = PageMode.INQUIRY;
+        this.rowLevelActionsForBasicEdit[0].disabled = false;
+        break;
+      }
+      default:
+        break;
+    }
+  }
+}
