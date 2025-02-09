@@ -2,9 +2,27 @@ public addTableData() {
   this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
 
   const newRow = {
-    locale: '',
-    displayname: '',
-    description: ''
+    id: this.lastModifiedIndex + 1,
+    useExistingGroupId: '',
+    mailingType: '',
+    activeStatus: false,
+    verifiedAddress: false,
+    groupId: '',
+    groupName: '',
+    amount: new Amount(this.currencies[0], 0),
+    country: '',
+    analyzedOn: null,
+    updatedOn: null,
+    deliveryMethod: '',
+    pointOfContact: '',
+    authorizeCheckbox: false,
+    usePreferred: '',
+    address: '',
+    time: null,
+    dateTime: null,
+    addressOrder: null,
+    overrideDefault: false,
+    required: false
   };
 
   // Add the new row to the table data
