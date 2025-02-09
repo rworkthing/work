@@ -31,13 +31,16 @@ import {
   SearchFieldModule,
   SingleRowEdit
 } from '@bod/common';
-
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import {
   FormsModule,
   ReactiveFormsModule,
-  UntypedFormGroup
+  UntypedFormGroup,
+  FormBuilder,
+  FormArray,
+  FormControl,
+  FormGroup
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -87,14 +90,11 @@ import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 export class TemplateSettingsComponent {
   private dataForReset: BodEditableSampleTable[] = [];
   public messages: NotificationMessage[] = [];
-
   @ViewChild('simpleEditTableRef', { static: false })
   simpleEditTableRef: BodTableComponent;
-
   public tableWithSimpleEdit: BodTableMetadata;
   public requiredColumnForm: UntypedFormGroup;
   public searchFieldObjArr: SearchFieldInputData[] = [];
-
   public pageMode = PageMode.INQUIRY;
   public pageModeSimple = this.pageMode;
   public lastModifiedIndex: number;
@@ -111,255 +111,19 @@ export class TemplateSettingsComponent {
   };
   public modeOptionsSimple = this.modeOptions;
 
-  public addTableData() {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.lastModifiedIndex =
-          this.tableWithSimpleEdit.datasource.data.length;
-        break;
-      }
-      default:
-        break;
-    }
-    const updatedData = {
-      id: ++this.lastModifiedIndex,
-      useExistingGroupId: 'Yes',
-      mailingType: this.inputForSelectKeyValue.options[0].value,
-      activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
-      verifiedAddress: true,
-      groupId: '123',
-      groupName: 'Insurance',
-      amount: new Amount(this.currencies[0], 1200),
-      country: this.inputForSingleSelectWithFlagIcon.options[2].value,
+  // Form Array to manage dynamic rows
+  public tableForm: UntypedFormGroup;
 
-      analyzedOn: new Date('Sep 10 2018'),
-      updatedOn: new Date('Sep 12 2018'),
-      deliveryMethod: 'email',
-      pointOfContact: 'Home',
-      authorizeCheckbox: Boolean(
-        this.inputForAuthorizeCheckboxValue.options[0].value
-      ),
-      usePreferred: 'No',
-      address: 'emily.daily@xyz.com',
-      time: moment(new Date()),
-      dateTime: new Date(),
-      addressOrder: Number('1'),
-      overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
-      required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
-    };
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef.addRow(updatedData);
-        break;
-      }
-
-      default:
-        break;
-    }
-    switch (this.selectedTabIndex) {
-      case 0: {
-        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
-          const lastSearchFieldCtrl =
-            this.searchFieldFormCtrlKeys[
-              this.searchFieldFormCtrlKeys.length - 1
-            ];
-          const index =
-            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
-        } else {
-          const index = 0;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-
-    if (this.modeOptionsSimple?.input) {
-      this.updateCustomColumnFormFields();
-    } else {
-      this.singleRowEdit = {
-        modeOptions: { input: true, reset: false },
-        index: this.tableWithSimpleEdit.datasource.data.length - 1
-      };
-      this.setSearchFieldsData(false);
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
-    }
-  }
-  public currencies: Currency[] = [
-    new Currency('USD', 'United States Dollar', 2, ''),
-    new Currency('EUR', 'EURO', 2, ''),
-    new Currency('CRC', 'Costa Rican Colón', 2, ''),
-    new Currency('GBP', 'Pound Sterling', 2, ''),
-    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
-    new Currency('JPY', 'Japanese Yen', 0, ''),
-    new Currency('CNY', 'Chinese Yuan', 2, '')
-  ];
-
-  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Yes'
-      },
-      {
-        value: false,
-        label: 'No'
-      }
-    ]
-  };
-  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Yes'
-      },
-      {
-        value: false,
-        label: 'No'
-      }
-    ]
-  };
-  public inputForCheckboxValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Active'
-      },
-      {
-        value: false,
-        label: 'Inactive'
-      }
-    ]
-  };
-  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: '1',
-        label: 'Primary Shipping'
-      },
-      {
-        value: '2',
-        label: 'Primary Billing'
-      }
-    ]
-  };
-  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
-    options: [
-      {
-        value: 'MX',
-        label: 'Mexico'
-      },
-      {
-        value: 'IN',
-        label: 'India'
-      },
-      {
-        value: 'US',
-        label: 'California United States of America USA '
-      }
-    ],
-    type: ListType.COUNTRY,
-    required: true
-  };
-
-  setDataForSingleLineEditMode(editIndex: number) {
-    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-      ...obj
-    }));
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: editIndex
-    };
-    this.pageModeSimple = PageMode.NONE;
-    this.setSearchFieldsData(false);
-    this.setOverrideDefaultFieldsData(false);
-    this.setRequiredFieldsData(false);
-  }
-  public updateCustomColumnFormFields() {
-    let lastSearchFieldCtrl;
-    let index;
-    this.searchFieldObjArr.push({
-      searchFieldData: {
-        label: '',
-        fieldName: 'groupId',
-        descFieldName: 'groupName',
-        required: true,
-        hideLabel: true,
-        hideFilterCriteria: true,
-        disableInput: true,
-        hideDescription: false
-      },
-      searchTableData: {
-        columns: this.commonDataService.columnsForDemoService,
-        enablePagination: true,
-        paginationOptions: {
-          pageSize: 5,
-          length: 12
-        },
-        datasource: new BodTableDataSource<SampleEC>(
-          new DemoTableDataService(this.http)
-        ),
-        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-      }
-    });
-    // logic to get index from last search field control key and create new search field control
-    switch (this.selectedTabIndex) {
-      case 0: {
-        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
-          lastSearchFieldCtrl =
-            this.searchFieldFormCtrlKeys[
-              this.searchFieldFormCtrlKeys.length - 1
-            ];
-          index =
-            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
-        } else {
-          index = 0;
-        }
-        break;
-      }
-
-      default:
-        break;
-    }
-    // this.searchFieldFormCtrlKeys = this.addFormControl(
-    //   this.searchFieldColumnForm,
-    //   'groupId',
-    //   index,
-    //   true,
-    //   ''
-    // );
-    // this.useExistingFormCtrlKeys = this.addFormControl(
-    //   this.useExistingColForm,
-    //   'useExisting',
-    //   index,
-    //   false,
-    //   'No'
-    // );
-
-    // this.overrideDefaultColFormCtrKeys = this.addFormControl(
-    //   this.overrideDefaultColumnForm,
-    //   'overrideDefault',
-    //   index,
-    //   false,
-    //   'true'
-    // );
-
-    // this.requiredColFormCtrKeys = this.addFormControl(
-    //   this.requiredColumnForm,
-    //   'required',
-    //   index,
-    //   false,
-    //   'true'
-    // );
-  }
-  // public updateCustomColumnFormFields() {
-
-  // }
   constructor(
     private translate: TranslateService,
     public commonDataService: BodTableDemoCommonDataService,
-    private http: HttpClient
+    private http: HttpClient,
+    private fb: FormBuilder
   ) {
+    this.tableForm = this.fb.group({
+      rows: this.fb.array([]) // Initialize a FormArray for rows
+    });
+
     this.tableWithSimpleEdit = {
       columns: [
         {
@@ -371,7 +135,7 @@ export class TemplateSettingsComponent {
           widthUnit: 'rem'
         },
         {
-          name: 'displayname',
+          name: 'displayName',
           title: 'Display Name',
           truncate: true,
           noOverflow: true,
@@ -393,42 +157,116 @@ export class TemplateSettingsComponent {
   }
 
   ngOnInit(): void {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-    this.subscriptions.add(
-      this.translate.onTranslationChange.subscribe(lang => {
-        const keys = [
-          'mbpBod.demo.microsite.table.messages.success',
-          'mbpBod.demo.microsite.table.messages.reset'
-        ];
-        this.translate
-          .get(keys)
-          .pipe(take(1))
-          .subscribe(value => {
-            this.successMsg.text = value[keys[0]];
-            this.resetMsg.text = value[keys[1]];
-          });
-      })
-    );
+    // Initialize form controls for existing rows
+    this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
   }
-  public successMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant(
-      'mbpBod.demo.microsite.table.messages.success'
-    ),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
-  public resetMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
 
-  public onEditTableAction(event) {}
-  public checkStatus(status) {
+  // Getter for the rows FormArray
+  get rows(): FormArray {
+    return this.tableForm.get('rows') as FormArray;
+  }
+
+  // Add a new row to the table and form
+  public addTableData() {
+    const newRow = {
+      id: this.tableWithSimpleEdit.datasource.data.length + 1,
+      locale: '',
+      displayName: '',
+      description: ''
+    };
+
+    // Add the new row to the data source
+    this.tableWithSimpleEdit.datasource.data.push(newRow);
+    this.addRow(newRow);
+
+    // Update the table datasource
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      this.tableWithSimpleEdit.datasource.data;
+
+    // Set edit mode for the new row
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: this.tableWithSimpleEdit.datasource.data.length - 1
+    };
+  }
+
+  // Add a row to the FormArray
+  addRow(row: any) {
+    const rowGroup = this.fb.group({
+      locale: [row.locale],
+      displayName: [row.displayName],
+      description: [row.description]
+    });
+    this.rows.push(rowGroup);
+  }
+
+  // Get the FormGroup for a specific row
+  getFormGroup(index: number): FormGroup {
+    return this.rows.at(index) as FormGroup;
+  }
+
+  // Update column data
+  public updateColumnData(columnName: string, value: any, index: number) {
+    const updatedData = this.tableWithSimpleEdit.datasource.data;
+    updatedData[index][columnName] = value;
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      updatedData;
+    this.getFormGroup(index).get(columnName)?.setValue(value);
+  }
+
+  // Save table data
+  public saveTableData() {
+    console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
+  }
+
+  // Reset form data
+  public reset() {
+    this.tableForm.reset();
+  }
+
+  // Handle row-level actions
+  public handleRowLevelActions(action: string, index: number) {
+    if (action === 'save') {
+      // Get the form group for the current row
+      const rowFormGroup = this.getFormGroup(index);
+
+      // Check if the form is valid before saving
+      if (rowFormGroup.valid) {
+        // Save the row data
+        const rowData = this.tableWithSimpleEdit.datasource.data[index];
+        console.log('Row saved:', rowData);
+
+        // Optionally, you can send this data to a backend API here
+        // this.http.post('/api/save-row', rowData).subscribe(response => { ... });
+
+        // Exit edit mode for this row
+        this.singleRowEdit = {
+          modeOptions: { input: false, reset: false },
+          index: -1
+        };
+      } else {
+        // If the form is invalid, show an error message
+        console.error('Form is invalid. Please fill all required fields.');
+        this.messages.push({
+          type: NotificationMessageType.ERROR,
+          message: 'Please fill all required fields.'
+        });
+      }
+    } else if (action === 'reset') {
+      // Reset the form for the current row
+      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]);
+
+      // Exit edit mode for this row
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: -1
+      };
+    }
+  }
+
+  // Other methods
+  public onEditTableAction() {}
+  public checkStatus(status: boolean) {
     this.formStatus = status;
   }
 
@@ -441,104 +279,21 @@ export class TemplateSettingsComponent {
     }
   ];
 
-  public onTableAction(event: BodTableAction){
-    if(event.id === 1) {
-      this.modeOptionsSimple = { input: true, reset: false };
-          this.pageModeSimple = PageMode.INPUT;
-          this.rowLevelActionsForBasicEdit[0].disabled = true;
-          this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(
-            obj => ({
-              ...obj
-            })
-          );
+  public onTableAction(event: BodTableAction) {
+    if (event.id === 1) {
+      this.addTableData(); // Add a new row when the add action is clicked
     }
   }
 
-  public onPageAction(event) {
-    if (event === PageAction.ADD) {  
-      this.messages = [];
-      switch (this.selectedTabIndex) {
-        case 0: {
-          this.addTableData();  // Call addTableData when Add button is clicked
-          this.modeOptionsSimple = { input: true, reset: false };
-          this.pageModeSimple = PageMode.INPUT;
-          this.rowLevelActionsForBasicEdit[0].disabled = true;
-          this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
-          break;
-        }
-        default:
-          break;
-      }
-      this.setSearchFieldsData(false);
-      this.setOverrideDefaultFieldsData(false);
-      this.setRequiredFieldsData(false);
+  public onPageAction(event: PageAction) {
+    if (event === PageAction.ADD) {
+      this.addTableData(); // Add a new row when the Add button is clicked
     } else if (event === PageAction.EDIT) {
-      this.messages = [];
-      switch (this.selectedTabIndex) {
-        case 0: {
-          this.modeOptionsSimple = { input: true, reset: false };
-          this.pageModeSimple = PageMode.INPUT;
-          this.rowLevelActionsForBasicEdit[0].disabled = true;
-          this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
-          break;
-        }
-        default:
-          break;
-      }
-      this.setSearchFieldsData(false);
-      this.setOverrideDefaultFieldsData(false);
-      this.setRequiredFieldsData(false);
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
     } else {
-      this.checkStatus(false);
-      switch (this.selectedTabIndex) {
-        case 0: {
-          this.modeOptionsSimple = { input: false, reset: true };
-          this.pageModeSimple = PageMode.INQUIRY;
-          this.rowLevelActionsForBasicEdit[0].disabled = false;
-          break;
-        }
-        default:
-          break;
-      }
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
     }
   }
-
-  public updateColumnData(columnName, value, index, checkboxRef?, tableName?) {
-    switch (tableName) {
-      case 'simpleEditTable': {
-        const updatedData = this.tableWithSimpleEdit.datasource.data;
-        updatedData[index][columnName] = checkboxRef
-          ? !checkboxRef.checked
-          : value;
-        (
-          this.tableWithSimpleEdit
-            .datasource as MatTableDataSource<BodEditableSampleTable>
-        ).data = updatedData;
-        this.simpleEditTableRef.updateDeltaForCustomColumn(
-          EditTableAction.EDIT,
-          index
-        );
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  public setRequiredFieldsData(isReset) {}
-  public setOverrideDefaultFieldsData(isReset) {}
-  public setSearchFieldsData(isReset) {}
-  public rowLevelActionsForBasicEdit: BodTableAction[] = [
-    {
-      id: 0,
-      icon: 'edit',
-      label: 'edit',
-      mostCommon: true
-    },
-    {
-      id: 1,
-      icon: 'trash',
-      label: 'delete',
-      mostCommon: true
-    }
-  ];
 }
