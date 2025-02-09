@@ -1,31 +1,24 @@
-// Add a new row to the table and form
 public addTableData() {
   const newRow = {
-    id: this.tableWithSimpleEdit.datasource.data.length + 1,
+    id: this.tableWithSimpleEdit.datasource.data.length + 1, // Generate a unique ID
     locale: '',
     displayName: '',
     description: ''
   };
 
-  // Add the new row to the data source
+  // Add the new row to the table data
   this.tableWithSimpleEdit.datasource.data.push(newRow);
-  this.addRow(newRow);
 
-  // Update the table datasource
+  // Update the MatTableDataSource to reflect the changes
   (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
     this.tableWithSimpleEdit.datasource.data;
+
+  // Add the new row to the FormArray
+  this.addRow(newRow);
 
   // Set edit mode for the new row
   this.singleRowEdit = {
     modeOptions: { input: true, reset: false },
     index: this.tableWithSimpleEdit.datasource.data.length - 1
   };
-
-  // Mark the form as dirty
-  this.tableForm.markAsDirty();
-}
-
-// Save table data
-public saveTableData() {
-  console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
 }
