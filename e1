@@ -3,26 +3,9 @@ public onPageAction(event) {
     this.messages = [];
     switch (this.selectedTabIndex) {
       case 0: {
-        this.addTableData();  // Call addTableData when Add button is clicked
+        this.addTableData();  // Add a new row when Add button is clicked
         this.modeOptionsSimple = { input: true, reset: false };
         this.pageModeSimple = PageMode.INPUT;
-        this.rowLevelActionsForBasicEdit[0].disabled = true;
-        this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
-        break;
-      }
-      default:
-        break;
-    }
-    this.setSearchFieldsData(false);
-    this.setOverrideDefaultFieldsData(false);
-    this.setRequiredFieldsData(false);
-  } else if (event === PageAction.EDIT) {
-    this.messages = [];
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.modeOptionsSimple = { input: true, reset: false };
-        this.pageModeSimple = PageMode.INPUT;
-        this.rowLevelActionsForBasicEdit[0].disabled = true;
         this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
         break;
       }
@@ -38,7 +21,6 @@ public onPageAction(event) {
       case 0: {
         this.modeOptionsSimple = { input: false, reset: true };
         this.pageModeSimple = PageMode.INQUIRY;
-        this.rowLevelActionsForBasicEdit[0].disabled = false;
         break;
       }
       default:
