@@ -12,3 +12,14 @@ public addTableData() {
     ...this.tableWithSimpleEdit.datasource.data,
     newRow
   ];
+
+  // Automatically set the new row in edit mode
+  this.singleRowEdit = {
+    modeOptions: { input: true, reset: false },
+    index: this.lastModifiedIndex
+  };
+
+  // Ensure search fields and required fields are updated
+  this.setSearchFieldsData(false);
+  this.setDataForSingleLineEditMode(this.lastModifiedIndex);
+}
