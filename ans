@@ -1,22 +1,14 @@
-private createSearchFieldObject(): SearchFieldInputData {
-  return {
-    searchFieldData: {
-      label: '',
-      fieldName: 'locale',
-      descFieldName: 'displayName',
-      required: true,
-      hideLabel: true,
-      hideFilterCriteria: true,
-      disableInput: true,
-      disableSearch: false,
-      hideDescription: false
-    },
-    searchTableData: {
-      // Provide default values for the required properties of BodTableMetadata
-      title: '', // Add a default title
-      columns: [], // Add default columns
-      datasource: new MatTableDataSource<any>([]), // Add a default data source
-      noRecordsMessage: '' // Add a default message for no records
-    }
+public addTableData() {
+  this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+
+  const newRow = {
+    locale: '',
+    displayname: '',
+    description: ''
   };
-}
+
+  // Add the new row to the table data
+  this.tableWithSimpleEdit.datasource.data = [
+    ...this.tableWithSimpleEdit.datasource.data,
+    newRow
+  ];
