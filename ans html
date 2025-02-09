@@ -30,13 +30,12 @@
         </div>
       </ng-container>
       <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
-        <form [formGroup]="localeForm">
+        <form [formGroup]="getFormGroup(index)">
           <mat-form-field appearance="outline" fisStyle>
             <input
               matInput
-              [formControl]="localeForm.controls[column.name + index]"
-              [(ngModel)]="element[column.name]"
-              (input)="updateColumnData(column.name, $event.target.value, index, null, 'simpleEditTable')"
+              formControlName="locale"
+              (input)="updateColumnData('locale', $event.target.value, index)"
             />
           </mat-form-field>
         </form>
@@ -51,13 +50,12 @@
         </div>
       </ng-container>
       <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
-        <form [formGroup]="displayNameForm">
+        <form [formGroup]="getFormGroup(index)">
           <mat-form-field appearance="outline" fisStyle>
             <input
               matInput
-              [formControl]="displayNameForm.controls[column.name + index]"
-              [(ngModel)]="element[column.name]"
-              (input)="updateColumnData(column.name, $event.target.value, index, null, 'simpleEditTable')"
+              formControlName="displayName"
+              (input)="updateColumnData('displayName', $event.target.value, index)"
             />
           </mat-form-field>
         </form>
@@ -72,13 +70,12 @@
         </div>
       </ng-container>
       <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
-        <form [formGroup]="descriptionForm">
+        <form [formGroup]="getFormGroup(index)">
           <mat-form-field appearance="outline" fisStyle>
             <textarea
               matInput
-              [formControl]="descriptionForm.controls[column.name + index]"
-              [(ngModel)]="element[column.name]"
-              (input)="updateColumnData(column.name, $event.target.value, index, null, 'simpleEditTable')"
+              formControlName="description"
+              (input)="updateColumnData('description', $event.target.value, index)"
             ></textarea>
           </mat-form-field>
         </form>
