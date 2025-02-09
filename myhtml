@@ -5,7 +5,6 @@
   [messages]="messages"
   *ngIf="showEdit"
 >
-  <!-- Table Component -->
   <bod-table
     [data]="tableWithSimpleEdit"
     [tableActions]="actionsForSimple"
@@ -41,6 +40,7 @@
         </form>
       </ng-container>
     </ng-template>
+
     <!-- Display Name Column Template -->
     <ng-template #displayNameTemplate let-element="element" let-column="column" let-index="index">
       <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
@@ -60,6 +60,7 @@
         </form>
       </ng-container>
     </ng-template>
+
     <!-- Description Column Template -->
     <ng-template #descriptionTemplate let-element="element" let-column="column" let-index="index">
       <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
@@ -79,6 +80,7 @@
         </form>
       </ng-container>
     </ng-template>
+
     <!-- Actions Column Template -->
     <ng-template #editActionsTemplate1 let-element="element" let-column="column" let-index="index">
       <div *ngIf="!singleRowEdit.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
@@ -109,6 +111,7 @@
       </div>
     </ng-template>
   </bod-table>
+
   <!-- Edit Page Options -->
   <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
     <button
@@ -117,7 +120,7 @@
       type="button"
       color="primary"
       (click)="saveTableData()"
-      [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+      [disabled]="!simpleEditTableRef?.tableFormGroup?.dirty"
     >
       {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
     </button>
