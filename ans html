@@ -5,16 +5,15 @@
   [messages]="messages"
   *ngIf="showEdit"
 >
-  <!-- Table Component -->
   <bod-table
     [data]="tableWithSimpleEdit"
-    [tableActions]="actionsForSimple"
     [modeOptions]="modeOptionsSimple"
     [singleRowEdit]="singleRowEdit"
     [customColumnTemplates]="[
       { columnName: 'locale', templateName: localeTemplate },
       { columnName: 'displayName', templateName: displayNameTemplate },
-      { columnName: 'description', templateName: descriptionTemplate }
+      { columnName: 'description', templateName: descriptionTemplate },
+      { columnName: 'actions', templateName: editActionsTemplate }
     ]"
     (inputValidationStatus)="checkStatus($event)"
     (editTableEvent)="onEditTableAction($event)"
@@ -24,19 +23,13 @@
   >
     <!-- Locale Column Template -->
     <ng-template #localeTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
-        <div>
-          {{ element[column.name] }}
-        </div>
+      <ng-container *ngIf="!isEditing(index)">
+        <div>{{ element[column.name] }}</div>
       </ng-container>
-      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+      <ng-container *ngIf="isEditing(index)">
         <form [formGroup]="getFormGroup(index)">
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              matInput
-              formControlName="locale"
-              (input)="updateColumnData('locale', $event.target.value, index)"
-            />
+          <mat-form-field appearance="outline">
+            <input matInput formControlName="locale" />
           </mat-form-field>
         </form>
       </ng-container>
@@ -44,19 +37,13 @@
 
     <!-- Display Name Column Template -->
     <ng-template #displayNameTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
-        <div>
-          {{ element[column.name] }}
-        </div>
+      <ng-container *ngIf="!isEditing(index)">
+        <div>{{ element[column.name] }}</div>
       </ng-container>
-      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+      <ng-container *ngIf="isEditing(index)">
         <form [formGroup]="getFormGroup(index)">
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              matInput
-              formControlName="displayName"
-              (input)="updateColumnData('displayName', $event.target.value, index)"
-            />
+          <mat-form-field appearance="outline">
+            <input matInput formControlName="displayName" />
           </mat-form-field>
         </form>
       </ng-container>
@@ -64,69 +51,33 @@
 
     <!-- Description Column Template -->
     <ng-template #descriptionTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
-        <div>
-          {{ element[column.name] }}
-        </div>
+      <ng-container *ngIf="!isEditing(index)">
+        <div>{{ element[column.name] }}</div>
       </ng-container>
-      <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
+      <ng-container *ngIf="isEditing(index)">
         <form [formGroup]="getFormGroup(index)">
-          <mat-form-field appearance="outline" fisStyle>
-            <textarea
-              matInput
-              formControlName="description"
-              (input)="updateColumnData('description', $event.target.value, index)"
-            ></textarea>
+          <mat-form-field appearance="outline">
+            <input matInput formControlName="description" />
           </mat-form-field>
         </form>
       </ng-container>
     </ng-template>
 
-    <!-- Actions Column Template -->
-    <ng-template #editActionsTemplate1 let-element="element" let-column="column" let-index="index">
-      <div *ngIf="!singleRowEdit.modeOptions?.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
-        <bod-table-actions
-          [actions]="actionsForSimple"
-          (onActionClick)="onTableAction($event)"
-        ></bod-table-actions>
-      </div>
-      <div *ngIf="singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index">
-        <button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
-          [matTooltipPosition]="'below'"
-          mat-mini-fab
-          color="primary"
-          (click)="handleRowLevelActions('save', index)"
-        >
-          <mat-icon fisIcon="check"></mat-icon>
+    <!-- Row-level Edit Actions Column -->
+    <ng-template #editActionsTemplate let-element="element" let-index="index">
+      <div *ngIf="!isEditing(index)">
+        <button mat-icon-button (click)="startEditing(index)">
+          <mat-icon>edit</mat-icon>
         </button>
-        <button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
-          [matTooltipPosition]="'below'"
-          mat-icon-button
-          class="ruf-ghost-button"
-          (click)="handleRowLevelActions('reset', index)"
-        >
-          <mat-icon fisIcon="close"></mat-icon>
+      </div>
+      <div *ngIf="isEditing(index)">
+        <button mat-icon-button color="primary" (click)="saveRow(index)">
+          <mat-icon>check</mat-icon>
+        </button>
+        <button mat-icon-button (click)="cancelEditing(index)">
+          <mat-icon>close</mat-icon>
         </button>
       </div>
     </ng-template>
   </bod-table>
-
-  <!-- Edit Page Options -->
-  <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
-    <button
-      mat-raised-button
-      fisStyle
-      type="button"
-      color="primary"
-      (click)="saveTableData()"
-      [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
-    >
-      {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
-    </button>
-    <button mat-stroked-button fisStyle type="button" (click)="reset()">
-      {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
-    </button>
-  </div>
 </bod-page-container>
