@@ -331,36 +331,56 @@ export class MetadataConfigComponent implements OnInit {
     this.overrideDefaultColumnForm = this.formBuilder.group(overrideDefaultCtrlObj);
     this.overrideDefaultColFormCtrKeys = Object.keys(this.overrideDefaultColumnForm.controls);
 }
+
   
-  public setSearchFieldsData(isReset: boolean) {
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
-    let data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
-    
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === ind)
-      ) {
-        searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'locale',
-            descFieldName: 'displayName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: false,
-            hideDescription: false
-          }
-        };
-      }
-    });
-    
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+public setSearchFieldsData(isReset: boolean) {
+  const searchFieldFormCtrlObj = this.createSearchFieldControls(isReset);
+  this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+  this.searchFieldFormCtrlKeys = Object.keys(this.searchFieldColumnForm.controls);
+}
+
+private createSearchFieldControls(isReset: boolean): { [key: string]: UntypedFormControl } {
+  const searchFieldFormCtrlObj = {};
+  this.searchFieldObjArr = [];
+  const data = isReset ? this.dataForReset : this.tableWithSimpleEdit.datasource.data;
+
+  data.forEach((row, ind) => {
+    if (this.shouldCreateControl(ind)) {
+      searchFieldFormCtrlObj['locale' + ind] = new UntypedFormControl(row.locale, Validators.required);
+      this.searchFieldObjArr[ind] = this.createSearchFieldObject();
+    }
+  });
+
+  return searchFieldFormCtrlObj;
+}
+
+private shouldCreateControl(index: number): boolean {
+  return (
+    this.modeOptionsSimple?.input ||
+    (this.singleRowEdit?.modeOptions?.input && this.singleRowEdit?.index === index)
+  );
+}
+
+private createSearchFieldObject(): SearchFieldInputData {
+  return {
+    searchFieldData: {
+      label: '',
+      fieldName: 'locale',
+      descFieldName: 'displayName',
+      required: true,
+      hideLabel: true,
+      hideFilterCriteria: true,
+      disableInput: true,
+      disableSearch: false,
+      hideDescription: false
+    },
+    searchTableData: {
+      title: '', // Default title
+      columns: [], // Default columns
+      datasource: new MatTableDataSource<any>([]), // Default data source
+      noRecordsMessage: '' // Default message for no records
+    }
+  };
 }
 
   public updateCustomColumnFormFields() {
@@ -803,3 +823,4 @@ public addFormControl(form, columnName, index, isRequired, defaultValue) {
     return dateObj;
   }
 }
+
