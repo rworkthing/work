@@ -1,22 +1,23 @@
-public onPageAction(event) {
+public onPageAction(event: PageAction) {
   if (event === PageAction.ADD) {  
     this.messages = [];
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.addTableData();  // Add a new row when Add button is clicked
-        this.modeOptionsSimple = { input: true, reset: false };
-        this.pageModeSimple = PageMode.INPUT;
-        this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
-        break;
-      }
-      default:
-        break;
-    }
+
+    // Add new row logic
+    this.addTableData();  // Adds a new blank row
+
+    // Enable input mode
+    this.modeOptionsSimple = { input: true, reset: false };
+    this.pageModeSimple = PageMode.INPUT;
+    
+    // Keep track of reset state
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
+
     this.setSearchFieldsData(false);
     this.setOverrideDefaultFieldsData(false);
     this.setRequiredFieldsData(false);
   } else {
     this.checkStatus(false);
+    
     switch (this.selectedTabIndex) {
       case 0: {
         this.modeOptionsSimple = { input: false, reset: true };
