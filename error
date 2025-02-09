@@ -1,4 +1,4 @@
-Property 'searchTableData' is missing in type '{ searchFieldData: { label: string; fieldName: string; descFieldName: string; required: true; hideLabel: true; hideFilterCriteria: true; disableInput: true; disableSearch: false; hideDescription: false; }; }' but required in type 'SearchFieldInputData'.
+Error: libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:346:9 - error TS2741: Property 'searchTableData' is missing in type '{ searchFieldData: { label: string; fieldName: string; descFieldName: string; required: true; hideLabel: true; hideFilterCriteria: true; disableInput: true; disableSearch: false; hideDescription: false; }; }' but required in type 'SearchFieldInputData'.
 
 346         this.searchFieldObjArr[ind] = {
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~
