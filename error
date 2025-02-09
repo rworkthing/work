@@ -1,10 +1,9 @@
-Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:161:68 - error TS2339: Property 'addRow' does not exist on type 'TemplateSettingsComponent'.
+Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:188:7 - error TS2322: Type 'string' is not assignable to type '{ id: number; label: string; value: string; }[]'.
 
-161     this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
-                                                                       ~~~~~~
+188       description: ''
+          ~~~~~~~~~~~
 
-
-Error: libs/sd-kit-staging/src/lib/template-settings/template-settings.component.ts:186:10 - error TS2339: Property 'addRow' does not exist on type 'TemplateSettingsComponent'.
-
-186     this.addRow(newRow);
-             ~~~~~~
+  libs/sd-kit-staging/src/lib/bod-table-demo.model.ts:79:3
+    79   description?: { id: number; label: string; value: string }[];
+         ~~~~~~~~~~~
+    The expected type comes from property 'description' which is declared here on type 'BodEditableSampleTable'
