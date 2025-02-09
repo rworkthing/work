@@ -1,106 +1,46 @@
-import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { BodTableComponent, BodTableMetadata, PageMode, ModeOptions, SingleRowEdit, BodTableAction, PageAction } from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { FormBuilder, FormArray, FormGroup } from '@angular/forms';
-import { Subscription } from 'rxjs';
+public saveTableData() {
+  // Update the table data with the form values
+  this.tableWithSimpleEdit.datasource.data = this.rows.controls.map((control, index) => ({
+    id: control.get('id')?.value,
+    locale: control.get('locale')?.value,
+    displayName: control.get('displayName')?.value,
+    description: control.get('description')?.value
+  }));
 
-@Component({
-  selector: 'bod-template-settings',
-  standalone: true,
-  templateUrl: './template-settings.component.html',
-  styleUrl: './template-settings.component.scss',
-  schemas: [NO_ERRORS_SCHEMA],
-})
-export class TemplateSettingsComponent {
-  @ViewChild('simpleEditTableRef', { static: false }) simpleEditTableRef: BodTableComponent;
-  public tableWithSimpleEdit: BodTableMetadata;
-  public pageModeSimple = PageMode.INQUIRY;
-  public modeOptionsSimple: ModeOptions = { input: false, reset: false };
-  public singleRowEdit: SingleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-  public tableForm: FormGroup;
-  private subscriptions: Subscription = new Subscription();
+  // Force Angular to detect changes
+  this.tableWithSimpleEdit.datasource = new MatTableDataSource(this.tableWithSimpleEdit.datasource.data);
 
-  constructor(private translate: TranslateService, private fb: FormBuilder) {
-    this.tableForm = this.fb.group({ rows: this.fb.array([]) });
-    this.tableWithSimpleEdit = {
-      columns: [
-        { name: 'locale', title: 'Locale', width: 12 },
-        { name: 'displayName', title: 'Display Name', width: 6 },
-        { name: 'description', title: 'Description', width: 12 }
-      ],
-      datasource: new MatTableDataSource([]),
-      noRecordsMessage: 'No records found.'
-    };
-  }
+  // Log the saved data
+  console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
 
-  ngOnInit(): void {
-    this.initializeTable();
-  }
+  // Reset form's dirty state
+  this.rows.controls.forEach((control) => control.markAsPristine());
+}
 
-  get rows(): FormArray {
-    return this.tableForm.get('rows') as FormArray;
-  }
 
-  initializeTable() {
-    this.tableWithSimpleEdit.datasource.data.forEach(row => this.addRow(row));
-  }
+public addTableData() {
+  const newRow = {
+    id: this.tableWithSimpleEdit.datasource.data.length + 1,
+    locale: '',
+    displayName: '',
+    description: ''
+  };
 
-  addRow(row?: any) {
-    const newRow = this.fb.group({
-      id: [row?.id || this.rows.length + 1],
-      locale: [row?.locale || ''],
-      displayName: [row?.displayName || ''],
-      description: [row?.description || '']
-    });
-    this.rows.push(newRow);
-    this.updateTableData();
-  }
+  // Clone existing data and add new row
+  const updatedData = [...this.tableWithSimpleEdit.datasource.data, newRow];
 
-  addTableData() {
-    this.addRow();
-    this.modeOptionsSimple.input = true;
-    this.pageModeSimple = PageMode.INPUT;
-  }
+  // Update table data source
+  this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
 
-  updateTableData() {
-    this.tableWithSimpleEdit.datasource.data = this.rows.controls.map(control => control.value);
-    this.tableWithSimpleEdit.datasource = new MatTableDataSource(this.tableWithSimpleEdit.datasource.data);
-  }
+  // Add new row to the form
+  this.addRow(newRow);
 
-  updateColumnData(columnName: string, value: any, index: number) {
-    this.rows.at(index).get(columnName)?.setValue(value);
-    this.rows.at(index).markAsDirty();
-    this.updateTableData();
-  }
+  // Enable edit mode for the new row
+  this.modeOptionsSimple = { input: true, reset: false };
+  this.pageModeSimple = PageMode.INPUT;
 
-  saveTableData() {
-    console.log('Saved Data:', this.tableWithSimpleEdit.datasource.data);
-    this.rows.controls.forEach(control => control.markAsPristine());
-  }
-
-  reset() {
-    this.rows.clear();
-    this.initializeTable();
-  }
-
-  handleRowLevelActions(action: string, index: number) {
-    if (action === 'save') {
-      this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-    } else if (action === 'reset') {
-      this.rows.at(index).reset();
-    }
-  }
-
-  onPageAction(event: PageAction) {
-    if (event === PageAction.ADD) {
-      this.addTableData();
-    } else if (event === PageAction.EDIT) {
-      this.modeOptionsSimple.input = true;
-      this.pageModeSimple = PageMode.INPUT;
-    } else {
-      this.modeOptionsSimple.input = false;
-      this.pageModeSimple = PageMode.INQUIRY;
-    }
-  }
+  this.singleRowEdit = {
+    modeOptions: { input: true, reset: false },
+    index: updatedData.length - 1
+  };
 }
