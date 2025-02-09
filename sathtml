@@ -1,19 +1,15 @@
-<!-- Description Column Template -->
-<ng-template #descriptionTemplate let-element="element" let-column="column" let-index="index">
-  <ng-container *ngIf="!modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index !== index)">
-    <div>
-      {{ element[column.name] }}
-    </div>
-  </ng-container>
-  <ng-container *ngIf="modeOptionsSimple.input || (singleRowEdit?.modeOptions?.input && singleRowEdit?.index === index)">
-    <form [formGroup]="getFormGroup(index)">
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          matInput
-          formControlName="description"
-          (input)="updateColumnData('description', $event.target.value, index)"
-        />
-      </mat-form-field>
-    </form>
-  </ng-container>
-</ng-template>
+<div *ngIf="modeOptionsSimple.input" class="editPageOptions">
+  <button
+    mat-raised-button
+    fisStyle
+    type="button"
+    color="primary"
+    (click)="saveTableData()"
+    [disabled]="!isFormDirty()"
+  >
+    {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+  </button>
+  <button mat-stroked-button fisStyle type="button" (click)="reset()">
+    {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+  </button>
+</div>
