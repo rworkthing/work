@@ -1,43 +1,4 @@
-public addTableData() {
-  this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-
-  const newRow = {
-    id: this.lastModifiedIndex + 1,
-    useExistingGroupId: '',
-    mailingType: '',
-    activeStatus: false,
-    verifiedAddress: false,
-    groupId: '',
-    groupName: '',
-    amount: new Amount(this.currencies[0], 0),
-    country: '',
-    analyzedOn: null,
-    updatedOn: null,
-    deliveryMethod: '',
-    pointOfContact: '',
-    authorizeCheckbox: false,
-    usePreferred: '',
-    address: '',
-    time: null,
-    dateTime: null,
-    addressOrder: null,
-    overrideDefault: false,
-    required: false
-  };
-
-  // Add the new row to the table data
-  this.tableWithSimpleEdit.datasource.data = [
-    ...this.tableWithSimpleEdit.datasource.data,
-    newRow
-  ];
-
-  // Automatically set the new row in edit mode
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: this.lastModifiedIndex
-  };
-
-  // Ensure search fields and required fields are updated
-  this.setSearchFieldsData(false);
-  this.setDataForSingleLineEditMode(this.lastModifiedIndex);
-}
+this.rowLevelActionsForBasicEdit = [
+  { action: PageAction.EDIT, icon: 'edit', tooltip: 'Edit Row' },
+  { action: PageAction.DELETE, icon: 'delete', tooltip: 'Delete Row' }
+];
