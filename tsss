@@ -1,35 +1,17 @@
-// Add this method to handle inline editing
-public handleRowLevelActions(action: string, index: number) {
-  if (action === 'edit') {
-    this.setDataForSingleLineEditMode(index); // Enable edit mode for the specific row
-  } else if (action === 'save') {
-    this.saveRow(index); // Save the edited row
-  } else if (action === 'delete') {
-    this.deleteRow(index); // Delete the row
-  } else if (action === 'reset') {
-    this.resetRow(index); // Reset the row to its original state
-  }
+export declare enum PageMode {
+    INQUIRY = "inquiry",
+    INPUT = "input",
+    NONE = "none"
 }
-
-// Method to save the edited row
-public saveRow(index: number) {
-  const updatedData = this.tableWithSimpleEdit.datasource.data;
-  // Perform any validation or data processing here
-  this.singleRowEdit.modeOptions.input = false; // Disable edit mode
-  this.simpleEditTableRef.updateDeltaForCustomColumn(EditTableAction.EDIT, index);
+export declare enum PageAction {
+    EDIT = "Edit",
+    DELETE = "Delete",
+    CANCEL = "Cancel",
+    ADD = 'Add'
 }
-
-// Method to delete a row
-public deleteRow(index: number) {
-  const updatedData = this.tableWithSimpleEdit.datasource.data;
-  updatedData.splice(index, 1); // Remove the row
-  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = updatedData;
+export interface PageActionBtn {
+    id: string;
+    icon: string;
+    tooltip: string;
 }
-
-// Method to reset a row to its original state
-public resetRow(index: number) {
-  const updatedData = this.tableWithSimpleEdit.datasource.data;
-  updatedData[index] = { ...this.dataForReset[index] }; // Reset to original data
-  (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data = updatedData;
-  this.singleRowEdit.modeOptions.input = false; // Disable edit mode
-}
+//# sourceMappingURL=page-container-enums.d.ts.map
