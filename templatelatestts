@@ -2,12 +2,33 @@ import { CommonModule } from '@angular/common';
 import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
+  Amount,
+  BodAutoCompleteMetadata,
   BodFormModule,
+  BodKeyValuePairMetadata,
   BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
   BodTableActionsModule,
   BodTableComponent,
+  BodTableDataSource,
+  BodTableFilterCriteria,
   BodTableMetadata,
   BodTableModule,
+  Column,
+  ControlGroupModule,
+  Currency,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  ListType,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  PageAction,
+  PageMode,
+  SearchFieldModule,
   SingleRowEdit
 } from '@bod/common';
 
@@ -19,12 +40,21 @@ import {
   UntypedFormGroup,
   FormBuilder,
   FormArray,
-  FormControl
+  FormControl,
+  FormGroup
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
+import {
+  BodEditableSampleTable,
+  SearchFieldInputData
+} from '../bod-table-demo.model';
+import { take } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
+import moment from 'moment';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
 import { HttpClient } from '@angular/common/http';
 import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
 
@@ -36,37 +66,66 @@ import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
     TranslateModule,
     BodPageContainerModule,
     BodTableModule,
+    BodTableModule,
+    BodPageContainerModule,
+    TranslateModule,
     BodFormModule,
     BodTableActionsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
     MatFormFieldModule,
     MatSelectModule,
+    MatDatepickerModule,
     ReactiveFormsModule,
     MatInputModule,
-    FormsModule
+    TranslateModule,
+    FormsModule,
+    SearchFieldModule,
+    MessageContainerModule
   ],
   templateUrl: './template-settings.component.html',
   styleUrl: './template-settings.component.scss',
   schemas: [NO_ERRORS_SCHEMA]
 })
 export class TemplateSettingsComponent {
-  public tableWithSimpleEdit: BodTableMetadata;
-  public tableForm: UntypedFormGroup;
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
-  };
-  public subscriptions: Subscription = new Subscription();
+  private dataForReset: BodEditableSampleTable[] = [];
+  public messages: NotificationMessage[] = [];
 
   @ViewChild('simpleEditTableRef', { static: false })
   simpleEditTableRef: BodTableComponent;
 
+  public tableWithSimpleEdit: BodTableMetadata;
+  public requiredColumnForm: UntypedFormGroup;
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+  public lastModifiedIndex: number;
+  public requiredColFormCtrKeys: string[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  selectedTabIndex = 0;
+  showEdit = true;
+  public formStatus = false;
+  private subscriptions: Subscription = new Subscription();
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public modeOptionsSimple = this.modeOptions;
+
+  // Form Array to manage dynamic rows
+  public tableForm: UntypedFormGroup;
+
   constructor(
     private translate: TranslateService,
+    public commonDataService: BodTableDemoCommonDataService,
     private http: HttpClient,
     private fb: FormBuilder
   ) {
     this.tableForm = this.fb.group({
-      rows: this.fb.array([])
+      rows: this.fb.array([]) // Initialize a FormArray for rows
     });
 
     this.tableWithSimpleEdit = {
@@ -90,25 +149,28 @@ export class TemplateSettingsComponent {
         {
           name: 'description',
           title: 'Description',
-          truncate: false,
-          noOverflow: false,
+          truncate: true,
+          noOverflow: true,
           width: 12,
           widthUnit: 'rem'
         }
       ],
-      datasource: new MatTableDataSource([]),
-      noRecordsMessage: 'No records available'
+      datasource: new MatTableDataSource<BodEditableSampleTable>(),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
     };
   }
 
   ngOnInit(): void {
+    // Initialize form controls for existing rows
     this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
   }
 
+  // Getter for the rows FormArray
   get rows(): FormArray {
     return this.tableForm.get('rows') as FormArray;
   }
 
+  // Add a new row to the table and form
   public addTableData() {
     const newRow = {
       id: this.tableWithSimpleEdit.datasource.data.length + 1,
@@ -116,18 +178,21 @@ export class TemplateSettingsComponent {
       displayName: '',
       description: ''
     };
-
     this.tableWithSimpleEdit.datasource.data.push(newRow);
     this.addRow(newRow);
 
-    this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data];
+    // Update the table datasource
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      this.tableWithSimpleEdit.datasource.data;
 
+    // Set edit mode for the new row
     this.singleRowEdit = {
       modeOptions: { input: true, reset: false },
       index: this.tableWithSimpleEdit.datasource.data.length - 1
     };
   }
 
+  // Add a row to the FormArray
   addRow(row: any) {
     const rowGroup = this.fb.group({
       locale: [row.locale],
@@ -137,35 +202,69 @@ export class TemplateSettingsComponent {
     this.rows.push(rowGroup);
   }
 
+  // Get the FormGroup for a specific row
   getFormGroup(index: number): FormGroup {
     return this.rows.at(index) as FormGroup;
   }
 
+  // Update column data
   public updateColumnData(columnName: string, value: any, index: number) {
-    this.tableWithSimpleEdit.datasource.data[index][columnName] = value;
+    const updatedData = this.tableWithSimpleEdit.datasource.data;
+    updatedData[index][columnName] = value;
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodEditableSampleTable>).data =
+      updatedData;
     this.getFormGroup(index).get(columnName)?.setValue(value);
-    this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data];
   }
 
+  // Save table data
   public saveTableData() {
     console.log('Table data saved:', this.tableWithSimpleEdit.datasource.data);
   }
 
+  // Reset form data
   public reset() {
     this.tableForm.reset();
   }
 
+  // Handle row-level actions
   public handleRowLevelActions(action: string, index: number) {
     if (action === 'save') {
       console.log('Row saved:', this.tableWithSimpleEdit.datasource.data[index]);
     } else if (action === 'reset') {
-      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]);
+      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]); // Reset row data
     }
   }
 
-  public onTableAction(event) {
+  // Other methods
+  public onEditTableAction() {}
+  public checkStatus(status: boolean) {
+    this.formStatus = status;
+  }
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'mbpBod.demo.microsite.tableActions.labels.add',
+      mostCommon: false
+    }
+  ];
+
+  public onTableAction(event: BodTableAction) {
     if (event.id === 1) {
-      this.addTableData();
+      this.addTableData(); // Add a new row when the add action is clicked
+    }
+  }
+
+  public onPageAction(event: PageAction) {
+    if (event === PageAction.ADD) {
+      this.addTableData(); // Add a new row when the Add button is clicked
+    } else if (event === PageAction.EDIT) {
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+    } else {
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
     }
   }
 }
