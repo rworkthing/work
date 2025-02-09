@@ -441,12 +441,9 @@ export class TemplateSettingsComponent {
     }
   ];
 
-  public onPageAction(event) {
-    if (event === PageAction.EDIT) {
-      this.messages = [];
-      switch (this.selectedTabIndex) {
-        case 0: {
-          this.modeOptionsSimple = { input: true, reset: false };
+  public onTableAction(event: BodTableAction){
+    if(event.id === 1) {
+      this.modeOptionsSimple = { input: true, reset: false };
           this.pageModeSimple = PageMode.INPUT;
           this.rowLevelActionsForBasicEdit[0].disabled = true;
           this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(
@@ -454,6 +451,35 @@ export class TemplateSettingsComponent {
               ...obj
             })
           );
+    }
+  }
+
+  public onPageAction(event) {
+    if (event === PageAction.ADD) {  
+      this.messages = [];
+      switch (this.selectedTabIndex) {
+        case 0: {
+          this.addTableData();  // Call addTableData when Add button is clicked
+          this.modeOptionsSimple = { input: true, reset: false };
+          this.pageModeSimple = PageMode.INPUT;
+          this.rowLevelActionsForBasicEdit[0].disabled = true;
+          this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
+          break;
+        }
+        default:
+          break;
+      }
+      this.setSearchFieldsData(false);
+      this.setOverrideDefaultFieldsData(false);
+      this.setRequiredFieldsData(false);
+    } else if (event === PageAction.EDIT) {
+      this.messages = [];
+      switch (this.selectedTabIndex) {
+        case 0: {
+          this.modeOptionsSimple = { input: true, reset: false };
+          this.pageModeSimple = PageMode.INPUT;
+          this.rowLevelActionsForBasicEdit[0].disabled = true;
+          this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({ ...obj }));
           break;
         }
         default:
@@ -471,7 +497,6 @@ export class TemplateSettingsComponent {
           this.rowLevelActionsForBasicEdit[0].disabled = false;
           break;
         }
-
         default:
           break;
       }
@@ -513,7 +538,7 @@ export class TemplateSettingsComponent {
       id: 1,
       icon: 'trash',
       label: 'delete',
-      mostCommon: false
+      mostCommon: true
     }
   ];
 }
