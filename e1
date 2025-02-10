@@ -1,10 +1,1910 @@
-// Add this method to your component
-public addRow(row: any) {
-  const rowGroup = this.fb.group({
-    id: [row.id],
-    locale: [row.locale],
-    displayName: [row.displayName],
-    description: [row.description]
-  });
-  this.rows.push(rowGroup);
-}
+<demo-container
+  [code]="code"
+  [demo]="true"
+  [overviewShowAll]="false"
+  [showLessMore]="true"
+>
+  <section manipulator fullWidth>
+    <bod-input-layout [col]="2">
+      <bod-control-group
+        label="{{
+          'mbpBod.demo.microsite.table.enableRowRequired' | translate
+        }}"
+        [forTextOnly]="true"
+      >
+        <bod-auto-complete
+          #countryAutocomplete
+          name="autoCompleteFieldMultiSelect"
+          [data]="
+            selectedTabIndex === 0
+              ? inputForSimpleEdit
+              : selectedTabIndex === 1
+              ? inputForExpandEdit
+              : selectedTabIndex === 2
+              ? inputForSingleSelectEdit
+              : selectedTabIndex === 3
+              ? inputForMultiSelectEdit
+              : selectedTabIndex === 4
+              ? inputForExpandSingleSelectEdit
+              : selectedTabIndex === 5
+              ? inputForExpandMultiSelectEdit
+              : null
+          "
+          [(ngModel)]="autoCompleteFieldMultiSelect"
+          (onItemSelected)="enableRowRequired($event)"
+          [disable]="
+            selectedTabIndex === 0
+              ? modeOptionsSimple.input
+              : selectedTabIndex === 1
+              ? modeOptionsExpand.input
+              : selectedTabIndex === 2
+              ? modeOptionsSingle.input
+              : selectedTabIndex === 3
+              ? modeOptionsMulti.input
+              : selectedTabIndex === 4
+              ? modeOptionsExpandSingle.input
+              : selectedTabIndex === 5
+              ? modeOptionsExpandMulti.input
+              : ''
+          "
+        ></bod-auto-complete>
+      </bod-control-group>
+      <bod-control-group
+        label="{{
+          'mbpBod.demo.microsite.table.disableEditForInput' | translate
+        }}"
+        [forTextOnly]="true"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          [checked]="disableEditForInput"
+          (change)="toggleEditableInput($event)"
+          [disabled]="
+            selectedTabIndex === 0
+              ? pageModeSimple !== pageMode
+              : selectedTabIndex === 1
+              ? pageModeExpand !== pageMode
+              : selectedTabIndex === 2
+              ? pageModeSingle !== pageMode
+              : selectedTabIndex === 3
+              ? pageModeMulti !== pageMode
+              : selectedTabIndex === 4
+              ? pageModeExpandSingle !== pageMode
+              : selectedTabIndex === 5
+              ? pageModeExpandMulti !== pageMode
+              : false
+          "
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group
+        label="{{
+          'mbpBod.demo.microsite.table.existingDataNotEditable' | translate
+        }}"
+        [forTextOnly]="true"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          fisStyle
+          color="primary"
+          [checked]="existingDataNotEditable"
+          (change)="toggleDisabledInput($event)"
+          [disabled]="
+            disableEditForInput ||
+            (selectedTabIndex === 0
+              ? pageModeSimple !== pageMode
+              : selectedTabIndex === 1
+              ? pageModeExpand !== pageMode
+              : selectedTabIndex === 2
+              ? pageModeSingle !== pageMode
+              : selectedTabIndex === 3
+              ? pageModeMulti !== pageMode
+              : selectedTabIndex === 4
+              ? pageModeExpandSingle !== pageMode
+              : selectedTabIndex === 5
+              ? pageModeExpandMulti !== pageMode
+              : false)
+          "
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group
+        label=" {{
+          'mbpBod.demo.microsite.label.maxLengthStrategy' | translate
+        }}"
+        [forTextOnly]="false"
+        [required]="false"
+        *ngIf="showEdit"
+      >
+        <mat-form-field fisStyle appearance="outline">
+          <mat-select
+            panelClass="fis-style"
+            name="selectedStrategy"
+            [(ngModel)]="selectedStrategy"
+            (selectionChange)="updateMaxLengthStrategy()"
+          >
+            <mat-option *ngFor="let item of maxLengthStrategy" [value]="item">{{
+              item
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="truncate"
+        label="{{ 'mbpBod.demo.microsite.label.maxLength' | translate }}"
+        [forTextOnly]="false"
+        [required]="false"
+        *ngIf="showEdit"
+      >
+        <mat-form-field fisStyle appearance="outline">
+          <input
+            matInput
+            type="number"
+            [(ngModel)]="maxLength"
+            (change)="updateMaxLength()"
+          />
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+    <button
+      *ngIf="
+        selectedTabIndex === 0
+          ? modeOptionsSimple.input
+          : selectedTabIndex === 1
+          ? modeOptionsExpand.input
+          : selectedTabIndex === 2
+          ? modeOptionsSingle.input
+          : selectedTabIndex === 3
+          ? modeOptionsMulti.input
+          : selectedTabIndex === 4
+          ? modeOptionsExpandSingle.input
+          : selectedTabIndex === 5
+          ? modeOptionsExpandMulti.input
+          : ''
+      "
+      mat-raised-button
+      color="primary"
+      fisStyle
+      type="button"
+      (click)="markTouched()"
+    >
+      {{ 'mbpBod.demo.microsite.table.markAllFieldsAsTouched' | translate }}
+    </button>
+  </section>
+
+  <section demo fullWidth>
+    <mat-tab-group
+      fisStyle
+      mat-stretch-tabs="false"
+      tableDemoTabGroup
+      (selectedTabChange)="
+        this.selectedTabIndex = $event.index; updateTemplate($event.index)
+      "
+    >
+      <mat-tab label="{{ 'Simple Edit Table' | translate }}">
+        <!-- Template for bodTableWithEdit -->
+        <bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeSimple"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showEdit"
+        >
+          <bod-table
+            [data]="tableWithSimpleEdit"
+            [tableActions]="actionsForSimple"
+            [modeOptions]="modeOptionsSimple"
+            [singleRowEdit]="singleRowEdit"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate1 },
+              { columnName: 'actions', templateName: editActionsTemplate1 },
+              { columnName: 'groupId', templateName: groupIdTemplate1 },
+              { columnName: 'groupName', templateName: groupNameTemplate1 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate1
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate1
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate1
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            #simpleEditTableRef
+          >
+            <ng-template
+              #editActionsTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div
+                *ngIf="
+                  !this.singleRowEdit.modeOptions?.input ||
+                  (this.singleRowEdit?.modeOptions?.input &&
+                    this.singleRowEdit?.index !== index)
+                "
+              >
+                <bod-table-actions
+                  [actions]="rowLevelActionsForBasicEdit"
+                  (onActionClick)="handleRowLevelActions($event.icon, index)"
+                >
+                </bod-table-actions>
+              </div>
+              <div
+                *ngIf="
+                  this.singleRowEdit?.modeOptions?.input &&
+                  this.singleRowEdit?.index === index
+                "
+              >
+                <button
+                  matTooltip="{{
+                    'mbpBod.demo.microsite.buttons.save' | translate
+                  }}"
+                  [matTooltipPosition]="'below'"
+                  rufId
+                  mat-mini-fab
+                  color="primary"
+                  fisStyle
+                  (click)="handleRowLevelActions('save', index)"
+                >
+                  <mat-icon
+                    fisStyle
+                    rufIconStyle="sm"
+                    fisIcon="check"
+                  ></mat-icon>
+                </button>
+                <button
+                  rufId
+                  fisStyle
+                  mat-icon-button
+                  matTooltip="{{
+                    'mbpBod.demo.microsite.buttons.cancel' | translate
+                  }}"
+                  [matTooltipPosition]="'below'"
+                  class="ruf-ghost-button"
+                  (click)="handleRowLevelActions('reset', index)"
+                >
+                  <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+                </button>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[column.name + index]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData(
+                        'groupId',
+                        $event.groupId,
+                        index,
+                        null,
+                        'simpleEditTable'
+                      );
+                      updateColumnData(
+                        'groupName',
+                        $event.groupName,
+                        index,
+                        null,
+                        'simpleEditTable'
+                      )
+                    "
+                  >
+                    <button
+                      infoIcon
+                      mat-icon-button
+                      [rufTrigger]="dropdownPanel"
+                      #trigger="rufTrigger"
+                      fisStyle
+                      type="button"
+                    >
+                      <mat-icon fisIcon="information"> </mat-icon>
+                    </button>
+                  </bod-search-field>
+                </form>
+                <ruf-dropdown-panel
+                  [hasBackdrop]="false"
+                  #dropdownPanel
+                  [origin]="trigger"
+                  [type]="panel.type"
+                  xPosition="center"
+                  yPosition="bottom"
+                >
+                  <div popoverContent>
+                    {{
+                      'mbpBod.demo.microsite.searchField.messages.popoverMessage'
+                        | translate
+                    }}
+                  </div>
+                </ruf-dropdown-panel>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index,
+                          null,
+                          'simpleEditTable'
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[column.name + index]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{
+                    element[column.name] == true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(
+                        column.name,
+                        $event.checked,
+                        index,
+                        null,
+                        'simpleEditTable'
+                      )
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[column.name + index]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container
+                *ngIf="
+                  !modeOptionsSimple.input &&
+                  (!singleRowEdit?.modeOptions?.input ||
+                    (singleRowEdit?.modeOptions?.input &&
+                      singleRowEdit?.index !== index))
+                "
+              >
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container
+                *ngIf="
+                  modeOptionsSimple.input ||
+                  (singleRowEdit?.modeOptions?.input &&
+                    singleRowEdit?.index === index)
+                "
+              >
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef1
+                    [formControl]="
+                      requiredColumnForm.controls[column.name + index]
+                    "
+                    [checked]="element[column.name]"
+                    [value]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      !requiredColumnForm.controls[column.name + index]
+                        ?.disabled
+                        ? this.updateColumnData(
+                            column.name,
+                            requiredColumnForm.controls[
+                              requiredColFormCtrKeys[index]
+                            ]?.value,
+                            index,
+                            checkboxRef1,
+                            'simpleEditTable'
+                          )
+                        : null
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate1
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
+      </mat-tab>
+      <mat-tab label="{{ 'Expandable Edit Table' | translate }}">
+        <!-- Template for bodTableWithEdit -->
+        <bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeExpand"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showExpandEdit"
+        >
+          <bod-table
+            [data]="tableWithExpandEdit"
+            [tableActions]="actionsForExpand"
+            [modeOptions]="modeOptionsExpand"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate2 },
+              { columnName: 'actions', templateName: editActionsTemplate2 },
+
+              { columnName: 'groupName', templateName: groupNameTemplate2 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate2
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate2
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            [expandedRowTemplate]="expandedRowTemplate"
+            [allowExpandAll]="true"
+            [allowMultiRowExpand]="true"
+            #expandEditTableRef
+            (onRowExpand)="showMessage('expand', $event)"
+            (onRowCollapse)="showMessage('collapse', $event)"
+            (onRowExpandInInputMode)="showMessage('expandInput', $event)"
+            (onRowCollapseInInputMode)="showMessage('collapseInput', $event)"
+          >
+            <ng-template
+              #editActionsTemplate2
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div *ngIf="modeOptionsExpand.input">
+                <bod-table-actions
+                  [actions]="rowLevelEditActions"
+                  (onActionClick)="deleteTableData(index)"
+                >
+                </bod-table-actions>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpand.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpand.input">
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[
+                        searchFieldFormCtrlKeys[index]
+                      ]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData('groupId', $event.groupId, index);
+                      updateColumnData('groupName', $event.groupName, index)
+                    "
+                  >
+                  </bod-search-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate2
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpand.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpand.input">
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[
+                          useExistingFormCtrlKeys[index]
+                        ]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate2
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpand.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="modeOptionsExpand.input">
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(column.name, $event.checked, index)
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[
+                        overrideDefaultColFormCtrKeys[index]
+                      ]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate2
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpand.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpand.input">
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef2
+                    [formControl]="
+                      requiredColumnForm.controls[requiredColFormCtrKeys[index]]
+                    "
+                    [checked]="element[column.name]"
+                    [value]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      this.updateColumnData(
+                        column.name,
+                        requiredColumnForm.controls[
+                          requiredColFormCtrKeys[index]
+                        ].value,
+                        index,
+                        checkboxRef2,
+                        'expandEditTable'
+                      )
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate2
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #expandedRowTemplate
+              let-context="context"
+              let-element="element"
+              let-column="column"
+            >
+              <div fullwidth>
+                <bod-inquiry-layout
+                  [columns]="2"
+                  [groups]="commonDataService.getExpandedData(context.element)"
+                  [softSeparator]="false"
+                  [information]="[]"
+                  (linkClick)="commonDataService.inquiryLayoutClick($event)"
+                  [truncation]="{
+                    truncate: true,
+                    noOverflow: false,
+                    truncateAfterLine: 1
+                  }"
+                >
+                </bod-inquiry-layout>
+              </div>
+              <bod-section-container [expanded]="true" [softSeparator]="false">
+                <bod-inquiry-layout
+                  [columns]="2"
+                  [groups]="$groups.asObservable()"
+                  [softSeparator]="false"
+                  [information]="[]"
+                >
+                </bod-inquiry-layout>
+              </bod-section-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsExpand.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!expandEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
+      </mat-tab>
+      <mat-tab label="{{ 'Single Select Edit Table' | translate }}">
+        <!-- Template for bodTableWithEdit -->
+        <bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeSingle"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showSingleSelect"
+        >
+          <bod-table
+            [data]="tableWithSingleSelectEdit"
+            [tableActions]="actionsForSingle"
+            [modeOptions]="modeOptionsSingle"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate3 },
+              { columnName: 'actions', templateName: editActionsTemplate3 },
+              { columnName: 'groupId', templateName: groupIdTemplate3 },
+              { columnName: 'groupName', templateName: groupNameTemplate3 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate3
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate3
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate3
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            [allowSelectAll]="true"
+            #singleSelectEditTableRef
+            (onRowSelect)="showMessage('select', $event)"
+            (onRowSelectInInputMode)="showMessage('selectInput', $event)"
+          >
+            <ng-template
+              #editActionsTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div *ngIf="modeOptionsSingle.input">
+                <bod-table-actions
+                  [actions]="rowLevelEditActions"
+                  (onActionClick)="deleteTableData(index)"
+                >
+                </bod-table-actions>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsSingle.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsSingle.input">
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[
+                        searchFieldFormCtrlKeys[index]
+                      ]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData('groupId', $event.groupId, index);
+                      updateColumnData('groupName', $event.groupName, index)
+                    "
+                  >
+                  </bod-search-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsSingle.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsSingle.input">
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[
+                          useExistingFormCtrlKeys[index]
+                        ]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsSingle.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="modeOptionsSingle.input">
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(column.name, $event.checked, index)
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[
+                        overrideDefaultColFormCtrKeys[index]
+                      ]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsSingle.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsSingle.input">
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef3
+                    [formControl]="
+                      requiredColumnForm.controls[requiredColFormCtrKeys[index]]
+                    "
+                    [checked]="element[column.name]"
+                    [ngModel]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      this.updateColumnData(
+                        column.name,
+                        requiredColumnForm.controls[
+                          requiredColFormCtrKeys[index]
+                        ].value,
+                        index,
+                        checkboxRef3,
+                        'singleSelectEditTable'
+                      )
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate3
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsSingle.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!singleSelectEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
+      </mat-tab>
+      <mat-tab label="{{ 'Multi Select Edit Table' | translate }}">
+        <!-- Template for bodTableWithEdit -->
+        <bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeMulti"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showMultiSelect"
+        >
+          <bod-table
+            [data]="tableWithMultiSelectEdit"
+            [tableActions]="actionsForMulti"
+            [modeOptions]="modeOptionsMulti"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate4 },
+              { columnName: 'actions', templateName: editActionsTemplate4 },
+              { columnName: 'groupId', templateName: groupIdTemplate4 },
+              { columnName: 'groupName', templateName: groupNameTemplate4 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate4
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate4
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate4
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            [allowSelectAll]="true"
+            #multiSelectEditTableRef
+            (onRowSelect)="showMessage('select', $event)"
+            (onRowSelectInInputMode)="showMessage('selectInput', $event)"
+          >
+            <ng-template
+              #editActionsTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div *ngIf="modeOptionsMulti.input">
+                <bod-table-actions
+                  [actions]="rowLevelEditActions"
+                  (onActionClick)="deleteTableData(index)"
+                >
+                </bod-table-actions>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsMulti.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsMulti.input">
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[
+                        searchFieldFormCtrlKeys[index]
+                      ]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData('groupId', $event.groupId, index);
+                      updateColumnData('groupName', $event.groupName, index)
+                    "
+                  >
+                  </bod-search-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsMulti.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsMulti.input">
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[
+                          useExistingFormCtrlKeys[index]
+                        ]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsMulti.input">
+                <div>
+                  {{
+                    element[column.name] == true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="modeOptionsMulti.input">
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(column.name, $event.checked, index)
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[
+                        overrideDefaultColFormCtrKeys[index]
+                      ]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsMulti.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsMulti.input">
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef4
+                    [formControl]="
+                      requiredColumnForm.controls[requiredColFormCtrKeys[index]]
+                    "
+                    [checked]="element[column.name]"
+                    [value]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      this.updateColumnData(
+                        column.name,
+                        requiredColumnForm.controls[
+                          requiredColFormCtrKeys[index]
+                        ].value,
+                        index,
+                        checkboxRef4,
+                        'multiSelectEditTable'
+                      )
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate4
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsMulti.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!multiSelectEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
+      </mat-tab>
+      <mat-tab label="{{ 'Expandable Single Select Edit Table' | translate }}">
+        <!-- Template for bodTableWithEdit -->
+        <bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeExpandSingle"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showExpandSingleSelect"
+        >
+          <bod-table
+            [data]="tableWithExpandSingleSelectEdit"
+            [tableActions]="actionsForExpandSingle"
+            [modeOptions]="modeOptionsExpandSingle"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate5 },
+              { columnName: 'actions', templateName: editActionsTemplate5 },
+              { columnName: 'groupId', templateName: groupIdTemplate5 },
+              { columnName: 'groupName', templateName: groupNameTemplate5 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate5
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate5
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate5
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            [expandedRowTemplate]="expandedRowTemplate"
+            [allowMultiRowExpand]="true"
+            [allowExpandAll]="true"
+            #expandSingleSelectEditTableRef
+            (onRowExpand)="showMessage('expand', $event)"
+            (onRowCollapse)="showMessage('collapse', $event)"
+            (onRowExpandInInputMode)="showMessage('expandInput', $event)"
+            (onRowCollapseInInputMode)="showMessage('collapseInput', $event)"
+            (onRowSelect)="showMessage('select', $event)"
+            (onRowSelectInInputMode)="showMessage('selectInput', $event)"
+          >
+            <ng-template
+              #editActionsTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div *ngIf="modeOptionsExpandSingle.input">
+                <bod-table-actions
+                  [actions]="rowLevelEditActions"
+                  (onActionClick)="deleteTableData(index)"
+                >
+                </bod-table-actions>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandSingle.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpandSingle.input">
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[
+                        searchFieldFormCtrlKeys[index]
+                      ]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData('groupId', $event.groupId, index);
+                      updateColumnData('groupName', $event.groupName, index)
+                    "
+                  >
+                  </bod-search-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandSingle.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpandSingle.input">
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[
+                          useExistingFormCtrlKeys[index]
+                        ]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandSingle.input">
+                <div>
+                  {{
+                    element[column.name] == true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="modeOptionsExpandSingle.input">
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(column.name, $event.checked, index)
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[
+                        overrideDefaultColFormCtrKeys[index]
+                      ]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandSingle.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpandSingle.input">
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef5
+                    [formControl]="
+                      requiredColumnForm.controls[requiredColFormCtrKeys[index]]
+                    "
+                    [checked]="element[column.name]"
+                    [value]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      this.updateColumnData(
+                        column.name,
+                        requiredColumnForm.controls[
+                          requiredColFormCtrKeys[index]
+                        ].value,
+                        index,
+                        checkboxRef5,
+                        'expandableSingleSelectEditTable'
+                      )
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate5
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #expandedRowTemplate
+              let-context="context"
+              let-element="element"
+              let-column="column"
+            >
+              <div fullwidth>
+                <bod-inquiry-layout
+                  [columns]="2"
+                  [groups]="commonDataService.getExpandedData(context.element)"
+                  [softSeparator]="false"
+                  [information]="[]"
+                  (linkClick)="commonDataService.inquiryLayoutClick($event)"
+                  [truncation]="{
+                    truncate: true,
+                    noOverflow: true,
+                    truncateAfterLine: 1
+                  }"
+                >
+                </bod-inquiry-layout>
+              </div>
+              <bod-section-container [expanded]="true" [softSeparator]="false">
+                <bod-inquiry-layout
+                  [columns]="2"
+                  [groups]="$groups.asObservable()"
+                  [softSeparator]="false"
+                  [information]="[]"
+                >
+                </bod-inquiry-layout>
+              </bod-section-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsExpandSingle.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!expandSingleSelectEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
+      </mat-tab>
+      <mat-tab label="{{ 'Expandable Multi Select Edit Table' | translate }}">
+        <!-- Template for bodTableWithEdit -->
+        <bod-page-container
+          [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
+          [pageMode]="pageModeExpandMulti"
+          (pageAction)="onPageAction($event)"
+          [messages]="messages"
+          *ngIf="showExpandMultiSelect"
+        >
+          <bod-table
+            [data]="tableWithExpandMultiSelectEdit"
+            [tableActions]="actionsForExpandMulti"
+            [modeOptions]="modeOptionsExpandMulti"
+            [customColumnTemplates]="[
+              { columnName: 'id', templateName: idTemplate6 },
+              { columnName: 'actions', templateName: editActionsTemplate6 },
+              { columnName: 'groupId', templateName: groupIdTemplate6 },
+              { columnName: 'groupName', templateName: groupNameTemplate6 },
+              {
+                columnName: 'useExistingGroupId',
+                templateName: useExistingGroupIdTemplate6
+              },
+              {
+                columnName: 'overrideDefault',
+                templateName: overrideDefaultTemplate6
+              },
+              {
+                columnName: 'required',
+                templateName: requiredTemplate6
+              }
+            ]"
+            (inputValidationStatus)="checkStatus($event)"
+            (editTableEvent)="onEditTableAction($event)"
+            (onTableActionClick)="addTableData()"
+            [primaryColumnName]="'id'"
+            [expandedRowTemplate]="expandedRowTemplate"
+            [allowExpandAll]="true"
+            [allowMultiRowExpand]="true"
+            [allowSelectAll]="true"
+            #expandMultiSelectEditTableRef
+            (onRowExpand)="showMessage('expand', $event)"
+            (onRowCollapse)="showMessage('collapse', $event)"
+            (onRowExpandInInputMode)="showMessage('expandInput', $event)"
+            (onRowCollapseInInputMode)="showMessage('collapseInput', $event)"
+            (onRowSelect)="showMessage('select', $event)"
+            (onRowSelectInInputMode)="showMessage('selectInput', $event)"
+          >
+            <ng-template
+              #editActionsTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+            >
+              <div *ngIf="modeOptionsExpandMulti.input">
+                <bod-table-actions
+                  [actions]="rowLevelEditActions"
+                  (onActionClick)="deleteTableData(index)"
+                >
+                </bod-table-actions>
+              </div>
+            </ng-template>
+            <ng-template
+              #groupIdTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandMulti.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpandMulti.input">
+                <form [formGroup]="searchFieldColumnForm">
+                  <bod-search-field
+                    [formControl]="
+                      searchFieldColumnForm.controls[
+                        searchFieldFormCtrlKeys[index]
+                      ]
+                    "
+                    [searchFieldData]="searchFieldObjArr[index].searchFieldData"
+                    [searchTableData]="searchFieldObjArr[index].searchTableData"
+                    (selected)="
+                      updateColumnData('groupId', $event.groupId, index);
+                      updateColumnData('groupName', $event.groupName, index)
+                    "
+                  >
+                  </bod-search-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #groupNameTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #useExistingGroupIdTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandMulti.input">
+                <div>
+                  {{ element[column.name] }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpandMulti.input">
+                <form [formGroup]="useExistingColForm">
+                  <mat-form-field class="editDiv" appearance="outline" fisStyle>
+                    <mat-select
+                      panelClass="fis-style"
+                      (selectionChange)="
+                        this.updateColumnData(
+                          'useExisting',
+                          $event.value,
+                          index
+                        );
+                        this.searchFieldObjArr[
+                          index
+                        ].searchFieldData.disableSearch =
+                          $event.value === 'Yes' ? true : false
+                      "
+                      [formControl]="
+                        useExistingColForm.controls[
+                          useExistingFormCtrlKeys[index]
+                        ]
+                      "
+                      [(value)]="element[column.name]"
+                    >
+                      <mat-option
+                        *ngFor="let val of useExistingArr"
+                        value="{{ val }}"
+                      >
+                        {{ val }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #overrideDefaultTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandMulti.input">
+                <div>
+                  {{
+                    element[column.name] == true
+                      ? inputForSlideToggleValue.options[0].label
+                      : inputForSlideToggleValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="modeOptionsExpandMulti.input">
+                <form [formGroup]="overrideDefaultColumnForm">
+                  <mat-slide-toggle
+                    fisStyle
+                    color="primary"
+                    [checked]="element[column.name]"
+                    (change)="
+                      this.dependentColChange($event, index);
+                      this.updateColumnData(column.name, $event.checked, index)
+                    "
+                    [formControl]="
+                      overrideDefaultColumnForm.controls[
+                        overrideDefaultColFormCtrKeys[index]
+                      ]
+                    "
+                  ></mat-slide-toggle>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #requiredTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container *ngIf="!modeOptionsExpandMulti.input">
+                <div>
+                  {{
+                    element[column.name] === true
+                      ? inputForAuthorizeCheckboxValue.options[0].label
+                      : inputForAuthorizeCheckboxValue.options[1].label
+                  }}
+                </div>
+              </ng-container>
+              <ng-container *ngIf="modeOptionsExpandMulti.input">
+                <form [formGroup]="requiredColumnForm">
+                  <mat-checkbox
+                    fisStyle
+                    color="primary"
+                    #checkboxRef6
+                    [formControl]="
+                      requiredColumnForm.controls[requiredColFormCtrKeys[index]]
+                    "
+                    [checked]="element[column.name]"
+                    [value]="
+                      element[column.name] === true
+                        ? inputForAuthorizeCheckboxValue.options[0].value
+                        : inputForAuthorizeCheckboxValue.options[1].value
+                    "
+                    (click)="
+                      this.updateColumnData(
+                        column.name,
+                        requiredColumnForm.controls[
+                          requiredColFormCtrKeys[index]
+                        ].value,
+                        index,
+                        checkboxRef6,
+                        'expandableMultiSelectEditTable'
+                      )
+                    "
+                  ></mat-checkbox>
+                </form>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #idTemplate6
+              let-element="element"
+              let-column="column"
+              let-index="index"
+              ><ng-container>
+                <div>
+                  {{ element[column.name] }}
+                  <span *ngIf="element.required">*</span>
+                </div>
+              </ng-container>
+            </ng-template>
+            <ng-template
+              #expandedRowTemplate
+              let-context="context"
+              let-element="element"
+              let-column="column"
+            >
+              <div fullwidth>
+                <bod-inquiry-layout
+                  [columns]="2"
+                  [groups]="commonDataService.getExpandedData(context.element)"
+                  [softSeparator]="false"
+                  [information]="[]"
+                  (linkClick)="commonDataService.inquiryLayoutClick($event)"
+                  [truncation]="{
+                    truncate: true,
+                    noOverflow: false,
+                    truncateAfterLine: 1
+                  }"
+                >
+                </bod-inquiry-layout>
+              </div>
+              <bod-section-container [expanded]="true" [softSeparator]="false">
+                <bod-inquiry-layout
+                  [columns]="2"
+                  [groups]="$groups.asObservable()"
+                  [softSeparator]="false"
+                  [information]="[]"
+                >
+                </bod-inquiry-layout>
+              </bod-section-container>
+            </ng-template>
+          </bod-table>
+          <div *ngIf="modeOptionsExpandMulti.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!expandMultiSelectEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div>
+        </bod-page-container>
+      </mat-tab>
+    </mat-tab-group>
+  </section>
+</demo-container>
