@@ -1,76 +1,112 @@
 import { CommonModule } from '@angular/common';
-import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  Inject,
+  NO_ERRORS_SCHEMA,
+  OnInit,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+
 import {
   Amount,
-  BodAutoCompleteMetadata,
   BodFormModule,
-  BodKeyValuePairMetadata,
   BodPageContainerModule,
+  BodPipeName,
   BodTableAction,
-  BodTableActionType,
   BodTableActionsModule,
   BodTableComponent,
   BodTableDataSource,
   BodTableFilterCriteria,
+  BodTableFilterUpdateButton,
   BodTableMetadata,
   BodTableModule,
   Column,
   ControlGroupModule,
+  BodCommonDialogModel,
   Currency,
   EditTableAction,
   InlineEditOutput,
   InputLayoutModule,
-  ListType,
   MessageContainerModule,
-  ModeOptions,
   NotificationMessage,
-  NotificationMessageType,
-  PageAction,
-  PageMode,
   SearchFieldModule,
-  SingleRowEdit
+  DirectivesModule,
+  BodDynamicFormModule,
+  SectionContainerModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BOD_DATE_RANGE,
+  BodCommonModule,
+  BodFormTypes,
+  BodTableActionType,
+  BodTableFilterType,
+  CommonDialogComponent,
+  BodCommonDialogService
 } from '@bod/common';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import {
+  FormBuilder,
+  FormControl,
   FormsModule,
   ReactiveFormsModule,
+  UntypedFormControl,
   UntypedFormGroup,
-  FormBuilder,
-  FormArray,
-  FormControl,
-  FormGroup
+  Validators
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import {
-  BodEditableSampleTable,
-  BodLocaleTable,
-  SearchFieldInputData
-} from '../bod-table-demo.model';
-import { take } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
-import moment from 'moment';
+  metadataconfig,
+  TableLevelActions,
+  TranslationKey
+} from './codegen-config.constant';
+import { BodInlineSampleTable, BodLocaleTable, BodSampleTable, BodSampleTable1 } from '../bod-table-demo.model';
+import { MatTabsModule } from '@angular/material/tabs';
+import {
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MetadataService } from './metada-config.service';
+import { template as dialogFilterTemplate } from './dialog-filter-template';
+import {
+  TableLevelActions1,
+  TableLevelActions2
+} from '../codegen-config/codegen-config.constant';
 import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { HttpClient } from '@angular/common/http';
-import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
-
+import { MatDialogRef } from '@angular/material/dialog';
+import { getFormValidationErrors } from './inline-modal-validators';
+interface TableProps {
+  formGroup: UntypedFormGroup;
+  data: BodTableMetadata;
+  ref: BodTableComponent;
+  input: any;
+}
+interface TabIndexTableMap {
+  [k: number]: TableProps;
+}
 @Component({
-  selector: 'bod-template-settings',
+  selector: 'bod-metadata-config',
   standalone: true,
   imports: [
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
     CommonModule,
     TranslateModule,
     BodPageContainerModule,
     BodTableModule,
-    BodTableModule,
-    BodPageContainerModule,
     TranslateModule,
-    BodFormModule,
     BodTableActionsModule,
+    FormsModule,
     InputLayoutModule,
     BodFormModule,
     ControlGroupModule,
@@ -78,54 +114,227 @@ import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
     MatSelectModule,
     MatDatepickerModule,
     ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
     MatInputModule,
     TranslateModule,
-    FormsModule,
     SearchFieldModule,
-    MessageContainerModule
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
   ],
-  templateUrl: './template-settings.component.html',
-  styleUrl: './template-settings.component.scss',
+  templateUrl: './metadata-config.component.html',
+  styleUrl: './metadata-config.component.scss',
+
   schemas: [NO_ERRORS_SCHEMA]
 })
-export class TemplateSettingsComponent {
-  private dataForReset: BodLocaleTable[] = [];
-  public messages: NotificationMessage[] = [];
-  @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef: BodTableComponent;
-  public tableWithSimpleEdit: BodTableMetadata;
-  public requiredColumnForm: UntypedFormGroup | undefined;
-  public searchFieldObjArr: SearchFieldInputData[] = [];
-  public pageMode = PageMode.INQUIRY;
-  public pageModeSimple = this.pageMode;
-  public lastModifiedIndex: number;
-  public requiredColFormCtrKeys: string[] = [];
-  public searchFieldFormCtrlKeys: string[] = [];
-  selectedTabIndex = 0;
-  showEdit = true;
-  public formStatus = false;
-  private subscriptions: Subscription = new Subscription();
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
+export class MetadataConfigComponent implements OnInit {
+  public addEditFormGroup: UntypedFormGroup | undefined;
+  public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
+  public balanceHoldsTableActions1: BodTableAction[] = TableLevelActions1;
+  public rowLevelActionsForBasicEdit: BodTableAction[] = TableLevelActions2;
+  
+  @ViewChild('addEditBalanceHoldTemplate')
+  public addAttributeTemp: TemplateRef<any>;
+  @ViewChild('addExistingAttributeTemplate')
+  public addExistingAttributeTemp: TemplateRef<any>;
+  @ViewChild('addLocaleTemplate')
+  public addLocaleTemp: TemplateRef<any>;
+  
+  public tableActions: BodTableAction[] = [];
+  input = {
+    id: '',
+    name: '',
+    productLine: '',
+    owner: '',
+    relationship: '',
+    lastDebit: 0,
+    start: new Date(new Date())
   };
-  public modeOptionsSimple = this.modeOptions;
-  // Form Array to manage dynamic rows
-  public tableForm: UntypedFormGroup;
+  inputLayoutForm: UntypedFormGroup;
+
+  formType: BodFormTypes = BodFormTypes.ADD;
+  public inputBasic = this.input;
+
+  public translationKey = TranslationKey;
+  bookingDate = '';
+  amountIsRequired = true;
+  isRequired = true;
+  public defaultCurrency: Currency;
+  selectedHoldId: string;
+  effectiveDate: string;
+  holdAllValue: boolean;
+  isExpireValue: boolean;
+
+  referenceType: string;
+
+  amountFieldValue: string | undefined;
+  actionModes = EditTableAction;
+  currentMode: EditTableAction = EditTableAction.ADD;
+  public disableAmount = false;
+  public isHoldExpirationDateTime = false;
+
+  public timeControl: UntypedFormControl;
+  public addEditBalanceHoldFormGroup: UntypedFormGroup;
+  public addExistingAttributeFormGroup: UntypedFormGroup;
+
+  public messages: NotificationMessage[] = [];
+  isRelateToProductTemplate = false;
+  isValidValueTypes = false;
+  private addExistingAttribute() {
+    // this.editAttribute = null;
+     let dialogModel: BodCommonDialogModel = {
+       formTemplate: this.addExistingAttributeTemp,
+       title: 'Attribute'
+     };
+     this.openDialog(dialogModel);
+   }
+  private addNewAttribute() {
+   // this.editAttribute = null;
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addAttributeTemp,
+      title: 'Add Attribute'
+    };
+    this.openDialog(dialogModel);
+  }
+  private addLocale() {
+    // this.editAttribute = null;
+     let dialogModel: BodCommonDialogModel = {
+       formTemplate: this.addLocaleTemp,
+       title: 'Add Locale'
+     };
+     this.openDialog(dialogModel);
+   }
+
+  
+  // onTableActionClicked(event: BodTableAction) {
+  //   this._notify.setMessages([]);
+  //   if (event.id === BodTableActionType.ADD) {
+  //     this.addNewAttribute();
+  //   }
+  //   if (event.id === BodTableActionType.FILTER) {
+  //     this.openFilterDialog();
+  //   }
+  // }
+  onToggleChange(event: MatSlideToggleChange) {
+    this.isRelateToProductTemplate = event.checked;
+  }
+  onValidValueTypesChange(event: MatSlideToggleChange) {
+    this.isValidValueTypes = event.checked;
+  }
+  
+  public handleTableWithViewsEvent(
+    event,
+    systemMessageKey,
+    loggerMessage,
+    tabName = null
+  ) {
+    this.commonDataService.updateMessage(
+      systemMessageKey,
+      tabName
+        ? ': ' + tabName + ': ' + JSON.stringify(event)
+        : JSON.stringify(event)
+    );
+   // this.bodLoggerService.info(loggerMessage, event);
+  }
+  // public inlineAddRowActionClick() {}
+  additionalValidValues: any[] = [];
+  public selectedFilters: BodTableFilterCriteria[] = [];
+  public onTableActionClicked(event: BodTableAction) {
+   if (event.id === BodTableActionType.NEWATTRIBUTE) {
+      this.addNewAttribute();
+    }
+    else if (event.id === 13) {
+      this.addExistingAttribute();
+    }
+  }
+  public onLocaleTableActionClicked(event: BodTableAction) {
+    this.addLocale();
+   }
+
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
+  // public inlineEditRowActionClick(_event: InlineEditOutput) {}
+  public balanceHoldsTableMetaData: BodTableMetadata;
+  public ValidvalueArray: BodTableMetadata;
+  public tableWithSimpleEdit: BodTableMetadata;
+
+  public template: TemplateRef<any>;
+  public formData: BodCommonDialogModel = {
+    title: 'mbpBod.demo.microsite.table.filterTableWithDialogFilter',
+    formTemplate: undefined
+  };
+  public dialogOutput$: MatDialogRef<CommonDialogComponent, any>;
+  public tabIndexTableMap: TabIndexTableMap = {};
+  public editRowElement: any;
+
+  // public types = [
+  //   { label: 'Arrangement', value: 'arrangement' },
+  //   { label: 'Charge Custom Parameter', value: 'ChargeCustomParameter' }
+  // ];
+  // public classificationtypes = [
+  //   { label: 'System Defined', value: 'SystemDefined' },
+  //   { label: 'User Defined', value: 'UserDefined' }
+  // ];
+  public types: any[] = [];
+  public classificationtypes: any[] = [];
+  public datatype: any[] = [];
+  public validvaluestypes: any[] = [];
 
   constructor(
-    private translate: TranslateService,
+    private bodCommonDialogService: BodCommonDialogService,
     public commonDataService: BodTableDemoCommonDataService,
-    private http: HttpClient,
     private fb: FormBuilder,
-    
+    private changeDetectorRef: ChangeDetectorRef,
+    private metadataService: MetadataService,
+    @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
   ) {
-    this.tableForm = this.fb.group({
-      rows: this.fb.array([]) // Initialize a FormArray for rows
-    });
-    
-
+    this.ValidvalueArray = {
+      // title: 'Name and Description (Locales)',
+      columns: [
+        {
+          name: 'additionaldatavalue',
+          title: 'Value',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'defaultindicator',
+          title: ' Default Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'primaryindicator',
+          title: 'Primary Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'overrideindicator',
+          title: 'Override Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'actions',
+          title: ' ',
+          hasAction: true
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable1>(
+        this.dataWithValidvalues
+      )
+    };
     this.tableWithSimpleEdit = {
       columns: [
         {
@@ -156,174 +365,455 @@ export class TemplateSettingsComponent {
       datasource: new MatTableDataSource<BodLocaleTable>(),
       noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
     };
+
+    this.balanceHoldsTableMetaData = {
+      title: 'Attribute Details',
+      columns: [
+        {
+          name: 'attCode',
+          title: 'Attributes',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable>()
+    };
+    this.balanceHoldsTableMetaData.datasource.data = metadataconfig;
+    console.log(this.balanceHoldsTableMetaData);
   }
 
-  ngOnInit(): void {
-    // Initialize form controls for existing rows
-    this.tableWithSimpleEdit.datasource.data.forEach((row) => this.addRow(row));
-  }
-
-  // Getter for the rows FormArray
-  get rows(): FormArray {
-    return this.tableForm.get('rows') as FormArray;
-  }
-
-  // Add a new row to the FormArray
-  public addRow(row: any) {
-    const rowGroup = this.fb.group({
-      id: [row?.id || ''],
-      locale: [row?.locale || ''],
-      displayName: [row?.displayName || ''],
-      description: [row?.description || []]
+  ngOnInit() {
+    this.inputLayoutForm = this.fb.group({
+      additionaldatavalue: ['', Validators.required],
+      percentagevalue: [''],
+      sequencenumber: [''],
+      defaultindicator: [false],
+      primaryindicator: [false],
+      overrideindicator: [false],
+      
     });
-  
-    this.rows.push(rowGroup);
-  }
+    // this.fetchIdentifier();
+    this.tableActions = [...this.metadataService.tableActions];
+    this.loadDropdownData();
+    this.initForm();
+    this.addEditBalanceHoldFormGroup
+      .get('classificationtype')
+      ?.valueChanges.subscribe(value => {
+        this.updateRelateToProductTypeValidator(value);
+      });
 
-  // Add a new row to the table and form
-  public addTableData() {
-    const newRow: BodLocaleTable = {
-      locale: '',
-      displayName: '',
-      description: ''
-    };
-  
-    // Clone existing data and add new row
-    const updatedData = [...this.tableWithSimpleEdit.datasource.data, newRow];
-  
-    // Update the table data source
-    this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
-  
-    // Add new row to the form
-    this.addRow(newRow);
-  
-    // Enable edit mode
-    this.modeOptionsSimple = { input: true, reset: false };
-    this.pageModeSimple = PageMode.INPUT;
-  
-    // Set edit mode for the new row
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: updatedData.length - 1
-    };
-  }
-
-  // Get the FormGroup for a specific row
-  getFormGroup(index: number): FormGroup {
-    return this.rows.at(index) as FormGroup;
-  }
-
-  // Update column data
-  public updateColumnData(columnName: string, value: any, index: number) {
-    const updatedData = this.tableWithSimpleEdit.datasource.data;
-    updatedData[index][columnName] = value;
-
-    // Update the MatTableDataSource to reflect the changes
-    (this.tableWithSimpleEdit.datasource as MatTableDataSource<BodLocaleTable>).data =
-      [...updatedData]; // Reassign to trigger change detection
-
-    // Update the corresponding form control
-    this.getFormGroup(index).get(columnName)?.setValue(value);
-
-    // Mark the form as dirty
-    this.getFormGroup(index).markAsDirty();
-  }
-
-  // Save table data
-  public saveTableData() {
-    // Map form values to the table data
-    const updatedData = this.rows.controls.map((control, index) => ({
-      id: control.get('id')?.value,
-      locale: control.get('locale')?.value,
-      displayName: control.get('displayName')?.value,
-      description: control.get('description')?.value || []
-    }));
-  
-    // Reassign MatTableDataSource (important for Angular change detection)
-    this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
-  
-    // Log saved data
-    console.log('Table data saved:', updatedData);
-  
-    // Mark the form as pristine after saving
-    this.rows.controls.forEach((control) => control.markAsPristine());
-  
-    // Exit edit mode
-    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-  }
-  
-
-  public isFormDirty(): boolean {
-    return this.rows.controls.some((control) => control.dirty);
-  }
-
-  // Reset form data
-  public reset() {
-    this.tableForm.reset();
-  }
-
-  // Handle row-level actions
-  public handleRowLevelActions(action: string, index: number) {
-    if (action === 'save') {
-      // Get the form group for the current row
-      const rowFormGroup = this.getFormGroup(index);
-
-      // Check if the form is valid before saving
-      if (rowFormGroup.valid) {
-        // Save the row data
-        const rowData = this.tableWithSimpleEdit.datasource.data[index];
-        console.log('Row saved:', rowData);
-
-        // Exit edit mode for this row
-        this.singleRowEdit = {
-          modeOptions: { input: false, reset: false },
-          index: -1
-        };
-      } else {
-        console.error('Form is invalid. Please fill all required fields.');
+    this.metadataService.getDataTypes().subscribe(
+      (data: any[]) => {
+        this.datatype = data.map(item => ({
+          label: item.identifier,
+          value: item.code
+        }));
+      },
+      error => {
+        console.error('Error fetching data types', error);
       }
-    } else if (action === 'reset') {
-      // Reset the form for the current row
-      this.getFormGroup(index).reset(this.tableWithSimpleEdit.datasource.data[index]);
-
-      // Exit edit mode for this row
-      this.singleRowEdit = {
-        modeOptions: { input: false, reset: false },
-        index: -1
-      };
-    }
+    );
+  }
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+  private openDialog(dialogModel: any) {
+    this.dialogRef$ = this.bodCommonDialogService.commonDialog(dialogModel);
   }
 
-  // Other methods
-  public onEditTableAction() {}
-  public checkStatus(status: boolean) {
-    this.formStatus = status;
-  }
+  public dataWithValidvalues: BodSampleTable1[] = [];
 
-  public actionsForSimple: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'add',
-      label: 'mbpBod.demo.microsite.tableActions.labels.add',
-      mostCommon: false
+  // fetchIdentifier() {
+  //   this.metadataService.getIdentifier().subscribe(
+  //     identifier => {
+  //       this.addEditBalanceHoldFormGroup.patchValue({ identifier });
+  //     },
+  //     error => {
+  //       console.error('Error fetching identifier:', error);
+  //     }
+  //   );
+  // }
+
+
+  public dialogFilterDataSource = new MatTableDataSource<BodInlineSampleTable>([
+    ...this.commonDataService.inlineModalData
+  ]);
+  public bodTableDataWithFormFilter: BodTableMetadata = {
+    title: 'mbpBod.demo.microsite.table.tableWithDialogFilter',
+    columns: [...this.commonDataService.inlineModalColumns],
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 8,
+      pageSizeOptions: [4, 8],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: this.dialogFilterDataSource,
+    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg',
+    filterOptions: {
+      filterType: BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
     }
-  ];
+  };
 
-  public onTableAction(event: BodTableAction) {
-    if (event.id === 1) {
-      this.addTableData(); // Add a new row when the add action is clicked
-    }
+  /**
+   * Method to open dialog with filter inputs
+   */
+  public OpenCommonDialog(formTemplate: TemplateRef<any>) {
+    this.formData.formTemplate = formTemplate;
+    this.dialogOutput$ = this.bodCommonDialogService.commonDialog(
+      this.formData
+    );
   }
+  /**
+   * Method to handle table actions event for dialog filter tab
+   */
+public onTableActionsWithFilterClicked(
+  event: BodTableAction,
+  formTemplate: TemplateRef<any>
+) {
+  this.template = formTemplate;
+  if (
+    event.id === BodTableActionType.FILTER &&
+    this.bodTableDataWithFormFilter.filterOptions.filterType ===
+      BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
+  ) {
+    this.OpenCommonDialog(formTemplate);
+  } else {
+    this.commonDataService.tableLevelEventObject(event);
+  }
+}
+getTableFormGroup(index: number): UntypedFormGroup {
+  return this.tabIndexTableMap[index].formGroup;
+}
+getTableRef(index: number): BodTableComponent {
+  return this.tabIndexTableMap[index].ref;
+}
+displayInlineFormErrorMessage(index) {
+  const errors = getFormValidationErrors(
+    this.getTableFormGroup(index).controls
+  ).shift();
+  this.commonDataService.updateMessage(
+    'mbpBod.demo.microsite.table.inlineFormError',
+    JSON.stringify(errors)
+  );
+}
+inlineFormEditSubmit(formGroupValid: boolean, index) {
+  if (formGroupValid) {
+    const editedData: BodInlineSampleTable[] = [];
+    const formGroup = this.getTableFormGroup(index);
+    this.getTableRef(index).data.datasource.data.forEach(d => {
+      if (d.index === this.editRowElement.index) {
+        const editedRow: BodInlineSampleTable = {
+          index: d.index,
+          id: d.id,
+          name: d.name,
+          productLine: formGroup.value.productLine,
+          aware: formGroup.value.owner,
+          relationship: formGroup.value.relationship,
+          lastDebit:
+            formGroup.value.lastDebit === null
+              ? 0
+              : formGroup.value.lastDebit,
+          start: formGroup.controls['start'].value
+        };
+        if (index === 1 || index === 2) {
+          editedRow.description = [
+            {
+              id: d.description[0].id,
+              label: d.description[0].label,
+              value: formGroup.value.title
+            },
+            {
+              id: d.description[1].id,
+              label: d.description[1].label,
+              value: formGroup.value.firstName
+            },
+            {
+              id: d.description[2].id,
+              label: d.description[2].label,
+              value: formGroup.value.lastName
+            }
+          ];
+        }
+        editedData.push(editedRow);
+      } else {
+        editedData.push(d);
+      }
+    });
+    this.getTableRef(index).updateDatasource(
+      new MatTableDataSource<BodInlineSampleTable>([...editedData])
+    );
+  } else {
+    this.displayInlineFormErrorMessage(index);
+  }
+}
+getTableData(index: number): BodTableMetadata {
+  return this.tabIndexTableMap[index].data;
+}
+getTableInput(index: number): any {
+  return this.tabIndexTableMap[index].input;
+}
+inlineFormAddSubmit(formGroupValid: boolean, index) {
+  if (formGroupValid) {
+    const newRow: BodInlineSampleTable = {
+      index: this.getTableData(index).paginationOptions.length,
+      id: this.getTableInput(index).id,
+      name: this.getTableInput(index).name,
+      productLine: this.getTableFormGroup(index).value.productLine,
+      aware: this.getTableFormGroup(index).value.owner,
+      relationship: this.getTableFormGroup(index).value.relationship,
+      lastDebit:
+        this.getTableFormGroup(index).value.lastDebit === null
+          ? 0
+          : this.getTableFormGroup(index).value.lastDebit,
+      start: this.getTableFormGroup(index).controls['start'].value
+    };
+    if (index === 1 || index === 2) {
+      newRow.description = [
+        {
+          id: 0,
+          label: 'mbpBod.demo.microsite.label.title',
+          value: this.getTableFormGroup(index).value.title
+        },
+        {
+          id: 1,
+          label: 'mbpBod.demo.microsite.label.firstName',
+          value: this.getTableFormGroup(index).value.firstName
+        },
+        {
+          id: 2,
+          label: 'mbpBod.demo.microsite.label.lastName',
+          value: this.getTableFormGroup(index).value.lastName
+        }
+      ];
+    }
+    const tempData = this.getTableRef(index).data.datasource.data;
+    tempData.push(newRow);
+    this.getTableRef(index).updateDatasource(
+      new MatTableDataSource<BodInlineSampleTable>([...tempData])
+    );
+    this.getTableData(index).paginationOptions.length =
+      this.getTableData(index).paginationOptions.length + 1;
+  } else {
+    this.displayInlineFormErrorMessage(index);
+  }
+}
 
-  public onPageAction(event: PageAction) {
-    if (event === PageAction.ADD) {
-      this.addTableData(); // Add a new row when the Add button is clicked
-    } else if (event === PageAction.EDIT) {
-      this.modeOptionsSimple = { input: true, reset: false };
-      this.pageModeSimple = PageMode.INPUT;
+  loadDropdownData(): void {
+    this.metadataService.getTypes().subscribe(data => {
+      this.types = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+
+      // console.log('fetching data from API' + this.types); 
+    });
+
+    this.metadataService
+      .getClassificationTypes()
+      .subscribe(data => (this.classificationtypes = data));
+    // this.metadataService
+    //   .getDataTypes()
+    //   .subscribe(data => (this.datatypes = data));
+    this.metadataService
+      .getValidvalueTypes()
+      .subscribe(data => (this.validvaluestypes = data));
+  }
+  private updateRelateToProductTypeValidator(classificationType: string): void {
+    const relateToProductTypeControl = this.addEditBalanceHoldFormGroup.get(
+      'relatetoproducttype'
+    );
+    if (classificationType === 'systemDefined') {
+      relateToProductTypeControl?.setValidators([Validators.required]);
     } else {
-      this.modeOptionsSimple = { input: false, reset: true };
-      this.pageModeSimple = PageMode.INQUIRY;
+      relateToProductTypeControl?.clearValidators();
     }
+    relateToProductTypeControl?.updateValueAndValidity();
+  }
+
+
+  onSubmit(event: Event) {}
+  onReset() {}
+  handleRowLevelActions(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRow(index);
+    }
+  }
+
+  deleteRow(index: number) {
+    this.dataWithValidvalues.splice(index, 1);
+    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    // alert('Row deleted successfully!');
+  }
+
+  onAdd(formValues: any) {
+    if (this.inputLayoutForm.invalid) {
+      alert('Please fill all the required fields.');
+      return;
+    }
+    const newValidValue: BodSampleTable1 = {
+      additionaldatavalue: formValues.additionaldatavalue ?? false,
+      defaultindicator: formValues.defaultindicator ?? false,
+      primaryindicator: formValues.primaryindicator ?? false,
+      overrideindicator: formValues.overrideindicator ?? false
+    };
+
+    this.dataWithValidvalues.push(newValidValue);
+    this.ValidvalueArray.datasource.data = this.dataWithValidvalues;
+    this.inputLayoutForm.reset();
+    alert('Valid values added successfully!');
+  }
+
+  /** Initialize Add Balance Hold Form  */
+  private initForm(): void {
+    this.addEditBalanceHoldFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [Validators.required]),
+      identifier: new UntypedFormControl(false, [Validators.required]),
+      description: new UntypedFormControl(''),
+      type: new UntypedFormControl(''),
+      datatype: new UntypedFormControl(''),
+      calculate: new UntypedFormControl(''),
+      searchable: new UntypedFormControl(true),
+      multivalueallowed: new UntypedFormControl(''),
+      percentageallowed: new UntypedFormControl(''),
+      classificationtype: new UntypedFormControl(''),
+      // validvaluestype: new UntypedFormControl(''),
+      relatetoproducttype: new UntypedFormControl(''),
+      low: [''],
+      high: [''],
+      name: [''],
+      descriptions: [''],
+      validvaluestype: [''],
+      productTypeCode: [{ value: '', disabled: true }],
+      max: [''],
+      min: [''],
+      GLcategorizationAllowed: [''],
+      validtype: ['']
+    });
+    this.addExistingAttributeFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [Validators.required]),
+      max: [''],
+      min: [''],
+      GLcategorizationAllowed: [''],
+      validtype: ['']
+    })
+    this.addEditBalanceHoldFormGroup
+      .get('code')
+      ?.valueChanges.subscribe(value => {
+        this.addEditBalanceHoldFormGroup
+          .get('productTypeCode')
+          ?.setValue(value);
+      });
+
+    this.addEditBalanceHoldFormGroup
+      .get('relatetoproducttype')
+      ?.valueChanges.subscribe(value => {
+        this.isRelateToProductTemplate = value;
+        if (!value) {
+          this.isValidValueTypes = false;
+          this.addEditBalanceHoldFormGroup
+            .get('validtype')
+            ?.setValue(false, { emitEvent: false });
+        }
+      });
+
+    this.addEditBalanceHoldFormGroup
+      .get('validtype')
+      ?.valueChanges.subscribe(value => {
+        if (this.isRelateToProductTemplate) {
+          this.isValidValueTypes = value;
+        } else {
+          this.isValidValueTypes = false;
+        }
+      });
+  }
+
+  /** On click of Add Button*/
+  inlineAddRowActionClick(index) {
+    this.getTableInput(index).productLine = '';
+    this.getTableInput(index).owner = '';
+    this.getTableInput(index).relationship = '';
+    this.getTableInput(index).lastDebit = 0;
+    this.getTableInput(index).id =
+      'RT_00' + this.getTableData(index).paginationOptions.length;
+    this.getTableInput(index).name =
+      'Newly added row Name:' + this.inputBasic.id;
+    if (index === 1 || index === 2) {
+      this.getTableInput(index).title = '';
+      this.getTableInput(index).firstName = '';
+      this.getTableInput(index).lastName = '';
+    }
+    this.getTableFormGroup(index).controls['start'].setValue(
+      new Date(new Date(Date.now()))
+    );
+  }
+
+
+  private setDefaultFormValue(): void {
+    this.addEditBalanceHoldFormGroup.patchValue({
+      amount: new Amount(this.defaultCurrency, null),
+      isHoldAll: false,
+      isExpire: false
+    });
+    // this.effectiveDate = DateUtilityService.updateDateFormat(
+    //   new Date(this.bookingDate),
+    //   'MM/dd/YYYY'
+    // );
+    this.addEditBalanceHoldFormGroup.markAsUntouched();
+    this.addEditBalanceHoldFormGroup.markAsPristine();
+  }
+
+  public updateMessages(messages: NotificationMessage[]) {
+    // this.accountWorkspaceService.pageLevelMessages$.next(messages);
+  }
+
+  public inlineEditRowActionClick(event: InlineEditOutput): void {
+    this.updateMessages([]);
+    this.currentMode = EditTableAction.EDIT;
+    this.selectedHoldId = event.editRowElement['referenceId'];
+    this.changeDetectorRef.detectChanges();
+    const combinedDateTime = this.combineDateAndTime(
+      event.editRowElement['expirationDate'],
+      event.editRowElement['expirationTime']
+    );
+    // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
+    //   event.editRowElement['amount'].amount,
+    //   event.editRowElement['amount'].currency?.symbol
+    // );
+    // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
+    this.addEditBalanceHoldFormGroup.removeControl('referenceId');
+    this.addEditBalanceHoldFormGroup.removeControl('referenceType');
+    this.holdAllValue = event.editRowElement['isHoldAll'];
+    this.isExpireValue = event.editRowElement['isExpire'];
+    this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
+    // this.checkExpirationFieldVisibility();
+    // this.effectiveDate = DateUtilityService.updateDateFormat(
+    //   new Date(this.bookingDate),
+    //   'MM/dd/YYYY'
+    // );
+    this.addEditBalanceHoldFormGroup.setValue({
+      // amount: holdAmount,
+      reason: event.editRowElement['reasonDescription'],
+      description: event?.editRowElement['description']
+        ? event?.editRowElement['description']
+        : '',
+      isHoldAll: event.editRowElement['isHoldAll'],
+      isExpire: event.editRowElement['isExpire'],
+      effective: this.effectiveDate,
+      expirationDate: combinedDateTime
+    });
+
+    this.addEditBalanceHoldFormGroup.controls['effective'].clearValidators();
+    this.addEditBalanceHoldFormGroup.controls[
+      'effective'
+    ].updateValueAndValidity();
+  }
+
+  private combineDateAndTime(date: string, time: string): Date {
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    const dateObj = new Date(date);
+    dateObj.setHours(hours, minutes, seconds);
+    return dateObj;
   }
 }
