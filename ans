@@ -1,76 +1,9 @@
-import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { BodTableComponent, BodTableMetadata, PageMode, ModeOptions, SingleRowEdit } from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { FormBuilder, FormGroup, FormArray, FormControl } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
-
-@Component({
-  selector: 'bod-template-settings',
-  standalone: true,
-  templateUrl: './template-settings.component.html',
-  styleUrl: './template-settings.component.scss',
-  schemas: [NO_ERRORS_SCHEMA]
-})
-export class TemplateSettingsComponent {
-  private dataForReset: any[] = [];
-  public messages: any[] = [];
-  @ViewChild('simpleEditTableRef', { static: false }) simpleEditTableRef: BodTableComponent;
-  public tableWithSimpleEdit: BodTableMetadata;
-  public tableForm: FormGroup;
-  public singleRowEdit: SingleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-  public modeOptionsSimple = { input: false, reset: false };
-  public pageModeSimple = PageMode.INQUIRY;
-  private subscriptions: Subscription = new Subscription();
-
-  constructor(
-    private translate: TranslateService,
-    public commonDataService: BodTableDemoCommonDataService,
-    private http: HttpClient,
-    private fb: FormBuilder
-  ) {
-    this.tableForm = this.fb.group({ rows: this.fb.array([]) });
-    this.tableWithSimpleEdit = {
-      columns: [
-        { name: 'locale', title: 'Locale', truncate: true, width: 12 },
-        { name: 'displayName', title: 'Display Name', truncate: true, width: 6 },
-        { name: 'description', title: 'Description', truncate: true, width: 12 },
-        { name: 'actions', title: 'Actions', width: 4 }
-      ],
-      datasource: new MatTableDataSource([]),
-      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-    };
-  }
-
-  get rows(): FormArray {
-    return this.tableForm.get('rows') as FormArray;
-  }
-
-  public addRow(row: any = {}): void {
-    this.rows.push(this.fb.group({
-      id: [row.id || ''],
-      locale: [row.locale || ''],
-      displayName: [row.displayName || ''],
-      description: [row.description || '']
-    }));
-  }
-
-  public startEditing(index: number): void {
-    this.singleRowEdit = { modeOptions: { input: true, reset: false }, index };
-  }
-
-  public saveRow(index: number): void {
-    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-  }
-
-  public cancelEditing(index: number): void {
-    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-  }
-
-  public isEditing(index: number): boolean {
-    return this.singleRowEdit.index === index;
-  }
+private initForm(): void {
+  this.addEditBalanceHoldFormGroup = this.fb.group({
+    // Existing form controls...
+    localeCode: new UntypedFormControl('', [Validators.required]),
+    displayName: new UntypedFormControl('', [Validators.required]),
+    description: new UntypedFormControl(''),
+    // Other form controls...
+  });
 }
