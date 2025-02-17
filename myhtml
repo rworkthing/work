@@ -3,141 +3,6 @@
   <mat-tab-group fisStyle mat-stretch-tabs="false" tableDemoTabGroug>
     <mat-tab label="{{ 'BOD.metadataconfig.attributes' | translate }}">
       <bod-page-container rufId [title]="'Attributes Details' | translate">
-        <!-- <bod-table
-          #balanceHoldsTabRef
-          [data]="balanceHoldsTableMetaData"
-          [tableActions]="balanceHoldsTableActions"
-          [alignContent]="'top'"
-          [selectedFilters]="selectedFilters"
-          (updateFilters)="onUpdateFilterClick($event)"
-          (onTableActionClick)="commonDataService.tableLevelEventObject($event)"
-          [expandedRowTemplate]="expandedRowTemplate"
-          [inlineModal]="{
-            addNewInlineRowTitle: 'Add details to relate account',
-            addFormTitle: 'Add form for Relate account',
-            editFormTitle: 'Edit form for Relate account',
-            formGroup: addEditBalanceHoldFormGroup,
-            formTemplateName: addEditBalanceHoldTemplate
-          }"
-          [customColumnTemplates]="[
-            {
-              columnName: 'relationship',
-              templateName: relationshipTemplate
-            },
-            {
-              columnName: 'actions',
-              templateName: actionsTemplate
-            },
-            { columnName: 'primary', templateName: primaryTemplate }
-          ]"
-          [truncateAfterLine]="1"
-          (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 0)"
-          (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 0)"
-          (onInlineEditRowActionClick)="inlineEditRowActionClick($event, 0)"
-          (onInlineAddRowActionClick)="inlineAddRowActionClick(0)"
-          (onInlineFormAddSubmit)="onSubmit($event)"
-          (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-        >
-          <ng-template
-            #relationshipTemplate
-            let-element="element"
-            let-column="column"
-          >
-            <div>
-              {{ element[column.name] }}
-            </div>
-          </ng-template>
-          <ng-template
-            #actionsTemplate
-            let-element="element"
-            let-column="column"
-            let-index="index"
-          >
-            <div>
-              <bod-table-actions
-                [actions]="rowLevelInlineActions"
-                [inlineEditAction]="inlineEditAction"
-                (onActionClick)="commonDataService.onRowActionClicked($event)"
-              >
-              </bod-table-actions>
-            </div>
-          </ng-template>
-          <ng-template #primaryTemplate>
-            <div class="primaryTemplateIcon">
-              <mat-icon
-                fisIcon="posak"
-                fisStyle
-                class="fis-icon-md"
-                color="primary"
-              >
-              </mat-icon>
-            </div>
-          </ng-template>
-          <ng-template
-            #expandedRowTemplate
-            let-element="element"
-            let-context="context"
-          >
-          </ng-template>
-        </bod-table> -->
-
-        <!-- <bod-table
-        #basicTable
-        [data]="balanceHoldsTableMetaData"
-        [inlineModal]="{
-          addNewInlineRowTitle: 'Add details to relate account',
-          addFormTitle: 'Add form for Relate account',
-          editFormTitle: 'Edit form for Relate account',
-          formGroup: addEditBalanceHoldFormGroup,
-          formTemplateName: addEditBalanceHoldTemplate
-        }"
-        [tableActions]="tableActions"
-        (onTableActionClick)="commonDataService.tableLevelEventObject($event)"   
-        [truncateAfterLine]="1"
-        (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 0)"
-        (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 0)"
-        (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-        (onInlineAddRowActionClick)="inlineAddRowActionClick(0)"
-      >
-      </bod-table> -->
-
-        <!-- <bod-table
-      #customTable
-      [data]="balanceHoldsTableMetaData"
-      [tableActions]="tableActions"
-      (onTableActionClick)="onTableActionClicked($event)"
-      (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 1)"
-      (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 1)"
-      (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-      (onInlineAddRowActionClick)="inlineAddRowActionClick(1)"
-      (editColumnViewEvent)="
-        handleTableWithViewsEvent(
-          $event,
-          'Selected views',
-          'Views available'
-        )
-      "
-      (editColumnListEvent)="
-        handleTableWithViewsEvent(
-          $event,
-          'ListBuilder view',
-          'ListBuilder Delta'
-        )
-      "
-      (viewChangeEvent)="
-        handleTableWithViewsEvent($event, 'Current view', 'Current view')
-      "
-      (viewLoadEvent)="
-        handleTableWithViewsEvent(
-          $event,
-          'Current view',
-          'Current view',
-          'Table with Input Views tab'
-        )
-      "
-    >
-    </bod-table> -->
-
         <!-- Add Edit Form For Account Relationship-->
         <bod-table
           #customTable
@@ -617,48 +482,37 @@
                   </mat-slide-toggle>
                 </bod-control-group>
                 <bod-input-layout col="1">
+                  <!-- <locale-table
+
+                    [isEdit]="true"
+                    [editLocaledata]="displayName"
+                    [editLocaleDescdata]="displayDesc"
+                    (selectedLocale)="getLocale($event)"
+                  ></locale-table> -->
+
                   <bod-table
-                    #localeTable
+                    #localetable
                     [data]="tableWithSimpleEdit"
+                    [inlineModal]="{
+                      addNewInlineRowTitle: 'Add details to relate account',
+                      addFormTitle: 'Add form for Relate account',
+                      editFormTitle: 'Edit form for Relate account',
+                      formTemplateName: addLocaleTemplate
+                    }"
                     [tableActions]="balanceHoldsTableActions1"
-                    (onTableActionClick)="onTableActionClicked($event)"
-                    (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 1)"
-                    (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 1)"
+                    (onTableActionClick)="onLocaleTableActionClicked($event)"
+                    [truncateAfterLine]="1"
+                    (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 0)"
+                    (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 0)"
                     (onInlineEditRowActionClick)="
                       inlineEditRowActionClick($event)
                     "
-                    (onInlineAddRowActionClick)="inlineAddRowActionClick(1)"
-                    (editColumnViewEvent)="
-                      handleTableWithViewsEvent(
-                        $event,
-                        'Selected views',
-                        'Views available'
-                      )
-                    "
-                    (editColumnListEvent)="
-                      handleTableWithViewsEvent(
-                        $event,
-                        'ListBuilder view',
-                        'ListBuilder Delta'
-                      )
-                    "
-                    (viewChangeEvent)="
-                      handleTableWithViewsEvent(
-                        $event,
-                        'Current view',
-                        'Current view'
-                      )
-                    "
-                    (viewLoadEvent)="
-                      handleTableWithViewsEvent(
-                        $event,
-                        'Current view',
-                        'Current view',
-                        'Table with Input Views tab'
-                      )
-                    "
+                    (onInlineAddRowActionClick)="inlineAddRowActionClick(0)"
                   >
                   </bod-table>
+                  <ng-template #addLocaleTemplate>
+                    
+                  </ng-template>
                 </bod-input-layout>
               </bod-input-layout>
             </div>
