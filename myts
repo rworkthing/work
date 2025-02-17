@@ -77,7 +77,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MetadataService } from './metada-config.service';
 import { template as dialogFilterTemplate } from './dialog-filter-template';
 import {
-  TableLevelActions1,
+  localeTableActions,
   TableLevelActions2
 } from '../codegen-config/codegen-config.constant';
 import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
@@ -133,7 +133,7 @@ interface TabIndexTableMap {
 export class MetadataConfigComponent implements OnInit {
   public addEditFormGroup: UntypedFormGroup | undefined;
   public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
-  public balanceHoldsTableActions1: BodTableAction[] = TableLevelActions1;
+  public balanceHoldsTableActions1: BodTableAction[] = localeTableActions;
   public rowLevelActionsForBasicEdit: BodTableAction[] = TableLevelActions2;
   
   @ViewChild('addEditBalanceHoldTemplate')
@@ -251,8 +251,13 @@ export class MetadataConfigComponent implements OnInit {
     }
   }
   public onLocaleTableActionClicked(event: BodTableAction) {
-    this.addLocale();
+    if (event.id === BodTableActionType.ADD) {
+      this.addLocale();
    }
+  //  else if (event.id === BodTableActionType.EDIT) {
+  //   console.log('edit')
+  // }
+  }
 
   public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
@@ -415,6 +420,19 @@ export class MetadataConfigComponent implements OnInit {
         console.error('Error fetching data types', error);
       }
     );
+    this.tableWithSimpleEdit.datasource.data = [
+      {
+        locale:'en-US',
+        displayName:'English',
+        description: 'locale'
+      },
+      {
+        locale:'in-IS',
+        displayName:'India',
+        description: 'czzcx'
+      }
+    ];
+    
   }
   private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
   private openDialog(dialogModel: any) {
@@ -639,6 +657,9 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     if (action === 'trash') {
       this.deleteRow(index);
     }
+    // else if (action === 'edit'){
+    //   this.editRow(index)
+    // }
   }
 
   deleteRow(index: number) {
