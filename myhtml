@@ -987,18 +987,6 @@
         </ng-template>
       </bod-page-container>
     </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.balancetypes' | translate }}">
-    </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.conditions' | translate }}">
-    </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.transactiontype' | translate }}">
-    </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.services' | translate }}"> </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.relationships' | translate }}">
-    </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.pricing' | translate }}"> </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.financialreporting' | translate }}">
-    </mat-tab>
-    <mat-tab label="{{ 'BOD.metadataconfig.currency' | translate }}"> </mat-tab>
+    
   </mat-tab-group>
 </section>
