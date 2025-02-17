@@ -1,83 +1,64 @@
-<bod-page-container
-  [title]="'mbpBod.demo.microsite.table.pageContainerWithTable'"
-  [pageMode]="pageModeSimple"
-  (pageAction)="onPageAction($event)"
-  [messages]="messages"
-  *ngIf="showEdit"
->
-  <bod-table
-    [data]="tableWithSimpleEdit"
-    [modeOptions]="modeOptionsSimple"
-    [singleRowEdit]="singleRowEdit"
-    [customColumnTemplates]="[
-      { columnName: 'locale', templateName: localeTemplate },
-      { columnName: 'displayName', templateName: displayNameTemplate },
-      { columnName: 'description', templateName: descriptionTemplate },
-      { columnName: 'actions', templateName: editActionsTemplate }
-    ]"
-    (inputValidationStatus)="checkStatus($event)"
-    (editTableEvent)="onEditTableAction($event)"
-    (onTableActionClick)="addTableData()"
-    [primaryColumnName]="'id'"
-    #simpleEditTableRef
+<ng-template #addLocaleTemplate>
+  <bod-form
+    [formGroup]="addEditBalanceHoldFormGroup"
+    rufId
+    [type]="formType"
+    fisStyle
   >
-    <!-- Locale Column Template -->
-    <ng-template #localeTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="!isEditing(index)">
-        <div>{{ element[column.name] }}</div>
-      </ng-container>
-      <ng-container *ngIf="isEditing(index)">
-        <form [formGroup]="getFormGroup(index)">
-          <mat-form-field appearance="outline">
-            <input matInput formControlName="locale" />
-          </mat-form-field>
-        </form>
-      </ng-container>
-    </ng-template>
+    <bod-input-layout col="2">
+      <!-- Field 1: Locale Code -->
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.localeCode'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <input
+            type="text"
+            matInput
+            fisStyle
+            formControlName="localeCode"
+            name="localeCode"
+          />
+        </mat-form-field>
+      </bod-control-group>
 
-    <!-- Display Name Column Template -->
-    <ng-template #displayNameTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="!isEditing(index)">
-        <div>{{ element[column.name] }}</div>
-      </ng-container>
-      <ng-container *ngIf="isEditing(index)">
-        <form [formGroup]="getFormGroup(index)">
-          <mat-form-field appearance="outline">
-            <input matInput formControlName="displayName" />
-          </mat-form-field>
-        </form>
-      </ng-container>
-    </ng-template>
+      <!-- Field 2: Display Name -->
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.displayName'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <input
+            type="text"
+            matInput
+            fisStyle
+            formControlName="displayName"
+            name="displayName"
+          />
+        </mat-form-field>
+      </bod-control-group>
 
-    <!-- Description Column Template -->
-    <ng-template #descriptionTemplate let-element="element" let-column="column" let-index="index">
-      <ng-container *ngIf="!isEditing(index)">
-        <div>{{ element[column.name] }}</div>
-      </ng-container>
-      <ng-container *ngIf="isEditing(index)">
-        <form [formGroup]="getFormGroup(index)">
-          <mat-form-field appearance="outline">
-            <input matInput formControlName="description" />
-          </mat-form-field>
-        </form>
-      </ng-container>
-    </ng-template>
-
-    <!-- Row-level Edit Actions Column -->
-    <ng-template #editActionsTemplate let-element="element" let-index="index">
-      <div *ngIf="!isEditing(index)">
-        <button mat-icon-button (click)="startEditing(index)">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </div>
-      <div *ngIf="isEditing(index)">
-        <button mat-icon-button color="primary" (click)="saveRow(index)">
-          <mat-icon>check</mat-icon>
-        </button>
-        <button mat-icon-button (click)="cancelEditing(index)">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-    </ng-template>
-  </bod-table>
-</bod-page-container>
+      <!-- Field 3: Description -->
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.description'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <input
+            type="text"
+            matInput
+            fisStyle
+            formControlName="description"
+            name="description"
+          />
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+  </bod-form>
+</ng-template>
