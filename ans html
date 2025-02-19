@@ -1,64 +1,65 @@
-<ng-template #addLocaleTemplate>
-  <bod-form
-    [formGroup]="addEditBalanceHoldFormGroup"
-    rufId
-    [type]="formType"
-    fisStyle
-  >
-    <bod-input-layout col="2">
-      <!-- Field 1: Locale Code -->
-      <bod-control-group
-        [truncate]="false"
-        [label]="translationKey + 'metadataconfig.localeCode'"
-        [forTextOnly]="true"
-        [required]="true"
-      >
-        <mat-form-field appearance="outline" fisStyle>
-          <input
-            type="text"
-            matInput
-            fisStyle
-            formControlName="localeCode"
-            name="localeCode"
-          />
-        </mat-form-field>
-      </bod-control-group>
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { AttributeService } from '../services/attribute.service';
 
-      <!-- Field 2: Display Name -->
-      <bod-control-group
-        [truncate]="false"
-        [label]="translationKey + 'metadataconfig.displayName'"
-        [forTextOnly]="true"
-        [required]="true"
-      >
-        <mat-form-field appearance="outline" fisStyle>
-          <input
-            type="text"
-            matInput
-            fisStyle
-            formControlName="displayName"
-            name="displayName"
-          />
-        </mat-form-field>
-      </bod-control-group>
+@Component({
+  selector: 'app-metadata',
+  templateUrl: './metadata.component.html',
+  styleUrls: ['./metadata.component.scss']
+})
+export class MetadataComponent {
+  addExistingAttributeFormGroup: FormGroup;
 
-      <!-- Field 3: Description -->
-      <bod-control-group
-        [truncate]="false"
-        [label]="translationKey + 'metadataconfig.description'"
-        [forTextOnly]="true"
-        [required]="false"
-      >
-        <mat-form-field appearance="outline" fisStyle>
-          <input
-            type="text"
-            matInput
-            fisStyle
-            formControlName="description"
-            name="description"
-          />
-        </mat-form-field>
-      </bod-control-group>
-    </bod-input-layout>
-  </bod-form>
-</ng-template>
+  constructor(private fb: FormBuilder, private attributeService: AttributeService) {
+    this.addExistingAttributeFormGroup = this.fb.group({
+      productTypeCode: [''],
+      min: [''],
+      max: [''],
+      GLcategorizationAllowed: [false],
+      validtype: [false]
+    });
+  }
+
+  onAdd() {
+    const payload = {
+      metadataType: 'Attribute',
+      attributeList: [
+        {
+          additionalDataType: {
+            identifier: 110000000002,
+            code: this.addExistingAttributeFormGroup.value.productTypeCode,
+            name: this.addExistingAttributeFormGroup.value.productTypeCode,
+            shortName: this.addExistingAttributeFormGroup.value.productTypeCode,
+            objectTypeIdentifier: 1000000000001,
+            formatTypeIdentifier: 100000001009,
+            calculated: 'N',
+            searchable: 'Y',
+            multiValueAllowed: 'Y',
+            percentageAllowed: 'N',
+            classificationType: 'SystemDefined'
+          },
+          productTypeAdditionalDataTypeRelationshipList: [
+            {
+              identifier: 1110101,
+              attributeIdentifier: 110000000002,
+              minimumRequired: this.addExistingAttributeFormGroup.value.min,
+              maximumAllowed: this.addExistingAttributeFormGroup.value.max,
+              glCategarization: this.addExistingAttributeFormGroup.value.GLcategorizationAllowed ? 'Y' : 'N'
+            }
+          ]
+        }
+      ],
+      productTypeList: ['CASA']
+    };
+
+    this.attributeService.saveAttribute(payload).subscribe(
+      response => {
+        console.log('Attribute saved successfully:', response);
+        // Update the UI if necessary
+      },
+      error => {
+        console.error('Error saving attribute:', error);
+      }
+    );
+  }
+}
