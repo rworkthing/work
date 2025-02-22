@@ -44,7 +44,14 @@ import {
   BodTableActionType,
   BodTableFilterType,
   CommonDialogComponent,
-  BodCommonDialogService
+  BodCommonDialogService,
+  ColumnType,
+  BodSearchFieldData,
+  SingleRowEdit,
+  ModeOptions,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel
 } from '@bod/common';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -66,7 +73,16 @@ import {
   TableLevelActions,
   TranslationKey
 } from './codegen-config.constant';
-import { BodInlineSampleTable, BodLocaleTable, BodSampleTable, BodSampleTable1 } from '../bod-table-demo.model';
+import {
+  BodEditableSampleTable,
+  BodInlineSampleTable,
+  BodLocaleRangeTable,
+  BodLocaleSetTable,
+  BodLocaleTable,
+  BodSampleTable,
+  BodSampleTable1,
+  BodSampleTableExisting
+} from '../bod-table-demo.model';
 import { MatTabsModule } from '@angular/material/tabs';
 import {
   MatSlideToggleChange,
@@ -78,11 +94,15 @@ import { MetadataService } from './metada-config.service';
 import { template as dialogFilterTemplate } from './dialog-filter-template';
 import {
   localeTableActions,
-  TableLevelActions2
+  TableLevelActions2,
+  TableLevelActions3
 } from '../codegen-config/codegen-config.constant';
 import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
 import { MatDialogRef } from '@angular/material/dialog';
 import { getFormValidationErrors } from './inline-modal-validators';
+import { FormUtilityService } from './form-utility.service';
+import { Subscription } from 'rxjs';
+import { MatIcon, MatIconModule } from '@angular/material/icon';
 interface TableProps {
   formGroup: UntypedFormGroup;
   data: BodTableMetadata;
@@ -96,6 +116,8 @@ interface TabIndexTableMap {
   selector: 'bod-metadata-config',
   standalone: true,
   imports: [
+    MatIcon,
+    MatIconModule,
     DirectivesModule,
     MatButtonModule,
     MatSlideToggleModule,
@@ -135,14 +157,32 @@ export class MetadataConfigComponent implements OnInit {
   public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
   public balanceHoldsTableActions1: BodTableAction[] = localeTableActions;
   public rowLevelActionsForBasicEdit: BodTableAction[] = TableLevelActions2;
-  
-  @ViewChild('addEditBalanceHoldTemplate')
+  public rowLevelActionsForlocaleEdit: BodTableAction[] = TableLevelActions2;
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public pageMode = PageMode.INQUIRY;
+  private dataForReset: BodEditableSampleTable[] = [];
+  public datatypes: any[] = [];
+  public productTypeCode: any[] = [];
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public modeOptionsSimple = this.modeOptions;
+  public pageModeSimple = this.pageMode;
+
+  @ViewChild('addNewAttributeTemplate')
   public addAttributeTemp: TemplateRef<any>;
   @ViewChild('addExistingAttributeTemplate')
   public addExistingAttributeTemp: TemplateRef<any>;
-  @ViewChild('addLocaleTemplate')
-  public addLocaleTemp: TemplateRef<any>;
-  
+  @ViewChild('localetable')
+  public addLocaleTemp: BodTableComponent;
+  @ViewChild('localetableforrange')
+  public addRangeLocaleTemp: BodTableComponent;
+  @ViewChild('localetableforset')
+  public addSetLocaleTemp: BodTableComponent;
+  @ViewChild('adminTableRef')
+  private adminTableRef: BodTableComponent;
+
   public tableActions: BodTableAction[] = [];
   input = {
     id: '',
@@ -154,6 +194,10 @@ export class MetadataConfigComponent implements OnInit {
     start: new Date(new Date())
   };
   inputLayoutForm: UntypedFormGroup;
+  inputExistingLayoutForm: UntypedFormGroup;
+  inputLocaleLayoutForm: UntypedFormGroup;
+  inputRangeLocaleLayoutForm: UntypedFormGroup;
+  inputSetLocaleLayoutForm: UntypedFormGroup;
 
   formType: BodFormTypes = BodFormTypes.ADD;
   public inputBasic = this.input;
@@ -173,26 +217,106 @@ export class MetadataConfigComponent implements OnInit {
   amountFieldValue: string | undefined;
   actionModes = EditTableAction;
   currentMode: EditTableAction = EditTableAction.ADD;
+  rowLevelAction: BodTableAction[];
   public disableAmount = false;
   public isHoldExpirationDateTime = false;
 
   public timeControl: UntypedFormControl;
-  public addEditBalanceHoldFormGroup: UntypedFormGroup;
+  public addNewAttributeFormGroup: UntypedFormGroup;
   public addExistingAttributeFormGroup: UntypedFormGroup;
+  public addLocaleFormGroup: UntypedFormGroup;
+  public useExistingFormCtrlKeys: string[] = [];
+  public useExistingColForm: UntypedFormGroup = new UntypedFormGroup({});
+  private subscriptions: Subscription = new Subscription();
 
   public messages: NotificationMessage[] = [];
   isRelateToProductTemplate = false;
   isValidValueTypes = false;
+  public categorySearchVal: UntypedFormControl = new UntypedFormControl('');
+
+  // if (this.isEdit) {
+  //   this.tableLevelAction = this.hasAddPermission
+  //     ? [
+  //       {
+  //         id: BodTableActionType.ADD,
+  //         icon: 'add',
+  //         label: 'mbpEc.commons.tableRowAction.add',
+  //         mostCommon: false
+  //       }
+  //     ]
+  //     : [];
+
+  //   this.rowLevelAction = [
+  //     {
+  //       id: EC_CONSTANT.RowLevelAction.DELETE,
+  //       icon: 'trash',
+  //       label: 'mbpEc.commons.tableRowAction.delete',
+  //       mostCommon: false
+  //     }
+  //   ];
+  // }
+
+  // profitablityTable: BodTableMetadata = {
+  //   title: 'mbpEc.commons.relationshipCode.relationshipCodeTitle',
+  //   columns: [
+  //     {
+  //       name: 'selectedTimePeriod',
+  //       title: 'mbpEc.commons.relationshipCode.table.code',
+  //       inputModeOptions: {
+  //         type: ColumnType.search
+  //       }
+  //     },
+  //     {
+  //       name: 'name',
+  //       title: 'mbpEc.commons.relationshipCode.table.name',
+  //       inputModeOptions: {
+  //         type: ColumnType.input
+  //       }
+  //     },
+  //     {
+  //       name: 'allowOptOut',
+  //       title: 'mbpEc.commons.relationshipCode.table.allowOptOut',
+  //       inputModeOptions: {
+  //         type: ColumnType.select
+  //       }
+  //     },
+  //     {
+  //       name: 'defaultSelection',
+  //       title: 'mbpEc.commons.relationshipCode.table.defaultSelection',
+  //       inputModeOptions: {
+  //         type: ColumnType.input
+  //       }
+  //     },
+  //     { name: 'actionBtns', title: ' ', hasAction: true }
+  //   ],
+  //   noRecordsMessage: 'mbpEc.commons.relationshipCode.relationshipCodeNoRecord',
+  //   datasource: new MatTableDataSource<[]>([])
+  // };
+  bodRelMgrSearchFieldData: BodSearchFieldData[] = [
+    {
+      label: '',
+      fieldName: 'code',
+      descFieldName: 'name',
+      required: true,
+      hideLabel: true,
+      hideFilterCriteria: false,
+      disableInput: true,
+      disableSearch: false,
+      defaultDescription: ' ',
+      hideDescription: true,
+      forTextOnly: true
+    }
+  ];
   private addExistingAttribute() {
     // this.editAttribute = null;
-     let dialogModel: BodCommonDialogModel = {
-       formTemplate: this.addExistingAttributeTemp,
-       title: 'Attribute'
-     };
-     this.openDialog(dialogModel);
-   }
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addExistingAttributeTemp,
+      title: 'Attribute'
+    };
+    this.openDialog(dialogModel);
+  }
   private addNewAttribute() {
-   // this.editAttribute = null;
+    // this.editAttribute = null;
     let dialogModel: BodCommonDialogModel = {
       formTemplate: this.addAttributeTemp,
       title: 'Add Attribute'
@@ -200,19 +324,98 @@ export class MetadataConfigComponent implements OnInit {
     this.openDialog(dialogModel);
   }
   private addLocale() {
-    // this.editAttribute = null;
-     let dialogModel: BodCommonDialogModel = {
-       formTemplate: this.addLocaleTemp,
-       title: 'Add Locale'
-     };
-     this.openDialog(dialogModel);
-   }
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
+    };
+    this.addLocaleTemp.addRow(updatedData);
+  }
+  private addRangeLocale() {
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
+    };
+    this.addRangeLocaleTemp.addRow(updatedData);
+  }
+  private addSetLocale() {
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
+    };
+    this.addSetLocaleTemp.addRow(updatedData);
+  }
 
-  
+  deleteProfSrc1(index, element) {
+    // if (!this.lastModifiedIndex) {
+    //   this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    // }
+
+    this.addLocaleTemp.deleteRow(index);
+  }
+
+  onlocaleChange(obj, index: number) {
+    let updatedData = this.tableWithSimpleEdit.datasource.data;
+
+    updatedData[index]['commPrefStatDflt'] = obj;
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<any>).data =
+      updatedData;
+    this.adminTableRef.updateDeltaForCustomColumn(EditTableAction.EDIT, index);
+  }
+
+  // addProfatablity() {
+  //   if (!this.lastModifiedIndex) {
+  //     this.lastModifiedIndex = this.profitablityTable.datasource.data.length;
+  //   }
+
+  //   this.categorySearchVal.reset();
+
+  //   this.bodRelMgrSearchFieldData.push({
+  //     label: '',
+  //     fieldName: 'code',
+  //     descFieldName: 'name',
+  //     required: false,
+  //     hideLabel: true,
+  //     hideFilterCriteria: false,
+  //     disableInput: true,
+  //     disableSearch: false,
+  //     defaultDescription: ' ',
+  //     hideDescription: true,
+  //     forTextOnly: true
+  //   });
+
+  //   let updatedData = {
+  //     id: this.lastModifiedIndex,
+  //     selectedTimePeriod: '',
+  //     name: '',
+  //     allowOptOut: '',
+  //     action: EditTableAction.ADD,
+  //     defaultSelection: ''
+  //   };
+  //   this.adminTableRef.addRow(updatedData);
+
+  //   this.useExistingFormCtrlKeys = FormUtilityService.addFormControl(
+  //     this.useExistingColForm,
+  //     'selectedTimePeriod',
+  //     this.lastModifiedIndex,
+  //     true,
+  //     ''
+  //   );
+  //   ++this.lastModifiedIndex;
+  // }
+
   // onTableActionClicked(event: BodTableAction) {
   //   this._notify.setMessages([]);
   //   if (event.id === BodTableActionType.ADD) {
-  //     this.addNewAttribute();
+  //     this.addNewAttributeFormGroup();
   //   }
   //   if (event.id === BodTableActionType.FILTER) {
   //     this.openFilterDialog();
@@ -224,7 +427,7 @@ export class MetadataConfigComponent implements OnInit {
   onValidValueTypesChange(event: MatSlideToggleChange) {
     this.isValidValueTypes = event.checked;
   }
-  
+
   public handleTableWithViewsEvent(
     event,
     systemMessageKey,
@@ -237,33 +440,51 @@ export class MetadataConfigComponent implements OnInit {
         ? ': ' + tabName + ': ' + JSON.stringify(event)
         : JSON.stringify(event)
     );
-   // this.bodLoggerService.info(loggerMessage, event);
+    // this.bodLoggerService.info(loggerMessage, event);
   }
   // public inlineAddRowActionClick() {}
   additionalValidValues: any[] = [];
   public selectedFilters: BodTableFilterCriteria[] = [];
   public onTableActionClicked(event: BodTableAction) {
-   if (event.id === BodTableActionType.NEWATTRIBUTE) {
+    if (event.id === BodTableActionType.NEWATTRIBUTE) {
       this.addNewAttribute();
-    }
-    else if (event.id === 13) {
+    } else if (event.id === 13) {
       this.addExistingAttribute();
     }
   }
   public onLocaleTableActionClicked(event: BodTableAction) {
     if (event.id === BodTableActionType.ADD) {
       this.addLocale();
-   }
-  //  else if (event.id === BodTableActionType.EDIT) {
-  //   console.log('edit')
-  // }
+    }
+    //  else if (event.id === BodTableActionType.EDIT) {
+    //   console.log('edit')
+    // }
+  }
+  public onLocaleTablerangeActionClicked(event: BodTableAction) {
+    if (event.id === BodTableActionType.ADD) {
+      this.addRangeLocale();
+    }
+    //  else if (event.id === BodTableActionType.EDIT) {
+    //   console.log('edit')
+    // }
+  }
+  public onLocaleTablesetActionClicked(event: BodTableAction) {
+    if (event.id === BodTableActionType.ADD) {
+      this.addSetLocale();
+    }
+    //  else if (event.id === BodTableActionType.EDIT) {
+    //   console.log('edit')
+    // }
   }
 
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
   public balanceHoldsTableMetaData: BodTableMetadata;
   public ValidvalueArray: BodTableMetadata;
+  public ExistingValidvalueArray: BodTableMetadata;
   public tableWithSimpleEdit: BodTableMetadata;
+  public localetablerangedata: BodTableMetadata;
+  public localetablesetdata: BodTableMetadata;
 
   public template: TemplateRef<any>;
   public formData: BodCommonDialogModel = {
@@ -273,19 +494,20 @@ export class MetadataConfigComponent implements OnInit {
   public dialogOutput$: MatDialogRef<CommonDialogComponent, any>;
   public tabIndexTableMap: TabIndexTableMap = {};
   public editRowElement: any;
-
-  // public types = [
-  //   { label: 'Arrangement', value: 'arrangement' },
-  //   { label: 'Charge Custom Parameter', value: 'ChargeCustomParameter' }
-  // ];
-  // public classificationtypes = [
-  //   { label: 'System Defined', value: 'SystemDefined' },
-  //   { label: 'User Defined', value: 'UserDefined' }
-  // ];
   public types: any[] = [];
   public classificationtypes: any[] = [];
   public datatype: any[] = [];
+  public productTypeCodes: any[] = [];
+  public localeCodes: any[] = [];
   public validvaluestypes: any[] = [];
+  private lastModifiedIndex: number = 0;
+
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'mbpBod.demo.microsite.dialogs.confirm.title',
+    message: 'mbpBod.demo.microsite.table.confirmDialog.message',
+    confirm: 'mbpBod.demo.microsite.table.confirmDialog.delete',
+    dismiss: 'mbpBod.demo.microsite.table.confirmDialog.cancel'
+  };
 
   constructor(
     private bodCommonDialogService: BodCommonDialogService,
@@ -293,9 +515,80 @@ export class MetadataConfigComponent implements OnInit {
     private fb: FormBuilder,
     private changeDetectorRef: ChangeDetectorRef,
     private metadataService: MetadataService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+
     @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
   ) {
+    this.addExistingAttributeFormGroup = this.fb.group({
+      productTypeCode: [''],
+      min: [''],
+      max: [''],
+      GLcategorizationAllowed: [false],
+      validtype: [false]
+    });
     this.ValidvalueArray = {
+      // title: 'Name and Description (Locales)',
+      columns: [
+        {
+          name: 'additionaldatavalue',
+          title: 'Value',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'defaultindicator',
+          title: ' Default Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'primaryindicator',
+          title: 'Primary Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'overrideindicator',
+          title: 'Override Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'percentagevalue',
+          title: 'Percentage Value ',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'sequencenumber',
+          title: ' Sequence Number ',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+
+        {
+          name: 'actions',
+          title: ' ',
+          hasAction: true
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable1>(
+        this.dataWithValidvalues
+      )
+    };
+    this.ExistingValidvalueArray = {
       // title: 'Name and Description (Locales)',
       columns: [
         {
@@ -336,8 +629,8 @@ export class MetadataConfigComponent implements OnInit {
           hasAction: true
         }
       ],
-      datasource: new MatTableDataSource<BodSampleTable1>(
-        this.dataWithValidvalues
+      datasource: new MatTableDataSource<BodSampleTableExisting>(
+        this.dataWithExsistingValidvalues
       )
     };
     this.tableWithSimpleEdit = {
@@ -348,7 +641,10 @@ export class MetadataConfigComponent implements OnInit {
           truncate: true,
           noOverflow: true,
           width: 12,
-          widthUnit: 'rem'
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.select
+          }
         },
         {
           name: 'displayName',
@@ -356,7 +652,10 @@ export class MetadataConfigComponent implements OnInit {
           truncate: true,
           noOverflow: true,
           width: 6,
-          widthUnit: 'rem'
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
         },
         {
           name: 'description',
@@ -364,10 +663,98 @@ export class MetadataConfigComponent implements OnInit {
           truncate: true,
           noOverflow: true,
           width: 12,
-          widthUnit: 'rem'
-        }
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        { name: 'actionBtns', title: ' ', hasAction: true }
       ],
-      datasource: new MatTableDataSource<BodLocaleTable>(),
+      datasource: new MatTableDataSource<BodLocaleTable>(this.dataWithlocale),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+    };
+    this.localetablerangedata = {
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.select
+          }
+        },
+        {
+          name: 'displayName',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        { name: 'actionBtns', title: ' ', hasAction: true }
+      ],
+      datasource: new MatTableDataSource<BodLocaleRangeTable>(
+        this.dataWithlocalerange
+      ),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+    };
+    this.localetablesetdata = {
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.select
+          }
+        },
+        {
+          name: 'displayName',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        { name: 'actionBtns', title: ' ', hasAction: true }
+      ],
+      datasource: new MatTableDataSource<BodLocaleSetTable>(
+        this.dataWithlocaleset
+      ),
       noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
     };
 
@@ -396,50 +783,55 @@ export class MetadataConfigComponent implements OnInit {
       sequencenumber: [''],
       defaultindicator: [false],
       primaryindicator: [false],
-      overrideindicator: [false],
-      
+      overrideindicator: [false]
     });
+    this.inputExistingLayoutForm = this.fb.group({
+      additionaldatavalue: ['', Validators.required],
+      percentagevalue: [''],
+      sequencenumber: [''],
+      defaultindicator: [false],
+      primaryindicator: [false],
+      overrideindicator: [false]
+    });
+    this.inputLocaleLayoutForm = this.fb.group({
+      localeCode: [''],
+      displayName: [''],
+      description: ['']
+    });
+    this.inputRangeLocaleLayoutForm = this.fb.group({
+      localeCode: [''],
+      displayName: [''],
+      description: ['']
+    });
+    this.inputSetLocaleLayoutForm = this.fb.group({
+      localeCode: [''],
+      displayName: [''],
+      description: ['']
+    });
+
     // this.fetchIdentifier();
     this.tableActions = [...this.metadataService.tableActions];
     this.loadDropdownData();
     this.initForm();
-    this.addEditBalanceHoldFormGroup
+    this.addNewAttributeFormGroup
       .get('classificationtype')
       ?.valueChanges.subscribe(value => {
         this.updateRelateToProductTypeValidator(value);
       });
-
-    this.metadataService.getDataTypes().subscribe(
-      (data: any[]) => {
-        this.datatype = data.map(item => ({
-          label: item.identifier,
-          value: item.code
-        }));
-      },
-      error => {
-        console.error('Error fetching data types', error);
-      }
-    );
-    this.tableWithSimpleEdit.datasource.data = [
-      {
-        locale:'en-US',
-        displayName:'English',
-        description: 'locale'
-      },
-      {
-        locale:'in-IS',
-        displayName:'India',
-        description: 'czzcx'
-      }
-    ];
-    
   }
   private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
   private openDialog(dialogModel: any) {
-    this.dialogRef$ = this.bodCommonDialogService.commonDialog(dialogModel);
+    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
+      dialogModel,
+      'Extra-large'
+    );
   }
 
   public dataWithValidvalues: BodSampleTable1[] = [];
+  public dataWithExsistingValidvalues: BodSampleTableExisting[] = [];
+  public dataWithlocale: BodLocaleTable[] = [];
+  public dataWithlocalerange: BodLocaleRangeTable[] = [];
+  public dataWithlocaleset: BodLocaleSetTable[] = [];
 
   // fetchIdentifier() {
   //   this.metadataService.getIdentifier().subscribe(
@@ -451,7 +843,6 @@ export class MetadataConfigComponent implements OnInit {
   //     }
   //   );
   // }
-
 
   public dialogFilterDataSource = new MatTableDataSource<BodInlineSampleTable>([
     ...this.commonDataService.inlineModalData
@@ -486,137 +877,137 @@ export class MetadataConfigComponent implements OnInit {
   /**
    * Method to handle table actions event for dialog filter tab
    */
-public onTableActionsWithFilterClicked(
-  event: BodTableAction,
-  formTemplate: TemplateRef<any>
-) {
-  this.template = formTemplate;
-  if (
-    event.id === BodTableActionType.FILTER &&
-    this.bodTableDataWithFormFilter.filterOptions.filterType ===
-      BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
+  public onTableActionsWithFilterClicked(
+    event: BodTableAction,
+    formTemplate: TemplateRef<any>
   ) {
-    this.OpenCommonDialog(formTemplate);
-  } else {
-    this.commonDataService.tableLevelEventObject(event);
-  }
-}
-getTableFormGroup(index: number): UntypedFormGroup {
-  return this.tabIndexTableMap[index].formGroup;
-}
-getTableRef(index: number): BodTableComponent {
-  return this.tabIndexTableMap[index].ref;
-}
-displayInlineFormErrorMessage(index) {
-  const errors = getFormValidationErrors(
-    this.getTableFormGroup(index).controls
-  ).shift();
-  this.commonDataService.updateMessage(
-    'mbpBod.demo.microsite.table.inlineFormError',
-    JSON.stringify(errors)
-  );
-}
-inlineFormEditSubmit(formGroupValid: boolean, index) {
-  if (formGroupValid) {
-    const editedData: BodInlineSampleTable[] = [];
-    const formGroup = this.getTableFormGroup(index);
-    this.getTableRef(index).data.datasource.data.forEach(d => {
-      if (d.index === this.editRowElement.index) {
-        const editedRow: BodInlineSampleTable = {
-          index: d.index,
-          id: d.id,
-          name: d.name,
-          productLine: formGroup.value.productLine,
-          aware: formGroup.value.owner,
-          relationship: formGroup.value.relationship,
-          lastDebit:
-            formGroup.value.lastDebit === null
-              ? 0
-              : formGroup.value.lastDebit,
-          start: formGroup.controls['start'].value
-        };
-        if (index === 1 || index === 2) {
-          editedRow.description = [
-            {
-              id: d.description[0].id,
-              label: d.description[0].label,
-              value: formGroup.value.title
-            },
-            {
-              id: d.description[1].id,
-              label: d.description[1].label,
-              value: formGroup.value.firstName
-            },
-            {
-              id: d.description[2].id,
-              label: d.description[2].label,
-              value: formGroup.value.lastName
-            }
-          ];
-        }
-        editedData.push(editedRow);
-      } else {
-        editedData.push(d);
-      }
-    });
-    this.getTableRef(index).updateDatasource(
-      new MatTableDataSource<BodInlineSampleTable>([...editedData])
-    );
-  } else {
-    this.displayInlineFormErrorMessage(index);
-  }
-}
-getTableData(index: number): BodTableMetadata {
-  return this.tabIndexTableMap[index].data;
-}
-getTableInput(index: number): any {
-  return this.tabIndexTableMap[index].input;
-}
-inlineFormAddSubmit(formGroupValid: boolean, index) {
-  if (formGroupValid) {
-    const newRow: BodInlineSampleTable = {
-      index: this.getTableData(index).paginationOptions.length,
-      id: this.getTableInput(index).id,
-      name: this.getTableInput(index).name,
-      productLine: this.getTableFormGroup(index).value.productLine,
-      aware: this.getTableFormGroup(index).value.owner,
-      relationship: this.getTableFormGroup(index).value.relationship,
-      lastDebit:
-        this.getTableFormGroup(index).value.lastDebit === null
-          ? 0
-          : this.getTableFormGroup(index).value.lastDebit,
-      start: this.getTableFormGroup(index).controls['start'].value
-    };
-    if (index === 1 || index === 2) {
-      newRow.description = [
-        {
-          id: 0,
-          label: 'mbpBod.demo.microsite.label.title',
-          value: this.getTableFormGroup(index).value.title
-        },
-        {
-          id: 1,
-          label: 'mbpBod.demo.microsite.label.firstName',
-          value: this.getTableFormGroup(index).value.firstName
-        },
-        {
-          id: 2,
-          label: 'mbpBod.demo.microsite.label.lastName',
-          value: this.getTableFormGroup(index).value.lastName
-        }
-      ];
+    this.template = formTemplate;
+    if (
+      event.id === BodTableActionType.FILTER &&
+      this.bodTableDataWithFormFilter.filterOptions.filterType ===
+      BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
+    ) {
+      this.OpenCommonDialog(formTemplate);
+    } else {
+      this.commonDataService.tableLevelEventObject(event);
     }
-    const tempData = this.getTableRef(index).data.datasource.data;
-    tempData.push(newRow);
-    this.getTableRef(index).updateDatasource(
-      new MatTableDataSource<BodInlineSampleTable>([...tempData])
-    );
-    this.getTableData(index).paginationOptions.length =
-      this.getTableData(index).paginationOptions.length + 1;
-  } else {
-    this.displayInlineFormErrorMessage(index);
   }
-}
+  getTableFormGroup(index: number): UntypedFormGroup {
+    return this.tabIndexTableMap[index].formGroup;
+  }
+  getTableRef(index: number): BodTableComponent {
+    return this.tabIndexTableMap[index].ref;
+  }
+  displayInlineFormErrorMessage(index) {
+    const errors = getFormValidationErrors(
+      this.getTableFormGroup(index).controls
+    ).shift();
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.inlineFormError',
+      JSON.stringify(errors)
+    );
+  }
+  inlineFormEditSubmit(formGroupValid: boolean, index) {
+    if (formGroupValid) {
+      const editedData: BodInlineSampleTable[] = [];
+      const formGroup = this.getTableFormGroup(index);
+      this.getTableRef(index).data.datasource.data.forEach(d => {
+        if (d.index === this.editRowElement.index) {
+          const editedRow: BodInlineSampleTable = {
+            index: d.index,
+            id: d.id,
+            name: d.name,
+            productLine: formGroup.value.productLine,
+            aware: formGroup.value.owner,
+            relationship: formGroup.value.relationship,
+            lastDebit:
+              formGroup.value.lastDebit === null
+                ? 0
+                : formGroup.value.lastDebit,
+            start: formGroup.controls['start'].value
+          };
+          if (index === 1 || index === 2) {
+            editedRow.description = [
+              {
+                id: d.description[0].id,
+                label: d.description[0].label,
+                value: formGroup.value.title
+              },
+              {
+                id: d.description[1].id,
+                label: d.description[1].label,
+                value: formGroup.value.firstName
+              },
+              {
+                id: d.description[2].id,
+                label: d.description[2].label,
+                value: formGroup.value.lastName
+              }
+            ];
+          }
+          editedData.push(editedRow);
+        } else {
+          editedData.push(d);
+        }
+      });
+      this.getTableRef(index).updateDatasource(
+        new MatTableDataSource<BodInlineSampleTable>([...editedData])
+      );
+    } else {
+      this.displayInlineFormErrorMessage(index);
+    }
+  }
+  getTableData(index: number): BodTableMetadata {
+    return this.tabIndexTableMap[index].data;
+  }
+  getTableInput(index: number): any {
+    return this.tabIndexTableMap[index].input;
+  }
+  inlineFormAddSubmit(formGroupValid: boolean, index) {
+    if (formGroupValid) {
+      const newRow: BodInlineSampleTable = {
+        index: this.getTableData(index).paginationOptions.length,
+        id: this.getTableInput(index).id,
+        name: this.getTableInput(index).name,
+        productLine: this.getTableFormGroup(index).value.productLine,
+        aware: this.getTableFormGroup(index).value.owner,
+        relationship: this.getTableFormGroup(index).value.relationship,
+        lastDebit:
+          this.getTableFormGroup(index).value.lastDebit === null
+            ? 0
+            : this.getTableFormGroup(index).value.lastDebit,
+        start: this.getTableFormGroup(index).controls['start'].value
+      };
+      if (index === 1 || index === 2) {
+        newRow.description = [
+          {
+            id: 0,
+            label: 'mbpBod.demo.microsite.label.title',
+            value: this.getTableFormGroup(index).value.title
+          },
+          {
+            id: 1,
+            label: 'mbpBod.demo.microsite.label.firstName',
+            value: this.getTableFormGroup(index).value.firstName
+          },
+          {
+            id: 2,
+            label: 'mbpBod.demo.microsite.label.lastName',
+            value: this.getTableFormGroup(index).value.lastName
+          }
+        ];
+      }
+      const tempData = this.getTableRef(index).data.datasource.data;
+      tempData.push(newRow);
+      this.getTableRef(index).updateDatasource(
+        new MatTableDataSource<BodInlineSampleTable>([...tempData])
+      );
+      this.getTableData(index).paginationOptions.length =
+        this.getTableData(index).paginationOptions.length + 1;
+    } else {
+      this.displayInlineFormErrorMessage(index);
+    }
+  }
 
   loadDropdownData(): void {
     this.metadataService.getTypes().subscribe(data => {
@@ -625,8 +1016,43 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
         value: item.identifier
       }));
 
-      // console.log('fetching data from API' + this.types); 
+      // console.log('fetching data from API' + this.types);
     });
+
+    this.metadataService.getDataTypes().subscribe(
+      (data: any[]) => {
+        this.datatypes = data.map(item => ({
+          label: item.code,
+          value: item.identifier
+        }));
+      },
+      error => {
+        console.error('Error fetching data types', error);
+      }
+    );
+
+    this.metadataService.getProductTypeCodes().subscribe(
+      (data: any[]) => {
+        this.productTypeCodes = data.map(item => ({
+          label: item.code,
+          value: item.identifier
+        }));
+      },
+      error => {
+        console.error('Error fetching data types', error);
+      }
+    );
+    this.metadataService.getLocaleCodes().subscribe(
+      (data: any[]) => {
+        this.localeCodes = data.map(item => ({
+          label: item,
+          value: item
+        }));
+      },
+      error => {
+        console.error('Error fetching data types', error);
+      }
+    );
 
     this.metadataService
       .getClassificationTypes()
@@ -639,7 +1065,7 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
       .subscribe(data => (this.validvaluestypes = data));
   }
   private updateRelateToProductTypeValidator(classificationType: string): void {
-    const relateToProductTypeControl = this.addEditBalanceHoldFormGroup.get(
+    const relateToProductTypeControl = this.addNewAttributeFormGroup.get(
       'relatetoproducttype'
     );
     if (classificationType === 'systemDefined') {
@@ -650,9 +1076,8 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     relateToProductTypeControl?.updateValueAndValidity();
   }
 
-
-  onSubmit(event: Event) {}
-  onReset() {}
+  onSubmit(event: Event) { }
+  onReset() { }
   handleRowLevelActions(action: string, index: number) {
     if (action === 'trash') {
       this.deleteRow(index);
@@ -661,11 +1086,309 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     //   this.editRow(index)
     // }
   }
+  handleExistingRowLevelActions(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteExistingRow(index);
+    }
+    // else if (action === 'edit'){
+    //   this.editRow(index)
+    // }
+  }
+
+  // handleRowLevelActions(action: string, index: number) {
+  //   if (action === 'edit') {
+  //     this.setDataForSingleLineEditMode(index);
+  //   } else if (action === 'trash') {
+  //     if (this.modeOptionsSimple?.input) {
+  //       this.deleteTableData(index);
+  //     } else {
+  //       this.subscriptions.add(
+  //         this.bodConfirmAlertDialogsService
+  //           .confirm(this.ConfirmData)
+  //           .subscribe(val => {
+  //             if (val) {
+  //               this.deleteTableData(index);
+  //             }
+  //           })
+  //       );
+  //     }
+  //   }
+  // }
+  public deleteTableData(index) {
+    this.addLocaleTemp.deleteRow(index);
+  }
+
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+  }
+
+  handleRowLevelActionsforlocale(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteLocaleRow(index);
+    }
+  }
+  handleRowLevelActionsforlocalerange(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteLocaleRowrange(index);
+    }
+  }
+  handleRowLevelActionsforlocaleset(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteLocaleRowset(index);
+    }
+  }
+  identifierSearch() {
+    this.metadataService.idfrSearch().subscribe(
+      (response: string) => {
+        this.addNewAttributeFormGroup.controls['identifier'].setValue(response);
+        this.addNewAttributeFormGroup.controls['identifier'].disable();
+      },
+      error => {
+        console.error('Error:', error);
+      }
+    );
+    console.log('Search Added');
+  }
+
+  deleteLocaleRow(index: number) {
+    console.log('Before splice:', this.dataWithlocale);
+    this.dataWithlocale.splice(index, 1);
+    console.log('After splice:', this.dataWithlocale);
+    this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
+    console.log(
+      'Updated data source:',
+      this.tableWithSimpleEdit.datasource.data
+    );
+    // alert('Row deleted successfully!');
+  }
+
+  deleteLocaleRowrange(index: number) {
+    console.log('Before splice:', this.dataWithlocalerange);
+    this.dataWithlocalerange.splice(index, 1);
+    console.log('After splice:', this.dataWithlocalerange);
+    this.localetablerangedata.datasource.data = [...this.dataWithlocalerange];
+    console.log(
+      'Updated data source:',
+      this.localetablerangedata.datasource.data
+    );
+    // alert('Row deleted successfully!');
+  }
+  deleteLocaleRowset(index: number) {
+    console.log('Before splice:', this.dataWithlocaleset);
+    this.dataWithlocaleset.splice(index, 1);
+    console.log('After splice:', this.dataWithlocaleset);
+    this.localetablesetdata.datasource.data = [...this.dataWithlocaleset];
+    console.log(
+      'Updated data source:',
+      this.localetablesetdata.datasource.data
+    );
+    // alert('Row deleted successfully!');
+  }
 
   deleteRow(index: number) {
     this.dataWithValidvalues.splice(index, 1);
     this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
     // alert('Row deleted successfully!');
+  }
+  deleteExistingRow(index: number) {
+    this.dataWithExsistingValidvalues.splice(index, 1);
+    this.ExistingValidvalueArray.datasource.data = [
+      ...this.dataWithExsistingValidvalues
+    ];
+    // alert('Row deleted successfully!');
+  }
+
+  editRow(index: number) {
+    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+  }
+
+  onLocaleAdd(formValues: any) {
+    if (this.inputLocaleLayoutForm.invalid) {
+      alert('Please fill all the required fields.');
+      return;
+    }
+    const newLocaleValues: BodLocaleTable = {
+      locale: formValues.locale ?? false,
+      displayName: formValues.displayName ?? false,
+      description: formValues.description ?? false
+    };
+
+    this.dataWithlocale.push(newLocaleValues);
+    this.tableWithSimpleEdit.datasource.data = this.dataWithlocale;
+    this.inputLocaleLayoutForm.reset();
+    alert('Valid values added successfully!');
+  }
+  onRangeLocaleAdd(formValuess: any) {
+    if (this.inputRangeLocaleLayoutForm.invalid) {
+      alert('Please fill all the required fields.');
+      return;
+    }
+    const newLocaleValues: BodLocaleTable = {
+      locale: formValuess.locale ?? false,
+      displayName: formValuess.displayName ?? false,
+      description: formValuess.description ?? false
+    };
+
+    this.dataWithlocalerange.push(newLocaleValues);
+    this.localetablerangedata.datasource.data = this.dataWithlocalerange;
+    this.inputRangeLocaleLayoutForm.reset();
+    alert('Valid values added successfully!');
+  }
+  onSetLocaleAdd(formValues: any) {
+    if (this.inputSetLocaleLayoutForm.invalid) {
+      alert('Please fill all the required fields.');
+      return;
+    }
+    const newLocaleValues: BodLocaleTable = {
+      locale: formValues.locale ?? false,
+      displayName: formValues.displayName ?? false,
+      description: formValues.description ?? false
+    };
+
+    this.dataWithlocaleset.push(newLocaleValues);
+    this.localetablesetdata.datasource.data = this.dataWithlocaleset;
+    this.inputSetLocaleLayoutForm.reset();
+    alert('Valid values added successfully!');
+  }
+
+  onSave() {
+    const formValue = this.addNewAttributeFormGroup.value;
+    // const validvalue = this.inputLayoutForm.value;
+    const formaValues = this.inputSetLocaleLayoutForm.value;
+    const selectedType = formValue.type;
+    const selectedFormatType = formValue.datatype;
+    const objectTypeIdentifier = this.types.find(
+      item => item.label === selectedType
+    )?.value;
+    const formatTypeIdentifier = this.datatypes.find(
+      item => item.label === selectedFormatType
+    )?.value;
+    const productTypeAdditionalDataList = this.dataWithValidvalues.map(
+      (item, index) => ({
+        identifier: index,
+        attributeIdentifier: formValue.identifier,
+        attributeValue: item.additionaldatavalue,
+        attributeValueSource: '',
+        isDefault: item.defaultindicator ? 'Y' : 'N',
+        isPrimary: item.primaryindicator ? 'Y' : 'N',
+        percentage: item.percentagevalue,
+        sequenceNumber: item.sequencenumber,
+        overrideDefault: item.overrideindicator ? 'Y' : 'N'
+      })
+    );
+    const multiLingualTextInfoList = this.dataWithlocale.map(
+      (item, index) => ({
+        localeCode: this.inputLocaleLayoutForm.value.localeCode,
+        localeText: this.inputLocaleLayoutForm.value.description,
+        identifier: 280000000072595,
+        objectType: formValue.type,
+        attributeType: formValue.datatype,
+        translationText: this.inputLocaleLayoutForm.value.description
+      })
+    );
+
+    const request = {
+      metadataType: 'Attribute',
+      attributeList: [
+        {
+          additionalDataType: {
+            identifier: formValue.identifier,
+            code: formValue.code,
+            name: formValue.name,
+            shortName: formValue.shortname,
+            objectTypeIdentifier: objectTypeIdentifier,
+            formatTypeIdentifier: formatTypeIdentifier,
+            calculated: formValue.calculate ? 'Y' : 'N',
+            searchable: formValue.searchable ? 'Y' : 'N',
+            multiValueAllowed: formValue.multivalueallowed ? 'Y' : 'N',
+            percentageAllowed: formValue.percentageallowed ? 'Y' : 'N',
+            classificationType: formValue.classificationtype,
+            multiLingualTextInfoList: multiLingualTextInfoList
+            // multiLingualTextInfoList: [
+            //   {
+            //     localeCode: this.inputLocaleLayoutForm.value.localeCode,
+            //     localeText: this.inputLocaleLayoutForm.value.description,
+            //     identifier: 280000000072595,
+            //     objectType: formValue.type,
+            //     attributeType: formValue.datatype,
+            //     translationText: formValue.description
+            //   }
+            // ]
+          },
+          additionalDataValidValuesRange: {
+            identifier: 0,
+            attributeIdentifier: formValue.identifier,
+            name: formValue.rangename,
+            description: formValue.description,
+            lowValue: formValue.low,
+            highValue: formValue.high,
+            multiLingualTextInfoList: [
+              {
+                localeCode: this.inputRangeLocaleLayoutForm.value.localeCode,
+                localeText: this.inputRangeLocaleLayoutForm.value.displayName,
+                identifier: 280000000072595,
+                objectType: formValue.type,
+                attributeType: formValue.datatype,
+                translationText: this.inputRangeLocaleLayoutForm.value.description
+              }
+            ]
+          },
+          additionalDataValidValueSetList: [
+            {
+              identifier: 0,
+              attributeIdentifier: formValue.identifier,
+              name: formValue.setname,
+              description: formValue.setdescription,
+              value: formValue.attributevalue,
+              isdefault: formValue.isdefault ? 'Y' : 'N',
+              isPrimary: formValue.isprimary ? 'Y' : 'N',
+              percentage: formValue.percentage,
+              sequenceNumber: formValue.sequencenumber,
+              overrideDefault: formValue.isvalueoverridden,
+              multiLingualTextInfoList: [
+                {
+                  localeCode: this.inputSetLocaleLayoutForm.value.localeCode,
+                  localeText: this.inputSetLocaleLayoutForm.value.displayName,
+                  identifier: 280000000072595,
+                  objectType: formValue.type,
+                  attributeType: formValue.datatype,
+                  translationText: this.inputSetLocaleLayoutForm.value.description
+                }
+              ]
+            }
+          ],
+          productTypeAdditionalDataTypeRelationshipList: [
+            {
+              identifier: 1110101,
+              attributeIdentifier: formValue.identifier,
+              minimumRequired: formValue.min,
+              maximumAllowed: formValue.max,
+              glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+            }
+          ],
+          productTypeAdditionalDataList: productTypeAdditionalDataList,
+        }
+      ],
+      productTypeList: ['CASA']
+    };
+
+    this.metadataService.saveAttribute(request).subscribe(
+      response => {
+        alert(' saving attribute');
+        console.log('Attribute saved successfully:', response);
+      },
+      error => {
+        alert('Error saving attribute');
+        console.error('Error saving attribute:', error);
+      }
+    );
   }
 
   onAdd(formValues: any) {
@@ -677,7 +1400,9 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
       additionaldatavalue: formValues.additionaldatavalue ?? false,
       defaultindicator: formValues.defaultindicator ?? false,
       primaryindicator: formValues.primaryindicator ?? false,
-      overrideindicator: formValues.overrideindicator ?? false
+      overrideindicator: formValues.overrideindicator ?? false,
+      percentagevalue: formValues.percentagevalue ?? false,
+      sequencenumber: formValues.sequencenumber ?? false
     };
 
     this.dataWithValidvalues.push(newValidValue);
@@ -686,12 +1411,84 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     alert('Valid values added successfully!');
   }
 
+  onExistingAdd(formValues: any) {
+    if (this.inputExistingLayoutForm.invalid) {
+      alert('Please fill all the required fields.');
+      return;
+    }
+    const newValidValue: BodSampleTableExisting = {
+      additionaldatavalue: formValues.additionaldatavalue ?? false,
+      defaultindicator: formValues.defaultindicator ?? false,
+      primaryindicator: formValues.primaryindicator ?? false,
+      overrideindicator: formValues.overrideindicator ?? false
+    };
+
+    this.dataWithExsistingValidvalues.push(newValidValue);
+    this.ExistingValidvalueArray.datasource.data =
+      this.dataWithExsistingValidvalues;
+    this.inputExistingLayoutForm.reset();
+    alert('Valid values added successfully!');
+  }
+
+  onAddforExistingAttribute() {
+    const formValue = this.addExistingAttributeFormGroup.value;
+    const selectedType = formValue.type;
+    const selectedFormatType: string = formValue.datatype;
+    const objectTypeIdentifier = this.types.find(
+      item => item.label === selectedType
+    )?.value;
+    const formatTypeIdentifier = this.datatypes.find(
+      item => item.label === selectedFormatType
+    )?.value;
+    const request = {
+      metadataType: 'Attribute',
+      attributeList: [
+        {
+          productTypeAdditionalDataTypeRelationshipList: [
+            {
+              identifier: 1110101,
+              attributeIdentifier: formValue.productTypeCode,
+              minimumRequired: formValue.min,
+              maximumAllowed: formValue.max,
+              glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+            }
+          ],
+          productTypeAdditionalDataList: [
+            {
+              identifier: 0,
+              attributeIdentifier: 0,
+              attributeValue: formValue.additionaldatavalue,
+              attributeValueSource: '',
+              isDefault: formValue.defaultindicator ? 'Y' : 'N',
+              isPrimary: formValue.primaryindicator ? 'Y' : 'N',
+              percentage: formValue.percentagevalue,
+              sequenceNumber: formValue.sequencenumber,
+              overrideDefault: formValue.overrideindicator ? 'Y' : 'N'
+            }
+          ]
+        }
+      ],
+      productTypeList: ['CASA']
+    };
+
+    this.metadataService.saveExistingAttribute(request).subscribe(
+      response => {
+        console.log('Attribute saved successfully:', response);
+      },
+      error => {
+        console.error('Error saving attribute:', error);
+      }
+    );
+  }
+
   /** Initialize Add Balance Hold Form  */
   private initForm(): void {
-    this.addEditBalanceHoldFormGroup = this.fb.group({
+    this.addNewAttributeFormGroup = this.fb.group({
       code: new UntypedFormControl('', [Validators.required]),
-      identifier: new UntypedFormControl(false, [Validators.required]),
-      description: new UntypedFormControl(''),
+      // identifier: new UntypedFormControl('', [Validators.required]),
+      identifier: [{ value: '', disabled: true }],
+      name: new UntypedFormControl(''),
+      shortname: new UntypedFormControl('', [Validators.required]),
       type: new UntypedFormControl(''),
       datatype: new UntypedFormControl(''),
       calculate: new UntypedFormControl(''),
@@ -701,16 +1498,28 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
       classificationtype: new UntypedFormControl(''),
       // validvaluestype: new UntypedFormControl(''),
       relatetoproducttype: new UntypedFormControl(''),
+      attributevalue: new UntypedFormControl(''),
+      setname: new UntypedFormControl(''),
+      setdescription: new UntypedFormControl(''),
+      sequencenumber: new UntypedFormControl(''),
+      percentage: new UntypedFormControl(''),
+      valuesearch: new UntypedFormControl(''),
+      isdefault: new UntypedFormControl(''),
+      isvalueoverridden: new UntypedFormControl(''),
+      isprimary: new UntypedFormControl(''),
       low: [''],
       high: [''],
-      name: [''],
       descriptions: [''],
       validvaluestype: [''],
       productTypeCode: [{ value: '', disabled: true }],
       max: [''],
       min: [''],
       GLcategorizationAllowed: [''],
-      validtype: ['']
+      validtype: [''],
+
+      displayName: new UntypedFormControl(''),
+      description: new UntypedFormControl(''),
+      localeCode: [{ value: '', disabled: true }]
     });
     this.addExistingAttributeFormGroup = this.fb.group({
       code: new UntypedFormControl('', [Validators.required]),
@@ -718,28 +1527,24 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
       min: [''],
       GLcategorizationAllowed: [''],
       validtype: ['']
-    })
-    this.addEditBalanceHoldFormGroup
-      .get('code')
-      ?.valueChanges.subscribe(value => {
-        this.addEditBalanceHoldFormGroup
-          .get('productTypeCode')
-          ?.setValue(value);
-      });
+    });
+    this.addNewAttributeFormGroup.get('code')?.valueChanges.subscribe(value => {
+      this.addNewAttributeFormGroup.get('productTypeCode')?.setValue(value);
+    });
 
-    this.addEditBalanceHoldFormGroup
+    this.addNewAttributeFormGroup
       .get('relatetoproducttype')
       ?.valueChanges.subscribe(value => {
         this.isRelateToProductTemplate = value;
         if (!value) {
           this.isValidValueTypes = false;
-          this.addEditBalanceHoldFormGroup
+          this.addNewAttributeFormGroup
             .get('validtype')
             ?.setValue(false, { emitEvent: false });
         }
       });
 
-    this.addEditBalanceHoldFormGroup
+    this.addNewAttributeFormGroup
       .get('validtype')
       ?.valueChanges.subscribe(value => {
         if (this.isRelateToProductTemplate) {
@@ -770,9 +1575,8 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     );
   }
 
-
   private setDefaultFormValue(): void {
-    this.addEditBalanceHoldFormGroup.patchValue({
+    this.addNewAttributeFormGroup.patchValue({
       amount: new Amount(this.defaultCurrency, null),
       isHoldAll: false,
       isExpire: false
@@ -781,8 +1585,8 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     //   new Date(this.bookingDate),
     //   'MM/dd/YYYY'
     // );
-    this.addEditBalanceHoldFormGroup.markAsUntouched();
-    this.addEditBalanceHoldFormGroup.markAsPristine();
+    this.addNewAttributeFormGroup.markAsUntouched();
+    this.addNewAttributeFormGroup.markAsPristine();
   }
 
   public updateMessages(messages: NotificationMessage[]) {
@@ -803,8 +1607,8 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     //   event.editRowElement['amount'].currency?.symbol
     // );
     // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
-    this.addEditBalanceHoldFormGroup.removeControl('referenceId');
-    this.addEditBalanceHoldFormGroup.removeControl('referenceType');
+    this.addNewAttributeFormGroup.removeControl('referenceId');
+    this.addNewAttributeFormGroup.removeControl('referenceType');
     this.holdAllValue = event.editRowElement['isHoldAll'];
     this.isExpireValue = event.editRowElement['isExpire'];
     this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
@@ -813,7 +1617,7 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
     //   new Date(this.bookingDate),
     //   'MM/dd/YYYY'
     // );
-    this.addEditBalanceHoldFormGroup.setValue({
+    this.addNewAttributeFormGroup.setValue({
       // amount: holdAmount,
       reason: event.editRowElement['reasonDescription'],
       description: event?.editRowElement['description']
@@ -825,8 +1629,8 @@ inlineFormAddSubmit(formGroupValid: boolean, index) {
       expirationDate: combinedDateTime
     });
 
-    this.addEditBalanceHoldFormGroup.controls['effective'].clearValidators();
-    this.addEditBalanceHoldFormGroup.controls[
+    this.addNewAttributeFormGroup.controls['effective'].clearValidators();
+    this.addNewAttributeFormGroup.controls[
       'effective'
     ].updateValueAndValidity();
   }
