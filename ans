@@ -1,16 +1,21 @@
-inlineFormAddSubmit(formGroupValid: boolean, index) {
-  if (formGroupValid) {
-    const formGroup = this.getTableFormGroup(index);
-    const newRow: BodLocaleTable = {
-      locale: formGroup.value.localeCode ?? '',
-      displayName: formGroup.value.displayName ?? '',
-      description: formGroup.value.description ?? ''
-    };
+autoSaveInlineEntry(formValues: any) {
+  const currentIndex = this.dataWithlocale.length - 1; // Last entry being edited/added
 
-    this.dataWithlocale.push(newRow);
-    this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
+  const updatedLocaleEntry: BodLocaleTable = {
+    locale: formValues.localeCode ?? '',
+    displayName: formValues.displayName ?? '',
+    description: formValues.description ?? ''
+  };
+
+  // Update or Add the latest entry
+  if (this.dataWithlocale[currentIndex]) {
+    this.dataWithlocale[currentIndex] = updatedLocaleEntry;
   } else {
-    this.displayInlineFormErrorMessage(index);
+    this.dataWithlocale.push(updatedLocaleEntry);
   }
+
+  // Update the datasource
+  this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
 }
+
 
