@@ -1,27 +1,16 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+inlineFormAddSubmit(formGroupValid: boolean, index) {
+  if (formGroupValid) {
+    const formGroup = this.getTableFormGroup(index);
+    const newRow: BodLocaleTable = {
+      locale: formGroup.value.localeCode ?? '',
+      displayName: formGroup.value.displayName ?? '',
+      description: formGroup.value.description ?? ''
+    };
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AttributeService {
-  private apiUrl = 'https://sdk-service-app-mbp-sdk-core-dev.apps.useast-2-mbp-2.mcp.fisdev.local/sdkconfiggen/metadata/create/requirement1';
-
-  constructor(private http: HttpClient) {}
-
-  saveAttribute(payload: any): Observable<any> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'country-code': 'CNTRY01',
-      'client-code': 'CLNT01',
-      'product-line': 'retaildeposits',
-      'fe_id': '2800',
-      'user-id': 'T999999',
-      'locale': 'en-US',
-      'uuid': 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
-    });
-
-    return this.http.post(this.apiUrl, payload, { headers });
+    this.dataWithlocale.push(newRow);
+    this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
+  } else {
+    this.displayInlineFormErrorMessage(index);
   }
 }
+
