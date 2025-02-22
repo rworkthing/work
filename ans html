@@ -1,65 +1,21 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { AttributeService } from '../services/attribute.service';
+<input
+  type="text"
+  matInput
+  fisStyle
+  formControlName="displayName"
+  name="displayName"
+  (blur)="autoSaveInlineEntry(inputLocaleLayoutForm.value)"
+  (input)="autoSaveInlineEntry(inputLocaleLayoutForm.value)"
+/>
 
-@Component({
-  selector: 'app-metadata',
-  templateUrl: './metadata.component.html',
-  styleUrls: ['./metadata.component.scss']
-})
-export class MetadataComponent {
-  addExistingAttributeFormGroup: FormGroup;
 
-  constructor(private fb: FormBuilder, private attributeService: AttributeService) {
-    this.addExistingAttributeFormGroup = this.fb.group({
-      productTypeCode: [''],
-      min: [''],
-      max: [''],
-      GLcategorizationAllowed: [false],
-      validtype: [false]
-    });
-  }
-
-  onAdd() {
-    const payload = {
-      metadataType: 'Attribute',
-      attributeList: [
-        {
-          additionalDataType: {
-            identifier: 110000000002,
-            code: this.addExistingAttributeFormGroup.value.productTypeCode,
-            name: this.addExistingAttributeFormGroup.value.productTypeCode,
-            shortName: this.addExistingAttributeFormGroup.value.productTypeCode,
-            objectTypeIdentifier: 1000000000001,
-            formatTypeIdentifier: 100000001009,
-            calculated: 'N',
-            searchable: 'Y',
-            multiValueAllowed: 'Y',
-            percentageAllowed: 'N',
-            classificationType: 'SystemDefined'
-          },
-          productTypeAdditionalDataTypeRelationshipList: [
-            {
-              identifier: 1110101,
-              attributeIdentifier: 110000000002,
-              minimumRequired: this.addExistingAttributeFormGroup.value.min,
-              maximumAllowed: this.addExistingAttributeFormGroup.value.max,
-              glCategarization: this.addExistingAttributeFormGroup.value.GLcategorizationAllowed ? 'Y' : 'N'
-            }
-          ]
-        }
-      ],
-      productTypeList: ['CASA']
-    };
-
-    this.attributeService.saveAttribute(payload).subscribe(
-      response => {
-        console.log('Attribute saved successfully:', response);
-        // Update the UI if necessary
-      },
-      error => {
-        console.error('Error saving attribute:', error);
-      }
-    );
-  }
-}
+<mat-select
+  panelClass="fis-style"
+  formControlName="localeCode"
+  name="localeCode"
+  (selectionChange)="autoSaveInlineEntry(inputLocaleLayoutForm.value)"
+>
+  <mat-option *ngFor="let localeCode of localeCodes" [value]="localeCode.value">
+    {{ localeCode.label }}
+  </mat-option>
+</mat-select>
