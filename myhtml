@@ -1,239 +1,116 @@
-<ng-template #addExistingAttributeTemplate>
-          <bod-form
-            [formGroup]="addExistingAttributeFormGroup"
-            rufId
-            [type]="formType"
-            fisStyle
-          >
-            <bod-input-layout col="2">
-              <bod-control-group
-                [truncate]="false"
-                [label]="translationKey + 'metadataconfig.code'"
-                [forTextOnly]="true"
-                [required]="true"
+<bod-table
+                #localetable
+                [data]="tableWithSimpleEdit"
+                [modeOptions]="modeOptions"
+                [tableActions]="balanceHoldsTableActions1"
+                (onTableActionClick)="onLocaleTableActionClicked($event)"
+                [primaryColumnName]="'id'"
+                [truncateAfterLine]="1"
+                (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 0)"
+                (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 0)"
+                (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
+                (onInlineAddRowActionClick)="inlineAddRowActionClick(0)"
+                [customColumnTemplates]="[
+                  {
+                    columnName: 'locale',
+                    templateName: localeTemplate
+                  },
+                  {
+                    columnName: 'displayName',
+                    templateName: displayNameTemplate
+                  },
+                  {
+                    columnName: 'description',
+                    templateName: descriptionTemplate
+                  },
+                  {
+                    columnName: 'actionBtns',
+                    templateName: actionBtnsTemplate
+                  }
+                ]"
               >
-                <mat-form-field appearance="outline" fisStyle>
-                  <mat-select
-                    panelClass="fis-style"
-                    formControlName="productTypeCode"
-                    name="productTypeCode"
-                  >
-                    <mat-option
-                      *ngFor="let productTypeCode of productTypeCodes"
-                      [value]="type.value"
-                    >
-                      {{ type.label }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </bod-control-group>
-              <bod-control-group
-                [truncate]="false"
-                [label]="translationKey + 'metadataconfig.min'"
-                [forTextOnly]="true"
-                [required]="true"
-              >
-                <mat-form-field appearance="outline" fisStyle>
-                  <input
-                    type="text"
-                    matInput
-                    fisStyle
-                    formControlName="min"
-                    name="min"
-                  />
-                </mat-form-field>
-              </bod-control-group>
-              <bod-control-group
-                [truncate]="false"
-                [label]="
-                  translationKey + 'metadataconfig.GLcategorizationAllowed'
-                "
-                [forTextOnly]="true"
-                [required]="false"
-              >
-                <mat-slide-toggle
+                <bod-form
+                  [formGroup]="inputLocaleLayoutForm"
+                  [type]="formType"
+                  (onSubmit)="onLocaleAdd(inputLocaleLayoutForm.value)"
+                  (onReset)="onReset()"
                   fisStyle
-                  color="primary"
-                  formControlName="GLcategorizationAllowed"
-                  name="GLcategorizationAllowed"
-                >
-                </mat-slide-toggle>
-              </bod-control-group>
-              <bod-control-group
-                [truncate]="false"
-                [label]="translationKey + 'metadataconfig.max'"
-                [forTextOnly]="true"
-                [required]="true"
-              >
-                <mat-form-field appearance="outline" fisStyle>
-                  <input
-                    type="text"
-                    matInput
-                    fisStyle
-                    formControlName="max"
-                    name="max"
-                  />
-                </mat-form-field>
-              </bod-control-group>
-              <bod-control-group
-                [truncate]="false"
-                [label]="translationKey + 'metadataconfig.validtype'"
-                [forTextOnly]="true"
-                [required]="false"
-              >
-                <mat-slide-toggle
-                  formControlName="validtype"
-                  name="validtype"
-                  (change)="onValidValueTypesChange($event)"
-                >
-                </mat-slide-toggle>
-              </bod-control-group>
-
-              <!-- <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.validtype'"
-            [forTextOnly]="true" [required]="false">
-            <mat-slide-toggle fisStyle color="primary" formControlName="validtype" name="validtype">
-            </mat-slide-toggle>
-            </bod-control-group> -->
-            </bod-input-layout>
-            <div *ngIf="isValidValueTypes">
-              <bod-page-container
-                title="Attribute Valid Values"
-              ></bod-page-container>
-              <bod-form
-                [formGroup]="inputExistingLayoutForm"
-                [type]="formType"
-                (onSubmit)="onExistingAdd(inputExistingLayoutForm.value)"
-                (onReset)="onReset()"
-                fisStyle
-              >
-                <bod-input-layout col="2">
-                  <bod-control-group
-                    [truncate]="false"
-                    [label]="
-                      translationKey + 'metadataconfig.additionaldatavalue'
-                    "
-                    [forTextOnly]="true"
-                    [required]="true"
-                  >
-                    <mat-form-field appearance="outline" fisStyle>
-                      <input
-                        type="text"
-                        matInput
-                        fisStyle
-                        formControlName="additionaldatavalue"
-                        name="additionaldatavalue"
-                      />
-                    </mat-form-field>
-                  </bod-control-group>
-                  <bod-control-group
-                    [truncate]="false"
-                    [label]="translationKey + 'metadataconfig.percentagevalue'"
-                    [forTextOnly]="true"
-                    [required]="false"
-                  >
-                    <mat-form-field appearance="outline" fisStyle>
-                      <input
-                        type="text"
-                        matInput
-                        fisStyle
-                        formControlName="percentagevalue"
-                        name="percentagevalue"
-                      />
-                    </mat-form-field>
-                  </bod-control-group>
-                  <bod-control-group
-                    [truncate]="false"
-                    [label]="translationKey + 'metadataconfig.sequencenumber'"
-                    [forTextOnly]="true"
-                    [required]="false"
-                  >
-                    <mat-form-field appearance="outline" fisStyle>
-                      <input
-                        type="text"
-                        matInput
-                        fisStyle
-                        formControlName="sequencenumber"
-                        name="sequencenumber"
-                      />
-                    </mat-form-field>
-                  </bod-control-group>
-                  <bod-control-group
-                    [truncate]="false"
-                    [label]="
-                      translationKey + 'metadataconfig.defaulatindicator'
-                    "
-                    [forTextOnly]="true"
-                    [required]="false"
-                  >
-                    <mat-slide-toggle
-                      fisStyle
-                      color="primary"
-                      formControlName="defaultindicator"
-                      name="defaultindicator"
-                    >
-                    </mat-slide-toggle>
-                  </bod-control-group>
-                  <bod-control-group
-                    [truncate]="false"
-                    [label]="translationKey + 'metadataconfig.primaryindicator'"
-                    [forTextOnly]="true"
-                    [required]="false"
-                  >
-                    <mat-slide-toggle
-                      fisStyle
-                      color="primary"
-                      formControlName="primaryindicator"
-                      name="primaryindicator"
-                    >
-                    </mat-slide-toggle>
-                  </bod-control-group>
-                  <bod-control-group
-                    [truncate]="false"
-                    [label]="
-                      translationKey + 'metadataconfig.overrideindicator'
-                    "
-                    [forTextOnly]="true"
-                    [required]="false"
-                  >
-                    <mat-slide-toggle
-                      fisStyle
-                      color="primary"
-                      formControlName="overrideindicator"
-                      name="overrideindicator"
-                    >
-                    </mat-slide-toggle>
-                  </bod-control-group>
-                </bod-input-layout>
-
-                <!-- <button mat-raised-button color="primary" type="submit" [disabled]="inputLayoutForm.invalid">Save</button> -->
-              </bod-form>
-              <bod-input-layout col="1">
-                <bod-table
-                  [customColumnTemplates]="[
-                    {
-                      columnName: 'actions',
-                      templateName: deleteActionTemplate
-                    }
-                  ]"
-                  [data]="ExistingValidvalueArray"
-                  [alignContent]="'top'"
                 >
                   <ng-template
-                    #deleteActionTemplate
+                    #localeTemplate
+                    let-element="element"
+                    let-column="column"
+                    let-index="index"
+                  >
+                    <bod-input-layout col="1">
+                      <mat-form-field appearance="outline" fisStyle>
+                        <mat-select
+                          panelClass="fis-style"
+                          formControlName="localeCode"
+                          name="localeCode"
+                        >
+                          <mat-option
+                            *ngFor="let localeCode of localeCodes"
+                            value="{{ localeCode.value }}"
+                          >
+                            {{ localeCode.label }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </bod-input-layout>
+                  </ng-template>
+
+                  <ng-template
+                    #displayNameTemplate
+                    let-element="element"
+                    let-column="column"
+                    let-index="index"
+                  >
+                    <ng-container>
+                      <mat-form-field appearance="outline" fisStyle>
+                        <input
+                          type="text"
+                          matInput
+                          fisStyle
+                          formControlName="displayName"
+                          name="displayName"
+                        />
+                      </mat-form-field>
+                    </ng-container>
+                  </ng-template>
+
+                  <ng-template
+                    #descriptionTemplate
+                    let-element="element"
+                    let-column="column"
+                    let-index="index"
+                  >
+                    <ng-container>
+                      <mat-form-field appearance="outline" fisStyle>
+                        <input
+                          type="text"
+                          matInput
+                          fisStyle
+                          formControlName="description"
+                          name="description"
+                        />
+                      </mat-form-field>
+                    </ng-container>
+                  </ng-template>
+
+                  <ng-template
+                    #actionBtnsTemplate
                     let-element="element"
                     let-column="column"
                     let-index="index"
                   >
                     <bod-table-actions
-                      [actions]="rowLevelActionsForBasicEdit"
+                      [actions]="rowLevelActionsForlocaleEdit"
                       (onActionClick)="
-                        handleExistingRowLevelActions($event.icon, index)
+                        handleRowLevelActionsforlocale($event.icon, index)
                       "
                     >
                     </bod-table-actions>
                   </ng-template>
-                </bod-table>
-              </bod-input-layout>
-            </div>
-          </bod-form>
-        </ng-template>
+                </bod-form>
+              </bod-table>
