@@ -1,14 +1,18 @@
-inlineFormAddSubmit(formGroupValid: boolean, index) {
-  if (formGroupValid) {
-    const formValue = this.inputLocaleLayoutForm.value;
+inlineFormAddSubmit(event: any, index: number) {
+  if (event && event.formGroup.valid) {
+    const formValue = event.formGroup.value; // Get values directly from the inline form
+
     const newLocaleEntry = {
       locale: formValue.localeCode,
       displayName: formValue.displayName,
       description: formValue.description
     };
 
-    this.dataWithlocale.push(newLocaleEntry);
-    this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
-    this.inputLocaleLayoutForm.reset();
+    if (newLocaleEntry.locale && newLocaleEntry.displayName && newLocaleEntry.description) {
+      this.dataWithlocale.push(newLocaleEntry);
+      this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
+    } else {
+      alert('Please fill all required fields before adding!');
+    }
   }
 }
