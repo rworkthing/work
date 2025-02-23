@@ -1,21 +1,14 @@
-autoSaveInlineEntry(formValues: any) {
-  const currentIndex = this.dataWithlocale.length - 1; // Last entry being edited/added
+inlineFormAddSubmit(formGroupValid: boolean, index) {
+  if (formGroupValid) {
+    const formValue = this.inputLocaleLayoutForm.value;
+    const newLocaleEntry = {
+      locale: formValue.localeCode,
+      displayName: formValue.displayName,
+      description: formValue.description
+    };
 
-  const updatedLocaleEntry: BodLocaleTable = {
-    locale: formValues.localeCode ?? '',
-    displayName: formValues.displayName ?? '',
-    description: formValues.description ?? ''
-  };
-
-  // Update or Add the latest entry
-  if (this.dataWithlocale[currentIndex]) {
-    this.dataWithlocale[currentIndex] = updatedLocaleEntry;
-  } else {
-    this.dataWithlocale.push(updatedLocaleEntry);
+    this.dataWithlocale.push(newLocaleEntry);
+    this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
+    this.inputLocaleLayoutForm.reset();
   }
-
-  // Update the datasource
-  this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
 }
-
-
