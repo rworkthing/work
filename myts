@@ -477,7 +477,7 @@ export class MetadataConfigComponent implements OnInit {
     // }
   }
 
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
   public balanceHoldsTableMetaData: BodTableMetadata;
   public ValidvalueArray: BodTableMetadata;
@@ -885,7 +885,7 @@ export class MetadataConfigComponent implements OnInit {
     if (
       event.id === BodTableActionType.FILTER &&
       this.bodTableDataWithFormFilter.filterOptions.filterType ===
-      BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
+        BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
     ) {
       this.OpenCommonDialog(formTemplate);
     } else {
@@ -1076,8 +1076,8 @@ export class MetadataConfigComponent implements OnInit {
     relateToProductTypeControl?.updateValueAndValidity();
   }
 
-  onSubmit(event: Event) { }
-  onReset() { }
+  onSubmit(event: Event) {}
+  onReset() {}
   handleRowLevelActions(action: string, index: number) {
     if (action === 'trash') {
       this.deleteRow(index);
@@ -1293,7 +1293,6 @@ export class MetadataConfigComponent implements OnInit {
         translationText: this.inputLocaleLayoutForm.value.description
       })
     );
-
     const request = {
       metadataType: 'Attribute',
       attributeList: [
@@ -1354,12 +1353,12 @@ export class MetadataConfigComponent implements OnInit {
               overrideDefault: formValue.isvalueoverridden,
               multiLingualTextInfoList: [
                 {
-                  localeCode: this.inputSetLocaleLayoutForm.value.localeCode,
-                  localeText: this.inputSetLocaleLayoutForm.value.displayName,
+                  localeCode: formaValues.localeCode,
+                  localeText: 'Deposit product',
                   identifier: 280000000072595,
                   objectType: formValue.type,
-                  attributeType: formValue.datatype,
-                  translationText: this.inputSetLocaleLayoutForm.value.description
+                  attributeType: 'product market name',
+                  translationText: formaValues.description
                 }
               ]
             }
@@ -1373,7 +1372,7 @@ export class MetadataConfigComponent implements OnInit {
               glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
             }
           ],
-          productTypeAdditionalDataList: productTypeAdditionalDataList,
+          productTypeAdditionalDataList: productTypeAdditionalDataList
         }
       ],
       productTypeList: ['CASA']
