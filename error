@@ -1,1 +1,16 @@
-ASSERTION ERROR: index [Expected=> 1 < 2 <=Actual]
+this.inputLocaleLayoutForm.valueChanges.subscribe((formvalues) =>{
+      this.autoSaveInlineEntry(formvalues, index);
+    });
+
+Expected 2 arguments, but got 1.      
+
+812       this.autoSaveInlineEntry(formvalues);
+               ~~~~~~~~~~~~~~~~~~~
+
+  libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:835:39
+    835   autoSaveInlineEntry(formValues: any,index: number) {
+                                              ~~~~~~~~~~~~~
+    An argument for 'index' was not provided.
+
+
+
