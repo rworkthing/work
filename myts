@@ -195,7 +195,9 @@ export class MetadataConfigComponent implements OnInit {
   };
   inputLayoutForm: UntypedFormGroup;
   inputExistingLayoutForm: UntypedFormGroup;
-  inputLocaleLayoutForm: UntypedFormGroup;
+  inputLocaleLayoutForm: UntypedFormGroup = new UntypedFormGroup({});
+  inputLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
+  inputLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
   inputRangeLocaleLayoutForm: UntypedFormGroup;
   inputSetLocaleLayoutForm: UntypedFormGroup;
 
@@ -227,6 +229,8 @@ export class MetadataConfigComponent implements OnInit {
   public addLocaleFormGroup: UntypedFormGroup;
   public useExistingFormCtrlKeys: string[] = [];
   public useExistingColForm: UntypedFormGroup = new UntypedFormGroup({});
+  useExistingFormCtrlKeysLocale: string[] = [];
+  useExistingFormCtrlKeysDesc: string[] = [];
   private subscriptions: Subscription = new Subscription();
 
   public messages: NotificationMessage[] = [];
@@ -331,7 +335,31 @@ export class MetadataConfigComponent implements OnInit {
       displayName: '',
       description: ''
     };
+    this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
+      this.inputLocaleLayoutFormLocale,
+      'locale',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
     this.addLocaleTemp.addRow(updatedData);
+    this.useExistingFormCtrlKeys = FormUtilityService.addFormControl(
+      this.inputLocaleLayoutForm,
+      'displayName',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
+      this.inputLocaleLayoutFormDesc,
+      'description',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
+
+    ++this.lastModifiedIndex;
+
   }
   private addRangeLocale() {
     let updatedData = {
@@ -477,7 +505,7 @@ export class MetadataConfigComponent implements OnInit {
     // }
   }
 
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
   public balanceHoldsTableMetaData: BodTableMetadata;
   public ValidvalueArray: BodTableMetadata;
@@ -618,6 +646,22 @@ export class MetadataConfigComponent implements OnInit {
         {
           name: 'overrideindicator',
           title: 'Override Indiactor',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'percentagevalue',
+          title: 'Percentage Value ',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'sequencenumber',
+          title: ' Sequence Number ',
           truncate: true,
           noOverflow: true,
           width: 12,
@@ -794,10 +838,13 @@ export class MetadataConfigComponent implements OnInit {
       overrideindicator: [false]
     });
     this.inputLocaleLayoutForm = this.fb.group({
-      localeCode: [''],
-      displayName: [''],
-      description: ['']
+      // localeCode: [''],
+      // displayName: [''],
+      // description: ['']
     });
+    this.inputLocaleLayoutFormLocale = this.fb.group({});
+    this.inputLocaleLayoutFormDesc = this.fb.group({});
+
     this.inputRangeLocaleLayoutForm = this.fb.group({
       localeCode: [''],
       displayName: [''],
@@ -885,7 +932,7 @@ export class MetadataConfigComponent implements OnInit {
     if (
       event.id === BodTableActionType.FILTER &&
       this.bodTableDataWithFormFilter.filterOptions.filterType ===
-        BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
+      BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
     ) {
       this.OpenCommonDialog(formTemplate);
     } else {
@@ -963,49 +1010,22 @@ export class MetadataConfigComponent implements OnInit {
   getTableInput(index: number): any {
     return this.tabIndexTableMap[index].input;
   }
-  inlineFormAddSubmit(formGroupValid: boolean, index) {
-    if (formGroupValid) {
-      const newRow: BodInlineSampleTable = {
-        index: this.getTableData(index).paginationOptions.length,
-        id: this.getTableInput(index).id,
-        name: this.getTableInput(index).name,
-        productLine: this.getTableFormGroup(index).value.productLine,
-        aware: this.getTableFormGroup(index).value.owner,
-        relationship: this.getTableFormGroup(index).value.relationship,
-        lastDebit:
-          this.getTableFormGroup(index).value.lastDebit === null
-            ? 0
-            : this.getTableFormGroup(index).value.lastDebit,
-        start: this.getTableFormGroup(index).controls['start'].value
+  inlineFormAddSubmit(event: any, index: number) {
+    if (event && event.formGroup.valid) {
+      const formValue = event.formGroup.value; // Get values directly from the inline form
+
+      const newLocaleEntry = {
+        locale: formValue.localeCode,
+        displayName: formValue.displayName,
+        description: formValue.description
       };
-      if (index === 1 || index === 2) {
-        newRow.description = [
-          {
-            id: 0,
-            label: 'mbpBod.demo.microsite.label.title',
-            value: this.getTableFormGroup(index).value.title
-          },
-          {
-            id: 1,
-            label: 'mbpBod.demo.microsite.label.firstName',
-            value: this.getTableFormGroup(index).value.firstName
-          },
-          {
-            id: 2,
-            label: 'mbpBod.demo.microsite.label.lastName',
-            value: this.getTableFormGroup(index).value.lastName
-          }
-        ];
+
+      if (newLocaleEntry.locale && newLocaleEntry.displayName && newLocaleEntry.description) {
+        this.dataWithlocale.push(newLocaleEntry);
+        this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
+      } else {
+        alert('Please fill all required fields before adding!');
       }
-      const tempData = this.getTableRef(index).data.datasource.data;
-      tempData.push(newRow);
-      this.getTableRef(index).updateDatasource(
-        new MatTableDataSource<BodInlineSampleTable>([...tempData])
-      );
-      this.getTableData(index).paginationOptions.length =
-        this.getTableData(index).paginationOptions.length + 1;
-    } else {
-      this.displayInlineFormErrorMessage(index);
     }
   }
 
@@ -1076,8 +1096,8 @@ export class MetadataConfigComponent implements OnInit {
     relateToProductTypeControl?.updateValueAndValidity();
   }
 
-  onSubmit(event: Event) {}
-  onReset() {}
+  onSubmit(event: Event) { }
+  onReset() { }
   handleRowLevelActions(action: string, index: number) {
     if (action === 'trash') {
       this.deleteRow(index);
@@ -1259,6 +1279,7 @@ export class MetadataConfigComponent implements OnInit {
   }
 
   onSave() {
+    console.log(this.addLocale)
     const formValue = this.addNewAttributeFormGroup.value;
     // const validvalue = this.inputLayoutForm.value;
     const formaValues = this.inputSetLocaleLayoutForm.value;
@@ -1284,14 +1305,34 @@ export class MetadataConfigComponent implements OnInit {
       })
     );
     const multiLingualTextInfoList = this.dataWithlocale.map(
-      (item, index) => ({
-        localeCode: this.inputLocaleLayoutForm.value.localeCode,
-        localeText: this.inputLocaleLayoutForm.value.description,
+      (item => ({
+        localeCode: this.inputLocaleLayoutFormLocale.value.locale0,
+        localeText: this.inputLocaleLayoutForm.value.displayName1,
         identifier: 280000000072595,
         objectType: formValue.type,
         attributeType: formValue.datatype,
-        translationText: this.inputLocaleLayoutForm.value.description
-      })
+        translationText: this.inputLocaleLayoutFormDesc.value.description0
+      }))
+    );
+    const multiLingualTextInfoRangeList = this.dataWithlocale.map(
+      (item => ({
+        localeCode: this.inputRangeLocaleLayoutForm.value.localeCode0,
+        localeText: this.inputRangeLocaleLayoutForm.value.displayName0,
+        identifier: 280000000072595,
+        objectType: formValue.type,
+        attributeType: formValue.datatype,
+        translationText: this.inputRangeLocaleLayoutForm.value.description0
+      }))
+    );
+    const multiLingualTextInfoSetList = this.dataWithlocale.map(
+      (item => ({
+        localeCode: this.inputSetLocaleLayoutForm.value.localeCode,
+        localeText: this.inputSetLocaleLayoutForm.value.description,
+        identifier: 280000000072595,
+        objectType: formValue.type,
+        attributeType: formValue.datatype,
+        translationText: this.inputSetLocaleLayoutForm.value.displayName
+      }))
     );
     const request = {
       metadataType: 'Attribute',
@@ -1312,12 +1353,12 @@ export class MetadataConfigComponent implements OnInit {
             multiLingualTextInfoList: multiLingualTextInfoList
             // multiLingualTextInfoList: [
             //   {
-            //     localeCode: this.inputLocaleLayoutForm.value.localeCode,
-            //     localeText: this.inputLocaleLayoutForm.value.description,
+            //     localeCode: this.inputLocaleLayoutFormLocale.value,
+            //     localeText: this.inputLocaleLayoutForm.value,
             //     identifier: 280000000072595,
             //     objectType: formValue.type,
             //     attributeType: formValue.datatype,
-            //     translationText: formValue.description
+            //     translationText: this.inputLocaleLayoutFormDesc.value
             //   }
             // ]
           },
@@ -1328,16 +1369,17 @@ export class MetadataConfigComponent implements OnInit {
             description: formValue.description,
             lowValue: formValue.low,
             highValue: formValue.high,
-            multiLingualTextInfoList: [
-              {
-                localeCode: this.inputRangeLocaleLayoutForm.value.localeCode,
-                localeText: this.inputRangeLocaleLayoutForm.value.displayName,
-                identifier: 280000000072595,
-                objectType: formValue.type,
-                attributeType: formValue.datatype,
-                translationText: this.inputRangeLocaleLayoutForm.value.description
-              }
-            ]
+            multiLingualTextInfoList: multiLingualTextInfoRangeList
+            // multiLingualTextInfoList: [
+            //   {
+            //     localeCode: this.inputRangeLocaleLayoutForm.value.localeCode,
+            //     localeText: this.inputRangeLocaleLayoutForm.value.displayName,
+            //     identifier: 280000000072595,
+            //     objectType: formValue.type,
+            //     attributeType: formValue.datatype,
+            //     translationText: this.inputRangeLocaleLayoutForm.value.description
+            //   }
+            // ]
           },
           additionalDataValidValueSetList: [
             {
@@ -1351,16 +1393,17 @@ export class MetadataConfigComponent implements OnInit {
               percentage: formValue.percentage,
               sequenceNumber: formValue.sequencenumber,
               overrideDefault: formValue.isvalueoverridden,
-              multiLingualTextInfoList: [
-                {
-                  localeCode: formaValues.localeCode,
-                  localeText: 'Deposit product',
-                  identifier: 280000000072595,
-                  objectType: formValue.type,
-                  attributeType: 'product market name',
-                  translationText: formaValues.description
-                }
-              ]
+              multiLingualTextInfoList: multiLingualTextInfoSetList
+              // multiLingualTextInfoList: [
+              //   {
+              //     localeCode: formaValues.localeCode,
+              //     localeText: 'Deposit product',
+              //     identifier: 280000000072595,
+              //     objectType: formValue.type,
+              //     attributeType: 'product market name',
+              //     translationText: formaValues.description
+              //   }
+              // ]
             }
           ],
           productTypeAdditionalDataTypeRelationshipList: [
