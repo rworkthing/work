@@ -13,11 +13,11 @@
                 [customColumnTemplates]="[
                   {
                     columnName: 'locale',
-                    templateName: localeTemplate
+                    templateName: localeTemplate1
                   },
                   {
                     columnName: 'displayName',
-                    templateName: displayNameTemplate
+                    templateName: displayName1
                   },
                   {
                     columnName: 'description',
@@ -29,24 +29,29 @@
                   }
                 ]"
               >
-                <bod-form
+                <!-- <bod-form
                   [formGroup]="inputLocaleLayoutForm"
                   [type]="formType"
                   (onSubmit)="onLocaleAdd(inputLocaleLayoutForm.value)"
                   (onReset)="onReset()"
                   fisStyle
+                > -->
+                <ng-template
+                  #localeTemplate1
+                  let-element="element"
+                  let-column="column"
+                  let-index="index"
                 >
-                  <ng-template
-                    #localeTemplate
-                    let-element="element"
-                    let-column="column"
-                    let-index="index"
-                  >
+                  <form [formGroup]="inputLocaleLayoutFormLocale">
                     <bod-input-layout col="1">
                       <mat-form-field appearance="outline" fisStyle>
                         <mat-select
                           panelClass="fis-style"
-                          formControlName="localeCode"
+                          [formControl]="
+                            inputLocaleLayoutFormLocale.controls[
+                              useExistingFormCtrlKeysLocale[index]
+                            ]
+                          "
                           name="localeCode"
                         >
                           <mat-option
@@ -58,59 +63,73 @@
                         </mat-select>
                       </mat-form-field>
                     </bod-input-layout>
-                  </ng-template>
+                  </form>
+                </ng-template>
 
-                  <ng-template
-                    #displayNameTemplate
-                    let-element="element"
-                    let-column="column"
-                    let-index="index"
-                  >
-                    <ng-container>
+                <ng-template
+                  #displayName1
+                  let-element="element"
+                  let-column="column"
+                  let-index="index"
+                >
+                  <ng-container>
+                    
+                    <form [formGroup]="inputLocaleLayoutForm">
                       <mat-form-field appearance="outline" fisStyle>
                         <input
                           type="text"
                           matInput
                           fisStyle
-                          formControlName="displayName"
+                          [formControl]="
+                            inputLocaleLayoutForm.controls[
+                              useExistingFormCtrlKeys[index]
+                            ]
+                          "
                           name="displayName"
                         />
                       </mat-form-field>
-                    </ng-container>
-                  </ng-template>
+                    </form>
+                  </ng-container>
+                </ng-template>
 
-                  <ng-template
-                    #descriptionTemplate
-                    let-element="element"
-                    let-column="column"
-                    let-index="index"
-                  >
-                    <ng-container>
+                <ng-template
+                  #descriptionTemplate
+                  let-element="element"
+                  let-column="column"
+                  let-index="index"
+                >
+                  <ng-container>
+                    <form [formGroup]="inputLocaleLayoutFormDesc">
                       <mat-form-field appearance="outline" fisStyle>
                         <input
                           type="text"
                           matInput
                           fisStyle
-                          formControlName="description"
+                          [formControl]="
+                            inputLocaleLayoutFormDesc.controls[
+                              useExistingFormCtrlKeysDesc[index]
+                            ]
+                          "
                           name="description"
                         />
                       </mat-form-field>
-                    </ng-container>
-                  </ng-template>
+                    </form>
+                  </ng-container>
+                </ng-template>
 
-                  <ng-template
-                    #actionBtnsTemplate
-                    let-element="element"
-                    let-column="column"
-                    let-index="index"
+                <ng-template
+                  #actionBtnsTemplate
+                  let-element="element"
+                  let-column="column"
+                  let-index="index"
+                >
+                  <bod-table-actions
+                    [actions]="rowLevelActionsForlocaleEdit"
+                    (onActionClick)="
+                      handleRowLevelActionsforlocale($event.icon, index)
+                    "
                   >
-                    <bod-table-actions
-                      [actions]="rowLevelActionsForlocaleEdit"
-                      (onActionClick)="
-                        handleRowLevelActionsforlocale($event.icon, index)
-                      "
-                    >
-                    </bod-table-actions>
-                  </ng-template>
-                </bod-form>
+                  </bod-table-actions>
+                </ng-template>
+                <!-- </bod-form> -->
               </bod-table>
