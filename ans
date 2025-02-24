@@ -1,18 +1,10 @@
-inlineFormAddSubmit(event: any, index: number) {
-  if (event && event.formGroup.valid) {
-    const formValue = event.formGroup.value; // Get values directly from the inline form
-
-    const newLocaleEntry = {
-      locale: formValue.localeCode,
-      displayName: formValue.displayName,
-      description: formValue.description
+const multiLingualTextInfoList = Object.keys(this.inputLocaleLayoutFormLocale.controls).map((key, index) => {
+    return {
+      localeCode: this.inputLocaleLayoutFormLocale.get(key)?.value, // From locale form group
+      localeText: this.inputLocaleLayoutForm.get(this.useExistingFormCtrlKeys[index])?.value, // From display name form group
+      identifier: 280000000072595, // Assuming fixed identifier
+      objectType: formValue.type,
+      attributeType: formValue.datatype,
+      translationText: this.inputLocaleLayoutFormDesc.get(this.useExistingFormCtrlKeysDesc[index])?.value // From description form group
     };
-
-    if (newLocaleEntry.locale && newLocaleEntry.displayName && newLocaleEntry.description) {
-      this.dataWithlocale.push(newLocaleEntry);
-      this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
-    } else {
-      alert('Please fill all required fields before adding!');
-    }
-  }
-}
+  });
