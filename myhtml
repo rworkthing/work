@@ -1,14 +1,44 @@
-<div *ngIf="isValidValueTypes">
-              <bod-page-container
-                title="Attribute Valid Values"
-              ></bod-page-container>
-              <bod-form
+<bod-input-layout col="1">
+                <bod-table
+                  #Validvaltable2
+                  [data]="ExistingValidvalueArray"
+                  [tableActions]="balanceHoldsTableActions3"
+                  (onTableActionClick)="onExsistingValidTableActionClicked($event)"
+                  [inlineModal]="{
+                    formGroup: inputExistingLayoutForm,
+                    formTemplateName: inputExistingLayoutTemplate
+                  }"
+                  [customColumnTemplates]="[
+                    {
+                      columnName: 'actions',
+                      templateName: deleteActionTemplate
+                    }
+                  ]"
+                  [alignContent]="'top'"
+                >
+                  <ng-template
+                    #deleteActionTemplate
+                    let-element="element"
+                    let-column="column"
+                    let-index="index"
+                  >
+                    <bod-table-actions
+                      [actions]="rowLevelActionsForBasicEdit"
+                      (onActionClick)="
+                        handleExistingRowLevelActions($event.icon, index)
+                      "
+                    >
+                    </bod-table-actions>
+                  </ng-template>
+                </bod-table>
+                 <form
                 [formGroup]="inputExistingLayoutForm"
                 [type]="formType"
                 (onSubmit)="onExistingAdd(inputExistingLayoutForm.value)"
                 (onReset)="onReset()"
                 fisStyle
               >
+               <ng-template #inputExistingLayoutTemplate>
                 <bod-input-layout col="2">
                   <bod-control-group
                     [truncate]="false"
@@ -107,34 +137,6 @@
                     </mat-slide-toggle>
                   </bod-control-group>
                 </bod-input-layout>
-
-                <!-- <button mat-raised-button color="primary" type="submit" [disabled]="inputLayoutForm.invalid">Save</button> -->
-              </bod-form>
-              <bod-input-layout col="1">
-                <bod-table
-                  [customColumnTemplates]="[
-                    {
-                      columnName: 'actions',
-                      templateName: deleteActionTemplate
-                    }
-                  ]"
-                  [data]="ExistingValidvalueArray"
-                  [alignContent]="'top'"
-                >
-                  <ng-template
-                    #deleteActionTemplate
-                    let-element="element"
-                    let-column="column"
-                    let-index="index"
-                  >
-                    <bod-table-actions
-                      [actions]="rowLevelActionsForBasicEdit"
-                      (onActionClick)="
-                        handleExistingRowLevelActions($event.icon, index)
-                      "
-                    >
-                    </bod-table-actions>
-                  </ng-template>
-                </bod-table>
+              </ng-template>
+              </form>
               </bod-input-layout>
-            </div>
