@@ -1,16 +1,3 @@
-this.inputLocaleLayoutForm.valueChanges.subscribe((formvalues) =>{
-      this.autoSaveInlineEntry(formvalues, index);
-    });
-
-Expected 2 arguments, but got 1.      
-
-812       this.autoSaveInlineEntry(formvalues);
-               ~~~~~~~~~~~~~~~~~~~
-
-  libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:835:39
-    835   autoSaveInlineEntry(formValues: any,index: number) {
-                                              ~~~~~~~~~~~~~
-    An argument for 'index' was not provided.
-
-
-
+Type '{ data: BodSampleTableExisting[]; filteredData: any; } | { data: BodSampleTableExisting[]; _renderChangesSubscription: Subscription | null; filteredData: any[]; sortingDataAccessor: (data: any, sortHeaderId: string) => string | number; sortData: (data: any[], sort: MatSort) => any[]; filterPredicate: (data: any, fil...' is not assignable to type 'BodTableDataSource<any> | MatTableDataSource<any, MatPaginator>'.
+  Type '{ data: BodSampleTableExisting[]; filteredData: any; }' is not assignable to type 'BodTableDataSource<any> | MatTableDataSource<any, MatPaginator>'.
+    Type '{ data: BodSampleTableExisting[]; filteredData: any; }' is missing the following properties from type 'MatTableDataSource<any, MatPaginator>': _data, _renderData, _filter, _internalPageChanges, and 16 more.ts(2322)
