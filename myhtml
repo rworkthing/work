@@ -1,135 +1,140 @@
-<bod-table
-                #localetable
-                [data]="tableWithSimpleEdit"
-                [modeOptions]="modeOptions"
-                [tableActions]="balanceHoldsTableActions1"
-                (onTableActionClick)="onLocaleTableActionClicked($event)"
-                [primaryColumnName]="'id'"
-                [truncateAfterLine]="1"
-                (onInlineFormAddSubmit)="inlineFormAddSubmit($event, 0)"
-                (onInlineFormEditSubmit)="inlineFormEditSubmit($event, 0)"
-                (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-                (onInlineAddRowActionClick)="inlineAddRowActionClick(0)"
-                [customColumnTemplates]="[
-                  {
-                    columnName: 'locale',
-                    templateName: localeTemplate1
-                  },
-                  {
-                    columnName: 'displayName',
-                    templateName: displayName1
-                  },
-                  {
-                    columnName: 'description',
-                    templateName: descriptionTemplate
-                  },
-                  {
-                    columnName: 'actionBtns',
-                    templateName: actionBtnsTemplate
-                  }
-                ]"
+<div *ngIf="isValidValueTypes">
+              <bod-page-container
+                title="Attribute Valid Values"
+              ></bod-page-container>
+              <bod-form
+                [formGroup]="inputExistingLayoutForm"
+                [type]="formType"
+                (onSubmit)="onExistingAdd(inputExistingLayoutForm.value)"
+                (onReset)="onReset()"
+                fisStyle
               >
-                <!-- <bod-form
-                  [formGroup]="inputLocaleLayoutForm"
-                  [type]="formType"
-                  (onSubmit)="onLocaleAdd(inputLocaleLayoutForm.value)"
-                  (onReset)="onReset()"
-                  fisStyle
-                > -->
-                <ng-template
-                  #localeTemplate1
-                  let-element="element"
-                  let-column="column"
-                  let-index="index"
-                >
-                  <form [formGroup]="inputLocaleLayoutFormLocale">
-                    <bod-input-layout col="1">
-                      <mat-form-field appearance="outline" fisStyle>
-                        <mat-select
-                          panelClass="fis-style"
-                          [formControl]="
-                            inputLocaleLayoutFormLocale.controls[
-                              useExistingFormCtrlKeysLocale[index]
-                            ]
-                          "
-                          name="localeCode"
-                        >
-                          <mat-option
-                            *ngFor="let localeCode of localeCodes"
-                            value="{{ localeCode.value }}"
-                          >
-                            {{ localeCode.label }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </bod-input-layout>
-                  </form>
-                </ng-template>
-
-                <ng-template
-                  #displayName1
-                  let-element="element"
-                  let-column="column"
-                  let-index="index"
-                >
-                  <ng-container>
-                    
-                    <form [formGroup]="inputLocaleLayoutForm">
-                      <mat-form-field appearance="outline" fisStyle>
-                        <input
-                          type="text"
-                          matInput
-                          fisStyle
-                          [formControl]="
-                            inputLocaleLayoutForm.controls[
-                              useExistingFormCtrlKeys[index]
-                            ]
-                          "
-                          name="displayName"
-                        />
-                      </mat-form-field>
-                    </form>
-                  </ng-container>
-                </ng-template>
-
-                <ng-template
-                  #descriptionTemplate
-                  let-element="element"
-                  let-column="column"
-                  let-index="index"
-                >
-                  <ng-container>
-                    <form [formGroup]="inputLocaleLayoutFormDesc">
-                      <mat-form-field appearance="outline" fisStyle>
-                        <input
-                          type="text"
-                          matInput
-                          fisStyle
-                          [formControl]="
-                            inputLocaleLayoutFormDesc.controls[
-                              useExistingFormCtrlKeysDesc[index]
-                            ]
-                          "
-                          name="description"
-                        />
-                      </mat-form-field>
-                    </form>
-                  </ng-container>
-                </ng-template>
-
-                <ng-template
-                  #actionBtnsTemplate
-                  let-element="element"
-                  let-column="column"
-                  let-index="index"
-                >
-                  <bod-table-actions
-                    [actions]="rowLevelActionsForlocaleEdit"
-                    (onActionClick)="
-                      handleRowLevelActionsforlocale($event.icon, index)
+                <bod-input-layout col="2">
+                  <bod-control-group
+                    [truncate]="false"
+                    [label]="
+                      translationKey + 'metadataconfig.additionaldatavalue'
                     "
+                    [forTextOnly]="true"
+                    [required]="true"
                   >
-                  </bod-table-actions>
-                </ng-template>
-                <!-- </bod-form> -->
-              </bod-table>
+                    <mat-form-field appearance="outline" fisStyle>
+                      <input
+                        type="text"
+                        matInput
+                        fisStyle
+                        formControlName="additionaldatavalue"
+                        name="additionaldatavalue"
+                      />
+                    </mat-form-field>
+                  </bod-control-group>
+                  <bod-control-group
+                    [truncate]="false"
+                    [label]="translationKey + 'metadataconfig.percentagevalue'"
+                    [forTextOnly]="true"
+                    [required]="false"
+                  >
+                    <mat-form-field appearance="outline" fisStyle>
+                      <input
+                        type="number"
+                        matInput
+                        fisStyle
+                        formControlName="percentagevalue"
+                        name="percentagevalue"
+                      />
+                    </mat-form-field>
+                  </bod-control-group>
+                  <bod-control-group
+                    [truncate]="false"
+                    [label]="translationKey + 'metadataconfig.sequencenumber'"
+                    [forTextOnly]="true"
+                    [required]="false"
+                  >
+                    <mat-form-field appearance="outline" fisStyle>
+                      <input
+                        type="number"
+                        matInput
+                        fisStyle
+                        formControlName="sequencenumber"
+                        name="sequencenumber"
+                      />
+                    </mat-form-field>
+                  </bod-control-group>
+                  <bod-control-group
+                    [truncate]="false"
+                    [label]="
+                      translationKey + 'metadataconfig.defaulatindicator'
+                    "
+                    [forTextOnly]="true"
+                    [required]="false"
+                  >
+                    <mat-slide-toggle
+                      fisStyle
+                      color="primary"
+                      formControlName="defaultindicator"
+                      name="defaultindicator"
+                    >
+                    </mat-slide-toggle>
+                  </bod-control-group>
+                  <bod-control-group
+                    [truncate]="false"
+                    [label]="translationKey + 'metadataconfig.primaryindicator'"
+                    [forTextOnly]="true"
+                    [required]="false"
+                  >
+                    <mat-slide-toggle
+                      fisStyle
+                      color="primary"
+                      formControlName="primaryindicator"
+                      name="primaryindicator"
+                    >
+                    </mat-slide-toggle>
+                  </bod-control-group>
+                  <bod-control-group
+                    [truncate]="false"
+                    [label]="
+                      translationKey + 'metadataconfig.overrideindicator'
+                    "
+                    [forTextOnly]="true"
+                    [required]="false"
+                  >
+                    <mat-slide-toggle
+                      fisStyle
+                      color="primary"
+                      formControlName="overrideindicator"
+                      name="overrideindicator"
+                    >
+                    </mat-slide-toggle>
+                  </bod-control-group>
+                </bod-input-layout>
+
+                <!-- <button mat-raised-button color="primary" type="submit" [disabled]="inputLayoutForm.invalid">Save</button> -->
+              </bod-form>
+              <bod-input-layout col="1">
+                <bod-table
+                  [customColumnTemplates]="[
+                    {
+                      columnName: 'actions',
+                      templateName: deleteActionTemplate
+                    }
+                  ]"
+                  [data]="ExistingValidvalueArray"
+                  [alignContent]="'top'"
+                >
+                  <ng-template
+                    #deleteActionTemplate
+                    let-element="element"
+                    let-column="column"
+                    let-index="index"
+                  >
+                    <bod-table-actions
+                      [actions]="rowLevelActionsForBasicEdit"
+                      (onActionClick)="
+                        handleExistingRowLevelActions($event.icon, index)
+                      "
+                    >
+                    </bod-table-actions>
+                  </ng-template>
+                </bod-table>
+              </bod-input-layout>
+            </div>
