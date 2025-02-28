@@ -1,3 +1,51 @@
-<button type="submit" mat-raised-button color="primary" (click)="onExistingAdd(inputExistingLayoutForm.value)">
-  Save
-</button>
+private editAttributes(element: Attribute) {
+    this.addNewAttributeFormGroup.setValue({
+      code: element.code,
+      identifier: element.identifier,
+      name: element.name,
+      shortname: element.shortName,
+      description: element.description,
+      type: element.formatTypeIdentifier,
+      datatype: element.objectTypeIdentifier,
+      calculate: element.calculated ? 'Y' : 'N',
+      searchable: element.searchable ? 'Y' : 'N',
+      multivalueallowed: element.multiValueAllowed ? 'Y' : 'N',
+      percentageallowed: element.percentageAllowed ? 'Y' : 'N',
+      classificationtype: element.classificationType,
+      relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList,
+      validvaluestype: element.validValuesType,
+      low: element.additionalDataValidValuesRange?.lowValue,
+      high: element.additionalDataValidValuesRange?.highValue,
+      rangename: element.additionalDataValidValuesRange?.name,
+      rangedescriptions: element.additionalDataValidValuesRange?.description,
+      attributevalue: element.additionalDataValidValueSetList?.attributeIdentifier,
+      setname: element.additionalDataValidValueSetList?.name,
+      setdescription: element.additionalDataValidValueSetList?.description,
+      sequencenumbers: element.additionalDataValidValueSetList?.sequenceNumber,
+      percentages: element.additionalDataValidValueSetList?.percentage,
+      valuesearch: element.additionalDataValidValueSetList?.value,
+      isdefault: element.additionalDataValidValueSetList?.isDefault,
+      isvalueoverridden: element.additionalDataValidValueSetList?.overrideDefault,
+      isprimary: element.additionalDataValidValueSetList?.isPrimary,
+      productTypeCode: element.code,
+    });
+
+    this.inputLayoutForm.setValue({
+      additionaldatavalue: element.additionalDataValue,
+      percentagevalue: element.percentageValue,
+      sequencenumber: element.sequenceNumber,
+      defaultindicator: element.defaultIndicator,
+      primaryindicator: element.primaryIndicator,
+      overrideindicator: element.overrideIndicator,
+    });
+
+    this.editAttribute = element;
+    
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addAttributeTemp,
+      title: 'Edit Attribute',
+    };
+    
+    this.openDialog(dialogModel);
+    this.isEdit = true;
+}
