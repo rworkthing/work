@@ -1,4 +1,1 @@
-this.inputLocaleLayoutForm.valueChanges.subscribe((formValues) => {
-  const currentIndex = this.dataWithlocale.length - 1; // Use the latest entry's index
-  this.autoSaveInlineEntry(formValues, currentIndex);
-});
+    console.log("Element Data:", JSON.stringify(element, null, 2));
