@@ -192,7 +192,7 @@ export class MetadataConfigComponent implements OnInit {
   };
   public modeOptionsSimple = this.modeOptions;
   public pageModeSimple = this.pageMode;
-  
+
   @Input() editAttributeRow: Attribute;
   @ViewChild('addNewAttributeTemplate')
   public addAttributeTemp: TemplateRef<any>;
@@ -354,8 +354,8 @@ export class MetadataConfigComponent implements OnInit {
       forTextOnly: true
     }
   ];
-  isEdit: boolean=false;
-  value: string="123";
+  isEdit: boolean = false;
+  value: string = "123";
   private addExistingAttribute() {
     // this.editAttribute = null;
     let dialogModel: BodCommonDialogModel = {
@@ -374,53 +374,113 @@ export class MetadataConfigComponent implements OnInit {
     this.messages = [];
     this.addNewAttributeFormGroup.reset();
   }
+  // private editAttributes(element: Attribute) {
+  //   console.log("Element Data:", JSON.stringify(element, null, 2));
+  //   this.addNewAttributeFormGroup.setValue({
+  //     code: element.code,
+  //     identifier: element.identifier,
+  //     name: element.name,
+  //     shortname: element.shortName,
+  //     type: element.formatTypeIdentifier,
+  //     datatype:element.objectTypeIdentifier,
+  //     calculate:element.calculated,
+  //     searchable: element.searchable,
+  //     multivalueallowed: element.multiValueAllowed,
+  //     percentageallowed: element.percentageAllowed,
+  //     classificationtype: element.classificationType,
+  //     relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList,
+  //     // attributevalue: element.additionalDataValidValueSetList?.attributeIdentifier,
+  //     // setname: element.additionalDataValidValueSetList?.name,
+  //     // setdescription: element.additionalDataValidValueSetList?.description,
+  //     // sequencenumbers: element.additionalDataValidValueSetList?.sequenceNumber,
+  //     // percentages: element.additionalDataValidValueSetList?.percentage,
+  //     // valuesearch: element.additionalDataValidValueSetList?.value,
+  //     // isdefault: element.additionalDataValidValueSetList?.isDefault,
+  //     // isvalueoverridden: element.additionalDataValidValueSetList?.overrideDefault,
+  //     // isprimary:element.additionalDataValidValueSetList?.isPrimary,
+  //     // low: element.additionalDataValidValuesRange?.lowValue,
+  //     // high: element.additionalDataValidValuesRange?.highValue,
+  //     descriptions:element.description,
+  //     // validvaluestype:element,
+  //     productTypeCode:element.code,
+  //     // max: element
+  //     // displayName:element.multiLingualTextInfoList.
+  //     // multiLingualTextInfoList: element.multiLingualTextInfoList,
+
+
+  //   })
+  //   // this.inputLayoutForm.setValue({
+  //   //   additionaldatavalue: element.
+  //   // })
+  //   this.editAttribute = element;
+  //   let dialogModel: BodCommonDialogModel = {
+  //     formTemplate: this.addAttributeTemp,
+  //     title: 'Edit Attribute'
+  //   };
+  //   this.openDialog(dialogModel);
+  //   this.isEdit=true;
+  //   console.log(this.getAttribute)
+  // }
+
   private editAttributes(element: Attribute) {
+    console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
+
     this.addNewAttributeFormGroup.setValue({
       code: element.code,
       identifier: element.identifier,
       name: element.name,
       shortname: element.shortName,
-      type: element.formatTypeIdentifier,
-      datatype:element.objectTypeIdentifier,
-      calculate:element.calculated ? 'Y' : 'N',
-      searchable: element.searchable ? 'Y' : 'N',
-      multivalueallowed: element.multiValueAllowed ? 'Y' : 'N',
-      percentageallowed: element.percentageAllowed ? 'Y' : 'N',
+      type: element.objectTypeIdentifier,
+      datatype: element.formatTypeIdentifier,
+      calculate: element.calculated === "Y",
+      searchable: element.searchable === "Y",
+      multivalueallowed: element.multiValueAllowed === "Y",
+      percentageallowed: element.percentageAllowed === "Y",
       classificationtype: element.classificationType,
-      relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList,
-      // attributevalue: element.additionalDataValidValueSetList?.attributeIdentifier,
-      // setname: element.additionalDataValidValueSetList?.name,
-      // setdescription: element.additionalDataValidValueSetList?.description,
-      // sequencenumbers: element.additionalDataValidValueSetList?.sequenceNumber,
-      // percentages: element.additionalDataValidValueSetList?.percentage,
-      // valuesearch: element.additionalDataValidValueSetList?.value,
-      // isdefault: element.additionalDataValidValueSetList?.isDefault,
-      // isvalueoverridden: element.additionalDataValidValueSetList?.overrideDefault,
-      // isprimary:element.additionalDataValidValueSetList?.isPrimary,
-      // low: element.additionalDataValidValuesRange?.lowValue,
-      // high: element.additionalDataValidValuesRange?.highValue,
-      descriptions:element.description,
-      // validvaluestype:element,
-      productTypeCode:element.code,
-      // max: element
-      // displayName:element.multiLingualTextInfoList.
-      // multiLingualTextInfoList: element.multiLingualTextInfoList,
+      relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
+      descriptions: element.description.find(desc => desc.label === "Description")?.value || '',
+      validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" :
+        element.additionalDataValidValueSetList ? "setvalues" : '',
+      productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
+      min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
+      max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
+      GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
+      attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
+      isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
+      isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
+      isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
+      sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
+      percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
+      valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
+      // low: element.additionalDataValidValuesRange?.low || '',
+      // high: element.additionalDataValidValuesRange?.high || '',
+      rangename: element.additionalDataValidValuesRange?.name || '',
+      rangedescriptions: element.additionalDataValidValuesRange?.description || '',
+      // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
+      // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
+    });
 
-
-    })
     this.inputLayoutForm.setValue({
-      additionaldatavalue: element.
+      additionaldatavalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
+      percentagevalue: element.productTypeAdditionalDataList?.[0]?.percentage || '',
+      sequencenumber: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
+      defaultindicator: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
+      primaryindicator: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
+      overrideindicator: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y"
+    });
+
+    this.inputLocaleLayoutFormLocale.setValue({
+      
     })
+
     this.editAttribute = element;
     let dialogModel: BodCommonDialogModel = {
       formTemplate: this.addAttributeTemp,
       title: 'Edit Attribute'
     };
     this.openDialog(dialogModel);
-    this.isEdit=true;
-    console.log(this.getAttribute)
+    this.isEdit = true;
   }
-  
   isEditView() {
     return this.editAttributeRow ? true : false;
   }
@@ -457,12 +517,12 @@ export class MetadataConfigComponent implements OnInit {
   //     //   'mbpEc.feAttributeValue.details.delete.messages.success'
   //     // )
   //   );
-    // this.getAllAttribute(
-    //   this.feAttrName,
-    //   // this.filterCriteria.segment,
-    //   qualifier1,
-    //   qualifier2
-    // );
+  // this.getAllAttribute(
+  //   this.feAttrName,
+  //   // this.filterCriteria.segment,
+  //   qualifier1,
+  //   qualifier2
+  // );
   // }
   // private handleErrorResp(errMessage: NotificationMessage[]) {
   //   if (errMessage && errMessage.length>0) {
@@ -677,7 +737,7 @@ export class MetadataConfigComponent implements OnInit {
   additionalValidValues: any[] = [];
   public selectedFilters: BodTableFilterCriteria[] = [];
   public onTableActionClicked(event: BodTableAction) {
-    this.isEdit=false;
+    this.isEdit = false;
     if (event.id === 12) {
       this.addNewAttribute();
     } else if (event.id === 13) {
@@ -685,7 +745,7 @@ export class MetadataConfigComponent implements OnInit {
     }
   }
   iconActionClicked(event: BodTableAction, element: Attribute) {
-    this.isEdit=true
+    this.isEdit = true
     // this._notify.setMessages([]);
     console.log(element);
     if (event.id === BodTableActionType.EDIT) {
@@ -695,8 +755,8 @@ export class MetadataConfigComponent implements OnInit {
     }
   }
 
-  public onExistingValidTableActionClicked(event: BodTableAction): void {}
-  public onValidTableActionClicked(event: BodTableAction): void {}
+  public onExistingValidTableActionClicked(event: BodTableAction): void { }
+  public onValidTableActionClicked(event: BodTableAction): void { }
 
   public onLocaleTableActionClicked(event: BodTableAction) {
     if (event.id === BodTableActionType.ADD) {
@@ -723,7 +783,7 @@ export class MetadataConfigComponent implements OnInit {
     // }
   }
 
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
   public balanceHoldsTableMetaData: BodTableMetadata;
   public AttributeLocalTable: BodTableMetadata;
@@ -1341,7 +1401,7 @@ export class MetadataConfigComponent implements OnInit {
   getTableInput(index: number): any {
     return this.tabIndexTableMap[index].input;
   }
-  inlineFormAddSubmit(event: any, index: number) {}
+  inlineFormAddSubmit(event: any, index: number) { }
 
   loadDropdownData(): void {
     this.metadataService.getTypes().subscribe(data => {
@@ -1420,8 +1480,8 @@ export class MetadataConfigComponent implements OnInit {
     relateToProductTypeControl?.updateValueAndValidity();
   }
 
-  onSubmit(event: Event) {}
-  onReset() {}
+  onSubmit(event: Event) { }
+  onReset() { }
   handleRowLevelActions(action: string, index: number) {
     if (action === 'trash') {
       this.deleteRow(index);
@@ -1817,7 +1877,7 @@ export class MetadataConfigComponent implements OnInit {
     }
     this.dataWithValidvalues = this.dataWithValidvalues || [];
     const newValidValue: BodSampleTable1 = {
-      additionaldatavalue: formValues.additionaldatavalue  || '',
+      additionaldatavalue: formValues.additionaldatavalue || '',
       defaultindicator: formValues.defaultindicator ?? false,
       primaryindicator: formValues.primaryindicator ?? false,
       overrideindicator: formValues.overrideindicator ?? false,
@@ -1826,10 +1886,10 @@ export class MetadataConfigComponent implements OnInit {
     };
 
     this.dataWithValidvalues.push(newValidValue);
-    if(this.ValidvalueArray && this.ValidvalueArray.datasource){
+    if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
       this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
     }
-    else{
+    else {
     }
     this.inputLayoutForm.reset();
     this.changeDetectorRef.detectChanges();
@@ -1844,9 +1904,9 @@ export class MetadataConfigComponent implements OnInit {
     this.dataWithExsistingValidvalues = this.dataWithExsistingValidvalues || [];
     const newValidValue: BodSampleTableExisting = {
       additionaldatavalue: formValues.additionaldatavalue || '',
-      defaultindicator: formValues.defaultindicator?? false,
-      primaryindicator: formValues.primaryindicator?? false,
-      overrideindicator: formValues.overrideindicator?? false,
+      defaultindicator: formValues.defaultindicator ?? false,
+      primaryindicator: formValues.primaryindicator ?? false,
+      overrideindicator: formValues.overrideindicator ?? false,
       percentagevalue: formValues.percentagevalue ?? null,
       sequencenumber: formValues.sequencenumber ?? null
     };
@@ -1859,12 +1919,12 @@ export class MetadataConfigComponent implements OnInit {
     //   ...this.ExistingValidvalueArray.datasource,
     //   data:[...this.dataWithExsistingValidvalues]
     // };
-    if(this.ExistingValidvalueArray && this.ExistingValidvalueArray.datasource){
+    if (this.ExistingValidvalueArray && this.ExistingValidvalueArray.datasource) {
       this.ExistingValidvalueArray.datasource.data = [...this.dataWithExsistingValidvalues];
     }
-    else{
+    else {
     }
-      
+
     this.inputExistingLayoutForm.reset({});
     this.changeDetectorRef.detectChanges();
     alert('Valid values added successfully!');
@@ -2162,30 +2222,29 @@ export class MetadataConfigComponent implements OnInit {
       classificationtype: new UntypedFormControl(''),
       // validvaluestype: new UntypedFormControl(''),
       relatetoproducttype: new UntypedFormControl(''),
-      // attributevalue: new UntypedFormControl(''),
+      attributevalue: new UntypedFormControl(''),
       // setname: new UntypedFormControl(''),
       // setdescription: new UntypedFormControl(''),
-      // sequencenumbers: new UntypedFormControl(),
-      // percentages: new UntypedFormControl(),
-      // valuesearch: new UntypedFormControl(''),
-      // isdefault: new UntypedFormControl(false),
-      // isvalueoverridden: new UntypedFormControl(false),
-      // isprimary: new UntypedFormControl(false),
+      sequencenumbers: new UntypedFormControl(),
+      percentages: new UntypedFormControl(),
+      valuesearch: new UntypedFormControl(''),
+      isdefault: new UntypedFormControl(false),
+      isvalueoverridden: new UntypedFormControl(false),
+      isprimary: new UntypedFormControl(false),
       // low: new UntypedFormControl(''),
       // high: new UntypedFormControl(''),
       descriptions: [''],
-      // validvaluestype: [''],
+      validvaluestype: [''],
       productTypeCode: [{ value: '', disabled: true }],
-      // max: new UntypedFormControl(),
-      // min: new UntypedFormControl(),
-      // GLcategorizationAllowed: [''],
+      max: new UntypedFormControl(),
+      min: new UntypedFormControl(),
+      GLcategorizationAllowed: [''],
       // validtype: [''],
-      // rangename: new UntypedFormControl(''),
-      // rangedescriptions: new UntypedFormControl(''),
+      rangename: new UntypedFormControl(''),
+      rangedescriptions: new UntypedFormControl(''),
       // displayName: new UntypedFormControl(''),
       // description: new UntypedFormControl(''),
       // localeCode: [{ value: '', disabled: true }]
-      multiLingualTextInfoList:
     });
     this.addExistingAttributeFormGroup = this.fb.group({
       productCode: new UntypedFormControl('', [Validators.required]),
@@ -2227,13 +2286,13 @@ export class MetadataConfigComponent implements OnInit {
       let error: string = '';
       Object.keys(fc.errors).forEach(
         key =>
-          (error = key
-            ? key == formValidatorKey
-              ? `BOD.demo.microsite.error.${customkey}`
-              : key !== null
+        (error = key
+          ? key == formValidatorKey
+            ? `BOD.demo.microsite.error.${customkey}`
+            : key !== null
               ? `BOD.demo.microsite.error.${key}`
               : ''
-            : ``)
+          : ``)
       );
       return error;
     }
@@ -2286,21 +2345,21 @@ export class MetadataConfigComponent implements OnInit {
   //     event.editRowElement['expirationDate'],
   //     event.editRowElement['expirationTime']
   //   );
-    // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
-    //   event.editRowElement['amount'].amount,
-    //   event.editRowElement['amount'].currency?.symbol
-    // );
-    // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
-    // this.addNewAttributeFormGroup.removeControl('referenceId');
-    // this.addNewAttributeFormGroup.removeControl('referenceType');
-    // this.holdAllValue = event.editRowElement['isHoldAll'];
-    // this.isExpireValue = event.editRowElement['isExpire'];
-    // this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
-    // this.checkExpirationFieldVisibility();
-    // this.effectiveDate = DateUtilityService.updateDateFormat(
-    //   new Date(this.bookingDate),
-    //   'MM/dd/YYYY'
-    // );
+  // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
+  //   event.editRowElement['amount'].amount,
+  //   event.editRowElement['amount'].currency?.symbol
+  // );
+  // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
+  // this.addNewAttributeFormGroup.removeControl('referenceId');
+  // this.addNewAttributeFormGroup.removeControl('referenceType');
+  // this.holdAllValue = event.editRowElement['isHoldAll'];
+  // this.isExpireValue = event.editRowElement['isExpire'];
+  // this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
+  // this.checkExpirationFieldVisibility();
+  // this.effectiveDate = DateUtilityService.updateDateFormat(
+  //   new Date(this.bookingDate),
+  //   'MM/dd/YYYY'
+  // );
   //   this.addNewAttributeFormGroup.setValue({
   //     // amount: holdAmount,
   //     reason: event.editRowElement['reasonDescription'],
