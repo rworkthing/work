@@ -1,12 +1,88 @@
-onAdd(formValues: any) {
-    const newValidValue: BodSampleTable1 = {
-      additionaldatavalue: formValues.additionaldatavalue,
-      defaulatindicator: formValues.defaulatindicator,
-      primaryindicator: formValues.primaryindicator,
-      overrideindicator: formValues.overrideindicator
-    };
+private editAttributes(element: Attribute) {
+    console.log("Element Data:", JSON.stringify(element, null, 2));
+    this.isAdd = false;
 
-    this.dataWithValidvalues.push(newValidValue);
-    this.result = this.dataWithValidvalues;
-    this.inputLayoutForm.reset();
-  }
+    if (element.code) {
+        // Case: Editing an existing attribute (use addAttributeTemp)
+        this.addNewAttributeFormGroup.setValue({
+            code: element.code,
+            identifier: element.identifier,
+            name: element.name,
+            shortname: element.shortName,
+            type: element.objectTypeIdentifier,
+            datatype: element.formatTypeIdentifier,
+            calculate: element.calculated === "Y",
+            searchable: element.searchable === "Y",
+            multivalueallowed: element.multiValueAllowed === "Y",
+            percentageallowed: element.percentageAllowed === "Y",
+            classificationtype: element.classificationType,
+            relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
+            descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
+            validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" : 
+                            element.additionalDataValidValueSetList ? "setvalues" : '',
+            productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
+            min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
+            max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
+            GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
+            attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
+            isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
+            isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
+            isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
+            sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
+            percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
+            valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
+            localeCode: element.multiLingualTextInfoList?.[0]?.localeCode || '',
+            description: element.multiLingualTextInfoList?.[0]?.localeText || '',
+            displayName: element.multiLingualTextInfoList?.[0]?.translationText || '',
+            rangename: element.additionalDataValidValuesRange?.name || '',
+            rangedescriptions: element.additionalDataValidValuesRange?.description || ''
+        });
+
+    } else {
+        // Case: Adding an existing attribute (use addExistingAttributeTemp)
+        this.addExistingAttributeFormGroup.setValue({
+            productCode: element.productCode || '',
+            min: element.min || '',
+            max: element.max || '',
+            GLcategorizationAllowed: element.GLcategorizationAllowed || false,
+            validtype: element.validtype || false
+        });
+    }
+
+    // Process valid values only for existing attributes
+    if (element.code) {
+        this.ValidvalueArray.datasource.data = [];
+        element.productTypeAdditionalDataList?.forEach(item => {
+            let obj = {} as BodSampleTable1;
+            obj.additionaldatavalue = item.attributeValue;
+            obj.defaultindicator = item.isDefault;
+            obj.overrideindicator = item.overrideDefault;
+            obj.percentagevalue = item.percentage;
+            obj.sequencenumber = item.sequenceNumber;
+            this.ValidvalueArray.datasource.data.push(obj);
+        });
+    }
+
+    // Process multilingual data
+    this.tableWithSimpleEdit.datasource.data = [];
+    element.multiLingualTextInfoList?.forEach(item => {
+        this.editLocale(item.localeCode, item.translationText, item.localeText);
+        let obj = {} as BodLocaleTable;
+        obj.locale = item.localeCode;
+        obj.displayName = item.translationText;
+        obj.description = item.localeText;
+        const existingRow = this.tableWithSimpleEdit.datasource.data.find(row => row.locale === obj.locale);
+        if (!existingRow) {
+            this.tableWithSimpleEdit.datasource.data.push(obj);
+        }
+    });
+
+    // Open dialog with the correct template
+    let dialogModel: BodCommonDialogModel = {
+        formTemplate: element.code ? this.addAttributeTemp : this.addExistingAttributeTemp,
+        title: element.code ? 'Edit Attribute' : 'Add Existing Attribute'
+    };
+    this.openDialog(dialogModel);
+    this.isEdit = true;
+}
+
