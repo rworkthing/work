@@ -1,76 +1,42 @@
-iconActionClicked(event: BodTableAction, element: Attribute) {
-    this.isEdit = true;
-    console.log("Editing element:", element);
+onAddforExistingAttribute() {
+  if (this.addExistingAttributeFormGroup.invalid) {
+    return; // Prevent submission if the form is invalid
+  }
 
-    if (event.id === BodTableActionType.EDIT) {
-        this.editAttributes(element); // This already handles opening the dialog
-    } else if (event.id === 1) {
-        this.bodConfirmAlertDialogsService
-            .confirm(this.ConfirmData)
-            .subscribe(val => {
-                if (val) {
-                    this.AttributeDelete(element);
-                }
-            });
-    }
-}
+  const formValue = this.addExistingAttributeFormGroup.value;
+  const selectedProductCode = formValue.productCode;
+  console.log('Product Codes:', this.productCodes);
 
+  // Find the matching product type identifier
+  const productTypeIdentifier =
+    this.productCodes.find(item => item.label === selectedProductCode)?.value || selectedProductCode;
 
-private editAttributes(element: Attribute) {
-    console.log("Element Data:", JSON.stringify(element, null, 2));
-    this.isAdd = false;
-    this.addNewAttributeFormGroup.reset();
-    this.addExistingAttributeFormGroup.reset();
+  // Create the attribute object
+  const attribute: any = {
+    productTypeAdditionalDataTypeRelationshipList: [
+      {
+        identifier: 1110101,
+        attributeIdentifier: productTypeIdentifier,
+        minimumRequired: formValue.min,
+        maximumAllowed: formValue.max,
+        glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+      }
+    ]
+  };
 
-    let selectedTemplate: TemplateRef<any>;
-    let dialogTitle: string;
+  // If validtype is selected, prepare additional data values
+  if (formValue.validtype) {
+    attribute.productTypeAdditionalDataList = this.dataWithExsistingValidvalues.map((item, index) => ({
+      identifier: index,
+      attributeIdentifier: productTypeIdentifier,
+      attributeValue: item.additionaldatavalue,
+      attributeValueSource: '',
+      isDefault: item.defaultindicator ? 'Y' : 'N',
+      isPrimary: item.primaryindicator ? 'Y' : 'N',
+      percentage: item.percentagevalue,
+      sequenceNumber: item.sequencenumber,
+      overrideDefault: item.overrideindicator ? 'Y' : 'N'
+    }));
+  }
 
-    if (element.code) {
-        selectedTemplate = this.addAttributeTemp;
-        dialogTitle = "Edit Attribute";
-        this.addNewAttributeFormGroup.setValue({
-            code: element.code,
-            identifier: element.identifier,
-            name: element.name,
-            shortname: element.shortName,
-            type: element.objectTypeIdentifier,
-            datatype: element.formatTypeIdentifier,
-            calculate: element.calculated === "Y",
-            searchable: element.searchable === "Y",
-            multivalueallowed: element.multiValueAllowed === "Y",
-            percentageallowed: element.percentageAllowed === "Y",
-            classificationtype: element.classificationType,
-            relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
-            descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
-            validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" : 
-                            element.additionalDataValidValueSetList ? "setvalues" : '',
-            productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
-            min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
-            max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
-            GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y"
-        });
-    } else {
-        selectedTemplate = this.addExistingAttributeTemp;
-        dialogTitle = "Edit Existing Attribute";
-        
-        const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
-        this.addExistingAttributeFormGroup.setValue({
-            productCode: firstRelation?.attributeIdentifier || '',
-            min: firstRelation?.minimumRequired || '',
-            max: firstRelation?.maximumAllowed || '',
-            GLcategorizationAllowed: firstRelation?.glCategarization === "Y",
-            validtype: !!firstRelation
-        });
-    }
-
-    // Ensure the dialog only opens once
-    if (!this.dialogRef$ || !this.dialogRef$.getState() || this.dialogRef$.getState() === "CLOSED") {
-        let dialogModel: BodCommonDialogModel = {
-            formTemplate: selectedTemplate,
-            title: dialogTitle
-        };
-        this.openDialog(dialogModel);
-    }
-
-    this.isEdit = true;
-}
+  const request = {
