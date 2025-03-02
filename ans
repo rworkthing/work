@@ -1,6 +1,28 @@
 private determineTemplate(element: Attribute): TemplateRef<any> {
-    if (element.someConditionToCheckExisting) {
-        return this.addExistingAttributeTemp;
+    return element.code ? this.addAttributeTemp : this.addExistingAttributeTemp;
+}
+
+
+iconActionClicked(event: BodTableAction, element: Attribute) {
+    this.isEdit = true;
+    console.log("Editing element:", element);
+
+    if (event.id === BodTableActionType.EDIT) {
+        this.editAttributes(element);
+
+        let dialogModel: BodCommonDialogModel = {
+            formTemplate: this.determineTemplate(element),
+            title: element.code ? 'Edit Attribute' : 'Add Existing Attribute'
+        };
+
+        this.openDialog(dialogModel);
+    } else if (event.id === 1) {
+        this.bodConfirmAlertDialogsService
+            .confirm(this.ConfirmData)
+            .subscribe(val => {
+                if (val) {
+                    this.AttributeDelete(element);
+                }
+            });
     }
-    return this.addAttributeTemp;
 }
