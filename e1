@@ -2,8 +2,18 @@ private editAttributes(element: Attribute) {
     console.log("Element Data:", JSON.stringify(element, null, 2));
     this.isAdd = false;
 
+    // Reset both form groups to avoid previous data interfering
+    this.addNewAttributeFormGroup.reset();
+    this.addExistingAttributeFormGroup.reset();
+
+    let selectedTemplate: TemplateRef<any>;
+    let dialogTitle: string;
+
     if (element.code) {
         // Case: Editing an existing attribute (use addAttributeTemp)
+        selectedTemplate = this.addAttributeTemp;
+        dialogTitle = "Edit Attribute";
+
         this.addNewAttributeFormGroup.setValue({
             code: element.code,
             identifier: element.identifier,
@@ -28,6 +38,9 @@ private editAttributes(element: Attribute) {
 
     } else {
         // Case: Adding an existing attribute (use addExistingAttributeTemp)
+        selectedTemplate = this.addExistingAttributeTemp;
+        dialogTitle = "Add Existing Attribute";
+
         const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
 
         this.addExistingAttributeFormGroup.setValue({
@@ -68,11 +81,14 @@ private editAttributes(element: Attribute) {
         }
     });
 
-    // Open dialog with the correct template
-    let dialogModel: BodCommonDialogModel = {
-        formTemplate: element.code ? this.addAttributeTemp : this.addExistingAttributeTemp,
-        title: element.code ? 'Edit Attribute' : 'Add Existing Attribute'
-    };
-    this.openDialog(dialogModel);
+    // Ensure the dialog opens only once
+    if (!this.dialogRef$ || !this.dialogRef$.getState() || this.dialogRef$.getState() === "CLOSED") {
+        let dialogModel: BodCommonDialogModel = {
+            formTemplate: selectedTemplate,
+            title: dialogTitle
+        };
+        this.openDialog(dialogModel);
+    }
+
     this.isEdit = true;
 }
