@@ -193,9 +193,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   };
   public modeOptionsSimple = this.modeOptions;
   public pageModeSimple = this.pageMode;
-  
+
   @Input() editAttributeRow: Attribute;
-@ViewChild('customTable', { static: true })
+  @ViewChild('customTable', { static: true })
   expandableTable1Ref: BodTableComponent;
   @ViewChild('addNewAttributeTemplate')
   public addAttributeTemp: TemplateRef<any>;
@@ -358,10 +358,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       forTextOnly: true
     }
   ];
-  isEdit: boolean=false;
-  value: string="123";
+  isEdit: boolean = false;
+  value: string = "123";
   private addExistingAttribute() {
     // this.editAttribute = null;
+    this.addExistingAttributeFormGroup.reset();
+    this.ExistingValidvalueArray.datasource.data = [];
     let dialogModel: BodCommonDialogModel = {
       formTemplate: this.addExistingAttributeTemp,
       title: 'Attribute'
@@ -372,7 +374,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.tableWithSimpleEdit.datasource.data = [];
     this.ValidvalueArray.datasource.data = [];
     this.addNewAttributeFormGroup.reset();
-    this.addExistingAttributeFormGroup.reset();
     this.isAdd = true;
     // this.editAttribute = null;
     let dialogModel: BodCommonDialogModel = {
@@ -383,13 +384,20 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.messages = [];
     this.addNewAttributeFormGroup.reset();
   }
- 
-  
+
+
   private editAttributes(element: Attribute) {
     console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
     this.isAdd = false;
+    this.addNewAttributeFormGroup.reset();
+    this.addExistingAttributeFormGroup.reset();
+    let selectedTemplate: TemplateRef<any>;
+    let dialogTitle: string;
 
-    this.addNewAttributeFormGroup.setValue({
+    if (element.code) {
+      selectedTemplate = this.addAttributeTemp;
+      dialogTitle = "Edit Attribute";
+      this.addNewAttributeFormGroup.setValue({
         code: element.code,
         identifier: element.identifier,
         name: element.name,
@@ -403,8 +411,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         classificationtype: element.classificationType,
         relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
         descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
-        validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" : 
-                         element.additionalDataValidValueSetList ? "setvalues" : '',
+        validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" :
+          element.additionalDataValidValueSetList ? "setvalues" : '',
         productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
         min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
         max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
@@ -417,7 +425,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
         valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
         localeCode: element.multiLingualTextInfoList?.[0]?.localeCode || '',
-        description: element.multiLingualTextInfoList?.[0]?.localeText|| '',
+        description: element.multiLingualTextInfoList?.[0]?.localeText || '',
         displayName: element.multiLingualTextInfoList?.[0]?.translationText || '',
         // low: element.additionalDataValidValuesRange?.low || '',
         // high: element.additionalDataValidValuesRange?.high || '',
@@ -425,10 +433,23 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         rangedescriptions: element.additionalDataValidValuesRange?.description || '',
         // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
         // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
-    });
+      });
+    } else {
+      selectedTemplate = this.addExistingAttributeTemp;
+        dialogTitle = "Edit Existing Attribute";
 
-   
-    element.productTypeAdditionalDataList?.forEach(element =>{
+      const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
+
+      this.addExistingAttributeFormGroup.setValue({
+        productCode: firstRelation?.attributeIdentifier || '',
+        min: firstRelation?.minimumRequired || '',
+        max: firstRelation?.maximumAllowed || '',
+        GLcategorizationAllowed: firstRelation?.glCategarization === "Y",
+        validtype: !!firstRelation
+      });
+    }
+
+    element.productTypeAdditionalDataList?.forEach(element => {
       let obj = {} as BodSampleTable1;
       obj.additionaldatavalue = element.attributeValue;
       obj.defaultindicator = element.isDefault;
@@ -439,11 +460,21 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     })
     console.log(this.inputLayoutForm);
     console.log(this.ValidvalueArray);
+    element.productTypeAdditionalDataList?.forEach(element => {
+      let obj = {} as BodSampleTable1;
+      obj.additionaldatavalue = element.attributeValue;
+      obj.defaultindicator = element.isDefault;
+      obj.overrideindicator = element.overrideDefault;
+      obj.percentagevalue = element.percentage;
+      obj.sequencenumber = element.sequenceNumber;
+      this.ValidvalueArray.datasource.data.push(obj);
+    })
 
-    element.multiLingualTextInfoList?.forEach(element =>{
-      
+
+    element.multiLingualTextInfoList?.forEach(element => {
+
       this.editLocale(element.localeCode, element.translationText, element.localeText)
-      console.log("processinglocale",element.localeCode )
+      console.log("processinglocale", element.localeCode)
       let obj = {} as BodLocaleTable;
       obj.locale = element.localeCode;
       // this.inputLocaleLayoutFormLocale.get('localeCode')?.setValue(element.localeCode)
@@ -452,10 +483,10 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       const existingRow = this.tableWithSimpleEdit.datasource.data.find(
         row => row.locale === obj.locale
       );
-      if(!existingRow){
+      if (!existingRow) {
         this.tableWithSimpleEdit.datasource.data.push(obj);
       }
-      
+
     })
     // console.log(this.inputLayoutForm);
     console.log(this.inputLocaleLayoutFormLocale);
@@ -472,12 +503,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     this.editAttribute = element;
     let dialogModel: BodCommonDialogModel = {
-        formTemplate: this.addAttributeTemp,
-        title: 'Edit Attribute'
+      formTemplate: this.addAttributeTemp,
+      title: 'Edit Attribute'
     };
     this.openDialog(dialogModel);
     this.isEdit = true;
-}
+  }
   isEditView() {
     return this.editAttributeRow ? true : false;
   }
@@ -514,12 +545,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   //     //   'mbpEc.feAttributeValue.details.delete.messages.success'
   //     // )
   //   );
-    // this.getAllAttribute(
-    //   this.feAttrName,
-    //   // this.filterCriteria.segment,
-    //   qualifier1,
-    //   qualifier2
-    // );
+  // this.getAllAttribute(
+  //   this.feAttrName,
+  //   // this.filterCriteria.segment,
+  //   qualifier1,
+  //   qualifier2
+  // );
   // }
   // private handleErrorResp(errMessage: NotificationMessage[]) {
   //   if (errMessage && errMessage.length>0) {
@@ -608,36 +639,36 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     );
     const existingRow = this.tableWithSimpleEdit.datasource.data.find(
       row => row.locale === locale
-  );
+    );
 
-  if (!existingRow) {
+    if (!existingRow) {
       this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
-          this.inputLocaleLayoutFormLocale,
-          'locale',
-          this.lastModifiedIndex,
-          true,
-          locale
+        this.inputLocaleLayoutFormLocale,
+        'locale',
+        this.lastModifiedIndex,
+        true,
+        locale
       );
       this.useExistingFormCtrlKeysDisplayName = FormUtilityService.addFormControl(
-          this.inputLocaleLayoutFormDisplayName,
-          'displayName',
-          this.lastModifiedIndex,
-          true,
-          name
+        this.inputLocaleLayoutFormDisplayName,
+        'displayName',
+        this.lastModifiedIndex,
+        true,
+        name
       );
       this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
-          this.inputLocaleLayoutFormDesc,
-          'description',
-          this.lastModifiedIndex,
-          true,
-          desc
+        this.inputLocaleLayoutFormDesc,
+        'description',
+        this.lastModifiedIndex,
+        true,
+        desc
       );
       ++this.lastModifiedIndex;
-  } else {
+    } else {
       console.log("editLocale: Row already exists, skipping...");
-  }
+    }
 
-    
+
   }
   private addRangeLocale() {
     let updatedData = {
@@ -800,7 +831,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   additionalValidValues: any[] = [];
   public selectedFilters: BodTableFilterCriteria[] = [];
   public onTableActionClicked(event: BodTableAction) {
-    this.isEdit=false;
+    this.isEdit = false;
     if (event.id === 12) {
       this.addNewAttribute();
     } else if (event.id === 13) {
@@ -808,11 +839,17 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     }
   }
   iconActionClicked(event: BodTableAction, element: Attribute) {
-    this.isEdit=true
+    this.isEdit = true
     // this._notify.setMessages([]);
     console.log(element);
     if (event.id === BodTableActionType.EDIT) {
+
+      let dialogModal: BodCommonDialogModel = {
+        formTemplate: this.determineTemplate(element),
+        title: element.code ? 'Edit Attribute' : 'Edit Existing Attribute'
+      }
       this.editAttributes(element);
+      this.openDialog(dialogModal)
     } else if (event.id === 1) {
       this.bodConfirmAlertDialogsService
         .confirm(this.ConfirmData)
@@ -824,8 +861,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     }
   }
 
-  public onExistingValidTableActionClicked(event: BodTableAction): void {}
-  public onValidTableActionClicked(event: BodTableAction): void {}
+  public onExistingValidTableActionClicked(event: BodTableAction): void { }
+  public onValidTableActionClicked(event: BodTableAction): void { }
 
   public onLocaleTableActionClicked(event: BodTableAction) {
     if (event.id === BodTableActionType.ADD) {
@@ -852,7 +889,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     // }
   }
 
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void {}
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
   public balanceHoldsTableMetaData: BodTableMetadata;
   public AttributeLocalTable: BodTableMetadata;
@@ -1023,7 +1060,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
           hasAction: true
         }
       ],
-      datasource: new MatTableDataSource<BodSampleTableExisting>(
+      datasource: new MatTableDataSource<BodSampleTable1>(
         this.dataWithExsistingValidvalues
       )
     };
@@ -1293,6 +1330,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     this.inputExistingLayoutForm = this.fb.group({
       additionaldatavalue: ['', Validators.required],
+      ExistingValidvalueArray: [],
       percentagevalue: [''],
       sequencenumber: [''],
       defaultindicator: [false],
@@ -1336,7 +1374,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   }
 
   public dataWithValidvalues: BodSampleTable1[] = [];
-  public dataWithExsistingValidvalues: BodSampleTableExisting[] = [];
+  public dataWithExsistingValidvalues: BodSampleTable1[] = [];
   public dataWithlocale: BodLocaleTable[] = [];
   public dataWithlocalerange: BodLocaleRangeTable[] = [];
   public dataWithlocaleset: BodLocaleSetTable[] = [];
@@ -1471,7 +1509,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   getTableInput(index: number): any {
     return this.tabIndexTableMap[index].input;
   }
-  inlineFormAddSubmit(event: any, index: number) {}
+  inlineFormAddSubmit(event: any, index: number) { }
 
   loadDropdownData(): void {
     this.metadataService.getTypes().subscribe(data => {
@@ -1550,8 +1588,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     relateToProductTypeControl?.updateValueAndValidity();
   }
 
-  onSubmit(event: Event) {}
-  onReset() {}
+  onSubmit(event: Event) { }
+  onReset() { }
   handleRowLevelActions(action: string, index: number) {
     if (action === 'trash') {
       this.deleteRow(index);
@@ -1681,6 +1719,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
   editRow(index: number) {
     this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    this.ExistingValidvalueArray.datasource.data = [...this.dataWithExsistingValidvalues];
+
+
   }
 
   // onLocaleAdd(formValues: any) {
@@ -1903,15 +1944,15 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       metadataType: 'Attribute',
       attributeList: [attribute],
       productTypeList: ['CASA']
-    };const serviceCall = isAdd 
-    ? this.metadataService.saveAttribute(request) 
-    : this.metadataService.updateAttribute(request);
+    }; const serviceCall = isAdd
+      ? this.metadataService.saveAttribute(request)
+      : this.metadataService.updateAttribute(request);
 
-  serviceCall.subscribe(
-    response => this.handleSuccess(response),
-    error => this.handleError(error)
-  );
-    
+    serviceCall.subscribe(
+      response => this.handleSuccess(response),
+      error => this.handleError(error)
+    );
+
 
     // if (!isAdd) {
     //   this.metadataService.updateAttribute(request).subscribe(
@@ -1920,16 +1961,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     //       console.log('Attribute saved successfully:', response);
     //       const successMsg: string =
     //         this.translationKey + 'table.messages.updateSuccess';
-  
+
     //       this.message = {
     //         code: '204',
     //         text: successMsg,
     //         type: NotificationMessageType.SUCCESS
     //       };
-  
+
     //       this.messages.push(this.message);
     //       this.getAttribute();
-  
+
     //       this.addNewAttributeFormGroup.reset();
     //       this.inputLocaleLayoutFormLocale.reset();
     //       this.inputLocaleLayoutFormDisplayName.reset();
@@ -1945,7 +1986,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     //     error => {
     //       alert('Error saving attribute');
     //       console.error('Error saving attribute:', error);
-  
+
     //     }
     //   );
     // } else {
@@ -1955,16 +1996,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     //       console.log('Attribute saved successfully:', response);
     //       const successMsg: string =
     //         this.translationKey + 'table.messages.updateSuccess';
-  
+
     //       this.message = {
     //         code: '204',
     //         text: successMsg,
     //         type: NotificationMessageType.SUCCESS
     //       };
-  
+
     //       this.messages.push(this.message);
     //       this.getAttribute();
-  
+
     //       this.addNewAttributeFormGroup.reset();
     //       this.inputLocaleLayoutFormLocale.reset();
     //       this.inputLocaleLayoutFormDisplayName.reset();
@@ -1980,7 +2021,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     //     error => {
     //       alert('Error saving attribute');
     //       console.error('Error saving attribute:', error);
-  
+
     //     }
     //   );
     // }
@@ -2058,7 +2099,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   handleSuccess(response?: any) {
     this.dialogRef$.close();
     console.log('Attribute saved successfully:', response);
-        const successMsg = 'Attribute Added Successfully';
+    const successMsg = 'Attribute Added Successfully';
 
     this.message = {
       code: '204',
@@ -2069,23 +2110,23 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.messages.push(this.message);
     this.getAttribute();
     this.resetForms();
-}
-handleError(error: any) {
-  alert('Error saving attribute');
-  console.error('Error saving attribute:', error);
-}
-resetForms() {
-  this.addNewAttributeFormGroup.reset();
-  this.inputLocaleLayoutFormLocale.reset();
-  this.inputLocaleLayoutFormDisplayName.reset();
-  this.inputLocaleLayoutFormDesc.reset();
-  this.inputRangeLocaleLayoutFormLocale.reset();
-  this.inputRangeLocaleLayoutFormDisplayName.reset();
-  this.inputRangeLocaleLayoutFormDesc.reset();
-  this.inputSetLocaleLayoutFormLocale.reset();
-  this.inputSetLocaleLayoutFormDisplayName.reset();
-  this.inputSetLocaleLayoutFormDesc.reset();
-}
+  }
+  handleError(error: any) {
+    alert('Error saving attribute');
+    console.error('Error saving attribute:', error);
+  }
+  resetForms() {
+    this.addNewAttributeFormGroup.reset();
+    this.inputLocaleLayoutFormLocale.reset();
+    this.inputLocaleLayoutFormDisplayName.reset();
+    this.inputLocaleLayoutFormDesc.reset();
+    this.inputRangeLocaleLayoutFormLocale.reset();
+    this.inputRangeLocaleLayoutFormDisplayName.reset();
+    this.inputRangeLocaleLayoutFormDesc.reset();
+    this.inputSetLocaleLayoutFormLocale.reset();
+    this.inputSetLocaleLayoutFormDisplayName.reset();
+    this.inputSetLocaleLayoutFormDesc.reset();
+  }
 
   onAdd(formValues: any) {
     if (this.inputLayoutForm.invalid) {
@@ -2094,7 +2135,7 @@ resetForms() {
     }
     this.dataWithValidvalues = this.dataWithValidvalues || [];
     const newValidValue: BodSampleTable1 = {
-      additionaldatavalue: formValues.additionaldatavalue  || '',
+      additionaldatavalue: formValues.additionaldatavalue || '',
       defaultindicator: formValues.defaultindicator ?? false,
       primaryindicator: formValues.primaryindicator ?? false,
       overrideindicator: formValues.overrideindicator ?? false,
@@ -2103,7 +2144,7 @@ resetForms() {
     };
 
     this.dataWithValidvalues.push(newValidValue);
-    if(this.ValidvalueArray && this.ValidvalueArray.datasource){
+    if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
       this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
     } else {
       this.inputLayoutForm.reset();
@@ -2118,11 +2159,11 @@ resetForms() {
       return;
     }
     this.dataWithExsistingValidvalues = this.dataWithExsistingValidvalues || [];
-    const newValidValue: BodSampleTableExisting = {
+    const newValidValue: BodSampleTable1 = {
       additionaldatavalue: formValues.additionaldatavalue || '',
-      defaultindicator: formValues.defaultindicator?? false,
-      primaryindicator: formValues.primaryindicator?? false,
-      overrideindicator: formValues.overrideindicator?? false,
+      defaultindicator: formValues.defaultindicator ?? false,
+      primaryindicator: formValues.primaryindicator ?? false,
+      overrideindicator: formValues.overrideindicator ?? false,
       percentagevalue: formValues.percentagevalue ?? null,
       sequencenumber: formValues.sequencenumber ?? null
     };
@@ -2144,7 +2185,7 @@ resetForms() {
       ];
     } else {
     }
-      
+
     this.inputExistingLayoutForm.reset({});
     this.changeDetectorRef.detectChanges();
     alert('Valid values added successfully!');
@@ -2194,8 +2235,7 @@ resetForms() {
       response => {
         this.dialogRef$.close();
         console.log('Attribute saved successfully:', response);
-        const successMsg: string =
-          this.translationKey + 'table.messages.updateSuccess';
+        const successMsg = 'Attribute saved successfully:';
 
         this.message = {
           code: '204',
@@ -2414,6 +2454,10 @@ resetForms() {
       }
     });
   }
+  private determineTemplate(element: Attribute): TemplateRef<any> {
+    return element.code ? this.addAttributeTemp : this.addExistingAttributeTemp;
+  }
+
 
   AttributeDelete(element: Attribute): void {
     if (element.code === undefined) {
@@ -2443,7 +2487,7 @@ resetForms() {
     }
   }
 
-     
+
   public rowExpanded(element: Attribute) {
     this.AttributeLocalTable.datasource.data =
       element.multiLingualTextInfoList || [];
@@ -2531,13 +2575,13 @@ resetForms() {
       let error: string = '';
       Object.keys(fc.errors).forEach(
         key =>
-          (error = key
-            ? key == formValidatorKey
-              ? `BOD.demo.microsite.error.${customkey}`
-              : key !== null
+        (error = key
+          ? key == formValidatorKey
+            ? `BOD.demo.microsite.error.${customkey}`
+            : key !== null
               ? `BOD.demo.microsite.error.${key}`
               : ''
-            : ``)
+          : ``)
       );
       return error;
     }
@@ -2590,21 +2634,21 @@ resetForms() {
   //     event.editRowElement['expirationDate'],
   //     event.editRowElement['expirationTime']
   //   );
-    // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
-    //   event.editRowElement['amount'].amount,
-    //   event.editRowElement['amount'].currency?.symbol
-    // );
-    // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
-    // this.addNewAttributeFormGroup.removeControl('referenceId');
-    // this.addNewAttributeFormGroup.removeControl('referenceType');
-    // this.holdAllValue = event.editRowElement['isHoldAll'];
-    // this.isExpireValue = event.editRowElement['isExpire'];
-    // this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
-    // this.checkExpirationFieldVisibility();
-    // this.effectiveDate = DateUtilityService.updateDateFormat(
-    //   new Date(this.bookingDate),
-    //   'MM/dd/YYYY'
-    // );
+  // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
+  //   event.editRowElement['amount'].amount,
+  //   event.editRowElement['amount'].currency?.symbol
+  // );
+  // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
+  // this.addNewAttributeFormGroup.removeControl('referenceId');
+  // this.addNewAttributeFormGroup.removeControl('referenceType');
+  // this.holdAllValue = event.editRowElement['isHoldAll'];
+  // this.isExpireValue = event.editRowElement['isExpire'];
+  // this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
+  // this.checkExpirationFieldVisibility();
+  // this.effectiveDate = DateUtilityService.updateDateFormat(
+  //   new Date(this.bookingDate),
+  //   'MM/dd/YYYY'
+  // );
   //   this.addNewAttributeFormGroup.setValue({
   //     // amount: holdAmount,
   //     reason: event.editRowElement['reasonDescription'],
