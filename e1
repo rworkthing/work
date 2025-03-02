@@ -23,29 +23,56 @@ private editAttributes(element: Attribute) {
             productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
             min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
             max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
-            GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
-            attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
-            isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
-            isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
-            isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
-            sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
-            percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
-            valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
-            localeCode: element.multiLingualTextInfoList?.[0]?.localeCode || '',
-            description: element.multiLingualTextInfoList?.[0]?.localeText || '',
-            displayName: element.multiLingualTextInfoList?.[0]?.translationText || '',
-            rangename: element.additionalDataValidValuesRange?.name || '',
-            rangedescriptions: element.additionalDataValidValuesRange?.description || ''
+            GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y"
         });
 
     } else {
         // Case: Adding an existing attribute (use addExistingAttributeTemp)
+        const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
+
         this.addExistingAttributeFormGroup.setValue({
-            productCode: element.productCode || '',
-            min: element.min || '',
-            max: element.max || '',
-            GLcategorizationAllowed: element.GLcategorizationAllowed || false,
-            validtype: element.validtype || false
+            productCode: firstRelation?.attributeIdentifier || '',
+            min: firstRelation?.minimumRequired || '',
+            max: firstRelation?.maximumAllowed || '',
+            GLcategorizationAllowed: firstRelation?.glCategarization === "Y",
+            validtype: !!firstRelation
         });
     }
+
+    // Process valid values only for existing attributes
+    if (element.code) {
+        this.ValidvalueArray.datasource.data = [];
+        element.productTypeAdditionalDataList?.forEach(item => {
+            let obj = {} as ProductTypeAdditionalData;
+            obj.attributeValue = item.attributeValue;
+            obj.isDefault = item.isDefault;
+            obj.overrideDefault = item.overrideDefault;
+            obj.percentage = item.percentage;
+            obj.sequenceNumber = item.sequenceNumber;
+            obj.isPrimary = item.isPrimary;
+            this.ValidvalueArray.datasource.data.push(obj);
+        });
+    }
+
+    // Process multilingual values
+    this.tableWithSimpleEdit.datasource.data = [];
+    element.multiLingualTextInfoList?.forEach(item => {
+        this.editLocale(item.localeCode, item.translationText, item.localeText);
+        let obj = {} as MultiLingualTextInfo;
+        obj.localeCode = item.localeCode;
+        obj.translationText = item.translationText;
+        obj.localeText = item.localeText;
+        const existingRow = this.tableWithSimpleEdit.datasource.data.find(row => row.localeCode === obj.localeCode);
+        if (!existingRow) {
+            this.tableWithSimpleEdit.datasource.data.push(obj);
+        }
+    });
+
+    // Open dialog with the correct template
+    let dialogModel: BodCommonDialogModel = {
+        formTemplate: element.code ? this.addAttributeTemp : this.addExistingAttributeTemp,
+        title: element.code ? 'Edit Attribute' : 'Add Existing Attribute'
+    };
+    this.openDialog(dialogModel);
+    this.isEdit = true;
 }
