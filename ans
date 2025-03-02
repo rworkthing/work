@@ -1,170 +1,42 @@
-onSave(isAdd: boolean) {
-    const updatedData = this.addNewAttributeFormGroup.getRawValue();
-    this.addNewAttributeFormGroup.controls['identifier'].enable();
-    const formValue = this.addNewAttributeFormGroup.value;
-
-    const objectTypeIdentifier = this.types.find(item => item.label === formValue.type)?.value || formValue.type;
-    const formatTypeIdentifier = this.datatypes.find(item => item.label === formValue.datatype)?.value || formValue.datatype;
-
-    const multiLingualTextInfoList = this.createMultiLingualList(
-      this.inputLocaleLayoutFormLocale, 
-      this.inputLocaleLayoutFormDisplayName, 
-      this.inputLocaleLayoutFormDesc, 
-      this.useExistingFormCtrlKeysDisplayName, 
-      this.useExistingFormCtrlKeysDesc
-    );
-
-    const multiLingualTextInfoRangeList = this.createMultiLingualList(
-      this.inputRangeLocaleLayoutFormLocale, 
-      this.inputRangeLocaleLayoutFormDisplayName, 
-      this.inputRangeLocaleLayoutFormDesc, 
-      this.useExistingFormCtrlKeysRangeDisplayName, 
-      this.useExistingFormCtrlKeysRangeDesc
-    );
-
-    const multiLingualTextInfoSetList = this.createMultiLingualList(
-      this.inputSetLocaleLayoutFormLocale, 
-      this.inputSetLocaleLayoutFormDisplayName, 
-      this.inputSetLocaleLayoutFormDesc, 
-      this.useExistingFormCtrlKeysSetDisplayName, 
-      this.useExistingFormCtrlKeysSetDesc
-    );
-
-    const attribute: any = {
-      additionalDataType: {
-        identifier: formValue.identifier,
-        code: formValue.code,
-        name: formValue.name,
-        shortName: formValue.shortname,
-        objectTypeIdentifier,
-        formatTypeIdentifier,
-        calculated: formValue.calculate ? 'Y' : 'N',
-        searchable: formValue.searchable ? 'Y' : 'N',
-        multiValueAllowed: formValue.multivalueallowed ? 'Y' : 'N',
-        percentageAllowed: formValue.percentageallowed ? 'Y' : 'N',
-        classificationType: formValue.classificationtype,
-        multiLingualTextInfoList
-      }
+private editLocale(locale, name, desc) {
+    console.log("editLocale() called with:", locale, name, desc);
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
     };
 
-    if (formValue.validvaluestype === 'rangevalues') {
-      attribute.additionalDataValidValuesRange = {
-        identifier: 0,
-        attributeIdentifier: formValue.identifier,
-        name: formValue.rangename,
-        description: formValue.rangedescriptions,
-        lowValue: formValue.low,
-        highValue: formValue.high,
-        multiLingualTextInfoList: multiLingualTextInfoRangeList
-      };
-    }
-
-    if (formValue.validvaluestype === 'setvalues') {
-      attribute.additionalDataValidValueSetList = [
-        {
-          identifier: 0,
-          attributeIdentifier: formValue.identifier,
-          name: formValue.setname,
-          description: formValue.setdescription,
-          value: formValue.attributevalue,
-          isdefault: formValue.isdefault ? 'Y' : 'N',
-          isPrimary: formValue.isprimary ? 'Y' : 'N',
-          percentage: formValue.percentages,
-          sequenceNumber: formValue.sequencenumbers,
-          overrideDefault: formValue.isvalueoverridden ? 'Y' : 'N',
-          multiLingualTextInfoList: multiLingualTextInfoSetList
-        }
-      ];
-    }
-
-    if (formValue.relatetoproducttype) {
-      attribute.productTypeAdditionalDataTypeRelationshipList = [
-        {
-          identifier: 1110101,
-          attributeIdentifier: formValue.identifier,
-          minimumRequired: formValue.min,
-          maximumAllowed: formValue.max,
-          glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
-        }
-      ];
-    }
-
-    if (formValue.validtype) {
-      attribute.productTypeAdditionalDataList = this.dataWithValidvalues.map((item, index) => ({
-        identifier: index,
-        attributeIdentifier: formValue.identifier,
-        attributeValue: item.additionaldatavalue,
-        attributeValueSource: '',
-        isDefault: item.defaultindicator ? 'Y' : 'N',
-        isPrimary: item.primaryindicator ? 'Y' : 'N',
-        percentage: item.percentagevalue,
-        sequenceNumber: item.sequencenumber,
-        overrideDefault: item.overrideindicator ? 'Y' : 'N'
-      }));
-    }
-
-    const request = {
-      metadataType: 'Attribute',
-      attributeList: [attribute],
-      productTypeList: ['CASA']
-    };
-
-    // Call the appropriate service based on isAdd
-    const serviceCall = isAdd 
-      ? this.metadataService.saveAttribute(request) 
-      : this.metadataService.updateAttribute(request);
-
-    serviceCall.subscribe(
-      response => this.handleSuccess(),
-      error => this.handleError(error)
+    // Ensure no duplicate rows are added
+    const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+        row => row.locale === locale
     );
-}
 
-// Function to handle success response
-handleSuccess() {
-    this.dialogRef$.close();
-    console.log('Attribute saved successfully');
-    const successMsg: string = this.translationKey + 'table.messages.updateSuccess';
-
-    this.message = {
-      code: '204',
-      text: successMsg,
-      type: NotificationMessageType.SUCCESS
-    };
-
-    this.messages.push(this.message);
-    this.getAttribute();
-    this.resetForms();
-}
-
-// Function to handle error response
-handleError(error: any) {
-    alert('Error saving attribute');
-    console.error('Error saving attribute:', error);
-}
-
-// Function to reset all forms
-resetForms() {
-    this.addNewAttributeFormGroup.reset();
-    this.inputLocaleLayoutFormLocale.reset();
-    this.inputLocaleLayoutFormDisplayName.reset();
-    this.inputLocaleLayoutFormDesc.reset();
-    this.inputRangeLocaleLayoutFormLocale.reset();
-    this.inputRangeLocaleLayoutFormDisplayName.reset();
-    this.inputRangeLocaleLayoutFormDesc.reset();
-    this.inputSetLocaleLayoutFormLocale.reset();
-    this.inputSetLocaleLayoutFormDisplayName.reset();
-    this.inputSetLocaleLayoutFormDesc.reset();
-}
-
-// Function to generate multi-lingual text info lists
-createMultiLingualList(localeForm: any, displayNameForm: any, descForm: any, displayKeys: string[], descKeys: string[]) {
-    return Object.keys(localeForm.controls).map((key, index) => ({
-      localeCode: localeForm.get(key)?.value,
-      localeText: displayNameForm.get(displayKeys[index])?.value,
-      identifier: this.addNewAttributeFormGroup.value.identifier,
-      objectType: this.addNewAttributeFormGroup.value.type,
-      attributeType: this.addNewAttributeFormGroup.value.datatype,
-      translationText: descForm.get(descKeys[index])?.value
-    }));
+    if (!existingRow) {
+        this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
+            this.inputLocaleLayoutFormLocale,
+            'locale',
+            this.lastModifiedIndex,
+            true,
+            locale
+        );
+        this.useExistingFormCtrlKeysDisplayName = FormUtilityService.addFormControl(
+            this.inputLocaleLayoutFormDisplayName,
+            'displayName',
+            this.lastModifiedIndex,
+            true,
+            name
+        );
+        this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
+            this.inputLocaleLayoutFormDesc,
+            'description',
+            this.lastModifiedIndex,
+            true,
+            desc
+        );
+        ++this.lastModifiedIndex;
+    } else {
+        console.log("editLocale: Row already exists, skipping...");
+    }
 }
