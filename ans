@@ -1,55 +1,170 @@
-private editAttributes(element: Attribute) {
-    console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
+onSave(isAdd: boolean) {
+    const updatedData = this.addNewAttributeFormGroup.getRawValue();
+    this.addNewAttributeFormGroup.controls['identifier'].enable();
+    const formValue = this.addNewAttributeFormGroup.value;
 
-    this.addNewAttributeFormGroup.setValue({
-        code: element.code,
-        identifier: element.identifier,
-        name: element.name,
-        shortname: element.shortName,
-        type: element.objectTypeIdentifier,
-        datatype: element.formatTypeIdentifier,
-        calculate: element.calculated === "Y",
-        searchable: element.searchable === "Y",
-        multivalueallowed: element.multiValueAllowed === "Y",
-        percentageallowed: element.percentageAllowed === "Y",
-        classificationtype: element.classificationType,
-        relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
-        descriptions: element.description.find(desc => desc.label === "Description")?.value || '',
-        validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" : 
-                         element.additionalDataValidValueSetList ? "setvalues" : '',
-        productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
-        min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
-        max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
-        GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
-        attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
-        isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
-        isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
-        isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
-        sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
-        percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
-        valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
-        low: element.additionalDataValidValuesRange?.low || '',
-        high: element.additionalDataValidValuesRange?.high || '',
-        rangename: element.additionalDataValidValuesRange?.name || '',
-        rangedescriptions: element.additionalDataValidValuesRange?.description || '',
-        setname: element.additionalDataValidValueSetList?.[0]?.name || '',
-        setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
-    });
+    const objectTypeIdentifier = this.types.find(item => item.label === formValue.type)?.value || formValue.type;
+    const formatTypeIdentifier = this.datatypes.find(item => item.label === formValue.datatype)?.value || formValue.datatype;
 
-    this.inputLayoutForm.setValue({
-        additionaldatavalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
-        percentagevalue: element.productTypeAdditionalDataList?.[0]?.percentage || '',
-        sequencenumber: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
-        defaultindicator: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
-        primaryindicator: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
-        overrideindicator: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y"
-    });
+    const multiLingualTextInfoList = this.createMultiLingualList(
+      this.inputLocaleLayoutFormLocale, 
+      this.inputLocaleLayoutFormDisplayName, 
+      this.inputLocaleLayoutFormDesc, 
+      this.useExistingFormCtrlKeysDisplayName, 
+      this.useExistingFormCtrlKeysDesc
+    );
 
-    this.editAttribute = element;
-    let dialogModel: BodCommonDialogModel = {
-        formTemplate: this.addAttributeTemp,
-        title: 'Edit Attribute'
+    const multiLingualTextInfoRangeList = this.createMultiLingualList(
+      this.inputRangeLocaleLayoutFormLocale, 
+      this.inputRangeLocaleLayoutFormDisplayName, 
+      this.inputRangeLocaleLayoutFormDesc, 
+      this.useExistingFormCtrlKeysRangeDisplayName, 
+      this.useExistingFormCtrlKeysRangeDesc
+    );
+
+    const multiLingualTextInfoSetList = this.createMultiLingualList(
+      this.inputSetLocaleLayoutFormLocale, 
+      this.inputSetLocaleLayoutFormDisplayName, 
+      this.inputSetLocaleLayoutFormDesc, 
+      this.useExistingFormCtrlKeysSetDisplayName, 
+      this.useExistingFormCtrlKeysSetDesc
+    );
+
+    const attribute: any = {
+      additionalDataType: {
+        identifier: formValue.identifier,
+        code: formValue.code,
+        name: formValue.name,
+        shortName: formValue.shortname,
+        objectTypeIdentifier,
+        formatTypeIdentifier,
+        calculated: formValue.calculate ? 'Y' : 'N',
+        searchable: formValue.searchable ? 'Y' : 'N',
+        multiValueAllowed: formValue.multivalueallowed ? 'Y' : 'N',
+        percentageAllowed: formValue.percentageallowed ? 'Y' : 'N',
+        classificationType: formValue.classificationtype,
+        multiLingualTextInfoList
+      }
     };
-    this.openDialog(dialogModel);
-    this.isEdit = true;
+
+    if (formValue.validvaluestype === 'rangevalues') {
+      attribute.additionalDataValidValuesRange = {
+        identifier: 0,
+        attributeIdentifier: formValue.identifier,
+        name: formValue.rangename,
+        description: formValue.rangedescriptions,
+        lowValue: formValue.low,
+        highValue: formValue.high,
+        multiLingualTextInfoList: multiLingualTextInfoRangeList
+      };
+    }
+
+    if (formValue.validvaluestype === 'setvalues') {
+      attribute.additionalDataValidValueSetList = [
+        {
+          identifier: 0,
+          attributeIdentifier: formValue.identifier,
+          name: formValue.setname,
+          description: formValue.setdescription,
+          value: formValue.attributevalue,
+          isdefault: formValue.isdefault ? 'Y' : 'N',
+          isPrimary: formValue.isprimary ? 'Y' : 'N',
+          percentage: formValue.percentages,
+          sequenceNumber: formValue.sequencenumbers,
+          overrideDefault: formValue.isvalueoverridden ? 'Y' : 'N',
+          multiLingualTextInfoList: multiLingualTextInfoSetList
+        }
+      ];
+    }
+
+    if (formValue.relatetoproducttype) {
+      attribute.productTypeAdditionalDataTypeRelationshipList = [
+        {
+          identifier: 1110101,
+          attributeIdentifier: formValue.identifier,
+          minimumRequired: formValue.min,
+          maximumAllowed: formValue.max,
+          glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+        }
+      ];
+    }
+
+    if (formValue.validtype) {
+      attribute.productTypeAdditionalDataList = this.dataWithValidvalues.map((item, index) => ({
+        identifier: index,
+        attributeIdentifier: formValue.identifier,
+        attributeValue: item.additionaldatavalue,
+        attributeValueSource: '',
+        isDefault: item.defaultindicator ? 'Y' : 'N',
+        isPrimary: item.primaryindicator ? 'Y' : 'N',
+        percentage: item.percentagevalue,
+        sequenceNumber: item.sequencenumber,
+        overrideDefault: item.overrideindicator ? 'Y' : 'N'
+      }));
+    }
+
+    const request = {
+      metadataType: 'Attribute',
+      attributeList: [attribute],
+      productTypeList: ['CASA']
+    };
+
+    // Call the appropriate service based on isAdd
+    const serviceCall = isAdd 
+      ? this.metadataService.saveAttribute(request) 
+      : this.metadataService.updateAttribute(request);
+
+    serviceCall.subscribe(
+      response => this.handleSuccess(),
+      error => this.handleError(error)
+    );
+}
+
+// Function to handle success response
+handleSuccess() {
+    this.dialogRef$.close();
+    console.log('Attribute saved successfully');
+    const successMsg: string = this.translationKey + 'table.messages.updateSuccess';
+
+    this.message = {
+      code: '204',
+      text: successMsg,
+      type: NotificationMessageType.SUCCESS
+    };
+
+    this.messages.push(this.message);
+    this.getAttribute();
+    this.resetForms();
+}
+
+// Function to handle error response
+handleError(error: any) {
+    alert('Error saving attribute');
+    console.error('Error saving attribute:', error);
+}
+
+// Function to reset all forms
+resetForms() {
+    this.addNewAttributeFormGroup.reset();
+    this.inputLocaleLayoutFormLocale.reset();
+    this.inputLocaleLayoutFormDisplayName.reset();
+    this.inputLocaleLayoutFormDesc.reset();
+    this.inputRangeLocaleLayoutFormLocale.reset();
+    this.inputRangeLocaleLayoutFormDisplayName.reset();
+    this.inputRangeLocaleLayoutFormDesc.reset();
+    this.inputSetLocaleLayoutFormLocale.reset();
+    this.inputSetLocaleLayoutFormDisplayName.reset();
+    this.inputSetLocaleLayoutFormDesc.reset();
+}
+
+// Function to generate multi-lingual text info lists
+createMultiLingualList(localeForm: any, displayNameForm: any, descForm: any, displayKeys: string[], descKeys: string[]) {
+    return Object.keys(localeForm.controls).map((key, index) => ({
+      localeCode: localeForm.get(key)?.value,
+      localeText: displayNameForm.get(displayKeys[index])?.value,
+      identifier: this.addNewAttributeFormGroup.value.identifier,
+      objectType: this.addNewAttributeFormGroup.value.type,
+      attributeType: this.addNewAttributeFormGroup.value.datatype,
+      translationText: descForm.get(descKeys[index])?.value
+    }));
 }
