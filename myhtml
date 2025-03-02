@@ -49,6 +49,7 @@
           "
         >
         <ng-template #expandedRowTemplate let-context="context">
+          {{context | json}}
           <div fullwidth>
             @if(context.element.code){
             <h1>Additional Datatype</h1>
@@ -1361,7 +1362,7 @@
             rufId
             [type]="formType"
             (onSubmit)="
-              onAddforExistingAttribute(addExistingAttributeFormGroup.value)
+              onAddforExistingAttribute(isAdd)
             "
             fisStyle
           >
