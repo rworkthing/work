@@ -1,6 +1,10 @@
+import { ChangeDetectorRef } from '@angular/core'; // Import ChangeDetectorRef
+
+constructor(private changeDetectorRef: ChangeDetectorRef, private metadataService: MetadataService) {}
+
 onAddforExistingAttribute(isAdd: boolean) {
   if (this.addExistingAttributeFormGroup.invalid) {
-    return; // Prevent submission if form is invalid
+    return; // Prevent submission if the form is invalid
   }
 
   const formValue = this.addExistingAttributeFormGroup.value;
@@ -16,7 +20,7 @@ onAddforExistingAttribute(isAdd: boolean) {
   const attribute: any = {
     productTypeAdditionalDataTypeRelationshipList: [
       {
-        identifier: 1110101, // This might need to be dynamically generated for updates
+        identifier: 1110101,
         attributeIdentifier: productTypeIdentifier,
         minimumRequired: formValue.min,
         maximumAllowed: formValue.max,
@@ -46,7 +50,6 @@ onAddforExistingAttribute(isAdd: boolean) {
     productTypeList: ['CASA']
   };
 
-  // **Determine whether to add or update**
   let serviceCall: Observable<any>;
 
   if (isAdd) {
@@ -55,7 +58,6 @@ onAddforExistingAttribute(isAdd: boolean) {
     serviceCall = this.metadataService.updateAttribute(request);
   }
 
-  // **Make API call**
   serviceCall.subscribe(
     response => {
       console.log('Attribute saved/updated successfully:', response);
@@ -80,9 +82,12 @@ onAddforExistingAttribute(isAdd: boolean) {
         this.ExistingValidvalueArray.datasource.data.push(attribute);
       }
 
+      // **Force Table UI Refresh**
       this.ExistingValidvalueArray.datasource = new MatTableDataSource(
-        this.ExistingValidvalueArray.datasource.data
+        [...this.ExistingValidvalueArray.datasource.data] // Create a new array to trigger change detection
       );
+
+      this.changeDetectorRef.detectChanges(); // Force Angular to update UI
 
       // **Reset form and close modal**
       this.addExistingAttributeFormGroup.reset();
@@ -97,3 +102,4 @@ onAddforExistingAttribute(isAdd: boolean) {
     }
   );
 }
+
