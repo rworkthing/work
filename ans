@@ -1,11 +1,10 @@
 onAddforExistingAttribute(isAdd: boolean) {
   if (this.addExistingAttributeFormGroup.invalid) {
-    return; // Prevent submission if form is invalid
+    return; // Prevent submission if the form is invalid
   }
 
   const formValue = this.addExistingAttributeFormGroup.value;
   const selectedProductCode = formValue.productCode;
-  console.log('Product Codes:', this.productCodes);
 
   // Find the matching product type identifier
   const productTypeIdentifier =
@@ -45,35 +44,43 @@ onAddforExistingAttribute(isAdd: boolean) {
     productTypeList: ['CASA']
   };
 
-  // **If Editing (isAdd = false), update the existing record**
-  if (!isAdd) {
-    const index = this.ExistingValidvalueArray.datasource.data.findIndex(
-      (attr: any) => attr.productTypeAdditionalDataTypeRelationshipList[0].attributeIdentifier === productTypeIdentifier
-    );
+  // **Determine whether to add or update**
+  let serviceCall: Observable<any>;
 
-    if (index !== -1) {
-      this.ExistingValidvalueArray.datasource.data[index] = attribute;
-    }
+  if (isAdd) {
+    serviceCall = this.metadataService.saveExistingAttribute(request);
   } else {
-    // **If Adding New, Push to the Table**
-    this.ExistingValidvalueArray.datasource.data.push(attribute);
+    serviceCall = this.metadataService.updateAttribute(request);
   }
 
-  // **Update UI Table**
-  this.ExistingValidvalueArray.datasource = new MatTableDataSource(
-    this.ExistingValidvalueArray.datasource.data
-  );
-
-  // **Save the attribute via API call**
-  this.metadataService.saveExistingAttribute(request).subscribe(
+  // **Make API call**
+  serviceCall.subscribe(
     response => {
-      console.log('Attribute saved successfully:', response);
+      console.log('Attribute saved/updated successfully:', response);
+
       this.message = {
         code: '204',
         text: isAdd ? 'New Attribute Added Successfully!' : 'Attribute Updated Successfully!',
         type: NotificationMessageType.SUCCESS
       };
       this.messages.push(this.message);
+
+      // **Update UI Table**
+      if (!isAdd) {
+        const index = this.ExistingValidvalueArray.datasource.data.findIndex(
+          (attr: any) => attr.productTypeAdditionalDataTypeRelationshipList[0].attributeIdentifier === productTypeIdentifier
+        );
+
+        if (index !== -1) {
+          this.ExistingValidvalueArray.datasource.data[index] = attribute;
+        }
+      } else {
+        this.ExistingValidvalueArray.datasource.data.push(attribute);
+      }
+
+      this.ExistingValidvalueArray.datasource = new MatTableDataSource(
+        this.ExistingValidvalueArray.datasource.data
+      );
 
       // **Reset form and close modal**
       this.addExistingAttributeFormGroup.reset();
@@ -83,8 +90,8 @@ onAddforExistingAttribute(isAdd: boolean) {
       this.getAttribute();
     },
     error => {
-      alert('Error saving attribute');
-      console.error('Error saving attribute:', error);
+      alert('Error saving/updating attribute');
+      console.error('Error:', error);
     }
   );
 }
