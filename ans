@@ -1,10 +1,12 @@
 onAddforExistingAttribute(isAdd: boolean) {
   if (this.addExistingAttributeFormGroup.invalid) {
-    return; // Prevent submission if the form is invalid
+    return; // Prevent submission if form is invalid
   }
 
   const formValue = this.addExistingAttributeFormGroup.value;
   const selectedProductCode = formValue.productCode;
+
+  console.log('Product Codes:', this.productCodes);
 
   // Find the matching product type identifier
   const productTypeIdentifier =
@@ -14,7 +16,7 @@ onAddforExistingAttribute(isAdd: boolean) {
   const attribute: any = {
     productTypeAdditionalDataTypeRelationshipList: [
       {
-        identifier: 1110101,
+        identifier: 1110101, // This might need to be dynamically generated for updates
         attributeIdentifier: productTypeIdentifier,
         minimumRequired: formValue.min,
         maximumAllowed: formValue.max,
