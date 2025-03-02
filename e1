@@ -1,1 +1,1 @@
-this.metadataService.updateAttribute(request);
+{{ addNewAttributeFormGroup.get('code')?.value }}
