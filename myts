@@ -108,7 +108,7 @@ import {
   validValuesExisting
 } from '../codegen-config/codegen-config.constant';
 import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { getFormValidationErrors } from './inline-modal-validators';
 import { FormUtilityService } from './form-utility.service';
 import { Observable, Subscription } from 'rxjs';
@@ -374,6 +374,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.tableWithSimpleEdit.datasource.data = [];
     this.ValidvalueArray.datasource.data = [];
     this.addNewAttributeFormGroup.reset();
+    this.inputLocaleLayoutFormLocale.reset();
+    this.inputLocaleLayoutFormDisplayName.reset();
+    this.inputLocaleLayoutFormDesc.reset();
+    this.inputLayoutForm.reset();
+
     this.isAdd = true;
     // this.editAttribute = null;
     let dialogModel: BodCommonDialogModel = {
@@ -391,12 +396,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.isAdd = false;
     this.addNewAttributeFormGroup.reset();
     this.addExistingAttributeFormGroup.reset();
+    this.addNewAttributeFormGroup.removeControl('validtype');
+    this.addExistingAttributeFormGroup.removeControl('validtype');
+    console.log(this.addNewAttributeFormGroup);
     let selectedTemplate: TemplateRef<any>;
     let dialogTitle: string;
 
     if (element.code) {
       selectedTemplate = this.addAttributeTemp;
       dialogTitle = "Edit Attribute";
+
       this.addNewAttributeFormGroup.setValue({
         code: element.code,
         identifier: element.identifier,
@@ -444,10 +453,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         productCode: firstRelation?.attributeIdentifier || '',
         min: firstRelation?.minimumRequired || '',
         max: firstRelation?.maximumAllowed || '',
-        GLcategorizationAllowed: firstRelation?.glCategarization === "Y",
-        validtype: !!firstRelation
+        GLcategorizationAllowed: firstRelation?.glCategarization === "Y"
       });
     }
+    this.ValidvalueArray.datasource.data = [];
+    this.ExistingValidvalueArray.datasource.data = [];
 
     element.productTypeAdditionalDataList?.forEach(element => {
       let obj = {} as BodSampleTable1;
@@ -457,18 +467,19 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       obj.percentagevalue = element.percentage;
       obj.sequencenumber = element.sequenceNumber;
       this.ValidvalueArray.datasource.data.push(obj);
+      this.ExistingValidvalueArray.datasource.data.push(obj);
     })
-    console.log(this.inputLayoutForm);
-    console.log(this.ValidvalueArray);
-    element.productTypeAdditionalDataList?.forEach(element => {
-      let obj = {} as BodSampleTable1;
-      obj.additionaldatavalue = element.attributeValue;
-      obj.defaultindicator = element.isDefault;
-      obj.overrideindicator = element.overrideDefault;
-      obj.percentagevalue = element.percentage;
-      obj.sequencenumber = element.sequenceNumber;
-      this.ValidvalueArray.datasource.data.push(obj);
-    })
+    // console.log(this.inputLayoutForm);
+    // console.log(this.ValidvalueArray);
+    // element.productTypeAdditionalDataList?.forEach(element => {
+    //   let obj = {} as BodSampleTable1;
+    //   obj.additionaldatavalue = element.attributeValue;
+    //   obj.defaultindicator = element.isDefault;
+    //   obj.overrideindicator = element.overrideDefault;
+    //   obj.percentagevalue = element.percentage;
+    //   obj.sequencenumber = element.sequenceNumber;
+    //   this.ValidvalueArray.datasource.data.push(obj);
+    // })
 
 
     element.multiLingualTextInfoList?.forEach(element => {
@@ -501,13 +512,15 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     // });
     // this.inputLocaleLayoutFormLocale.get('localeCode')?.setValue()
 
-    this.editAttribute = element;
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addAttributeTemp,
-      title: 'Edit Attribute'
-    };
-    this.openDialog(dialogModel);
-    this.isEdit = true;
+    if (!this.dialogRef$ || this.dialogRef$.getState() === MatDialogState.CLOSED) {
+      let dialogModel: BodCommonDialogModel = {
+          formTemplate: selectedTemplate,
+          title: dialogTitle
+      };
+      this.openDialog(dialogModel);
+  }
+
+  this.isEdit = true;
   }
   isEditView() {
     return this.editAttributeRow ? true : false;
@@ -843,13 +856,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     // this._notify.setMessages([]);
     console.log(element);
     if (event.id === BodTableActionType.EDIT) {
-
-      let dialogModal: BodCommonDialogModel = {
-        formTemplate: this.determineTemplate(element),
-        title: element.code ? 'Edit Attribute' : 'Edit Existing Attribute'
-      }
       this.editAttributes(element);
-      this.openDialog(dialogModal)
     } else if (event.id === 1) {
       this.bodConfirmAlertDialogsService
         .confirm(this.ConfirmData)
@@ -1777,7 +1784,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     const updatedData = this.addNewAttributeFormGroup.getRawValue();
     this.addNewAttributeFormGroup.controls['identifier'].enable();
     const formValue = this.addNewAttributeFormGroup.value;
-    // const validvalue = this.inputLayoutForm.value;
+    const validvalue = this.inputLayoutForm.value;
 
     const selectedType = formValue.type;
     const selectedFormatType = formValue.datatype;
@@ -1938,6 +1945,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         })
       );
       attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
+      this.addNewAttributeFormGroup.removeControl('validtype');
     }
 
     const request = {
@@ -2528,7 +2536,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       max: new UntypedFormControl(),
       min: new UntypedFormControl(),
       GLcategorizationAllowed: [''],
-      // validtype: [''],
+      validtype: [false],
       rangename: new UntypedFormControl(''),
       rangedescriptions: new UntypedFormControl(''),
       displayName: new UntypedFormControl(''),
@@ -2540,7 +2548,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       max: [''],
       min: [''],
       GLcategorizationAllowed: [''],
-      validtype: ['']
+      validtype: [false]
     });
     this.addNewAttributeFormGroup.get('code')?.valueChanges.subscribe(value => {
       this.addNewAttributeFormGroup.get('productTypeCode')?.setValue(value);
@@ -2676,7 +2684,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   private subscription = new Subscription();
 
   ngOnDestroy() {
-    this.messages = [];
-    this.subscriptions.unsubscribe();
+    if (this.subscription){this.messages = [];
+      this.subscription.unsubscribe();
+    }
+    
   }
 }
