@@ -1,147 +1,95 @@
-Element Data: {
-  "code": "Testing123",
-  "description": [
-    {
-      "id": 0,
-      "label": "Name",
-      "value": "abc"
-    },
-    {
-      "id": 1,
-      "label": "Identifier",
-      "value": 1110400358
-    },
-    {
-      "id": 2,
-      "label": "ShortName",
-      "value": "ab"
-    },
-    {
-      "id": 3,
-      "label": "Description"
-    },
-    {
-      "id": 4,
-      "label": "Type",
-      "value": 1001
-    },
-    {
-      "id": 5,
-      "label": "Data type",
-      "value": 100000001003
-    },
-    {
-      "id": 6,
-      "label": "Calculate",
-      "value": "N"
-    },
-    {
-      "id": 7,
-      "label": "Searchable",
-      "value": "N"
-    },
-    {
-      "id": 8,
-      "label": "Multivalue Allowed",
-      "value": "Y"
-    },
-    {
-      "id": 9,
-      "label": "Percentage Allowed",
-      "value": "N"
-    },
-    {
-      "id": 10,
-      "label": "Classification Type",
-      "value": "systemDefined"
-    }
-  ],
-  "identifier": 1110400358,
-  "name": "abc",
-  "shortName": "ab",
-  "objectTypeIdentifier": 1001,
-  "formatTypeIdentifier": 100000001003,
-  "calculated": "N",
-  "searchable": "N",
-  "multiValueAllowed": "Y",
-  "percentageAllowed": "N",
-  "classificationType": "systemDefined",
-  "multiLingualTextInfoList": [
-    {
-      "localeCode": "en",
-      "localeText": "aa",
-      "identifier": 1110400358,
-      "objectType": "1001",
-      "attributeType": "100000001003",
-      "translationText": "Language"
-    }
-  ],
-  "additionalDataValidValuesRange": null,
-  "additionalDataValidValueSetList": [
-    {
-      "identifier": 1110400359,
-      "attributeIdentifier": 1110400358,
-      "name": "sadasd",
-      "description": null,
-      "value": "asdad",
-      "isPrimary": "N",
-      "percentage": 232,
-      "sequenceNumber": 213,
-      "overrideDefault": "N",
-      "multiLingualTextInfoList": [
-        {
-          "localeCode": "en-GB",
-          "localeText": "sdvs",
-          "identifier": 1110400358,
-          "objectType": "1001",
-          "attributeType": "100000001003",
-          "translationText": "sdvs"
-        }
-      ]
-    }
-  ],
-  "productTypeAdditionalDataTypeRelationshipList": [
-    {
-      "identifier": 1110101,
-      "attributeIdentifier": 1110400358,
-      "minimumRequired": 23,
-      "maximumAllowed": 43,
-      "glCategarization": "N"
-    }
-  ],
-  "prdrtpeReltinqMetaData": [
-    {
-      "id": 0,
-      "label": "Maximum Allowed",
-      "value": 43
-    },
-    {
-      "id": 1,
-      "label": "Identifier",
-      "value": 1110101
-    },
-    {
-      "id": 1,
-      "label": "Minimum Required",
-      "value": 23
-    },
-    {
-      "id": 1,
-      "label": "GL Categorization",
-      "value": "N"
-    }
-  ],
-  "productTypeAdditionalDataList": [
-    {
-      "identifier": 0,
-      "attributeIdentifier": 1110400358,
-      "attributeValue": "dscs2",
-      "attributeValueSource": "",
-      "isDefault": "N",
-      "isPrimary": "N",
-      "percentage": 21,
-      "sequenceNumber": 32,
-      "overrideDefault": "Y"
-    }
-  ]
+export interface Attribute {
+  identifier: number;
+  code: string;
+  name: string;
+  shortName: string;
+  objectTypeIdentifier: number;
+  formatTypeIdentifier: number;
+  calculated: string;
+  searchable: string;
+  multiValueAllowed: string;
+  percentageAllowed: string;
+  classificationType: string;
+  multiLingualTextInfoList: MultiLingualTextInfo[];
+  descriptions: Description[];
+  prdrtpeReltinqMetaData: Description[];
+  additionalDataValidValuesRange?: AdditionalDataValidValuesRange | null;
+  additionalDataValidValueSetList?: AdditionalDataValidValueSet | null;
+  productTypeAdditionalDataTypeRelationshipList: ProductTypeAdditionalDataTypeRelationship[];
+  productTypeAdditionalDataList?: ProductTypeAdditionalData[] | null;
+}
+
+export interface AdditionalDataType {
+  identifier: number;
+  code: string;
+  name: string;
+  shortName: string;
+  objectTypeIdentifier: number;
+  formatTypeIdentifier: number;
+  calculated: string;
+  searchable: string;
+  multiValueAllowed: string;
+  percentageAllowed: string;
+  classificationType: string;
+  multiLingualTextInfoList: MultiLingualTextInfo[];
+  descriptions: Description[];
+}
+
+export interface Description {
+  id: number;
+  label: string;
+  value: string;
+}
+
+export interface MultiLingualTextInfo {
+  localeCode: string;
+  localeText: string;
+  identifier: number;
+  objectType: string;
+  attributeType: string;
+  translationText: string;
+}
+
+export interface ProductTypeAdditionalDataTypeRelationship {
+  identifier: number;
+  attributeIdentifier: number;
+  minimumRequired: number;
+  maximumAllowed: number;
+  glCategarization: string;
+}
+
+export interface ProductTypeAdditionalData {
+  identifier: number;
+  attributeIdentifier: number;
+  attributeValue: string;
+  attributeValueSource: string;
+  isDefault: string;
+  isPrimary: string;
+  percentage: number;
+  sequenceNumber: number;
+  overrideDefault: string;
+}
+
+export interface AdditionalDataValidValueSet {
+  identifier: number;
+  attributeIdentifier: number;
+  name: string;
+  description: string | null;
+  value: string;
+  isDefault: string;
+  isPrimary: string;
+  percentage: number;
+  sequenceNumber: number;
+  overrideDefault: string;
+  multiLingualTextInfoList: MultiLingualTextInfo[];
+}
+
+export interface AdditionalDataValidValuesRange {
+  identifier: number;
+  attributeIdentifier: number;
+  name: string;
+  description: string | null;
+  lowValue: string;
+  highValue: string;
+  multiLingualTextInfoList: MultiLingualTextInfo[];
 }
