@@ -1,21 +1,49 @@
-<input
-  type="text"
-  matInput
-  fisStyle
-  formControlName="displayName"
-  name="displayName"
-  (blur)="autoSaveInlineEntry(inputLocaleLayoutForm.value)"
-  (input)="autoSaveInlineEntry(inputLocaleLayoutForm.value)"
-/>
+onAddforExistingAttribute(isAdd: boolean) {
+    const formValue = this.addExistingAttributeFormGroup.value;
+    const selectedProductCode = formValue.productCode;
 
+    const productTypeIdentifier =
+        this.productCodes.find(item => item.label === selectedProductCode)?.value || selectedProductCode;
 
-<mat-select
-  panelClass="fis-style"
-  formControlName="localeCode"
-  name="localeCode"
-  (selectionChange)="autoSaveInlineEntry(inputLocaleLayoutForm.value)"
->
-  <mat-option *ngFor="let localeCode of localeCodes" [value]="localeCode.value">
-    {{ localeCode.label }}
-  </mat-option>
-</mat-select>
+    const attribute: any = {
+        productTypeAdditionalDataTypeRelationshipList: [
+            {
+                identifier: 1110101,
+                attributeIdentifier: productTypeIdentifier,
+                minimumRequired: formValue.min,
+                maximumAllowed: formValue.max,
+                glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+            }
+        ]
+    };
+
+    if (formValue.validtype) {
+        const productTypeAdditionalDataList = this.dataWithExsistingValidvalues.map((item, index) => ({
+            identifier: index,
+            attributeIdentifier: productTypeIdentifier,
+            attributeValue: item.additionaldatavalue,
+            attributeValueSource: '',
+            isDefault: item.defaultindicator ? 'Y' : 'N',
+            isPrimary: item.primaryindicator ? 'Y' : 'N',
+            percentage: item.percentagevalue,
+            sequenceNumber: item.sequencenumber,
+            overrideDefault: item.overrideindicator ? 'Y' : 'N'
+        }));
+        attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
+    }
+
+    const request = {
+        metadataType: 'Attribute',
+        attributeList: [attribute],
+        productTypeList: ['CASA']
+    };
+
+    const serviceCall = isAdd
+        ? this.metadataService.saveExistingAttribute(request)
+        : this.metadataService.updateAttribute(request);
+
+    serviceCall.subscribe(
+        response => this.handleSuccess(response),
+        error => this.handleError(error)
+    );
+}
