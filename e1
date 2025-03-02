@@ -1,94 +1,64 @@
-private editAttributes(element: Attribute) {
-    console.log("Element Data:", JSON.stringify(element, null, 2));
-    this.isAdd = false;
+onAddforExistingAttribute() {
+    // this.addExistingAttributeFormGroup.controls['identifier'].enable();
+    const formValue = this.addExistingAttributeFormGroup.value;
+    const selectedProductCode = formValue.productCode;
+    console.log(this.productCodes);
+    const productTypeIdentifier =
+      this.productCodes.find(item => item.label === selectedProductCode)
+        ?.value || selectedProductCode;
 
-    // Reset both form groups to avoid previous data interfering
-    this.addNewAttributeFormGroup.reset();
-    this.addExistingAttributeFormGroup.reset();
-
-    let selectedTemplate: TemplateRef<any>;
-    let dialogTitle: string;
-
-    if (element.code) {
-        // Case: Editing an existing attribute (use addAttributeTemp)
-        selectedTemplate = this.addAttributeTemp;
-        dialogTitle = "Edit Attribute";
-
-        this.addNewAttributeFormGroup.setValue({
-            code: element.code,
-            identifier: element.identifier,
-            name: element.name,
-            shortname: element.shortName,
-            type: element.objectTypeIdentifier,
-            datatype: element.formatTypeIdentifier,
-            calculate: element.calculated === "Y",
-            searchable: element.searchable === "Y",
-            multivalueallowed: element.multiValueAllowed === "Y",
-            percentageallowed: element.percentageAllowed === "Y",
-            classificationtype: element.classificationType,
-            relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
-            descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
-            validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" : 
-                            element.additionalDataValidValueSetList ? "setvalues" : '',
-            productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
-            min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
-            max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
-            GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y"
-        });
-
-    } else {
-        // Case: Adding an existing attribute (use addExistingAttributeTemp)
-        selectedTemplate = this.addExistingAttributeTemp;
-        dialogTitle = "Add Existing Attribute";
-
-        const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
-
-        this.addExistingAttributeFormGroup.setValue({
-            productCode: firstRelation?.attributeIdentifier || '',
-            min: firstRelation?.minimumRequired || '',
-            max: firstRelation?.maximumAllowed || '',
-            GLcategorizationAllowed: firstRelation?.glCategarization === "Y",
-            validtype: !!firstRelation
-        });
+    const attribute: any = {};
+    attribute.productTypeAdditionalDataTypeRelationshipList = [
+      {
+        identifier: 1110101,
+        attributeIdentifier: productTypeIdentifier,
+        minimumRequired: formValue.min,
+        maximumAllowed: formValue.max,
+        glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+      }
+    ];
+    if (formValue.validtype) {
+      const productTypeAdditionalDataList =
+        this.dataWithExsistingValidvalues.map((item, index) => ({
+          identifier: index,
+          attributeIdentifier: productTypeIdentifier,
+          attributeValue: item.additionaldatavalue,
+          attributeValueSource: '',
+          isDefault: item.defaultindicator ? 'Y' : 'N',
+          isPrimary: item.primaryindicator ? 'Y' : 'N',
+          percentage: item.percentagevalue,
+          sequenceNumber: item.sequencenumber,
+          overrideDefault: item.overrideindicator ? 'Y' : 'N'
+        }));
+      attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
     }
+    const request = {
+      metadataType: 'Attribute',
+      attributeList: [attribute],
+      productTypeList: ['CASA']
+    };
 
-    // Process valid values only for existing attributes
-    if (element.code) {
-        this.ValidvalueArray.datasource.data = [];
-        element.productTypeAdditionalDataList?.forEach(item => {
-            let obj = {} as ProductTypeAdditionalData;
-            obj.attributeValue = item.attributeValue;
-            obj.isDefault = item.isDefault;
-            obj.overrideDefault = item.overrideDefault;
-            obj.percentage = item.percentage;
-            obj.sequenceNumber = item.sequenceNumber;
-            obj.isPrimary = item.isPrimary;
-            this.ValidvalueArray.datasource.data.push(obj);
-        });
-    }
+    this.metadataService.saveExistingAttribute(request).subscribe(
+      response => {
+        this.dialogRef$.close();
+        console.log('Attribute saved successfully:', response);
+        const successMsg = 'Attribute saved successfully:';
 
-    // Process multilingual values
-    this.tableWithSimpleEdit.datasource.data = [];
-    element.multiLingualTextInfoList?.forEach(item => {
-        this.editLocale(item.localeCode, item.translationText, item.localeText);
-        let obj = {} as MultiLingualTextInfo;
-        obj.localeCode = item.localeCode;
-        obj.translationText = item.translationText;
-        obj.localeText = item.localeText;
-        const existingRow = this.tableWithSimpleEdit.datasource.data.find(row => row.localeCode === obj.localeCode);
-        if (!existingRow) {
-            this.tableWithSimpleEdit.datasource.data.push(obj);
-        }
-    });
-
-    // Ensure the dialog opens only once
-    if (!this.dialogRef$ || !this.dialogRef$.getState() || this.dialogRef$.getState() === "CLOSED") {
-        let dialogModel: BodCommonDialogModel = {
-            formTemplate: selectedTemplate,
-            title: dialogTitle
+        this.message = {
+          code: '204',
+          text: successMsg,
+          type: NotificationMessageType.SUCCESS
         };
-        this.openDialog(dialogModel);
-    }
 
-    this.isEdit = true;
-}
+        this.messages.push(this.message);
+        this.getAttribute();
+        this.addExistingAttributeFormGroup.reset();
+
+        //   this._messageContainerService.getSuccessMsg(successMsg);
+      },
+      error => {
+        alert('Error saving attribute');
+        console.error('Error saving attribute:', error);
+      }
+    );
+  }
