@@ -360,9 +360,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   ];
   isEdit: boolean = false;
   value: string = "123";
+  validtype: boolean = false;
   private addExistingAttribute() {
     // this.editAttribute = null;
     this.addExistingAttributeFormGroup.reset();
+    this.isAdd = true;
     this.ExistingValidvalueArray.datasource.data = [];
     let dialogModel: BodCommonDialogModel = {
       formTemplate: this.addExistingAttributeTemp,
@@ -399,10 +401,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.addNewAttributeFormGroup.removeControl('validtype');
     this.addExistingAttributeFormGroup.removeControl('validtype');
     console.log(this.addNewAttributeFormGroup);
+    //this.addNewAttributeFormGroup.addControl("validtype",true)
     let selectedTemplate: TemplateRef<any>;
     let dialogTitle: string;
-
-    if (element.code) {
+    this.validtype = element?.productTypeAdditionalDataList?.length > 0 ? true : false;
+    if (element.shortName) {
       selectedTemplate = this.addAttributeTemp;
       dialogTitle = "Edit Attribute";
 
@@ -412,7 +415,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         name: element.name,
         shortname: element.shortName,
         type: element.objectTypeIdentifier,
-        datatype: element.formatTypeIdentifier,
+         datatype: element.formatTypeIdentifier,
         calculate: element.calculated === "Y",
         searchable: element.searchable === "Y",
         multivalueallowed: element.multiValueAllowed === "Y",
@@ -442,10 +445,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         rangedescriptions: element.additionalDataValidValuesRange?.description || '',
         // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
         // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
+        
       });
     } else {
       selectedTemplate = this.addExistingAttributeTemp;
-        dialogTitle = "Edit Existing Attribute";
+      dialogTitle = "Edit Existing Attribute";
 
       const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
 
@@ -456,6 +460,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         GLcategorizationAllowed: firstRelation?.glCategarization === "Y"
       });
     }
+    this.addNewAttributeFormGroup.addControl(
+      'validtype',
+      this.fb.control(this.validtype)
+    );
+ 
+    console.log( this.addNewAttributeFormGroup)
     this.ValidvalueArray.datasource.data = [];
     this.ExistingValidvalueArray.datasource.data = [];
 
@@ -514,13 +524,13 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     if (!this.dialogRef$ || this.dialogRef$.getState() === MatDialogState.CLOSED) {
       let dialogModel: BodCommonDialogModel = {
-          formTemplate: selectedTemplate,
-          title: dialogTitle
+        formTemplate: selectedTemplate,
+        title: dialogTitle
       };
       this.openDialog(dialogModel);
-  }
+    }
 
-  this.isEdit = true;
+    this.isEdit = true;
   }
   isEditView() {
     return this.editAttributeRow ? true : false;
@@ -1229,7 +1239,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       }
     };
     this.AttributeLocalTable = {
-      title: 'multiLingualTextInfoList',
+      title: 'Locale Table',
       columns: [
         {
           name: 'localeCode',
@@ -1811,7 +1821,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         )?.value // From description form group
       };
     }).filter(item => item.localeCode);
-    
+
     const multiLingualTextInfoRangeList = Object.keys(
       this.inputRangeLocaleLayoutFormLocale.controls
     ).map((key, index) => {
@@ -1932,7 +1942,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         }
       ];
     }
-    if (formValue.validtype) {
+    if (this.dataWithValidvalues.length > 0) {
+      console.log(this.dataWithValidvalues);
       const productTypeAdditionalDataList = this.dataWithValidvalues.map(
         (item, index) => ({
           identifier: index,
@@ -1949,14 +1960,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
       // this.addNewAttributeFormGroup.removeControl('validtype');
     }
+    this.addNewAttributeFormGroup.removeControl('validtype');
     this.addNewAttributeFormGroup.markAllAsTouched();
     this.addNewAttributeFormGroup.updateValueAndValidity();
 
-    const request = {
+    const   request = {
       metadataType: 'Attribute',
       attributeList: [attribute],
       productTypeList: ['CASA']
-    }; 
+    };
+    console.log(request);
     const serviceCall = isAdd
       ? this.metadataService.saveAttribute(request)
       : this.metadataService.updateAttribute(request);
@@ -1969,148 +1982,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.dataWithValidvalues = [];
     this.addNewAttributeFormGroup.controls['identifier'].disable();
 
-
-    // if (!isAdd) {
-    //   this.metadataService.updateAttribute(request).subscribe(
-    //     response => {
-    //       this.dialogRef$.close();
-    //       console.log('Attribute saved successfully:', response);
-    //       const successMsg: string =
-    //         this.translationKey + 'table.messages.updateSuccess';
-
-    //       this.message = {
-    //         code: '204',
-    //         text: successMsg,
-    //         type: NotificationMessageType.SUCCESS
-    //       };
-
-    //       this.messages.push(this.message);
-    //       this.getAttribute();
-
-    //       this.addNewAttributeFormGroup.reset();
-    //       this.inputLocaleLayoutFormLocale.reset();
-    //       this.inputLocaleLayoutFormDisplayName.reset();
-    //       this.inputLocaleLayoutFormDesc.reset();
-    //       this.inputRangeLocaleLayoutFormLocale.reset();
-    //       this.inputRangeLocaleLayoutFormDisplayName.reset();
-    //       this.inputRangeLocaleLayoutFormDesc.reset();
-    //       this.inputSetLocaleLayoutFormLocale.reset();
-    //       this.inputSetLocaleLayoutFormDisplayName.reset();
-    //       this.inputSetLocaleLayoutFormDesc.reset();
-    //       //   this._messageContainerService.getSuccessMsg(successMsg);
-    //     },
-    //     error => {
-    //       alert('Error saving attribute');
-    //       console.error('Error saving attribute:', error);
-
-    //     }
-    //   );
-    // } else {
-    //   this.metadataService.saveAttribute(request).subscribe(
-    //     response => {
-    //       this.dialogRef$.close();
-    //       console.log('Attribute saved successfully:', response);
-    //       const successMsg: string =
-    //         this.translationKey + 'table.messages.updateSuccess';
-
-    //       this.message = {
-    //         code: '204',
-    //         text: successMsg,
-    //         type: NotificationMessageType.SUCCESS
-    //       };
-
-    //       this.messages.push(this.message);
-    //       this.getAttribute();
-
-    //       this.addNewAttributeFormGroup.reset();
-    //       this.inputLocaleLayoutFormLocale.reset();
-    //       this.inputLocaleLayoutFormDisplayName.reset();
-    //       this.inputLocaleLayoutFormDesc.reset();
-    //       this.inputRangeLocaleLayoutFormLocale.reset();
-    //       this.inputRangeLocaleLayoutFormDisplayName.reset();
-    //       this.inputRangeLocaleLayoutFormDesc.reset();
-    //       this.inputSetLocaleLayoutFormLocale.reset();
-    //       this.inputSetLocaleLayoutFormDisplayName.reset();
-    //       this.inputSetLocaleLayoutFormDesc.reset();
-    //       //   this._messageContainerService.getSuccessMsg(successMsg);
-    //     },
-    //     error => {
-    //       alert('Error saving attribute');
-    //       console.error('Error saving attribute:', error);
-
-    //     }
-    //   );
-    // }
-
-    // this.metadataService.updateAttribute(request).subscribe(
-    //   response => {
-    //     this.dialogRef$.close();
-    //     console.log('Attribute saved successfully:', response);
-    //     const successMsg: string =
-    //       this.translationKey + 'table.messages.updateSuccess';
-
-    //     this.message = {
-    //       code: '204',
-    //       text: successMsg,
-    //       type: NotificationMessageType.SUCCESS
-    //     };
-
-    //     this.messages.push(this.message);
-    //     this.getAttribute();
-
-    //     this.addNewAttributeFormGroup.reset();
-    //     this.inputLocaleLayoutFormLocale.reset();
-    //     this.inputLocaleLayoutFormDisplayName.reset();
-    //     this.inputLocaleLayoutFormDesc.reset();
-    //     this.inputRangeLocaleLayoutFormLocale.reset();
-    //     this.inputRangeLocaleLayoutFormDisplayName.reset();
-    //     this.inputRangeLocaleLayoutFormDesc.reset();
-    //     this.inputSetLocaleLayoutFormLocale.reset();
-    //     this.inputSetLocaleLayoutFormDisplayName.reset();
-    //     this.inputSetLocaleLayoutFormDesc.reset();
-    //     //   this._messageContainerService.getSuccessMsg(successMsg);
-    //   },
-    //   error => {
-    //     alert('Error saving attribute');
-    //     console.error('Error saving attribute:', error);
-
-    //   }
-    // );
-
-    // this.metadataService.saveAttribute(request).subscribe(
-    //   response => {
-    //     this.dialogRef$.close();
-    //     console.log('Attribute saved successfully:', response);
-    //     const successMsg: string =
-    //       this.translationKey + 'table.messages.updateSuccess';
-
-    //     this.message = {
-    //       code: '204',
-    //       text: successMsg,
-    //       type: NotificationMessageType.SUCCESS
-    //     };
-
-    //     this.messages.push(this.message);
-    //     this.getAttribute();
-
-    //     this.addNewAttributeFormGroup.reset();
-    //     this.inputLocaleLayoutFormLocale.reset();
-    //     this.inputLocaleLayoutFormDisplayName.reset();
-    //     this.inputLocaleLayoutFormDesc.reset();
-    //     this.inputRangeLocaleLayoutFormLocale.reset();
-    //     this.inputRangeLocaleLayoutFormDisplayName.reset();
-    //     this.inputRangeLocaleLayoutFormDesc.reset();
-    //     this.inputSetLocaleLayoutFormLocale.reset();
-    //     this.inputSetLocaleLayoutFormDisplayName.reset();
-    //     this.inputSetLocaleLayoutFormDesc.reset();
-    //     //   this._messageContainerService.getSuccessMsg(successMsg);
-    //   },
-    //   error => {
-    //     alert('Error saving attribute');
-    //     console.error('Error saving attribute:', error);
-
-    //   }
-    // );
   }
   handleSuccess(response?: any) {
     this.dialogRef$.close();
@@ -2128,7 +1999,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.resetForms();
   }
   handleError(error: any) {
-    alert('Error saving attribute');
+    // alert('Error saving attribute');
     console.error('Error saving attribute:', error);
   }
   resetForms() {
@@ -2146,7 +2017,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
   onAdd(formValues: any) {
     if (this.inputLayoutForm.invalid) {
-      alert('Please fill all the required fields.');
+      // alert('Please fill all the required fields.');
       return;
     }
     this.dataWithValidvalues = this.dataWithValidvalues || [];
@@ -2202,7 +2073,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         ...this.dataWithExsistingValidvalues
       ];
     } else {
-      
+
     }
 
     this.inputExistingLayoutForm.reset();
@@ -2215,16 +2086,17 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     const formValue = this.addExistingAttributeFormGroup.value;
     console.log("values beforer:", formValue);
     const selectedProductCode = formValue.productCode;
+    const selectedProduct = this.productCodes.find(item => item.label === selectedProductCode || item.value === selectedProductCode);
     console.log(this.productCodes);
-    const productTypeIdentifier =
-      this.productCodes.find(item => item.label === selectedProductCode)
-        ?.value || selectedProductCode;
+    const productTypeIdentifier = selectedProduct?.value || selectedProductCode;
+    const productTypeLabel = selectedProduct?.label || selectedProductCode;
 
     const attribute: any = {};
     attribute.productTypeAdditionalDataTypeRelationshipList = [
       {
         identifier: 1110101,
         attributeIdentifier: productTypeIdentifier,
+        attributeCode: productTypeLabel,
         minimumRequired: formValue.min,
         maximumAllowed: formValue.max,
         glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
@@ -2252,9 +2124,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       productTypeList: ['CASA']
     };
 
+
     const serviceCall = isAdd
       ? this.metadataService.saveAttribute(request)
       : this.metadataService.updateAttribute(request);
+
+    console.log("request:", JSON.stringify(request, null, 2));
 
     serviceCall.subscribe(
       response => {
@@ -2265,21 +2140,22 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     );
     this.dataWithExsistingValidvalues = [];
 
-    
+
   }
   getAttribute(): void {
     this.metadataService.retrieveAttribute().subscribe(response => {
       if (response.status === 'SUCCESS' && response.data) {
         this.attributeData = response.data.map((item: any) => {
-          const additionalDataType = item.additionalDataType || {};
+          const attributeData = item.Attribute || {};
+          const additionalDataType = attributeData.additionalDataType || {};
           const productTypeAdditionalDataList =
-            item.productTypeAdditionalDataList || [];
+            attributeData.productTypeAdditionalDataList || [];
           const productTypeAdditionalDataTypeRelationshipList =
-            item.productTypeAdditionalDataTypeRelationshipList || [];
+            attributeData.productTypeAdditionalDataTypeRelationshipList || [];
           const additionalDataValidValueSetList =
-            item.additionalDataValidValueSetList || [];
+            attributeData.additionalDataValidValueSetList || [];
           const additionalDataValidValuesRange =
-            item.additionalDataValidValuesRange;
+            attributeData.additionalDataValidValuesRange;
 
           let additionalDataValidValueSetListMapped = null;
           if (additionalDataValidValueSetList.length > 0) {
@@ -2305,6 +2181,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
               productTypeAdditionalDataTypeRelationshipList.map(
                 (relationship: any) => ({
                   identifier: relationship.identifier,
+                  attributeCode: relationship.attributeCode,
                   attributeIdentifier: relationship.attributeIdentifier,
                   minimumRequired: relationship.minimumRequired,
                   maximumAllowed: relationship.maximumAllowed,
@@ -2346,7 +2223,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
           const attribute: Attribute = {
             //   additionalDataType: {
-            code: additionalDataType.code,
+            code: additionalDataType.code ? additionalDataType.code : productTypeAdditionalDataTypeRelationshipList[0].attributeCode,
             descriptions: [
               {
                 id: 0,
@@ -2453,15 +2330,14 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
                     .glCategarization
               }
             ],
-            productTypeAdditionalDataList: productTypeAdditionalDataListMapped
+            productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
+            MetdataStatus: item.MetdataStatus
           };
 
           // console.log(attribute);
           return attribute;
         });
-
         // this.attributeData.sort((a, b) => b.identifier - a.identifier);
-
         this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
       }
     });
@@ -2688,9 +2564,10 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   private subscription = new Subscription();
 
   ngOnDestroy() {
-    if (this.subscription){this.messages = [];
+    if (this.subscription) {
+      this.messages = [];
       this.subscription.unsubscribe();
     }
-    
+
   }
 }
