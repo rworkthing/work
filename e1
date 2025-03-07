@@ -4,3 +4,27 @@ metadata-config.component.ts:719 editLocale: Row already exists, skipping...
 metadata-config.component.ts:661 editlocale called with  en-US w english
 metadata-config.component.ts:719 editLocale: Row already exists, skipping...
 metadata-config.component.ts:547 Updated multiLingualTextInfoList in table: 
+(2) [{…}, {…}]
+0
+: 
+description
+: 
+"sca"
+displayName
+: 
+"werwe"
+locale
+: 
+"en-GB"
+[[Prototype]]
+: 
+Object
+1
+: 
+{locale: 'en-US', displayName: 'english', description: 'w'}
+length
+: 
+2
+[[Prototype]]
+: 
+Array(0)
