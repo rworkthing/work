@@ -1,15 +1,64 @@
-<div *ngIf="modeOptionsSimple.input" class="editPageOptions">
-  <button
-    mat-raised-button
-    fisStyle
-    type="button"
-    color="primary"
-    (click)="saveTableData()"
-    [disabled]="!isFormDirty()"
-  >
-    {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
-  </button>
-  <button mat-stroked-button fisStyle type="button" (click)="reset()">
-    {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
-  </button>
-</div>
+{columns: Array(4), datasource: MatTableDataSource, noRecordsMessage: 'No Data Defined'}
+columns
+: 
+(4) [{…}, {…}, {…}, {…}]
+datasource
+: 
+MatTableDataSource
+filterPredicate
+: 
+(rowData, filter) => {…}
+filteredData
+: 
+[{…}]
+sortData
+: 
+(data, sort) => {…}
+sortingDataAccessor
+: 
+(data, sortHeaderId) => {…}
+_data
+: 
+BehaviorSubject {closed: false, currentObservers: Array(0), observers: Array(0), isStopped: false, hasError: false, …}
+_filter
+: 
+BehaviorSubject {closed: false, currentObservers: null, observers: Array(0), isStopped: false, hasError: false, …}
+_internalPageChanges
+: 
+Subject {closed: false, currentObservers: null, observers: Array(0), isStopped: false, hasError: false, …}
+_renderChangesSubscription
+: 
+null
+_renderData
+: 
+BehaviorSubject {closed: false, currentObservers: null, observers: Array(0), isStopped: false, hasError: false, …}
+data
+: 
+Array(1)
+0
+: 
+{locale: 'en-GB', displayName: 'ds', description: 'ds'}
+length
+: 
+1
+[[Prototype]]
+: 
+Array(0)
+filter
+: 
+(...)
+paginator
+: 
+(...)
+sort
+: 
+(...)
+[[Prototype]]
+: 
+DataSource
+noRecordsMessage
+: 
+"No Data Defined"
+[[Prototype]]
+: 
+Object
