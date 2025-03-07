@@ -1,10 +1,11 @@
-  private editAttributes(element: Attribute) {
+ private editAttributes(element: Attribute) {
     console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
     this.isAdd = false;
     this.addNewAttributeFormGroup.reset();
     this.addExistingAttributeFormGroup.reset();
     this.addNewAttributeFormGroup.removeControl('validtype');
     this.addExistingAttributeFormGroup.removeControl('validtype');
+    this.tableWithSimpleEdit.datasource.data = [];
     console.log(this.addNewAttributeFormGroup);
     //this.addNewAttributeFormGroup.addControl("validtype",true)
     let selectedTemplate: TemplateRef<any>;
@@ -20,7 +21,7 @@
         name: element.name,
         shortname: element.shortName,
         type: element.objectTypeIdentifier,
-         datatype: element.formatTypeIdentifier,
+        datatype: element.formatTypeIdentifier,
         calculate: element.calculated === "Y",
         searchable: element.searchable === "Y",
         multivalueallowed: element.multiValueAllowed === "Y",
@@ -50,7 +51,7 @@
         rangedescriptions: element.additionalDataValidValuesRange?.description || '',
         // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
         // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
-        
+
       });
     } else {
       selectedTemplate = this.addExistingAttributeTemp;
@@ -69,8 +70,12 @@
       'validtype',
       this.fb.control(this.validtype)
     );
- 
-    console.log( this.addNewAttributeFormGroup)
+    this.addExistingAttributeFormGroup.addControl(
+      'validtype',
+      this.fb.control(this.validtype)
+    );
+
+    console.log(this.addNewAttributeFormGroup)
     this.ValidvalueArray.datasource.data = [];
     this.ExistingValidvalueArray.datasource.data = [];
     this.dataWithValidvalues = [];
@@ -85,7 +90,8 @@
       this.ValidvalueArray.datasource.data.push(obj);
       this.ExistingValidvalueArray.datasource.data.push(obj);
       this.dataWithValidvalues.push(obj);
-      
+      this.dataWithExsistingValidvalues.push(obj);
+
     })
     console.log("loaded vaild", this.dataWithValidvalues);
     // console.log(this.inputLayoutForm);
@@ -101,24 +107,46 @@
     // })
 
 
-    element.multiLingualTextInfoList?.forEach(element => {
+    // element.multiLingualTextInfoList?.forEach(element => {
 
-      this.editLocale(element.localeCode, element.translationText, element.localeText)
-      console.log("processinglocale", element.localeCode)
-      let obj = {} as BodLocaleTable;
-      obj.locale = element.localeCode;
-      // this.inputLocaleLayoutFormLocale.get('localeCode')?.setValue(element.localeCode)
-      obj.displayName = element.translationText;
-      obj.description = element.localeText;
-      const existingRow = this.tableWithSimpleEdit.datasource.data.find(
-        row => row.locale === obj.locale
-      );
-      if (!existingRow) {
-        this.tableWithSimpleEdit.datasource.data.push(obj);
-      }
+    //   this.editLocale(element.localeCode, element.translationText, element.localeText)
+    //   console.log("processinglocale", element.localeCode)
+    //   let obj = {} as BodLocaleTable;
+    //   obj.locale = element.localeCode;
+    //   // this.inputLocaleLayoutFormLocale.get('localeCode')?.setValue(element.localeCode)
+    //   obj.displayName = element.translationText;
+    //   obj.description = element.localeText;
+    //   const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+    //     row => row.locale === obj.locale
+    //   );
+    //   if (!existingRow) {
+    //     this.tableWithSimpleEdit.datasource.data.push(obj);
+    //   }
 
-    })
+    // })
     // console.log(this.inputLayoutForm);
+    if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
+      console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
+  
+      element.multiLingualTextInfoList.forEach(item => {
+          this.editLocale(item.localeCode, item.translationText, item.localeText);
+  
+          let obj = {
+              locale: item.localeCode,
+              displayName: item.translationText,
+              description: item.localeText
+          };
+  
+          const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+              row => row.locale === obj.locale
+          );
+          if (!existingRow) {
+              this.tableWithSimpleEdit.datasource.data.push(obj);
+          }
+      });
+  
+      console.log("Updated multiLingualTextInfoList in table:", this.tableWithSimpleEdit.datasource.data);
+  }
     console.log(this.inputLocaleLayoutFormLocale);
 
 
