@@ -1,46 +1,41 @@
-serviceCall.subscribe(
-        response => {
-            console.log("API Response from PUT:", response);
+private editLocale(locale, name, desc) {
+    console.log("editLocale called with ", locale, name, desc);
 
-            // ✅ If PUT response is null, trigger GET request to fetch updated data
-            if (!response) {
-                console.warn("PUT response is null. Fetching updated data using GET...");
-
-                this.metadataService.getAttributes().subscribe(getResponse => {
-                    console.log("Fetched Data from GET:", getResponse);
-
-                    if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
-                        // ✅ Update table data with GET response
-                        this.tableWithSimpleEdit.datasource.data = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
-                            locale: item.localeCode,
-                            displayName: item.translationText,
-                            description: item.localeText
-                        }));
-
-                        setTimeout(() => {
-                            this.changeDetectorRef.detectChanges();
-                        }, 100);
-                    } else {
-                        console.warn("GET response is also empty. No data to update.");
-                    }
-                });
-            } else {
-                // ✅ Normal case if PUT returns correct data
-                this.tableWithSimpleEdit.datasource.data = response.attributeList[0].multiLingualTextInfoList.map(item => ({
-                    locale: item.localeCode,
-                    displayName: item.translationText,
-                    description: item.localeText
-                }));
-
-                setTimeout(() => {
-                    this.changeDetectorRef.detectChanges();
-                }, 100);
-            }
-
-            this.handleSuccess(response);
-        },
-        error => {
-            console.error("API Call Failed:", error);
-            this.handleError(error);
-        }
+    // ✅ Find the existing row
+    const existingRowIndex = this.tableWithSimpleEdit.datasource.data.findIndex(
+        row => row.locale === locale
     );
+
+    if (existingRowIndex !== -1) {
+        // ✅ Update the existing row
+        this.tableWithSimpleEdit.datasource.data[existingRowIndex] = {
+            ...this.tableWithSimpleEdit.datasource.data[existingRowIndex], // Preserve other values
+            displayName: name,
+            description: desc
+        };
+        console.log("editLocale: Row updated at index", existingRowIndex);
+    } else {
+        // ✅ If row does not exist, add a new one
+        console.log("editLocale: Adding a new row.");
+        let updatedData = {
+            id: this.lastModifiedIndex,
+            locale: locale,
+            action: EditTableAction.ADD,
+            displayName: name,
+            description: desc
+        };
+
+        this.tableWithSimpleEdit.datasource.data = [
+            ...this.tableWithSimpleEdit.datasource.data,
+            updatedData
+        ];
+        ++this.lastModifiedIndex;
+    }
+
+    // ✅ Trigger UI refresh
+    setTimeout(() => {
+        this.changeDetectorRef.detectChanges();
+    }, 100);
+
+    console.log("Updated Table Data:", this.tableWithSimpleEdit.datasource.data);
+}
