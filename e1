@@ -1,19 +1,21 @@
-if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
+this.metadataService.getAttributes().subscribe(getResponse => {
+    console.log("Fetched Data from GET:", getResponse);
+
+    if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
         const updatedData = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
             locale: item.localeCode,
             displayName: item.translationText,
             description: item.localeText
         }));
 
-        // ✅ Force Angular to detect changes
-        this.tableWithSimpleEdit.datasource.data = updatedData;
+        // ✅ Completely replace the data source
         this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
 
-        // ✅ Manually refresh Angular Material Table
-        if (this.tableWithSimpleEdit.table) {
-            this.tableWithSimpleEdit.table.renderRows();
-        }
+        // ✅ Manually trigger Angular change detection
+        this.changeDetectorRef.detectChanges();
 
-        setTimeout(() => {
-            this.changeDetectorRef.detectChanges();
-        }, 100);
+        console.log("Updated Table Data (After GET):", updatedData);
+    } else {
+        console.warn("GET response is empty. No data to update.");
+    }
+});
