@@ -1,29 +1,92 @@
-// ✅ Clear existing data
-this.tableWithSimpleEdit.datasource.data = [];
+private editAttributes(element: Attribute) {
+    console.log("Element Data:", JSON.stringify(element, null, 2)); // Log full element data
+    this.isAdd = false;
+    this.addNewAttributeFormGroup.reset();
+    this.addExistingAttributeFormGroup.reset();
+    this.addNewAttributeFormGroup.removeControl('validtype');
+    this.addExistingAttributeFormGroup.removeControl('validtype');
 
-// ✅ Ensure multiLingualTextInfoList is populated when editing
-if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
-    console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
+    // ✅ Save previous values before resetting
+    const previousLocaleData = [...this.tableWithSimpleEdit.datasource.data];
 
-    element.multiLingualTextInfoList.forEach(item => {
-        this.editLocale(item.localeCode, item.translationText, item.localeText);
+    // ✅ Clear table before loading new data
+    this.tableWithSimpleEdit.datasource.data = [];
 
-        let obj = {
-            locale: item.localeCode,
-            displayName: item.translationText,
-            description: item.localeText
-        };
+    console.log("Previous locale data before reset:", previousLocaleData);
 
-        // ✅ Add to the table only if it doesn't already exist
-        const existingRow = this.tableWithSimpleEdit.datasource.data.find(
-            row => row.locale === obj.locale
-        );
-        if (!existingRow) {
-            this.tableWithSimpleEdit.datasource.data.push(obj);
-        }
-    });
+    let selectedTemplate: TemplateRef<any>;
+    let dialogTitle: string;
+    this.validtype = element?.productTypeAdditionalDataList?.length > 0 ? true : false;
+    if (element.shortName) {
+      selectedTemplate = this.addAttributeTemp;
+      dialogTitle = "Edit Attribute";
 
-    console.log("Updated multiLingualTextInfoList in table:", this.tableWithSimpleEdit.datasource.data);
-} else {
-    console.warn("⚠️ No multiLingualTextInfoList found!");
+      this.addNewAttributeFormGroup.setValue({
+        code: element.code,
+        identifier: element.identifier,
+        name: element.name,
+        shortname: element.shortName,
+        type: element.objectTypeIdentifier,
+        datatype: element.formatTypeIdentifier,
+        calculate: element.calculated === "Y",
+        searchable: element.searchable === "Y",
+        multivalueallowed: element.multiValueAllowed === "Y",
+        percentageallowed: element.percentageAllowed === "Y",
+        classificationtype: element.classificationType,
+        relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
+        descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
+        validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" :
+          element.additionalDataValidValueSetList ? "setvalues" : '',
+        productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
+        min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
+        max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
+        GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
+        attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
+        isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
+        isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
+        isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
+        sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
+        percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
+        valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
+        localeCode: element.multiLingualTextInfoList?.[0]?.localeCode || '',
+        description: element.multiLingualTextInfoList?.[0]?.localeText || '',
+        displayName: element.multiLingualTextInfoList?.[0]?.translationText || '',
+        rangename: element.additionalDataValidValuesRange?.name || '',
+        rangedescriptions: element.additionalDataValidValuesRange?.description || '',
+      });
+    }
+
+    // ✅ Ensure table is repopulated with previous or existing data
+    if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
+        console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
+
+        element.multiLingualTextInfoList.forEach(item => {
+            let obj = {
+                locale: item.localeCode,
+                displayName: item.translationText,
+                description: item.localeText
+            };
+
+            const existingRow = previousLocaleData.find(row => row.locale === obj.locale);
+            if (!existingRow) {
+                this.tableWithSimpleEdit.datasource.data.push(obj);
+            }
+        });
+
+        console.log("Updated multiLingualTextInfoList in table:", this.tableWithSimpleEdit.datasource.data);
+    } else {
+        console.warn("⚠️ No multiLingualTextInfoList found!");
+    }
+
+    console.log("Final table data:", this.tableWithSimpleEdit.datasource.data);
+
+    if (!this.dialogRef$ || this.dialogRef$.getState() === MatDialogState.CLOSED) {
+      let dialogModel: BodCommonDialogModel = {
+        formTemplate: selectedTemplate,
+        title: dialogTitle
+      };
+      this.openDialog(dialogModel);
+    }
+
+    this.isEdit = true;
 }
