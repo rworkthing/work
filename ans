@@ -1,23 +1,15 @@
-if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
-    console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
-
-    let updatedData = [];
-
-    element.multiLingualTextInfoList.forEach(item => {
-        let obj = {
-            locale: item.localeCode,
-            displayName: item.translationText,
-            description: item.localeText
-        };
-
-        updatedData.push(obj);
-    });
-
-    // ✅ Update table data properly
-    this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
-
-    // ✅ Ensure table refreshes in the UI
-    this.changeDetectorRef.detectChanges();
-
-    console.log("Final table data after change detection:", this.tableWithSimpleEdit.datasource.data);
+const existingRowIndex = this.tableWithSimpleEdit.datasource.data.findIndex(
+    row => row.locale === locale
+);
+if (existingRowIndex !== -1) {
+    console.log("✅ Updating existing row in editLocale:", locale);
+    this.tableWithSimpleEdit.datasource.data[existingRowIndex].displayName = name;
+    this.tableWithSimpleEdit.datasource.data[existingRowIndex].description = desc;
+} else {
+    console.log("✅ Adding new row in editLocale:", locale);
+    this.tableWithSimpleEdit.datasource.data.push({ locale, displayName: name, description: desc });
 }
+
+// ✅ Force UI refresh
+this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data];
+this.changeDetectorRef.detectChanges();
