@@ -1,10 +1,11 @@
- private editAttributes(element: Attribute) {
+  private editAttributes(element: Attribute) {
     console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
     this.isAdd = false;
     this.addNewAttributeFormGroup.reset();
     this.addExistingAttributeFormGroup.reset();
     this.addNewAttributeFormGroup.removeControl('validtype');
     this.addExistingAttributeFormGroup.removeControl('validtype');
+    const previousLocaleData = [...this.tableWithSimpleEdit.datasource.data];
     this.tableWithSimpleEdit.datasource.data = [];
     console.log(this.addNewAttributeFormGroup);
     //this.addNewAttributeFormGroup.addControl("validtype",true)
@@ -144,6 +145,9 @@
               this.tableWithSimpleEdit.datasource.data.push(obj);
           }
       });
+      this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data]
+
+      this.changeDetectorRef.detectChanges();
   
       console.log("Updated multiLingualTextInfoList in table:", this.tableWithSimpleEdit.datasource.data);
   }
