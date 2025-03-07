@@ -1,22 +1,17 @@
 private editLocale(locale, name, desc) {
     console.log("editLocale called with ", locale, name, desc);
 
-    // ✅ Find the existing row
-    const existingRowIndex = this.tableWithSimpleEdit.datasource.data.findIndex(
-        row => row.locale === locale
-    );
+    // ✅ Find the existing row by matching the locale
+    const existingRow = this.tableWithSimpleEdit.datasource.data.find(row => row.locale === locale);
 
-    if (existingRowIndex !== -1) {
-        // ✅ Update the existing row
-        this.tableWithSimpleEdit.datasource.data[existingRowIndex] = {
-            ...this.tableWithSimpleEdit.datasource.data[existingRowIndex], // Preserve other values
-            displayName: name,
-            description: desc
-        };
-        console.log("editLocale: Row updated at index", existingRowIndex);
+    if (existingRow) {
+        // ✅ Modify the existing row directly
+        existingRow.displayName = name;
+        existingRow.description = desc;
+        console.log("editLocale: Row updated:", existingRow);
     } else {
-        // ✅ If row does not exist, add a new one
-        console.log("editLocale: Adding a new row.");
+        console.log("editLocale: Row not found, keeping existing logic.");
+        
         let updatedData = {
             id: this.lastModifiedIndex,
             locale: locale,
@@ -25,14 +20,11 @@ private editLocale(locale, name, desc) {
             description: desc
         };
 
-        this.tableWithSimpleEdit.datasource.data = [
-            ...this.tableWithSimpleEdit.datasource.data,
-            updatedData
-        ];
+        this.tableWithSimpleEdit.datasource.data.push(updatedData);
         ++this.lastModifiedIndex;
     }
 
-    // ✅ Trigger UI refresh
+    // ✅ Ensure UI updates
     setTimeout(() => {
         this.changeDetectorRef.detectChanges();
     }, 100);
