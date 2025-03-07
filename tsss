@@ -1,17 +1,3 @@
-export declare enum PageMode {
-    INQUIRY = "inquiry",
-    INPUT = "input",
-    NONE = "none"
-}
-export declare enum PageAction {
-    EDIT = "Edit",
-    DELETE = "Delete",
-    CANCEL = "Cancel",
-    ADD = 'Add'
-}
-export interface PageActionBtn {
-    id: string;
-    icon: string;
-    tooltip: string;
-}
-//# sourceMappingURL=page-container-enums.d.ts.map
+setTimeout(() => {
+    this.changeDetectorRef.detectChanges();
+}, 100);
