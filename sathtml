@@ -1,64 +1,26 @@
-{columns: Array(4), datasource: MatTableDataSource, noRecordsMessage: 'No Data Defined'}
-columns
-: 
-(4) [{…}, {…}, {…}, {…}]
-datasource
-: 
-MatTableDataSource
-filterPredicate
-: 
-(rowData, filter) => {…}
-filteredData
-: 
-[{…}]
-sortData
-: 
-(data, sort) => {…}
-sortingDataAccessor
-: 
-(data, sortHeaderId) => {…}
-_data
-: 
-BehaviorSubject {closed: false, currentObservers: Array(0), observers: Array(0), isStopped: false, hasError: false, …}
-_filter
-: 
-BehaviorSubject {closed: false, currentObservers: null, observers: Array(0), isStopped: false, hasError: false, …}
-_internalPageChanges
-: 
-Subject {closed: false, currentObservers: null, observers: Array(0), isStopped: false, hasError: false, …}
-_renderChangesSubscription
-: 
-null
-_renderData
-: 
-BehaviorSubject {closed: false, currentObservers: null, observers: Array(0), isStopped: false, hasError: false, …}
-data
-: 
-Array(1)
-0
-: 
-{locale: 'en-GB', displayName: 'ds', description: 'ds'}
-length
-: 
-1
-[[Prototype]]
-: 
-Array(0)
-filter
-: 
-(...)
-paginator
-: 
-(...)
-sort
-: 
-(...)
-[[Prototype]]
-: 
-DataSource
-noRecordsMessage
-: 
-"No Data Defined"
-[[Prototype]]
-: 
-Object
+onAdd(formValues: any) {
+    if (this.inputLayoutForm.invalid) {
+      // alert('Please fill all the required fields.');
+      return;
+    }
+    this.dataWithValidvalues = this.dataWithValidvalues || [];
+    const newValidValue: BodSampleTable1 = {
+      additionaldatavalue: formValues.additionaldatavalue || '',
+      defaultindicator: formValues.defaultindicator ?? false,
+      primaryindicator: formValues.primaryindicator ?? false,
+      overrideindicator: formValues.overrideindicator ?? false,
+      percentagevalue: formValues.percentagevalue ?? null,
+      sequencenumber: formValues.sequencenumber ?? null
+    };
+
+    this.dataWithValidvalues.push(newValidValue);
+    if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
+      this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    } else {
+      this.inputLayoutForm.reset();
+      // this.changeDetectorRef.detectChanges();
+      // alert('Valid values added successfully!');
+    }
+    this.changeDetectorRef.detectChanges();
+    this.inputLayoutForm.reset();
+  }
