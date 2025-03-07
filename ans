@@ -1,20 +1,9 @@
- serviceCall.subscribe(
-        response => {
-            console.log("API Response:", response); // Debugging log
+this.metadataService.getAttributes().subscribe(getResponse => {
+                console.log("Fetched Data from GET:", getResponse);
 
-            // ✅ Ensure table updates with the new data
-            this.tableWithSimpleEdit.datasource.data = response.attributeList[0].multiLingualTextInfoList.map(item => ({
-                locale: item.localeCode,
-                displayName: item.translationText,
-                description: item.localeText
-            }));
-
-            // ✅ Force UI update
-            setTimeout(() => {
-                this.changeDetectorRef.detectChanges();
-            }, 100);
-
-            this.handleSuccess(response);
-        },
-        error => this.handleError(error)
-    );
+                // ✅ Update table data with GET response
+                this.tableWithSimpleEdit.datasource.data = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
+                    locale: item.localeCode,
+                    displayName: item.translationText,
+                    description: item.localeText
+                }));
