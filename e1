@@ -1,1 +1,3 @@
-console.log("multiLingualTextInfoList:", getResponse.data[0].multiLingualTextInfoList);
+this.metadataService.getAttributes().subscribe(getResponse => {
+    console.log("Full GET Response:", JSON.stringify(getResponse, null, 2));
+});
