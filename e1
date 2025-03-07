@@ -1,15 +1,6 @@
-if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
-    console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
-
-    let updatedData = element.multiLingualTextInfoList.map(item => ({
-        locale: item.localeCode,
-        displayName: item.translationText,
-        description: item.localeText
-    }));
-
-    this.tableWithSimpleEdit.datasource.data = updatedData;  // ✅ Set data directly
-    this.tableWithSimpleEdit.datasource._updateChangeSubscription();  // ✅ Notify table to refresh
-    this.changeDetectorRef.detectChanges();  // ✅ Force UI update
-
-    console.log("Final table data after change detection:", this.tableWithSimpleEdit.datasource.data);
-}
+Processing multiLingualTextInfoList: (2) [{…}, {…}]0: {localeCode: 'en-GB', localeText: 'werwe', identifier: 1110400720, objectType: '1000000000002', attributeType: '100000001004', …}1: {localeCode: 'en-US', localeText: 'english', identifier: 1110400720, objectType: '1000000000002', attributeType: '100000001004', …}length: 2[[Prototype]]: Array(0)
+metadata-config.component.ts:661 editlocale called with  en-GB sca werwe
+metadata-config.component.ts:719 editLocale: Row already exists, skipping...
+metadata-config.component.ts:661 editlocale called with  en-US w english
+metadata-config.component.ts:719 editLocale: Row already exists, skipping...
+metadata-config.component.ts:547 Updated multiLingualTextInfoList in table: 
