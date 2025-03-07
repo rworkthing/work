@@ -1,103 +1,20 @@
-private editAttributes(element: Attribute) {
-  console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
-  this.isAdd = false;
-  this.addNewAttributeFormGroup.reset();
-  this.addExistingAttributeFormGroup.reset();
-  this.addNewAttributeFormGroup.removeControl('validtype');
-  this.addExistingAttributeFormGroup.removeControl('validtype');
-  const previousLocaleData = [...this.tableWithSimpleEdit.datasource.data];
-  console.log(this.addNewAttributeFormGroup);
+ serviceCall.subscribe(
+        response => {
+            console.log("API Response:", response); // Debugging log
 
-  let selectedTemplate: TemplateRef<any>;
-  let dialogTitle: string;
-  this.validtype = element?.productTypeAdditionalDataList?.length > 0 ? true : false;
+            // ✅ Ensure table updates with the new data
+            this.tableWithSimpleEdit.datasource.data = response.attributeList[0].multiLingualTextInfoList.map(item => ({
+                locale: item.localeCode,
+                displayName: item.translationText,
+                description: item.localeText
+            }));
 
-  if (element.shortName) {
-    selectedTemplate = this.addAttributeTemp;
-    dialogTitle = "Edit Attribute";
+            // ✅ Force UI update
+            setTimeout(() => {
+                this.changeDetectorRef.detectChanges();
+            }, 100);
 
-    this.addNewAttributeFormGroup.setValue({
-      code: element.code,
-      identifier: element.identifier,
-      name: element.name,
-      shortname: element.shortName,
-      type: element.objectTypeIdentifier,
-      datatype: element.formatTypeIdentifier,
-      calculate: element.calculated === "Y",
-      searchable: element.searchable === "Y",
-      multivalueallowed: element.multiValueAllowed === "Y",
-      percentageallowed: element.percentageAllowed === "Y",
-      classificationtype: element.classificationType,
-      relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
-      descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
-      validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" :
-        element.additionalDataValidValueSetList ? "setvalues" : '',
-      productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
-      min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
-      max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
-      GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
-      attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
-      isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
-      isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
-      isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
-      sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
-      percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
-      valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
-      localeCode: element.multiLingualTextInfoList?.[0]?.localeCode || '',
-      description: element.multiLingualTextInfoList?.[0]?.localeText || '',
-      displayName: element.multiLingualTextInfoList?.[0]?.translationText || '',
-      rangename: element.additionalDataValidValuesRange?.name || '',
-      rangedescriptions: element.additionalDataValidValuesRange?.description || '',
-    });
-
-    // Process multiLingualTextInfoList
-    if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
-      console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
-      element.multiLingualTextInfoList.forEach(item => {
-        this.editLocale(item.localeCode, item.translationText, item.localeText);
-      });
-    }
-  } else {
-    selectedTemplate = this.addExistingAttributeTemp;
-    dialogTitle = "Edit Existing Attribute";
-
-    const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
-    this.addExistingAttributeFormGroup.setValue({
-      productCode: firstRelation?.attributeIdentifier || '',
-      min: firstRelation?.minimumRequired || '',
-      max: firstRelation?.maximumAllowed || '',
-      GLcategorizationAllowed: firstRelation?.glCategarization === "Y"
-    });
-  }
-
-  this.addNewAttributeFormGroup.addControl('validtype', this.fb.control(this.validtype));
-  this.addExistingAttributeFormGroup.addControl('validtype', this.fb.control(this.validtype));
-
-  console.log(this.addNewAttributeFormGroup);
-  this.ValidvalueArray.datasource.data = [];
-  this.ExistingValidvalueArray.datasource.data = [];
-  this.dataWithValidvalues = [];
-
-  element.productTypeAdditionalDataList?.forEach(element => {
-    let obj = {} as BodSampleTable1;
-    obj.additionaldatavalue = element.attributeValue;
-    obj.defaultindicator = element.isDefault;
-    obj.overrideindicator = element.overrideDefault;
-    obj.percentagevalue = element.percentage;
-    obj.sequencenumber = element.sequenceNumber;
-    this.ValidvalueArray.datasource.data.push(obj);
-    this.ExistingValidvalueArray.datasource.data.push(obj);
-    this.dataWithValidvalues.push(obj);
-    this.dataWithExsistingValidvalues.push(obj);
-  });
-
-  if (!this.dialogRef$ || this.dialogRef$.getState() === MatDialogState.CLOSED) {
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: selectedTemplate,
-      title: dialogTitle
-    };
-    this.openDialog(dialogModel);
-  }
-
-  this.isEdit = true;
-}
+            this.handleSuccess(response);
+        },
+        error => this.handleError(error)
+    );
