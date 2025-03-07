@@ -1,9 +1,46 @@
-this.metadataService.getAttributes().subscribe(getResponse => {
-                console.log("Fetched Data from GET:", getResponse);
+serviceCall.subscribe(
+        response => {
+            console.log("API Response from PUT:", response);
 
-                // ✅ Update table data with GET response
-                this.tableWithSimpleEdit.datasource.data = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
+            // ✅ If PUT response is null, trigger GET request to fetch updated data
+            if (!response) {
+                console.warn("PUT response is null. Fetching updated data using GET...");
+
+                this.metadataService.getAttributes().subscribe(getResponse => {
+                    console.log("Fetched Data from GET:", getResponse);
+
+                    if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
+                        // ✅ Update table data with GET response
+                        this.tableWithSimpleEdit.datasource.data = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
+                            locale: item.localeCode,
+                            displayName: item.translationText,
+                            description: item.localeText
+                        }));
+
+                        setTimeout(() => {
+                            this.changeDetectorRef.detectChanges();
+                        }, 100);
+                    } else {
+                        console.warn("GET response is also empty. No data to update.");
+                    }
+                });
+            } else {
+                // ✅ Normal case if PUT returns correct data
+                this.tableWithSimpleEdit.datasource.data = response.attributeList[0].multiLingualTextInfoList.map(item => ({
                     locale: item.localeCode,
                     displayName: item.translationText,
                     description: item.localeText
-                }));
+                }));
+
+                setTimeout(() => {
+                    this.changeDetectorRef.detectChanges();
+                }, 100);
+            }
+
+            this.handleSuccess(response);
+        },
+        error => {
+            console.error("API Call Failed:", error);
+            this.handleError(error);
+        }
+    );
