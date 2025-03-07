@@ -1,4 +1,2 @@
-error TS2367: This comparison appears to be unintentional because the types 'MatDialogState' and 'string' have no overlap.
-
-504     if (!this.dialogRef$ || !this.dialogRef$.getState() || this.dialogRef$.getState() === "CLOSED") {
-                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+roperty '_updateChangeSubscription' does not exist on type 'BodTableDataSource<any> | MatTableDataSource<any, MatPaginator>'.
+  Property '_updateChangeSubscription' does not exist on type 'BodTableDataSource<any>'
