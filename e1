@@ -1,1 +1,15 @@
-{{ addNewAttributeFormGroup.get('code')?.value }}
+if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
+    console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
+
+    let updatedData = element.multiLingualTextInfoList.map(item => ({
+        locale: item.localeCode,
+        displayName: item.translationText,
+        description: item.localeText
+    }));
+
+    this.tableWithSimpleEdit.datasource.data = updatedData;  // ✅ Set data directly
+    this.tableWithSimpleEdit.datasource._updateChangeSubscription();  // ✅ Notify table to refresh
+    this.changeDetectorRef.detectChanges();  // ✅ Force UI update
+
+    console.log("Final table data after change detection:", this.tableWithSimpleEdit.datasource.data);
+}
