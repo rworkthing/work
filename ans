@@ -1,105 +1,29 @@
-import { ChangeDetectorRef } from '@angular/core'; // Import ChangeDetectorRef
+// ✅ Clear existing data
+this.tableWithSimpleEdit.datasource.data = [];
 
-constructor(private changeDetectorRef: ChangeDetectorRef, private metadataService: MetadataService) {}
+// ✅ Ensure multiLingualTextInfoList is populated when editing
+if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
+    console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
 
-onAddforExistingAttribute(isAdd: boolean) {
-  if (this.addExistingAttributeFormGroup.invalid) {
-    return; // Prevent submission if the form is invalid
-  }
+    element.multiLingualTextInfoList.forEach(item => {
+        this.editLocale(item.localeCode, item.translationText, item.localeText);
 
-  const formValue = this.addExistingAttributeFormGroup.value;
-  const selectedProductCode = formValue.productCode;
+        let obj = {
+            locale: item.localeCode,
+            displayName: item.translationText,
+            description: item.localeText
+        };
 
-  console.log('Product Codes:', this.productCodes);
-
-  // Find the matching product type identifier
-  const productTypeIdentifier =
-    this.productCodes.find(item => item.label === selectedProductCode)?.value || selectedProductCode;
-
-  // Create the attribute object
-  const attribute: any = {
-    productTypeAdditionalDataTypeRelationshipList: [
-      {
-        identifier: 1110101,
-        attributeIdentifier: productTypeIdentifier,
-        minimumRequired: formValue.min,
-        maximumAllowed: formValue.max,
-        glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
-      }
-    ]
-  };
-
-  // If validtype is selected, prepare additional data values
-  if (formValue.validtype) {
-    attribute.productTypeAdditionalDataList = this.dataWithExsistingValidvalues.map((item, index) => ({
-      identifier: index,
-      attributeIdentifier: productTypeIdentifier,
-      attributeValue: item.additionaldatavalue,
-      attributeValueSource: '',
-      isDefault: item.defaultindicator ? 'Y' : 'N',
-      isPrimary: item.primaryindicator ? 'Y' : 'N',
-      percentage: item.percentagevalue,
-      sequenceNumber: item.sequencenumber,
-      overrideDefault: item.overrideindicator ? 'Y' : 'N'
-    }));
-  }
-
-  const request = {
-    metadataType: 'Attribute',
-    attributeList: [attribute],
-    productTypeList: ['CASA']
-  };
-
-  let serviceCall: Observable<any>;
-
-  if (isAdd) {
-    serviceCall = this.metadataService.saveExistingAttribute(request);
-  } else {
-    serviceCall = this.metadataService.updateAttribute(request);
-  }
-
-  serviceCall.subscribe(
-    response => {
-      console.log('Attribute saved/updated successfully:', response);
-
-      this.message = {
-        code: '204',
-        text: isAdd ? 'New Attribute Added Successfully!' : 'Attribute Updated Successfully!',
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.message);
-
-      // **Update UI Table**
-      if (!isAdd) {
-        const index = this.ExistingValidvalueArray.datasource.data.findIndex(
-          (attr: any) => attr.productTypeAdditionalDataTypeRelationshipList[0].attributeIdentifier === productTypeIdentifier
+        // ✅ Add to the table only if it doesn't already exist
+        const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+            row => row.locale === obj.locale
         );
-
-        if (index !== -1) {
-          this.ExistingValidvalueArray.datasource.data[index] = attribute;
+        if (!existingRow) {
+            this.tableWithSimpleEdit.datasource.data.push(obj);
         }
-      } else {
-        this.ExistingValidvalueArray.datasource.data.push(attribute);
-      }
+    });
 
-      // **Force Table UI Refresh**
-      this.ExistingValidvalueArray.datasource = new MatTableDataSource(
-        [...this.ExistingValidvalueArray.datasource.data] // Create a new array to trigger change detection
-      );
-
-      this.changeDetectorRef.detectChanges(); // Force Angular to update UI
-
-      // **Reset form and close modal**
-      this.addExistingAttributeFormGroup.reset();
-      this.dialogRef$.close();
-
-      // **Refresh the attribute list**
-      this.getAttribute();
-    },
-    error => {
-      alert('Error saving/updating attribute');
-      console.error('Error:', error);
-    }
-  );
+    console.log("Updated multiLingualTextInfoList in table:", this.tableWithSimpleEdit.datasource.data);
+} else {
+    console.warn("⚠️ No multiLingualTextInfoList found!");
 }
-
