@@ -1,2 +1,6 @@
-roperty '_updateChangeSubscription' does not exist on type 'BodTableDataSource<any> | MatTableDataSource<any, MatPaginator>'.
-  Property '_updateChangeSubscription' does not exist on type 'BodTableDataSource<any>'
+API Response from PUT: null
+metadata-config.component.ts:2020 PUT response is null. Fetching updated data using GET...
+
+metadata-config.component.ts:2082 Attribute saved successfully: null
+metadata-config.component.ts:2023 Fetched Data from GET: {data: Array(31), status: 'SUCCESS'}
+metadata-config.component.ts:2040 GET response is empty. No data to update.
