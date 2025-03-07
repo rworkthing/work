@@ -1,65 +1,55 @@
-request SEND: {
-  "metadataType": "Attribute",
-  "attributeList": [
-    {
-      "additionalDataType": {
-        "identifier": 1110400721,
-        "code": "localetest8",
-        "name": "afteredit1",
-        "shortName": "Attribute1",
-        "objectTypeIdentifier": 1000000000001,
-        "formatTypeIdentifier": 100000001005,
-        "calculated": "Y",
-        "searchable": "N",
-        "multiValueAllowed": "Y",
-        "percentageAllowed": "N",
-        "classificationType": "systemDefined",
-        "multiLingualTextInfoList": [
-          {
-            "localeCode": "en-US",
-            "localeText": "qwerty",
-            "identifier": 1110400721,
-            "objectType": 1000000000001,
-            "attributeType": 100000001005,
-            "translationText": "werwe"
-          },
-          {
-            "localeCode": "en",
-            "localeText": "nbnk",
-            "identifier": 1110400721,
-            "objectType": 1000000000001,
-            "attributeType": 100000001005,
-            "translationText": "great britain"
-          }
-        ]
-      },
-      "productTypeAdditionalDataTypeRelationshipList": [
-        {
-          "identifier": 1110101,
-          "attributeIdentifier": 1110400721,
-          "minimumRequired": 5,
-          "maximumAllowed": 44,
-          "glCategarization": "N"
+serviceCall.subscribe(
+        response => {
+            console.log("API Response from PUT:", response);
+
+            // ✅ If PUT response is null, trigger GET request to fetch updated data
+            if (!response) {
+                console.warn("PUT response is null. Fetching updated data using GET...");
+
+                this.metadataService.getAttributes().subscribe(getResponse => {
+                    console.log("Fetched Data from GET:", getResponse);
+
+                    if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
+                        const updatedData = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
+                            locale: item.localeCode,
+                            displayName: item.translationText,
+                            description: item.localeText
+                        }));
+
+                        // ✅ Completely replace the data source to force UI update
+                        this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
+
+                        setTimeout(() => {
+                            this.changeDetectorRef.detectChanges();
+                        }, 100);
+
+                        console.log("Updated Table Data:", updatedData);
+                    } else {
+                        console.warn("GET response is empty. No data to update.");
+                    }
+                });
+            } else {
+                // ✅ Normal case if PUT returns correct data
+                const updatedData = response.attributeList[0].multiLingualTextInfoList.map(item => ({
+                    locale: item.localeCode,
+                    displayName: item.translationText,
+                    description: item.localeText
+                }));
+
+                // ✅ Use new MatTableDataSource() to force UI refresh
+                this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
+
+                setTimeout(() => {
+                    this.changeDetectorRef.detectChanges();
+                }, 100);
+
+                console.log("Updated Table Data:", updatedData);
+            }
+
+            this.handleSuccess(response);
+        },
+        error => {
+            console.error("API Call Failed:", error);
+            this.handleError(error);
         }
-      ],
-      "productTypeAdditionalDataList": [
-        {
-          "identifier": 0,
-          "attributeIdentifier": 1110400721,
-          "attributeValue": "sdhr",
-          "attributeValueSource": "",
-          "isDefault": "Y",
-          "isPrimary": "N",
-          "percentage": 2,
-          "sequenceNumber": 5,
-          "overrideDefault": "Y"
-        }
-      ]
-    }
-  ],
-  "productTypeList": [
-    "CASA"
-  ]
-}
-metadata-config.component.ts:2016 API RESPONSE null
-metadata-config.component.ts:2027 Attribute saved successfully: null
+    );
