@@ -6,3 +6,7 @@ setTimeout(() => {
 setTimeout(() => {
     console.log("Final table data after 2s:", this.tableWithSimpleEdit.datasource.data);
 }, 2000);
+<div *ngIf="tableWithSimpleEdit.datasource.data.length > 0">
+  <h3>Debugging: Table Data Exists</h3>
+  {{ tableWithSimpleEdit.datasource.data | json }}
+</div>
