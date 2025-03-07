@@ -1,3 +1,31 @@
 this.metadataService.getAttributes().subscribe(getResponse => {
-    console.log("Full GET Response:", JSON.stringify(getResponse, null, 2));
+    console.log("Fetched Data from GET:", JSON.stringify(getResponse, null, 2));
+
+    // ✅ Ensure data exists and has items before iterating
+    if (getResponse && getResponse.data && getResponse.data.length > 0) {
+        const updatedData = getResponse.data.flatMap(attributeObj => {
+            const additionalDataType = attributeObj.Attribute?.additionalDataType;
+
+            if (!additionalDataType || !additionalDataType.multiLingualTextInfoList) {
+                console.warn("Skipping attribute: No multiLingualTextInfoList found for", attributeObj);
+                return []; // Skip attributes that don't have multiLingualTextInfoList
+            }
+
+            return additionalDataType.multiLingualTextInfoList.map(item => ({
+                locale: item.localeCode,
+                displayName: item.translationText,
+                description: item.localeText
+            }));
+        });
+
+        // ✅ Replace the data source
+        this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
+
+        // ✅ Manually trigger Angular change detection
+        this.changeDetectorRef.detectChanges();
+
+        console.log("Updated Table Data (After GET):", updatedData);
+    } else {
+        console.warn("GET response contains empty data. No data to display.");
+    }
 });
