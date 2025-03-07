@@ -1,6 +1,162 @@
-API Response from PUT: null
-metadata-config.component.ts:2020 PUT response is null. Fetching updated data using GET...
-
-metadata-config.component.ts:2082 Attribute saved successfully: null
-metadata-config.component.ts:2023 Fetched Data from GET: {data: Array(31), status: 'SUCCESS'}
-metadata-config.component.ts:2040 GET response is empty. No data to update.
+Full GET Response: {
+  "data": [
+    {
+      "Attribute": {
+        "additionalDataType": null,
+        "additionalDataValidValuesRange": null,
+        "additionalDataValidValueSetList": null,
+        "productTypeAdditionalDataTypeRelationshipList": [
+          {
+            "identifier": 1110101,
+            "attributeIdentifier": 112000000006,
+            "attributeCode": "AmountCategory",
+            "minimumRequired": 12,
+            "maximumAllowed": 321,
+            "glCategarization": "N"
+          }
+        ],
+        "productTypeAdditionalDataList": null
+      },
+      "MetdataStatus": "INPROGRESS"
+    },
+    {
+      "Attribute": {
+        "additionalDataType": null,
+        "additionalDataValidValuesRange": null,
+        "additionalDataValidValueSetList": null,
+        "productTypeAdditionalDataTypeRelationshipList": [
+          {
+            "identifier": 1110101,
+            "attributeIdentifier": 110120100026,
+            "attributeCode": "ProcessedFlag",
+            "minimumRequired": 34,
+            "maximumAllowed": 342,
+            "glCategarization": "N"
+          }
+        ],
+        "productTypeAdditionalDataList": null
+      },
+      "MetdataStatus": "INPROGRESS"
+    },
+    {
+      "Attribute": {
+        "additionalDataType": null,
+        "additionalDataValidValuesRange": null,
+        "additionalDataValidValueSetList": null,
+        "productTypeAdditionalDataTypeRelationshipList": [
+          {
+            "identifier": 1110101,
+            "attributeIdentifier": 112000000006,
+            "attributeCode": "AmountCategory",
+            "minimumRequired": 21,
+            "maximumAllowed": 32,
+            "glCategarization": "N"
+          }
+        ],
+        "productTypeAdditionalDataList": null
+      },
+      "MetdataStatus": "INPROGRESS"
+    },
+    {
+      "Attribute": {
+        "additionalDataType": null,
+        "additionalDataValidValuesRange": null,
+        "additionalDataValidValueSetList": null,
+        "productTypeAdditionalDataTypeRelationshipList": [
+          {
+            "identifier": 1110101,
+            "attributeIdentifier": 110000000042,
+            "attributeCode": "DateOutOfOverdraft",
+            "minimumRequired": 21,
+            "maximumAllowed": 1,
+            "glCategarization": "N"
+          }
+        ],
+        "productTypeAdditionalDataList": null
+      },
+      "MetdataStatus": "INPROGRESS"
+    },
+    {
+      "Attribute": {
+        "additionalDataType": null,
+        "additionalDataValidValuesRange": null,
+        "additionalDataValidValueSetList": null,
+        "productTypeAdditionalDataTypeRelationshipList": [
+          {
+            "identifier": 1110101,
+            "attributeIdentifier": 110120100030,
+            "attributeCode": "MergerID",
+            "minimumRequired": 21,
+            "maximumAllowed": 31,
+            "glCategarization": "N"
+          }
+        ],
+        "productTypeAdditionalDataList": [
+          {
+            "identifier": 0,
+            "attributeIdentifier": 110120100030,
+            "attributeCode": null,
+            "attributeValue": "da",
+            "attributeValueSource": "",
+            "isDefault": "N",
+            "isPrimary": "N",
+            "percentage": 1,
+            "sequenceNumber": 3,
+            "overrideDefault": "N"
+          }
+        ]
+      },
+      "MetdataStatus": "INPROGRESS"
+    },
+    {
+      "Attribute": {
+        "additionalDataType": {
+          "identifier": 1110400695,
+          "code": "edittesting8",
+          "name": null,
+          "shortName": "swqqs",
+          "objectTypeIdentifier": 1000000000001,
+          "formatTypeIdentifier": 100000001002,
+          "calculated": "Y",
+          "searchable": "N",
+          "multiValueAllowed": "Y",
+          "percentageAllowed": "Y",
+          "classificationType": "systemDefined",
+          "multiLingualTextInfoList": [
+            {
+              "localeCode": "en",
+              "localeText": "sq",
+              "identifier": 1110400695,
+              "objectType": "1000000000001",
+              "attributeType": "100000001002",
+              "translationText": "english"
+            }
+          ]
+        },
+        "additionalDataValidValuesRange": null,
+        "additionalDataValidValueSetList": null,
+        "productTypeAdditionalDataTypeRelationshipList": [
+          {
+            "identifier": 1110101,
+            "attributeIdentifier": 1110400695,
+            "attributeCode": null,
+            "minimumRequired": 1191,
+            "maximumAllowed": 23,
+            "glCategarization": "N"
+          }
+        ],
+        "productTypeAdditionalDataList": null
+      },
+      "MetdataStatus": "INPROGRESS"
+    },
+    {
+      "Attribute": {
+        "additionalDataType": {
+          "identifier": 1110400642,
+          "code": "AttrbuteSDK3",
+          "name": "Attributeha1",
+          "shortName": "Attribute1",
+          "objectTypeIdentifier": 1000000000002,
+          "formatTypeIdentifier": 100000001003,
+          "calculated": "N",
+          "searchable": "N",
