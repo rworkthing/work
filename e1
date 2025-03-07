@@ -1,55 +1,19 @@
-serviceCall.subscribe(
-        response => {
-            console.log("API Response from PUT:", response);
+if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
+        const updatedData = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
+            locale: item.localeCode,
+            displayName: item.translationText,
+            description: item.localeText
+        }));
 
-            // ✅ If PUT response is null, trigger GET request to fetch updated data
-            if (!response) {
-                console.warn("PUT response is null. Fetching updated data using GET...");
+        // ✅ Force Angular to detect changes
+        this.tableWithSimpleEdit.datasource.data = updatedData;
+        this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
 
-                this.metadataService.getAttributes().subscribe(getResponse => {
-                    console.log("Fetched Data from GET:", getResponse);
-
-                    if (getResponse && getResponse.attributeList && getResponse.attributeList.length > 0) {
-                        const updatedData = getResponse.attributeList[0].multiLingualTextInfoList.map(item => ({
-                            locale: item.localeCode,
-                            displayName: item.translationText,
-                            description: item.localeText
-                        }));
-
-                        // ✅ Completely replace the data source to force UI update
-                        this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
-
-                        setTimeout(() => {
-                            this.changeDetectorRef.detectChanges();
-                        }, 100);
-
-                        console.log("Updated Table Data:", updatedData);
-                    } else {
-                        console.warn("GET response is empty. No data to update.");
-                    }
-                });
-            } else {
-                // ✅ Normal case if PUT returns correct data
-                const updatedData = response.attributeList[0].multiLingualTextInfoList.map(item => ({
-                    locale: item.localeCode,
-                    displayName: item.translationText,
-                    description: item.localeText
-                }));
-
-                // ✅ Use new MatTableDataSource() to force UI refresh
-                this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
-
-                setTimeout(() => {
-                    this.changeDetectorRef.detectChanges();
-                }, 100);
-
-                console.log("Updated Table Data:", updatedData);
-            }
-
-            this.handleSuccess(response);
-        },
-        error => {
-            console.error("API Call Failed:", error);
-            this.handleError(error);
+        // ✅ Manually refresh Angular Material Table
+        if (this.tableWithSimpleEdit.table) {
+            this.tableWithSimpleEdit.table.renderRows();
         }
-    );
+
+        setTimeout(() => {
+            this.changeDetectorRef.detectChanges();
+        }, 100);
