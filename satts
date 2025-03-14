@@ -1,133 +1,69 @@
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Inject,
-  Input,
-  NO_ERRORS_SCHEMA,
-  OnDestroy,
-  OnInit,
-  Output,
-  TemplateRef,
-  ViewChild
-} from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-
-import {
-  Amount,
-  BodFormModule,
-  BodPageContainerModule,
-  BodPipeName,
-  BodTableAction,
-  BodTableActionsModule,
-  BodTableComponent,
-  BodTableDataSource,
-  BodTableFilterCriteria,
-  BodTableFilterUpdateButton,
-  BodTableMetadata,
-  BodTableModule,
-  Column,
-  ControlGroupModule,
-  BodCommonDialogModel,
-  Currency,
-  EditTableAction,
-  InlineEditOutput,
-  InputLayoutModule,
-  MessageContainerModule,
-  NotificationMessage,
-  SearchFieldModule,
-  DirectivesModule,
-  BodDynamicFormModule,
-  SectionContainerModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BOD_DATE_RANGE,
-  BodCommonModule,
-  BodFormTypes,
-  BodTableActionType,
-  BodTableFilterType,
-  CommonDialogComponent,
-  BodCommonDialogService,
-  ColumnType,
-  BodSearchFieldData,
-  SingleRowEdit,
-  ModeOptions,
-  PageMode,
-  BodConfirmAlertDialogsService,
-  BodConfirmDialogModel,
-  NotificationMessageType,
-  RowLeftAction,
-  InquiryLayoutInput,
-  InquiryLayoutModule
-} from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
 import {
   AbstractControl,
   FormBuilder,
-  FormControl,
   FormsModule,
   ReactiveFormsModule,
   UntypedFormControl,
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { BalanceTypeService } from '../balance-type-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import {
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableMetadata,
+  BodTableModule,
+  ControlGroupModule,
+  DirectivesModule,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { BalanceTypeComponent } from '../balance-type.component';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-import {
-  metadataconfig,
-  TableLevelActions,
-  TranslationKey
-} from './codegen-config.constant';
-import {
-  BodEditableSampleTable,
-  BodInlineSampleTable,
-  BodLocaleRangeTable,
-  BodLocaleSetTable,
-  BodLocaleTable,
-  BodSampleTable,
-  BodSampleTable1,
-  BodSampleTableExisting
-} from '../bod-table-demo.model';
-import { MatTabsModule } from '@angular/material/tabs';
-import {
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MetadataService } from './metada-config.service';
-import { template as dialogFilterTemplate } from './dialog-filter-template';
 import {
-  localeTableActions,
-  TableLevelActions2,
-  TableLevelActions3,
-  validValuesExisting
-} from '../codegen-config/codegen-config.constant';
-import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-import { getFormValidationErrors } from './inline-modal-validators';
-import { FormUtilityService } from './form-utility.service';
-import { Observable, Subscription } from 'rxjs';
-import { MatIcon, MatIconModule } from '@angular/material/icon';
-import { Attribute, MultiLingualTextInfo } from './attribute.model';
-import { RufIconModule } from '@ruf/shell/icon';
-interface TableProps {
-  formGroup: UntypedFormGroup;
-  data: BodTableMetadata;
-  ref: BodTableComponent;
-  input: any;
-}
-interface TabIndexTableMap {
-  [k: number]: TableProps;
-}
+  roletypeaction,
+  roletypeactionDelete
+} from '../balance-type-constants';
+import { MatTableDataSource } from '@angular/material/table';
+import { BodSampleTable } from '../../bod-table-demo.model';
+import {
+  AggregateSampleTable,
+  BalSybTypeTable,
+  PstgSampleTable,
+  RoleTypeSampleTable
+} from './balancetype.model';
+
 @Component({
-  selector: 'bod-metadata-config',
+  selector: 'bod-add-edit-balancetype',
   standalone: true,
   imports: [
+    BalanceTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
     MatIconModule,
@@ -161,2452 +97,447 @@ interface TabIndexTableMap {
     MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './metadata-config.component.html',
-  styleUrl: './metadata-config.component.scss',
-
-  schemas: [NO_ERRORS_SCHEMA]
+  templateUrl: './add-edit-balancetype.component.html',
+  styleUrl: './add-edit-balancetype.component.scss'
 })
-export class MetadataConfigComponent implements OnInit, OnDestroy {
-  attributeData: Attribute[] = [];
-  public addEditFormGroup: UntypedFormGroup | undefined;
-  public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
-  public balanceHoldsTableActions1: BodTableAction[] = localeTableActions;
-  public balanceHoldsTableActions3: BodTableAction[] = validValuesExisting;
-  public rowLevelActionsForBasicEdit: BodTableAction[] = TableLevelActions2;
-  public rowLevelActionsForlocaleEdit: BodTableAction[] = TableLevelActions2;
-  public editactions: BodTableAction[] = TableLevelActions3;
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public pageMode = PageMode.INQUIRY;
-  private dataForReset: BodEditableSampleTable[] = [];
-  public datatypes: any[] = [];
-  public productCode: any[] = [];
-  private dialogOutput$: Observable<boolean>;
-  feAttrName: string;
-  private _subscription: Subscription = new Subscription();
-  public response: Attribute
-  // msgs: NotificationMessage[] = [];
-  public productTypeCode: any[] = [];
-  public tableRefArray: any[] = [];
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
-  };
-  public modeOptionsSimple = this.modeOptions;
-  public pageModeSimple = this.pageMode;
-
-  @Input() editAttributeRow: Attribute;
-  @ViewChild('customTable', { static: true })
-  expandableTable1Ref: BodTableComponent;
-  @ViewChild('addNewAttributeTemplate')
-  public addAttributeTemp: TemplateRef<any>;
-  @ViewChild('addExistingAttributeTemplate')
-  public addExistingAttributeTemp: TemplateRef<any>;
-  @ViewChild('localetable')
-  public addLocaleTemp: BodTableComponent;
-  @ViewChild('localetableforrange')
-  public addRangeLocaleTemp: BodTableComponent;
-  @ViewChild('localetableforset')
-  public addSetLocaleTemp: BodTableComponent;
-  @ViewChild('adminTableRef')
-  private adminTableRef: BodTableComponent;
-  @ViewChild('systemMessage', { static: true }) systemMessage: any;
-
-  public tableActions: BodTableAction[] = [];
-  input = {
-    id: '',
-    name: '',
-    productLine: '',
-    owner: '',
-    relationship: '',
-    lastDebit: 0,
-    start: new Date(new Date())
-  };
-  inputLayoutForm: UntypedFormGroup;
-  inputExistingLayoutForm: UntypedFormGroup;
-  inputLocaleLayoutFormDisplayName: UntypedFormGroup = new UntypedFormGroup({});
-  inputLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
-  inputLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
-  inputRangeLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
-  inputRangeLocaleLayoutFormDisplayName: UntypedFormGroup =
-    new UntypedFormGroup({});
-  inputRangeLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
-  inputSetLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
-  inputSetLocaleLayoutFormDisplayName: UntypedFormGroup = new UntypedFormGroup(
-    {}
-  );
-  inputSetLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
-  // inputRangeLocaleLayoutForm: UntypedFormGroup;
-  // inputSetLocaleLayoutForm: UntypedFormGroup;
-  // attributeData: any;
-  formType: BodFormTypes = BodFormTypes.SUBMIT;
-  public inputBasic = this.input;
-  isAdd: boolean = true;
-
+export class AddEditBalancetypeComponent implements OnInit {
   public translationKey = TranslationKey;
-  bookingDate = '';
-  amountIsRequired = true;
-  isRequired = true;
-  public defaultCurrency: Currency;
-  selectedHoldId: string;
-  effectiveDate: string;
-  holdAllValue: boolean;
-  isExpireValue: boolean;
+  public addNewBalanceTypeFormGroup: UntypedFormGroup;
+  public balanceSubtypeForm: UntypedFormGroup;
+  public aggregateForm: UntypedFormGroup;
+  public roleTypeForm: UntypedFormGroup | undefined;
+  public postingApplicationForm: UntypedFormGroup | undefined;
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  public accountclassifications: any[] = [];
+  public roletypes: any[] = [];
+  public roleaccountclassifications: any[] = [];
+  public postingapplicationmethods: any[] = [];
+  public producttypes: any[] = [];
+  public balancetypes: any[] = [];
+  public debittransactiontypes: any[] = [];
+  public credittransactiontypes: any[] = [];
+  public payees: any[] = [];
+  public payers: any[] = [];
 
-  referenceType: string;
+  public roleTypetableActions: BodTableAction[] = roletypeaction;
+  public aggregateTableActions: BodTableAction[] = roletypeaction;
+  public postingAppTableActions: BodTableAction[] = roletypeaction;
+  public balanceSubTypeTableActions: BodTableAction[] = roletypeaction;
+  public rowLevelActionsForBasicEdit: BodTableAction[] = roletypeactionDelete;
 
-  amountFieldValue: string | undefined;
-  actionModes = EditTableAction;
-  currentMode: EditTableAction = EditTableAction.ADD;
-  rowLevelAction: BodTableAction[];
-  editAttribute: Attribute;
-  public disableAmount = false;
-  public isHoldExpirationDateTime = false;
+  public onValidTableActionClicked(event: BodTableAction): void {}
+  // onAdd(formValues: any) {}
 
-  public timeControl: UntypedFormControl;
-  public addNewAttributeFormGroup: UntypedFormGroup;
-  public addExistingAttributeFormGroup: UntypedFormGroup;
-  public addLocaleFormGroup: UntypedFormGroup;
-  public useExistingFormCtrlKeysDisplayName: string[] = [];
-  public useExistingColForm: UntypedFormGroup = new UntypedFormGroup({});
-  useExistingFormCtrlKeysLocale: string[] = [];
-  useExistingFormCtrlKeysDesc: string[] = [];
-  useExistingFormCtrlKeysRangeLocale: string[] = [];
-  useExistingFormCtrlKeysRangeDisplayName: string[] = [];
-  useExistingFormCtrlKeysRangeDesc: string[] = [];
-  useExistingFormCtrlKeysSetLocale: string[] = [];
-  useExistingFormCtrlKeysSetDisplayName: string[] = [];
-  useExistingFormCtrlKeysSetDesc: string[] = [];
+  public inlineAddRowActionClick() {}
+  public inlineEditRowActionClick(_event: InlineEditOutput) {}
 
-  private subscriptions: Subscription = new Subscription();
-
-  public messages: NotificationMessage[] = [];
-  public message: NotificationMessage | undefined;
-  isRelateToProductTemplate = false;
-  isValidValueTypes = false;
-  public categorySearchVal: UntypedFormControl = new UntypedFormControl('');
-
-  // if (this.isEdit) {
-  //   this.tableLevelAction = this.hasAddPermission
-  //     ? [
-  //       {
-  //         id: BodTableActionType.ADD,
-  //         icon: 'add',
-  //         label: 'mbpEc.commons.tableRowAction.add',
-  //         mostCommon: false
-  //       }
-  //     ]
-  //     : [];
-
-  //   this.rowLevelAction = [
-  //     {
-  //       id: EC_CONSTANT.RowLevelAction.DELETE,
-  //       icon: 'trash',
-  //       label: 'mbpEc.commons.tableRowAction.delete',
-  //       mostCommon: false
-  //     }
-  //   ];
-  // }
-
-  // profitablityTable: BodTableMetadata = {
-  //   title: 'mbpEc.commons.relationshipCode.relationshipCodeTitle',
-  //   columns: [
-  //     {
-  //       name: 'selectedTimePeriod',
-  //       title: 'mbpEc.commons.relationshipCode.table.code',
-  //       inputModeOptions: {
-  //         type: ColumnType.search
-  //       }
-  //     },
-  //     {
-  //       name: 'name',
-  //       title: 'mbpEc.commons.relationshipCode.table.name',
-  //       inputModeOptions: {
-  //         type: ColumnType.input
-  //       }
-  //     },
-  //     {
-  //       name: 'allowOptOut',
-  //       title: 'mbpEc.commons.relationshipCode.table.allowOptOut',
-  //       inputModeOptions: {
-  //         type: ColumnType.select
-  //       }
-  //     },
-  //     {
-  //       name: 'defaultSelection',
-  //       title: 'mbpEc.commons.relationshipCode.table.defaultSelection',
-  //       inputModeOptions: {
-  //         type: ColumnType.input
-  //       }
-  //     },
-  //     { name: 'actionBtns', title: ' ', hasAction: true }
-  //   ],
-  //   noRecordsMessage: 'mbpEc.commons.relationshipCode.relationshipCodeNoRecord',
-  //   datasource: new MatTableDataSource<[]>([])
-  // };
-  bodRelMgrSearchFieldData: BodSearchFieldData[] = [
-    {
-      label: '',
-      fieldName: 'code',
-      descFieldName: 'name',
-      required: true,
-      hideLabel: true,
-      hideFilterCriteria: false,
-      disableInput: true,
-      disableSearch: false,
-      defaultDescription: ' ',
-      hideDescription: true,
-      forTextOnly: true
-    }
+  dateValues = [
+    { value: 'EffectiveDate', label: 'Effective Date' },
+    { value: 'ValueDate', label: 'Value Date' },
+    { value: 'BookingDate', label: 'Booking Date' }
   ];
-  isEdit: boolean = false;
-  value: string = "123";
-  validtype: boolean = false;
-  private addExistingAttribute() {
-    // this.editAttribute = null;
-    this.addExistingAttributeFormGroup.reset();
-    this.isAdd = true;
-    this.ExistingValidvalueArray.datasource.data = [];
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addExistingAttributeTemp,
-      title: 'Relate To Existing Attribute'
-    };
-    this.openDialog(dialogModel);
-  }
-  private addNewAttribute() {
-    this.tableWithSimpleEdit.datasource.data = [];
-    this.ValidvalueArray.datasource.data = [];
-    this.addNewAttributeFormGroup.reset();
-    this.inputLocaleLayoutFormLocale.reset();
-    this.inputLocaleLayoutFormDisplayName.reset();
-    this.inputLocaleLayoutFormDesc.reset();
-    this.inputLayoutForm.reset();
-
-    this.isAdd = true;
-    // this.editAttribute = null;
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addAttributeTemp,
-      title: 'Add Attribute'
-    };
-    this.openDialog(dialogModel);
-    this.messages = [];
-    this.addNewAttributeFormGroup.reset();
-  }
-
-
-  private editAttributes(element: Attribute) {
-    console.log("Element Data:", JSON.stringify(element, null, 2)); // Log the full element data
-    this.isAdd = false;
-    this.addNewAttributeFormGroup.reset();
-    this.addExistingAttributeFormGroup.reset();
-    this.addNewAttributeFormGroup.removeControl('validtype');
-    this.addExistingAttributeFormGroup.removeControl('validtype');
-    const previousLocaleData = [...this.tableWithSimpleEdit.datasource.data];
-    this.tableWithSimpleEdit.datasource.data = [];
-    console.log(this.addNewAttributeFormGroup);
-    //this.addNewAttributeFormGroup.addControl("validtype",true)
-    let selectedTemplate: TemplateRef<any>;
-    let dialogTitle: string;
-    this.validtype = element?.productTypeAdditionalDataList?.length > 0 ? true : false;
-    if (element.shortName) {
-      selectedTemplate = this.addAttributeTemp;
-      dialogTitle = "Edit Attribute";
-
-      this.addNewAttributeFormGroup.setValue({
-        code: element.code,
-        identifier: element.identifier,
-        name: element.name,
-        shortname: element.shortName,
-        type: element.objectTypeIdentifier,
-        datatype: element.formatTypeIdentifier,
-        calculate: element.calculated === "Y",
-        searchable: element.searchable === "Y",
-        multivalueallowed: element.multiValueAllowed === "Y",
-        percentageallowed: element.percentageAllowed === "Y",
-        classificationtype: element.classificationType,
-        relatetoproducttype: element.productTypeAdditionalDataTypeRelationshipList || [],
-        descriptions: element.descriptions.find(desc => desc.label === "Description")?.value || '',
-        validvaluestype: element.additionalDataValidValuesRange ? "rangevalues" :
-          element.additionalDataValidValueSetList ? "setvalues" : '',
-        productTypeCode: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.attributeIdentifier || '',
-        min: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.minimumRequired || '',
-        max: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.maximumAllowed || '',
-        GLcategorizationAllowed: element.productTypeAdditionalDataTypeRelationshipList?.[0]?.glCategarization === "Y",
-        attributevalue: element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
-        isdefault: element.productTypeAdditionalDataList?.[0]?.isDefault === "Y",
-        isvalueoverridden: element.productTypeAdditionalDataList?.[0]?.overrideDefault === "Y",
-        isprimary: element.productTypeAdditionalDataList?.[0]?.isPrimary === "Y",
-        sequencenumbers: element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
-        percentages: element.productTypeAdditionalDataList?.[0]?.percentage || '',
-        valuesearch: element.productTypeAdditionalDataList?.[0]?.attributeValueSource || '',
-        localeCode: element.multiLingualTextInfoList?.[0]?.localeCode || '',
-        description: element.multiLingualTextInfoList?.[0]?.localeText || '',
-        displayName: element.multiLingualTextInfoList?.[0]?.translationText || '',
-        // low: element.additionalDataValidValuesRange?.low || '',
-        // high: element.additionalDataValidValuesRange?.high || '',
-        rangename: element.additionalDataValidValuesRange?.name || '',
-        rangedescriptions: element.additionalDataValidValuesRange?.description || '',
-        // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
-        // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
-
-      });
-    } else {
-      selectedTemplate = this.addExistingAttributeTemp;
-      dialogTitle = "Edit Existing Attribute";
-
-      const firstRelation = element.productTypeAdditionalDataTypeRelationshipList?.[0];
-
-      this.addExistingAttributeFormGroup.setValue({
-        productCode: firstRelation?.attributeIdentifier || '',
-        min: firstRelation?.minimumRequired || '',
-        max: firstRelation?.maximumAllowed || '',
-        GLcategorizationAllowed: firstRelation?.glCategarization === "Y"
-      });
-    }
-    this.addNewAttributeFormGroup.addControl(
-      'validtype',
-      this.fb.control(this.validtype)
-    );
-    this.addExistingAttributeFormGroup.addControl(
-      'validtype',
-      this.fb.control(this.validtype)
-    );
-
-    console.log(this.addNewAttributeFormGroup)
-    this.ValidvalueArray.datasource.data = [];
-    this.ExistingValidvalueArray.datasource.data = [];
-    this.dataWithValidvalues = [];
-
-    element.productTypeAdditionalDataList?.forEach(element => {
-      let obj = {} as BodSampleTable1;
-      obj.additionaldatavalue = element.attributeValue;
-      obj.defaultindicator = element.isDefault;
-      obj.overrideindicator = element.overrideDefault;
-      obj.percentagevalue = element.percentage;
-      obj.sequencenumber = element.sequenceNumber;
-      this.ValidvalueArray.datasource.data.push(obj);
-      this.ExistingValidvalueArray.datasource.data.push(obj);
-      this.dataWithValidvalues.push(obj);
-      this.dataWithExsistingValidvalues.push(obj);
-
-    })
-    console.log("loaded vaild", this.dataWithValidvalues);
-    // console.log(this.inputLayoutForm);
-    // console.log(this.ValidvalueArray);
-    // element.productTypeAdditionalDataList?.forEach(element => {
-    //   let obj = {} as BodSampleTable1;
-    //   obj.additionaldatavalue = element.attributeValue;
-    //   obj.defaultindicator = element.isDefault;
-    //   obj.overrideindicator = element.overrideDefault;
-    //   obj.percentagevalue = element.percentage;
-    //   obj.sequencenumber = element.sequenceNumber;
-    //   this.ValidvalueArray.datasource.data.push(obj);
-    // })
-
-
-    // element.multiLingualTextInfoList?.forEach(element => {
-
-    //   this.editLocale(element.localeCode, element.translationText, element.localeText)
-    //   console.log("processinglocale", element.localeCode)
-    //   let obj = {} as BodLocaleTable;
-    //   obj.locale = element.localeCode;
-    //   // this.inputLocaleLayoutFormLocale.get('localeCode')?.setValue(element.localeCode)
-    //   obj.displayName = element.translationText;
-    //   obj.description = element.localeText;
-    //   const existingRow = this.tableWithSimpleEdit.datasource.data.find(
-    //     row => row.locale === obj.locale
-    //   );
-    //   if (!existingRow) {
-    //     this.tableWithSimpleEdit.datasource.data.push(obj);
-    //   }
-
-    // })
-    // console.log(this.inputLayoutForm);
-    if (element.multiLingualTextInfoList && element.multiLingualTextInfoList.length > 0) {
-      console.log("Processing multiLingualTextInfoList:", element.multiLingualTextInfoList);
-  
-      element.multiLingualTextInfoList.forEach(item => {
-          this.editLocale(item.localeCode, item.translationText, item.localeText);
-  
-          let obj = {
-              locale: item.localeCode,
-              displayName: item.translationText,
-              description: item.localeText
-          };
-  
-          const existingRow = this.tableWithSimpleEdit.datasource.data.find(
-              row => row.locale === obj.locale
-          );
-          if (!existingRow) {
-              this.tableWithSimpleEdit.datasource.data.push(obj);
-          }
-      });
-      this.tableWithSimpleEdit.datasource.data = [...this.tableWithSimpleEdit.datasource.data]
-
-      this.changeDetectorRef.detectChanges();
-  
-      console.log("Updated multiLingualTextInfoList in table:", this.tableWithSimpleEdit.datasource.data);
-  }
-    console.log(this.inputLocaleLayoutFormLocale);
-
-
-    if (!this.dialogRef$ || this.dialogRef$.getState() === MatDialogState.CLOSED) {
-      let dialogModel: BodCommonDialogModel = {
-        formTemplate: selectedTemplate,
-        title: dialogTitle
-      };
-      this.openDialog(dialogModel);
-    }
-
-    this.isEdit = true;
-  }
-  isEditView() {
-    return this.editAttributeRow ? true : false;
-  }
-  private confirmDelete(element: Attribute) {
-    let confirmData = this.getConfirmationModel();
-    this.dialogOutput$ = this.confirmDialogService.confirm(confirmData);
-    this._subscription.add(
-      this.dialogOutput$.subscribe(status => {
-        // if (status) this.deleteAttributes(this.feAttrName, element);
-      })
-    );
-  }
-  public inlineEditRowActionClick(event: Attribute) {
-    console.log(event);
-    this.addNewAttributeFormGroup.setValue({
-      identifier: event.identifier
-    })
-  }
-  // private deleteAttributes(name: string, element: Attribute) {
-  //   this._subscription.add(
-  //     this._attributeService
-  //       // .deleteFeAttributeValue(name, element)
-  //       .subscribe(
-  //         resp => this.deleteSuccess(resp),
-  //         (err: NotificationMessage[]) => this.handleErrorResp(err)
-  //       )
-  //   );
-  // }
-  // private deleteSuccess(resp) {
-  //   let qualifier1,
-  //     qualifier2 = null;
-  //   this._notify.setMessages('are you sure'
-  //     // this._ecAdminMessageService.getSuccessMsg(
-  //     //   'mbpEc.feAttributeValue.details.delete.messages.success'
-  //     // )
-  //   );
-  // this.getAllAttribute(
-  //   this.feAttrName,
-  //   // this.filterCriteria.segment,
-  //   qualifier1,
-  //   qualifier2
-  // );
-  // }
-  // private handleErrorResp(errMessage: NotificationMessage[]) {
-  //   if (errMessage && errMessage.length>0) {
-  //     this._notify.setMessages(errMessage);
-  //   }else{
-  //     this.tableData.paginationOptions.length = 0;
-  //     this.bodAttrTableRef.updateDatasource(
-  //       new MatTableDataSource<Attribute>([])
-  //     );
-  //   }
-  // }
-  private getConfirmationModel(): BodConfirmDialogModel {
-    return {
-      title: 'mbpEc.feAttributeValue.details.delete.dialog.title',
-      message: 'mbpEc.feAttributeValue.details.delete.dialog.msg',
-      confirm: 'mbpEc.feAttributeValue.details.delete.dialog.buttonText.delete',
-      dismiss: 'mbpEc.feAttributeValue.details.delete.dialog.buttonText.cancel'
-    };
-  }
-
-  private addLocale() {
-    console.log("addlocale called")
-    let updatedData = {
-      id: this.lastModifiedIndex,
-      locale: '',
-      action: EditTableAction.ADD,
-      displayName: '',
-      description: ''
-    };
-    this.addLocaleTemp.addRow(updatedData);
-    this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
-      this.inputLocaleLayoutFormLocale,
-      'locale',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeysDisplayName = FormUtilityService.addFormControl(
-      this.inputLocaleLayoutFormDisplayName,
-      'displayName',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
-      this.inputLocaleLayoutFormDesc,
-      'description',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-
-    ++this.lastModifiedIndex;
-  }
-
-  private editLocale(locale, name, desc) {
-    console.log("editlocale called with ", locale, name, desc)
-    let updatedData = {
-      id: this.lastModifiedIndex,
-      locale: '',
-      action: EditTableAction.ADD,
-      displayName: '',
-      description: ''
-    };
-    // this.addLocaleTemp.addRow(updatedData);
-    this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
-      this.inputLocaleLayoutFormLocale,
-      'locale',
-      this.lastModifiedIndex,
-      true,
-      locale
-    );
-    this.useExistingFormCtrlKeysDisplayName = FormUtilityService.addFormControl(
-      this.inputLocaleLayoutFormDisplayName,
-      'displayName',
-      this.lastModifiedIndex,
-      true,
-      name
-    );
-    this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
-      this.inputLocaleLayoutFormDesc,
-      'description',
-      this.lastModifiedIndex,
-      true,
-      desc
-    );
-    const existingRow = this.tableWithSimpleEdit.datasource.data.find(
-      row => row.locale === locale
-    );
-
-    if (!existingRow) {
-      this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
-        this.inputLocaleLayoutFormLocale,
-        'locale',
-        this.lastModifiedIndex,
-        true,
-        locale
-      );
-      this.useExistingFormCtrlKeysDisplayName = FormUtilityService.addFormControl(
-        this.inputLocaleLayoutFormDisplayName,
-        'displayName',
-        this.lastModifiedIndex,
-        true,
-        name
-      );
-      this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
-        this.inputLocaleLayoutFormDesc,
-        'description',
-        this.lastModifiedIndex,
-        true,
-        desc
-      );
-      ++this.lastModifiedIndex;
-    } else {
-      console.log("editLocale: Row already exists, skipping...");
-    }
-
-
-  }
-  private addRangeLocale() {
-    let updatedData = {
-      id: this.lastModifiedIndex,
-      locale: '',
-      action: EditTableAction.ADD,
-      displayName: '',
-      description: ''
-    };
-    this.addRangeLocaleTemp.addRow(updatedData);
-    this.useExistingFormCtrlKeysRangeLocale = FormUtilityService.addFormControl(
-      this.inputRangeLocaleLayoutFormLocale,
-      'locale',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeysRangeDisplayName =
-      FormUtilityService.addFormControl(
-        this.inputRangeLocaleLayoutFormDisplayName,
-        'displayName',
-        this.lastModifiedIndex,
-        true,
-        ''
-      );
-    this.useExistingFormCtrlKeysRangeDesc = FormUtilityService.addFormControl(
-      this.inputRangeLocaleLayoutFormDesc,
-      'description',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-
-    ++this.lastModifiedIndex;
-  }
-  private addSetLocale() {
-    let updatedData = {
-      id: this.lastModifiedIndex,
-      locale: '',
-      action: EditTableAction.ADD,
-      displayName: '',
-      description: ''
-    };
-    this.addSetLocaleTemp.addRow(updatedData);
-    this.useExistingFormCtrlKeysSetLocale = FormUtilityService.addFormControl(
-      this.inputSetLocaleLayoutFormLocale,
-      'locale',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeysSetDisplayName =
-      FormUtilityService.addFormControl(
-        this.inputSetLocaleLayoutFormDisplayName,
-        'displayName',
-        this.lastModifiedIndex,
-        true,
-        ''
-      );
-    this.useExistingFormCtrlKeysSetDesc = FormUtilityService.addFormControl(
-      this.inputSetLocaleLayoutFormDesc,
-      'description',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-
-    ++this.lastModifiedIndex;
-  }
-
-  deleteProfSrc1(index, element) {
-    // if (!this.lastModifiedIndex) {
-    //   this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-    // }
-
-    this.addLocaleTemp.deleteRow(index);
-  }
-
-  onlocaleChange(obj, index: number) {
-    let updatedData = this.tableWithSimpleEdit.datasource.data;
-
-    updatedData[index]['commPrefStatDflt'] = obj;
-    (this.tableWithSimpleEdit.datasource as MatTableDataSource<any>).data =
-      updatedData;
-    this.adminTableRef.updateDeltaForCustomColumn(EditTableAction.EDIT, index);
-  }
-
-  // addProfatablity() {
-  //   if (!this.lastModifiedIndex) {
-  //     this.lastModifiedIndex = this.profitablityTable.datasource.data.length;
-  //   }
-
-  //   this.categorySearchVal.reset();
-
-  //   this.bodRelMgrSearchFieldData.push({
-  //     label: '',
-  //     fieldName: 'code',
-  //     descFieldName: 'name',
-  //     required: false,
-  //     hideLabel: true,
-  //     hideFilterCriteria: false,
-  //     disableInput: true,
-  //     disableSearch: false,
-  //     defaultDescription: ' ',
-  //     hideDescription: true,
-  //     forTextOnly: true
-  //   });
-
-  //   let updatedData = {
-  //     id: this.lastModifiedIndex,
-  //     selectedTimePeriod: '',
-  //     name: '',
-  //     allowOptOut: '',
-  //     action: EditTableAction.ADD,
-  //     defaultSelection: ''
-  //   };
-  //   this.adminTableRef.addRow(updatedData);
-
-  //   this.useExistingFormCtrlKeys = FormUtilityService.addFormControl(
-  //     this.useExistingColForm,
-  //     'selectedTimePeriod',
-  //     this.lastModifiedIndex,
-  //     true,
-  //     ''
-  //   );
-  //   ++this.lastModifiedIndex;
-  // }
-
-  // onTableActionClicked(event: BodTableAction) {
-  //   this._notify.setMessages([]);
-  //   if (event.id === BodTableActionType.ADD) {
-  //     this.addNewAttributeFormGroup();
-  //   }
-  //   if (event.id === BodTableActionType.FILTER) {
-  //     this.openFilterDialog();
-  //   }
-  // }
-  onToggleChange(event: MatSlideToggleChange) {
-    this.isRelateToProductTemplate = event.checked;
-  }
-  onValidValueTypesChange(event: MatSlideToggleChange) {
-    this.isValidValueTypes = event.checked;
-  }
-
-  public handleTableWithViewsEvent(
-    event,
-    systemMessageKey,
-    loggerMessage,
-    tabName = null
-  ) {
-    this.commonDataService.updateMessage(
-      systemMessageKey,
-      tabName
-        ? ': ' + tabName + ': ' + JSON.stringify(event)
-        : JSON.stringify(event)
-    );
-    // this.bodLoggerService.info(loggerMessage, event);
-  }
-  // public inlineAddRowActionClick() {}
-  additionalValidValues: any[] = [];
-  public selectedFilters: BodTableFilterCriteria[] = [];
-  public onTableActionClicked(event: BodTableAction) {
-    this.isEdit = false;
-    this.messages = [];
-    if (event.id === 12) {
-      this.addNewAttribute();
-    } else if (event.id === 13) {
-      this.addExistingAttribute();
-    }
-  }
-  iconActionClicked(event: BodTableAction, element: Attribute) {
-    this.isEdit = true
-    this.messages = [];
-    console.log(element);
-    if (event.id === BodTableActionType.EDIT) {
-      this.editAttributes(element);
-    } else if (event.id === 1) {
-      this.bodConfirmAlertDialogsService
-        .confirm(this.ConfirmData)
-        .subscribe(val => {
-          if (val) {
-            this.AttributeDelete(element);
-          }
-        });
-    }
-  }
-
-  public onExistingValidTableActionClicked(event: BodTableAction): void { }
-  public onValidTableActionClicked(event: BodTableAction): void { }
-
-  public onLocaleTableActionClicked(event: BodTableAction) {
-    if (event.id === BodTableActionType.ADD) {
-      this.addLocale();
-    }
-    //  else if (event.id === BodTableActionType.EDIT) {
-    //   console.log('edit')
-    // }
-  }
-  public onLocaleTablerangeActionClicked(event: BodTableAction) {
-    if (event.id === BodTableActionType.ADD) {
-      this.addRangeLocale();
-    }
-    //  else if (event.id === BodTableActionType.EDIT) {
-    //   console.log('edit')
-    // }
-  }
-  public onLocaleTablesetActionClicked(event: BodTableAction) {
-    if (event.id === BodTableActionType.ADD) {
-      this.addSetLocale();
-    }
-    //  else if (event.id === BodTableActionType.EDIT) {
-    //   console.log('edit')
-    // }
-  }
-
-  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
-  // public inlineEditRowActionClick(_event: InlineEditOutput) {}
-  public balanceHoldsTableMetaData: BodTableMetadata;
-  public AttributeLocalTable: BodTableMetadata;
-  public productRelationTable: BodTableMetadata;
-  public ValidvalueArray: BodTableMetadata;
-  public ExistingValidvalueArray: BodTableMetadata;
-  public tableWithSimpleEdit: BodTableMetadata;
-  public localetablerangedata: BodTableMetadata;
-  public localetablesetdata: BodTableMetadata;
-
-  public template: TemplateRef<any>;
-  public formData: BodCommonDialogModel = {
-    title: 'mbpBod.demo.microsite.table.filterTableWithDialogFilter',
-    formTemplate: undefined
-  };
-  // public dialogOutput$: MatDialogRef<CommonDialogComponent, any>;
-  public tabIndexTableMap: TabIndexTableMap = {};
-  public editRowElement: any;
-  public types: any[] = [];
-  public classificationtypes: any[] = [];
-  public datatype: any[] = [];
-  public productCodes: any[] = [];
-  public localeCodes: any[] = [];
-  public validvaluestypes: any[] = [];
-  private lastModifiedIndex: number = 0;
-
-  public ConfirmData: BodConfirmDialogModel = {
-    title: 'BOD.metadataconfig.title',
-    message: 'BOD.metadataconfig.message',
-    confirm: 'BOD.metadataconfig.delete',
-    dismiss: 'BOD.metadataconfig.cancel'
-  };
+  applicationTypes = [
+    { value: 'MaximumBalance', label: 'Maximum Balance' },
+    { value: 'RemainingAmount', label: 'Remaining Amount' },
+    { value: 'Amount', label: 'Amount' }
+  ];
+  customizationTypes = [
+    { value: 'Before', label: 'Before' },
+    { value: 'None', label: 'None' },
+    { value: 'After', label: 'After' },
+    { value: 'CustomOnly', label: 'Custom Only' }
+  ];
 
   constructor(
-    private bodCommonDialogService: BodCommonDialogService,
-    public commonDataService: BodTableDemoCommonDataService,
-    private confirmDialogService: BodConfirmAlertDialogsService,
+    public balanceTypeService: BalanceTypeService,
     private fb: FormBuilder,
-    private changeDetectorRef: ChangeDetectorRef,
-    private metadataService: MetadataService,
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService //roleTypetabledata
+  ) {}
 
-    @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
-  ) {
-    this.addExistingAttributeFormGroup = this.fb.group({
-      productCode: [''],
-      min: [''],
-      max: [''],
-      GLcategorizationAllowed: [false],
-      validtype: [false]
-    });
-    this.ValidvalueArray = {
-      // title: 'Name and Description (Locales)',
-      columns: [
-        {
-          name: 'additionaldatavalue',
-          title: 'Value',
-          truncate: true,
-          noOverflow: true,
-          width: 9,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'defaultindicator',
-          title: ' Default Indicator',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'primaryindicator',
-          title: 'Primary Indiactor',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'overrideindicator',
-          title: 'Override Indiactor',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'percentagevalue',
-          title: 'Percentage Value ',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'sequencenumber',
-          title: ' Sequence Number ',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-
-        {
-          name: 'actions',
-          title: ' ',
-          hasAction: true
-        }
-      ],
-      datasource: new MatTableDataSource<BodSampleTable1>(
-        this.dataWithValidvalues
-      )
-    };
-    this.ExistingValidvalueArray = {
-      // title: 'Name and Description (Locales)',
-      columns: [
-        {
-          name: 'additionaldatavalue',
-          title: 'Value',
-          truncate: true,
-          noOverflow: true,
-          width: 9,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'defaultindicator',
-          title: ' Default Indicator',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'primaryindicator',
-          title: 'Primary Indiactor',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'overrideindicator',
-          title: 'Override Indiactor',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'percentagevalue',
-          title: 'Percentage Value ',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'sequencenumber',
-          title: ' Sequence Number ',
-          truncate: true,
-          noOverflow: true,
-          width: 10,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'actions',
-          title: ' ',
-          hasAction: true
-        }
-      ],
-      datasource: new MatTableDataSource<BodSampleTable1>(
-        this.dataWithExsistingValidvalues
-      )
-    };
-    this.tableWithSimpleEdit = {
-      columns: [
-        {
-          name: 'locale',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.select
-          }
-        },
-        {
-          name: 'displayName',
-          title: 'Display Name',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.input
-          }
-        },
-        {
-          name: 'description',
-          title: 'Description',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.input
-          }
-        },
-        { name: 'actionBtns', title: ' ', hasAction: true }
-      ],
-      datasource: new MatTableDataSource<BodLocaleTable>(this.dataWithlocale),
-      noRecordsMessage: 'No Data Defined'
-    };
-    this.localetablerangedata = {
-      columns: [
-        {
-          name: 'locale',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.select
-          }
-        },
-        {
-          name: 'displayName',
-          title: 'Display Name',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.input
-          }
-        },
-        {
-          name: 'description',
-          title: 'Description',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.input
-          }
-        },
-        { name: 'actionBtns', title: ' ', hasAction: true }
-      ],
-      datasource: new MatTableDataSource<BodLocaleRangeTable>(
-        this.dataWithlocalerange
-      ),
-      noRecordsMessage: 'No Data defined'
-    };
-    this.localetablesetdata = {
-      columns: [
-        {
-          name: 'locale',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.select
-          }
-        },
-        {
-          name: 'displayName',
-          title: 'Display Name',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.input
-          }
-        },
-        {
-          name: 'description',
-          title: 'Description',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem',
-          inputModeOptions: {
-            type: ColumnType.input
-          }
-        },
-        { name: 'actionBtns', title: ' ', hasAction: true }
-      ],
-      datasource: new MatTableDataSource<BodLocaleSetTable>(
-        this.dataWithlocaleset
-      ),
-      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-    };
-
-    this.balanceHoldsTableMetaData = {
-      title: 'Attribute Details',
-      columns: [
-        {
-          name: 'code',
-          title: 'Attributes',
-          truncate: true,
-          noOverflow: true,
-          width: 50,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'actions',
-          title: ' ',
-          disableSorting: true,
-          disableFiltering: true,
-          hasAction: true,
-          cssClass: 'compact-columns'
-        }
-      ],
-
-      datasource: new MatTableDataSource<Attribute>(),
-      rowLeftAction: RowLeftAction.expandableRows,
-      enableSorting: false,
-      enablePagination: true,
-      paginationOptions: {
-        length: null,
-        showLastButton: true,
-        pageSize: 5
-      }
-    };
-    this.AttributeLocalTable = {
-      title: 'Locale Table',
-      columns: [
-        {
-          name: 'localeCode',
-          title: 'Locale',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'localeText',
-          title: 'Display Name',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'translationText',
-          title: 'Description',
-          truncate: true,
-          noOverflow: true,
-          width: 12,
-          widthUnit: 'rem'
-        }
-      ],
-      datasource: new MatTableDataSource<BodLocaleTable>([])
-    };
-
-    this.productRelationTable = {
-      title: 'Valid Values',
-      columns: [
-        {
-          name: 'attributeValue',
-          title: 'Additional Data Value',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'isDefault',
-          title: 'Default Indicator',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'isPrimary',
-          title: 'Primary Indicator',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'overrideDefault',
-          title: 'Override Indicator',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'percentage',
-          title: 'Percentage Value',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        },
-        {
-          name: 'sequenceNumber',
-          title: 'Sequence Number',
-          truncate: true,
-          noOverflow: true,
-          width: 6,
-          widthUnit: 'rem'
-        }
-      ],
-      datasource: new MatTableDataSource<BodSampleTable1>()
-    };
-
-    console.log(this.productRelationTable);
-  }
-
-  public commonDialogSize: string = 'Large';
-  public closeOnCloseIconClick: boolean = false;
-  private onCloseClick() {
-    this.systemMessage.message = 'Custom Function called on close';
-    this.systemMessage.show();
-    this.dialogRef$.close();
-  }
-
-  ngOnInit() {
-    this.inputLayoutForm = this.fb.group({
-      additionaldatavalue: ['', Validators.required],
-      ValidvalueArray: [],
-      percentagevalue: new UntypedFormControl(),
-      sequencenumber: new UntypedFormControl(),
-      defaultindicator: [false],
-      primaryindicator: [false],
-      overrideindicator: [false]
-    });
-
-    this.inputExistingLayoutForm = this.fb.group({
-      additionaldatavalue: ['', Validators.required],
-      ExistingValidvalueArray: [],
-      percentagevalue: [''],
-      sequencenumber: [''],
-      defaultindicator: [false],
-      primaryindicator: [false],
-      overrideindicator: [false]
-    });
-    this.inputLocaleLayoutFormDisplayName = this.fb.group({});
-    this.inputLocaleLayoutFormLocale = this.fb.group({});
-    this.inputLocaleLayoutFormDesc = this.fb.group({});
-
-    this.inputRangeLocaleLayoutFormLocale = this.fb.group({});
-    this.inputRangeLocaleLayoutFormDisplayName = this.fb.group({});
-    this.inputRangeLocaleLayoutFormDesc = this.fb.group({});
-    this.inputSetLocaleLayoutFormLocale = this.fb.group({});
-    this.inputSetLocaleLayoutFormDisplayName = this.fb.group({});
-    this.inputSetLocaleLayoutFormDesc = this.fb.group({});
-
-    // this.fetchIdentifier();
-    this.tableActions = [...this.metadataService.tableActions];
-    this.loadDropdownData();
+  ngOnInit(): void {
     this.initForm();
-    this.getAttribute();
-    this.addNewAttributeFormGroup
-      .get('classificationtype')
+    this.loadDropdownData();
+    this.addNewBalanceTypeFormGroup
+      .get('balanceTypeCode')
       ?.valueChanges.subscribe(value => {
-        this.updateRelateToProductTypeValidator(value);
+        this.aggregateForm.get('aggregationname')?.setValue(value);
       });
   }
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-  private openDialog(dialogModel: any) {
-    let onClose = this.closeOnCloseIconClick
-      ? this.onCloseClick.bind(this)
-      : undefined;
-    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
-      dialogModel,
-      onClose,
-      this.commonDialogSize
-      // "",
-      // 'Extra-large'
-    );
+  loadDropdownData(): void {
+    this.balanceTypeService.getAccntClassification().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      this.accountclassifications = mappedData;
+      this.roleaccountclassifications = mappedData;
+    });
+
+    this.balanceTypeService.getRoletype().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      this.roletypes = mappedData;
+      this.payers = mappedData;
+      this.payees = mappedData;
+    });
+
+    this.balanceTypeService.getPostMethod().subscribe(data => {
+      this.postingapplicationmethods = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+    });
+    this.balanceTypeService.getProductType().subscribe(data => {
+      this.producttypes = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+    });
+    this.balanceTypeService.getBalanceType().subscribe(data => {
+      this.balancetypes = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+    });
+
+    this.balanceTypeService.getPostingSTD().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      this.debittransactiontypes = mappedData;
+      this.credittransactiontypes = mappedData;
+    });
   }
+  public dataWithRoleTypevalues: RoleTypeSampleTable[] = [];
+  onAdd(formValues: any) {
+    const selectedRoleType = this.roletypes.find(
+      item => item.value === formValues.roletype
+    );
+    const roleTypeCode = selectedRoleType ? selectedRoleType.label : '';
+    const selectedAccountClassification = this.accountclassifications.find(
+      item => item.value === formValues.roleaccountclassification
+    );
+    const accountClassificationCode = selectedAccountClassification
+      ? selectedAccountClassification.label
+      : '';
 
-  public dataWithValidvalues: BodSampleTable1[] = [];
-  public dataWithExsistingValidvalues: BodSampleTable1[] = [];
-  public dataWithlocale: BodLocaleTable[] = [];
-  public dataWithlocalerange: BodLocaleRangeTable[] = [];
-  public dataWithlocaleset: BodLocaleSetTable[] = [];
+    this.dataWithRoleTypevalues = this.dataWithRoleTypevalues || [];
+    const newValidValue: RoleTypeSampleTable = {
+      type: roleTypeCode || '',
+      accountingClassification: accountClassificationCode ?? '',
+      obligator: formValues.obligator ?? false,
+      beneficiary: formValues.beneficiary ?? false,
+      visibility: formValues.isvisible ?? false
+    };
 
-  // fetchIdentifier() {
-  //   this.metadataService.getIdentifier().subscribe(
-  //     identifier => {
-  //       this.addEditBalanceHoldFormGroup.patchValue({ identifier });
-  //     },
-  //     error => {
-  //       console.error('Error fetching identifier:', error);
-  //     }
-  //   );
-  // }
+    this.dataWithRoleTypevalues.push(newValidValue);
+    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
+      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    }
+    if (this.roleTypeForm) {
+      this.roleTypeForm.reset();
+    }
+  }
+  public dataWithAggregatevalues: AggregateSampleTable[] = [];
+  onAddAggregate(formValues: any) {
+    //convert from idfr to code
+    const selectedBalanceType = this.balancetypes.find(
+      item => item.value === formValues.balancetype
+    );
+    const balTypeName = selectedBalanceType ? selectedBalanceType.label : '';
 
-  public dialogFilterDataSource = new MatTableDataSource<BodInlineSampleTable>([
-    ...this.commonDataService.inlineModalData
-  ]);
-  public bodTableDataWithFormFilter: BodTableMetadata = {
-    title: 'mbpBod.demo.microsite.table.tableWithDialogFilter',
-    columns: [...this.commonDataService.inlineModalColumns],
+    const selectedProductType = this.producttypes.find(
+      item => item.value === formValues.producttype
+    );
+    const prdtTypeName = selectedProductType ? selectedProductType.label : '';
+
+    const selecteDebitType = this.debittransactiontypes.find(
+      item => item.value === formValues.debittransactiontype
+    );
+    const debitTransType = selecteDebitType ? selecteDebitType.label : '';
+
+    const selecteCreditType = this.credittransactiontypes.find(
+      item => item.value === formValues.credittransactiontype
+    );
+    const creditTransType = selecteCreditType ? selecteCreditType.label : '';
+
+    this.dataWithAggregatevalues = this.dataWithAggregatevalues || [];
+    const newValidValue: AggregateSampleTable = {
+      aggregationname: this.aggregateForm.get('aggregationname')?.value || '',
+      balancetype: balTypeName || '',
+      aggregationLevel: formValues.aggregationlevel || '',
+      relationshiptype: formValues.relationshiptype || '',
+      aggregates: [
+        {
+          id: 0,
+          label: 'Product Type',
+          value: prdtTypeName
+        },
+        {
+          id: 1,
+          label: 'Debit Transaction Type',
+          value: debitTransType
+        },
+        {
+          id: 2,
+          label: 'Debit Transaction Type',
+          value: creditTransType
+        },
+        {
+          id: 3,
+          label: 'Other Currency',
+          value: formValues.othercurrency
+        },
+        {
+          id: 4,
+          label: 'Reverse',
+          value: formValues.reverse
+        }
+      ]
+    };
+    this.dataWithAggregatevalues.push(newValidValue);
+    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
+      this.aggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
+      ];
+    }
+    if (this.aggregateForm) {
+      this.aggregateForm.reset();
+    }
+  }
+  public dataWithPostngStdvalues: PstgSampleTable[] = [];
+  onAddPstgStd(formValues: any) {
+    const selectedPstgStd = this.postingapplicationmethods.find(
+      item => item.value === formValues.postingapplicationmethod
+    );
+    const pstgApplicationName = selectedPstgStd ? selectedPstgStd.label : '';
+
+    this.dataWithPostngStdvalues = this.dataWithPostngStdvalues || [];
+    const newValidValue: PstgSampleTable = {
+      postingapplicationmethod: pstgApplicationName || '',
+      postingapplicationtype: formValues.applicationtype || '',
+      customizationtype: formValues.customizationtype || '',
+      instructionorder: formValues.instructionorder || ''
+    };
+    this.dataWithPostngStdvalues.push(newValidValue);
+    if (
+      this.postingApplicationTabledata &&
+      this.postingApplicationTabledata.datasource
+    ) {
+      this.postingApplicationTabledata.datasource.data = [
+        ...this.dataWithPostngStdvalues
+      ];
+    }
+    if (this.postingApplicationForm) {
+      this.postingApplicationForm.reset();
+    }
+  }
+  public balanceSubTypeData: BodTableMetadata = {
+    title: 'Balance Sub Type Details',
+    columns: [...this.balanceTypeService.balanceSubTypeColumn],
+    enablePagination: true,
+
+    datasource: new MatTableDataSource<BalSybTypeTable>(),
+    noRecordsMessage: 'No data Defined'
+  };
+
+  public roleTypetabledata: BodTableMetadata = {
+    title: 'Role Type Details',
+    columns: [...this.balanceTypeService.roletypecolumns],
     enablePagination: true,
     paginationOptions: {
       pageSize: 4,
-      length: 8,
-      pageSizeOptions: [4, 8],
+      length: 12,
+      // pageSizeOptions: [2, 3, 4, 6],
       showLastButton: true,
       showPageSizeOptions: true
     },
-    datasource: this.dialogFilterDataSource,
-    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg',
-    filterOptions: {
-      filterType: BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
-    }
+    datasource: new MatTableDataSource<RoleTypeSampleTable>(
+      this.dataWithRoleTypevalues
+    ),
+    noRecordsMessage: 'No data Defined'
+  };
+  public aggregateTabledata: BodTableMetadata = {
+    title: 'Aggregate Details',
+    columns: [...this.balanceTypeService.aggregatecolmn],
+    rowLeftAction: RowLeftAction.expandableRows,
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      // pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<AggregateSampleTable>(
+      this.dataWithAggregatevalues
+    ),
+    noRecordsMessage: 'No data Defined'
+  };
+  public postingApplicationTabledata: BodTableMetadata = {
+    title: 'Posting Application Instruction',
+    columns: [...this.balanceTypeService.postingAppcolumn],
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<PstgSampleTable>(
+      this.dataWithPostngStdvalues
+    ),
+    noRecordsMessage: 'No data Defined'
   };
 
-  /**
-   * Method to open dialog with filter inputs
-   */
-  // public OpenCommonDialog(formTemplate: TemplateRef<any>) {
-  //   this.formData.formTemplate = formTemplate;
-  //   this.dialogOutput$ = this.bodCommonDialogService.commonDialog(
-  //     this.formData
-  //   );
-  // }
-  /**
-   * Method to handle table actions event for dialog filter tab
-   */
-  // public onTableActionsWithFilterClicked(
-  //   event: BodTableAction,
-  //   formTemplate: TemplateRef<any>
-  // ) {
-  //   this.template = formTemplate;
-  //   if (
-  //     event.id === BodTableActionType.FILTER &&
-  //     this.bodTableDataWithFormFilter.filterOptions.filterType ===
-  //       BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
-  //   ) {
-  //     this.OpenCommonDialog(formTemplate);
-  //   } else {
-  //     this.commonDataService.tableLevelEventObject(event);
-  //   }
-  // }
-  getTableFormGroup(index: number): UntypedFormGroup {
-    return this.tabIndexTableMap[index].formGroup;
-  }
-  getTableRef(index: number): BodTableComponent {
-    return this.tabIndexTableMap[index].ref;
-  }
-  displayInlineFormErrorMessage(index) {
-    const errors = getFormValidationErrors(
-      this.getTableFormGroup(index).controls
-    ).shift();
-    this.commonDataService.updateMessage(
-      'mbpBod.demo.microsite.table.inlineFormError',
-      JSON.stringify(errors)
-    );
-  }
-  inlineFormEditSubmit(formGroupValid: boolean, index) {
-    if (formGroupValid) {
-      const editedData: BodInlineSampleTable[] = [];
-      const formGroup = this.getTableFormGroup(index);
-      this.getTableRef(index).data.datasource.data.forEach(d => {
-        if (d.index === this.editRowElement.index) {
-          const editedRow: BodInlineSampleTable = {
-            index: d.index,
-            id: d.id,
-            name: d.name,
-            productLine: formGroup.value.productLine,
-            aware: formGroup.value.owner,
-            relationship: formGroup.value.relationship,
-            lastDebit:
-              formGroup.value.lastDebit === null
-                ? 0
-                : formGroup.value.lastDebit,
-            start: formGroup.controls['start'].value
-          };
-          if (index === 1 || index === 2) {
-            editedRow.description = [
-              {
-                id: d.description[0].id,
-                label: d.description[0].label,
-                value: formGroup.value.title
-              },
-              {
-                id: d.description[1].id,
-                label: d.description[1].label,
-                value: formGroup.value.firstName
-              },
-              {
-                id: d.description[2].id,
-                label: d.description[2].label,
-                value: formGroup.value.lastName
-              }
-            ];
-          }
-          editedData.push(editedRow);
-        } else {
-          editedData.push(d);
-        }
-      });
-      this.getTableRef(index).updateDatasource(
-        new MatTableDataSource<BodInlineSampleTable>([...editedData])
-      );
-    } else {
-      this.displayInlineFormErrorMessage(index);
-    }
-  }
-  getTableData(index: number): BodTableMetadata {
-    return this.tabIndexTableMap[index].data;
-  }
-  getTableInput(index: number): any {
-    return this.tabIndexTableMap[index].input;
-  }
-  inlineFormAddSubmit(event: any, index: number) { }
+  private initForm(): void {
+    this.addNewBalanceTypeFormGroup = this.fb.group({
+      balanceTypeCode: new UntypedFormControl('', [Validators.required]),
+      balTypeIdentifier: [{ value: '', disabled: true }],
+      balanceTypeName: new UntypedFormControl('', [Validators.required]),
+      balancesubtype: new UntypedFormControl(),
 
-  loadDropdownData(): void {
-    this.metadataService.getTypes().subscribe(data => {
-      this.types = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-
-      // console.log('fetching data from API' + this.types);
+      systembalance: new UntypedFormControl(),
+      accountclassification: new UntypedFormControl('', [Validators.required]),
+      datevalue: new UntypedFormControl('', [Validators.required]),
+      payer: new UntypedFormControl('', [Validators.required]),
+      payee: new UntypedFormControl('', [Validators.required]),
+      statementdisplay: new UntypedFormControl(),
+      chargebase: new UntypedFormControl(),
+      persisted: new UntypedFormControl(),
+      calculated: new UntypedFormControl(),
+      autocreation: new UntypedFormControl(),
+      systembal: new UntypedFormControl(),
+      loghistory: new UntypedFormControl(),
+      dailysnapshot: new UntypedFormControl(),
+      inquiryrequired: new UntypedFormControl(),
+      generatefinancialresults: new UntypedFormControl(),
+      glmapping: new UntypedFormControl(),
+      summaryrequired: new UntypedFormControl()
+    });
+    this.balanceSubtypeForm = this.fb.group({
+      balancesubtypecode: new UntypedFormControl('', [Validators.required]),
+      balsubtypeIdentifier: [{ value: '', disabled: true }],
+      balancesubtypename: new UntypedFormControl('', [Validators.required])
     });
 
-    this.metadataService.getDataTypes().subscribe(
-      (data: any[]) => {
-        this.datatypes = data.map(item => ({
-          label: item.code,
-          value: item.identifier
-        }));
-      },
-      error => {
-        console.error('Error fetching data types', error);
-      }
-    );
-
-    this.metadataService.getProductCodes().subscribe(data => {
-      this.productCodes = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-
-      // console.log('fetching data from API' + this.types);
+    this.roleTypeForm = this.fb.group({
+      roletype: new UntypedFormControl('', [Validators.required]),
+      roleaccountclassification: new UntypedFormControl('', [
+        Validators.required
+      ]),
+      obligator: new UntypedFormControl(),
+      beneficiary: new UntypedFormControl(),
+      isvisible: new UntypedFormControl()
     });
-
-    // this.metadataService.getProductTypeCodes().subscribe(
-    //   (data  => {
-    //     this.productTypeCodes = data.map(item => ({
-    //       label: item.code,
-    //       value: item.identifier
-    //     }));
-    //   },
-    //   error => {
-    //     console.error('Error fetching data types', error);
-    //   }
-    // );
-    this.metadataService.getLocaleCodes().subscribe(
-      (data: any[]) => {
-        this.localeCodes = data.map(item => ({
-          label: item,
-          value: item
-        }));
-      },
-      error => {
-        console.error('Error fetching data types', error);
-      }
-    );
-
-    this.metadataService
-      .getClassificationTypes()
-      .subscribe(data => (this.classificationtypes = data));
-    // this.metadataService
-    //   .getDataTypes()
-    //   .subscribe(data => (this.datatypes = data));
-    this.metadataService
-      .getValidvalueTypes()
-      .subscribe(data => (this.validvaluestypes = data));
+    this.aggregateForm = this.fb.group({
+      aggregationname: new UntypedFormControl({ value: '', disabled: true }),
+      producttype: new UntypedFormControl(''),
+      balancetype: new UntypedFormControl('', [Validators.required]),
+      relationshiptype: new UntypedFormControl(),
+      aggregationlevel: new UntypedFormControl('', [Validators.required]),
+      debittransactiontype: new UntypedFormControl(''),
+      credittransactiontype: new UntypedFormControl(''),
+      othercurrency: new UntypedFormControl(''),
+      reverse: new UntypedFormControl('')
+    });
+    this.postingApplicationForm = this.fb.group({
+      postingapplicationmethod: new UntypedFormControl('', [
+        Validators.required
+      ]),
+      applicationtype: new UntypedFormControl('', [Validators.required]),
+      instructionorder: new UntypedFormControl('', [Validators.required]),
+      customizationtype: new UntypedFormControl('', [Validators.required])
+    });
   }
-
-  private updateRelateToProductTypeValidator(classificationType: string): void {
-    const relateToProductTypeControl = this.addNewAttributeFormGroup.get(
-      'relatetoproducttype'
-    );
-    if (classificationType === 'systemDefined') {
-      relateToProductTypeControl?.setValidators([Validators.required]);
-    } else {
-      relateToProductTypeControl?.clearValidators();
-    }
-    relateToProductTypeControl?.updateValueAndValidity();
-  }
-
-  onSubmit(event: Event) { }
-  onReset() { }
-  handleRowLevelActions(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteRow(index);
-    }
-    // else if (action === 'edit'){
-    //   this.editRow(index)
-    // }
-  }
-  handleExistingRowLevelActions(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteExistingRow(index);
-    }
-    // else if (action === 'edit'){
-    //   this.editRow(index)
-    // }
-  }
-
-  // handleRowLevelActions(action: string, index: number) {
-  //   if (action === 'edit') {
-  //     this.setDataForSingleLineEditMode(index);
-  //   } else if (action === 'trash') {
-  //     if (this.modeOptionsSimple?.input) {
-  //       this.deleteTableData(index);
-  //     } else {
-  //       this.subscriptions.add(
-  //         this.bodConfirmAlertDialogsService
-  //           .confirm(this.ConfirmData)
-  //           .subscribe(val => {
-  //             if (val) {
-  //               this.deleteTableData(index);
-  //             }
-  //           })
-  //       );
-  //     }
-  //   }
-  // }
-  public deleteTableData(index) {
-    this.addLocaleTemp.deleteRow(index);
-  }
-
-  setDataForSingleLineEditMode(editIndex: number) {
-    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-      ...obj
-    }));
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: editIndex
-    };
-    this.pageModeSimple = PageMode.NONE;
-  }
-
-  handleRowLevelActionsforlocale(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteLocaleRow(index);
-    }
-  }
-  handleRowLevelActionsforlocalerange(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteLocaleRowrange(index);
-    }
-  }
-  handleRowLevelActionsforlocaleset(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteLocaleRowset(index);
-    }
-  }
-  identifierSearch() {
+  identifierSearch(field: string) {
     this.metadataService.idfrSearch().subscribe(
       (response: string) => {
-        this.addNewAttributeFormGroup.controls['identifier'].setValue(response);
-        this.addNewAttributeFormGroup.controls['identifier'].disable();
+        if (field === 'balTypeIdentifier') {
+          this.addNewBalanceTypeFormGroup.controls[
+            'balTypeIdentifier'
+          ].setValue(response);
+          this.addNewBalanceTypeFormGroup.controls[
+            'balTypeIdentifier'
+          ].disable();
+        } else if (field === 'balsubtypeIdentifier') {
+          this.balanceSubtypeForm.controls['balsubtypeIdentifier'].setValue(
+            response
+          );
+          this.balanceSubtypeForm.controls['balsubtypeIdentifier'].disable();
+        }
       },
       error => {
         console.error('Error:', error);
       }
     );
-    console.log('Search Added');
   }
-
-  deleteLocaleRow(index: number) {
-    console.log('Before splice:', this.dataWithlocale);
-    this.dataWithlocale.splice(index, 1);
-    console.log('After splice:', this.dataWithlocale);
-    this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
-    console.log(
-      'Updated data source:',
-      this.tableWithSimpleEdit.datasource.data
-    );
-    // alert('Row deleted successfully!');
+  handleRowLevelActionsforRoletype(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRow(index);
+    }
   }
-
-  deleteLocaleRowrange(index: number) {
-    console.log('Before splice:', this.dataWithlocalerange);
-    this.dataWithlocalerange.splice(index, 1);
-    console.log('After splice:', this.dataWithlocalerange);
-    this.localetablerangedata.datasource.data = [...this.dataWithlocalerange];
-    console.log(
-      'Updated data source:',
-      this.localetablerangedata.datasource.data
-    );
-    // alert('Row deleted successfully!');
+  handleRowLevelActionsforaggergate(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteAggregateRow(index);
+    }
   }
-  deleteLocaleRowset(index: number) {
-    console.log('Before splice:', this.dataWithlocaleset);
-    this.dataWithlocaleset.splice(index, 1);
-    console.log('After splice:', this.dataWithlocaleset);
-    this.localetablesetdata.datasource.data = [...this.dataWithlocaleset];
-    console.log(
-      'Updated data source:',
-      this.localetablesetdata.datasource.data
-    );
-    // alert('Row deleted successfully!');
+  handleRowLevelActionsforPstgStd(action: string, index: number) {
+    if (action === 'trash') {
+      this.deletePstStdRow(index);
+    }
   }
-
   deleteRow(index: number) {
-    this.dataWithValidvalues.splice(index, 1);
-    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
-    // alert('Row deleted successfully!');
+    this.dataWithRoleTypevalues.splice(index, 1);
+    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
   }
-  deleteExistingRow(index: number) {
-    this.dataWithExsistingValidvalues.splice(index, 1);
-    this.ExistingValidvalueArray.datasource.data = [
-      ...this.dataWithExsistingValidvalues
-    ];
-    // alert('Row deleted successfully!');
-  }
-
-  editRow(index: number) {
-    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
-    this.ExistingValidvalueArray.datasource.data = [...this.dataWithExsistingValidvalues];
-
-
-  }
-
-  // onLocaleAdd(formValues: any) {
-  //   if (this.inputLocaleLayoutForm.invalid) {
-  //     alert('Please fill all the required fields.');
-  //     return;
-  //   }
-  //   const newLocaleValues: BodLocaleTable = {
-  //     locale: formValues.locale ?? false,
-  //     displayName: formValues.displayName ?? false,
-  //     description: formValues.description ?? false
-  //   };
-
-  //   this.dataWithlocale.push(newLocaleValues);
-  //   this.tableWithSimpleEdit.datasource.data = this.dataWithlocale;
-  //   this.inputLocaleLayoutForm.reset();
-  //   alert('Valid values added successfully!');
-  // }
-  // onRangeLocaleAdd(formValuess: any) {
-  //   if (this.inputRangeLocaleLayoutForm.invalid) {
-  //     alert('Please fill all the required fields.');
-  //     return;
-  //   }
-  //   const newLocaleValues: BodLocaleTable = {
-  //     locale: formValuess.locale ?? false,
-  //     displayName: formValuess.displayName ?? false,
-  //     description: formValuess.description ?? false
-  //   };
-
-  //   this.dataWithlocalerange.push(newLocaleValues);
-  //   this.localetablerangedata.datasource.data = this.dataWithlocalerange;
-  //   this.inputRangeLocaleLayoutForm.reset();
-  //   alert('Valid values added successfully!');
-  // }
-  // onSetLocaleAdd(formValues: any) {
-  //   if (this.inputSetLocaleLayoutForm.invalid) {
-  //     alert('Please fill all the required fields.');
-  //     return;
-  //   }
-  //   const newLocaleValues: BodLocaleTable = {
-  //     locale: formValues.locale ?? false,
-  //     displayName: formValues.displayName ?? false,
-  //     description: formValues.description ?? false
-  //   };
-
-  //   this.dataWithlocaleset.push(newLocaleValues);
-  //   this.localetablesetdata.datasource.data = this.dataWithlocaleset;
-  //   this.inputSetLocaleLayoutForm.reset();
-  //   alert('Valid values added successfully!');
-  // }
-
-  onSave(isAdd: boolean) {
-    const updatedData = this.addNewAttributeFormGroup.getRawValue();
-    this.addNewAttributeFormGroup.controls['identifier'].enable();
-    const formValue = this.addNewAttributeFormGroup.value;
-    const validvalue = this.inputLayoutForm.value;
-    delete formValue.validtype;
-    const selectedType = formValue.type;
-    const selectedFormatType = formValue.datatype;
-    const objectTypeIdentifier =
-      this.types.find(item => item.label === selectedType)?.value ||
-      selectedType;
-    const formatTypeIdentifier =
-      this.datatypes.find(item => item.label === selectedFormatType)?.value ||
-      selectedFormatType;
-    const multiLingualTextInfoList = Object.keys(
-      this.inputLocaleLayoutFormLocale.controls
-    ).map((key, index) => {
-      return {
-        localeCode: this.inputLocaleLayoutFormLocale.get(key)?.value, // From locale form group
-        localeText: this.inputLocaleLayoutFormDisplayName.get(
-          this.useExistingFormCtrlKeysDisplayName[index]
-        )?.value, // From display name form group
-        identifier: formValue.identifier,
-        objectType: formValue.type,
-        attributeType: formValue.datatype,
-        translationText: this.inputLocaleLayoutFormDesc.get(
-          this.useExistingFormCtrlKeysDesc[index]
-        )?.value // From description form group
-      };
-    }).filter(item => item.localeCode);
-
-    const multiLingualTextInfoRangeList = Object.keys(
-      this.inputRangeLocaleLayoutFormLocale.controls
-    ).map((key, index) => {
-      return {
-        localeCode: this.inputRangeLocaleLayoutFormLocale.get(key)?.value, // From locale form group
-        localeText: this.inputRangeLocaleLayoutFormDisplayName.get(
-          this.useExistingFormCtrlKeysRangeDisplayName[index]
-        )?.value, // From display name form group
-        identifier: formValue.identifier,
-        objectType: formValue.type,
-        attributeType: formValue.datatype,
-        translationText: this.inputRangeLocaleLayoutFormDesc.get(
-          this.useExistingFormCtrlKeysRangeDesc[index]
-        )?.value // From description form group
-      };
-    });
-    const multiLingualTextInfoSetList = Object.keys(
-      this.inputSetLocaleLayoutFormLocale.controls
-    ).map((key, index) => {
-      return {
-        localeCode: this.inputSetLocaleLayoutFormLocale.get(key)?.value, // From locale form group
-        localeText: this.inputSetLocaleLayoutFormDisplayName.get(
-          this.useExistingFormCtrlKeysSetDisplayName[index]
-        )?.value, // From display name form group
-        identifier: formValue.identifier,
-        objectType: formValue.type,
-        attributeType: formValue.datatype,
-        translationText: this.inputSetLocaleLayoutFormDesc.get(
-          this.useExistingFormCtrlKeysSetDesc[index]
-        )?.value // From description form group
-      };
-    });
-
-    const attribute: any = {
-      additionalDataType: {
-        identifier: formValue.identifier,
-        code: formValue.code,
-        name: formValue.name,
-        shortName: formValue.shortname,
-        objectTypeIdentifier: objectTypeIdentifier,
-        formatTypeIdentifier: formatTypeIdentifier,
-        calculated: formValue.calculate ? 'Y' : 'N',
-        searchable: formValue.searchable ? 'Y' : 'N',
-        multiValueAllowed: formValue.multivalueallowed ? 'Y' : 'N',
-        percentageAllowed: formValue.percentageallowed ? 'Y' : 'N',
-        classificationType: formValue.classificationtype,
-        multiLingualTextInfoList: multiLingualTextInfoList
-      }
-
-      // productTypeAdditionalDataTypeRelationshipList: [
-      //   {
-      //     identifier: 1110101,
-      //     attributeIdentifier: formValue.identifier,
-      //     minimumRequired: formValue.min,
-      //     maximumAllowed: formValue.max,
-      //     glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
-      //   }
-      // ],
-      // productTypeAdditionalDataList: productTypeAdditionalDataList
-    };
-
-    if (formValue.validvaluestype === 'rangevalues') {
-      attribute.additionalDataValidValuesRange = {
-        identifier: 0,
-        attributeIdentifier: formValue.identifier,
-        name: formValue.rangename,
-        description: formValue.rangedescriptions,
-        lowValue: formValue.low,
-        highValue: formValue.high,
-        multiLingualTextInfoList: multiLingualTextInfoRangeList
-        // [
-        //   {
-        //     localeCode: formValues.localeCode,
-        //     localeText: formValue.description,
-        //     identifier: formValue.identifier,
-        //     objectType: formValue.type,
-        //     attributeType: formValue.datatype,
-        //     translationText: formValue.description
-        //   }
-        // ]
-      };
-    }
-    if (formValue.validvaluestype === 'setvalues') {
-      attribute.additionalDataValidValueSetList = [
-        {
-          identifier: 0,
-          attributeIdentifier: formValue.identifier,
-          name: formValue.setname,
-          description: formValue.setdescription,
-          value: formValue.attributevalue,
-          isdefault: formValue.isdefault ? 'Y' : 'N',
-          isPrimary: formValue.isprimary ? 'Y' : 'N',
-          percentage: formValue.percentages,
-          sequenceNumber: formValue.sequencenumbers,
-          overrideDefault: formValue.isvalueoverridden ? 'Y' : 'N',
-          multiLingualTextInfoList: multiLingualTextInfoSetList
-          //  [
-          //   {
-          //     localeCode: formValues.localeCode,
-          //     localeText: 'Deposit product',
-          //     identifier: formValue.identifier,
-          //     objectType: formValue.type,
-          //     attributeType: 'product market name',
-          //     translationText: formValue.description
-          //   }
-          // ]
-        }
+  deleteAggregateRow(index: number): void {
+    this.dataWithAggregatevalues.splice(index, 1);
+    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
+      this.aggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
       ];
     }
-    if (formValue.relatetoproducttype) {
-      attribute.productTypeAdditionalDataTypeRelationshipList = [
-        {
-          identifier: 1110101,
-          attributeIdentifier: formValue.identifier,
-          minimumRequired: formValue.min,
-          maximumAllowed: formValue.max,
-          glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
-        }
-      ];
-    }
-    if (this.dataWithValidvalues.length > 0) {
-      console.log(this.dataWithValidvalues);
-      const productTypeAdditionalDataList = this.dataWithValidvalues.map(
-        (item, index) => ({
-          identifier: index,
-          attributeIdentifier: formValue.identifier,
-          attributeValue: item.additionaldatavalue,
-          attributeValueSource: '',
-          isDefault: item.defaultindicator ? 'Y' : 'N',
-          isPrimary: item.primaryindicator ? 'Y' : 'N',
-          percentage: item.percentagevalue,
-          sequenceNumber: item.sequencenumber,
-          overrideDefault: item.overrideindicator ? 'Y' : 'N'
-        })
-      );
-      attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
-      // this.addNewAttributeFormGroup.removeControl('validtype');
-    }
-    // this.addNewAttributeFormGroup.removeControl('validtype');
-    this.addNewAttributeFormGroup.markAllAsTouched();
-    this.addNewAttributeFormGroup.updateValueAndValidity();
-
-    const request = {
-      metadataType: 'Attribute',
-      attributeList: [attribute],
-      productTypeList: ['CASA']
-    };
-    console.log(request);
-    const serviceCall = isAdd
-      ? this.metadataService.saveAttribute(request)
-      : this.metadataService.updateAttribute(request);
-
-    serviceCall.subscribe(
-      response => this.handleSuccess(response),
-      error => this.handleError(error)
-    );
-
-    this.dataWithValidvalues = [];
-    this.addNewAttributeFormGroup.controls['identifier'].disable();
-
   }
-  handleSuccess(response?: any) {
-    this.dialogRef$.close();
-    console.log('Attribute saved successfully:', response);
-    const successMsg = 'Attribute Added Successfully';
-
-    this.message = {
-      code: '204',
-      text: successMsg,
-      type: NotificationMessageType.SUCCESS
-    };
-
-    this.messages.push(this.message);
-    this.getAttribute();
-    this.resetForms();
-  }
-  handleError(error: any) {
-    // alert('Error saving attribute');
-    console.error('Error saving attribute:', error);
-  }
-  resetForms() {
-    this.addNewAttributeFormGroup.reset();
-    this.inputLocaleLayoutFormLocale.reset();
-    this.inputLocaleLayoutFormDisplayName.reset();
-    this.inputLocaleLayoutFormDesc.reset();
-    this.inputRangeLocaleLayoutFormLocale.reset();
-    this.inputRangeLocaleLayoutFormDisplayName.reset();
-    this.inputRangeLocaleLayoutFormDesc.reset();
-    this.inputSetLocaleLayoutFormLocale.reset();
-    this.inputSetLocaleLayoutFormDisplayName.reset();
-    this.inputSetLocaleLayoutFormDesc.reset();
-  }
-
-  onAdd(formValues: any) {
-    if (this.inputLayoutForm.invalid) {
-      // alert('Please fill all the required fields.');
-      return;
-    }
-    this.dataWithValidvalues = this.dataWithValidvalues || [];
-    const newValidValue: BodSampleTable1 = {
-      additionaldatavalue: formValues.additionaldatavalue || '',
-      defaultindicator: formValues.defaultindicator ?? false,
-      primaryindicator: formValues.primaryindicator ?? false,
-      overrideindicator: formValues.overrideindicator ?? false,
-      percentagevalue: formValues.percentagevalue ?? null,
-      sequencenumber: formValues.sequencenumber ?? null
-    };
-
-    this.dataWithValidvalues.push(newValidValue);
-    if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
-      this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
-    } else {
-      // this.inputLayoutForm.reset();
-      // this.changeDetectorRef.detectChanges();
-      // alert('Valid values added successfully!');
-    }
-    this.changeDetectorRef.detectChanges();
-    this.inputLayoutForm.reset();
-  }
-
-  onExistingAdd(formValues: any) {
-    if (this.inputExistingLayoutForm.invalid) {
-      alert('Please fill all the required fields.');
-      return;
-    }
-    this.dataWithExsistingValidvalues = this.dataWithExsistingValidvalues || [];
-    const newValidValue: BodSampleTable1 = {
-      additionaldatavalue: formValues.additionaldatavalue || '',
-      defaultindicator: formValues.defaultindicator ?? false,
-      primaryindicator: formValues.primaryindicator ?? false,
-      overrideindicator: formValues.overrideindicator ?? false,
-      percentagevalue: formValues.percentagevalue ?? null,
-      sequencenumber: formValues.sequencenumber ?? null
-    };
-
-    console.log('BeforeAdding:', this.dataWithExsistingValidvalues);
-
-    this.dataWithExsistingValidvalues.push(newValidValue);
-
-    // this.ExistingValidvalueArray.datasource = {
-    //   ...this.ExistingValidvalueArray.datasource,
-    //   data:[...this.dataWithExsistingValidvalues]
-    // };
+  deletePstStdRow(index: number): void {
+    this.dataWithPostngStdvalues.splice(index, 1);
     if (
-      this.ExistingValidvalueArray &&
-      this.ExistingValidvalueArray.datasource
+      this.postingApplicationTabledata &&
+      this.postingApplicationTabledata.datasource
     ) {
-      this.ExistingValidvalueArray.datasource.data = [
-        ...this.dataWithExsistingValidvalues
+      this.postingApplicationTabledata.datasource.data = [
+        ...this.dataWithPostngStdvalues
       ];
-    } else {
-
-    }
-
-    this.inputExistingLayoutForm.reset();
-    this.changeDetectorRef.detectChanges();
-    // alert('Valid values added successfully!');
-  }
-
-  onAddforExistingAttribute(isAdd: boolean) {
-    // this.addExistingAttributeFormGroup.controls['identifier'].enable();
-    const formValue = this.addExistingAttributeFormGroup.value;
-    console.log("values beforer:", formValue);
-    delete formValue.validtype;
-    const selectedProductCode = formValue.productCode;
-    const selectedProduct = this.productCodes.find(item => item.label === selectedProductCode || item.value === selectedProductCode);
-    console.log(this.productCodes);
-    const productTypeIdentifier = selectedProduct?.value || selectedProductCode;
-    const productTypeLabel = selectedProduct?.label || selectedProductCode;
-
-    const attribute: any = {};
-    attribute.productTypeAdditionalDataTypeRelationshipList = [
-      {
-        identifier: 1110101,
-        attributeIdentifier: productTypeIdentifier,
-        attributeCode: productTypeLabel,
-        minimumRequired: formValue.min,
-        maximumAllowed: formValue.max,
-        glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
-      }
-    ];
-    if (this.dataWithExsistingValidvalues.length > 0) {
-      console.log(this.dataWithValidvalues);
-      const productTypeAdditionalDataList =
-        this.dataWithExsistingValidvalues.map((item, index) => ({
-          identifier: index,
-          attributeIdentifier: productTypeIdentifier,
-          attributeValue: item.additionaldatavalue,
-          attributeValueSource: '',
-          isDefault: item.defaultindicator ? 'Y' : 'N',
-          isPrimary: item.primaryindicator ? 'Y' : 'N',
-          percentage: item.percentagevalue,
-          sequenceNumber: item.sequencenumber,
-          overrideDefault: item.overrideindicator ? 'Y' : 'N'
-        }));
-      attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
-      // this.addExistingAttributeFormGroup.removeControl('validtype');
-    }
-    const request = {
-      metadataType: 'Attribute',
-      attributeList: [attribute],
-      productTypeList: ['CASA']
-    };
-
-
-    const serviceCall = isAdd
-      ? this.metadataService.saveAttribute(request)
-      : this.metadataService.updateAttribute(request);
-
-    console.log("request:", JSON.stringify(request, null, 2));
-
-    serviceCall.subscribe(
-      response => {
-        this.handleSuccess(response)
-        console.log("after:", response)
-      },
-      error => this.handleError(error)
-    );
-    this.dataWithValidvalues = [];
-    this.dataWithExsistingValidvalues = [];
-
-
-  }
-  getAttribute(): void {
-    this.metadataService.retrieveAttribute().subscribe(response => {
-      if (response.status === 'SUCCESS' && response.data) {
-        this.attributeData = response.data.map((item: any) => {
-          const attributeData = item.Attribute || {};
-          const additionalDataType = attributeData.additionalDataType || {};
-          const productTypeAdditionalDataList =
-            attributeData.productTypeAdditionalDataList || [];
-          const productTypeAdditionalDataTypeRelationshipList =
-            attributeData.productTypeAdditionalDataTypeRelationshipList || [];
-          const additionalDataValidValueSetList =
-            attributeData.additionalDataValidValueSetList || [];
-          const additionalDataValidValuesRange =
-            attributeData.additionalDataValidValuesRange;
-
-          let additionalDataValidValueSetListMapped = null;
-          if (additionalDataValidValueSetList.length > 0) {
-            additionalDataValidValueSetListMapped =
-              additionalDataValidValueSetList.map((valueSet: any) => ({
-                identifier: valueSet.identifier,
-                attributeIdentifier: valueSet.attributeIdentifier,
-                name: valueSet.name,
-                description: valueSet.description,
-                value: valueSet.value,
-                isDefault: valueSet.isDefault,
-                isPrimary: valueSet.isPrimary,
-                percentage: valueSet.percentage,
-                sequenceNumber: valueSet.sequenceNumber,
-                overrideDefault: valueSet.overrideDefault,
-                multiLingualTextInfoList: valueSet.multiLingualTextInfoList
-              }));
-          }
-
-          let productTypeAdditionalDataTypeRelationshipListMapped = null;
-          if (productTypeAdditionalDataTypeRelationshipList.length > 0) {
-            productTypeAdditionalDataTypeRelationshipListMapped =
-              productTypeAdditionalDataTypeRelationshipList.map(
-                (relationship: any) => ({
-                  identifier: relationship.identifier,
-                  attributeCode: relationship.attributeCode,
-                  attributeIdentifier: relationship.attributeIdentifier,
-                  minimumRequired: relationship.minimumRequired,
-                  maximumAllowed: relationship.maximumAllowed,
-                  glCategarization: relationship.glCategarization
-                })
-              );
-          }
-
-          let productTypeAdditionalDataListMapped = null;
-          if (productTypeAdditionalDataList.length > 0) {
-            productTypeAdditionalDataListMapped =
-              productTypeAdditionalDataList.map((data: any) => ({
-                identifier: data.identifier,
-                attributeIdentifier: data.attributeIdentifier,
-                attributeValue: data.attributeValue,
-                attributeValueSource: data.attributeValueSource,
-                isDefault: data.isDefault,
-                isPrimary: data.isPrimary,
-                percentage: data.percentage,
-                sequenceNumber: data.sequenceNumber,
-                overrideDefault: data.overrideDefault
-              }));
-          }
-
-          let additionalDataValidValuesRangeMapped = null;
-          if (additionalDataValidValuesRange) {
-            additionalDataValidValuesRangeMapped = {
-              identifier: additionalDataValidValuesRange.identifier,
-              attributeIdentifier:
-                additionalDataValidValuesRange.attributeIdentifier,
-              name: additionalDataValidValuesRange.name,
-              description: additionalDataValidValuesRange.description,
-              lowValue: additionalDataValidValuesRange.lowValue,
-              highValue: additionalDataValidValuesRange.highValue,
-              multiLingualTextInfoList:
-                additionalDataValidValuesRange.multiLingualTextInfoList
-            };
-          }
-
-          const attribute: Attribute = {
-            //   additionalDataType: {
-            code: additionalDataType.code ? additionalDataType.code : productTypeAdditionalDataTypeRelationshipList[0].attributeCode,
-            descriptions: [
-              {
-                id: 0,
-                label: 'Name',
-                value: additionalDataType.name
-              },
-              {
-                id: 1,
-                label: 'Identifier',
-                value: additionalDataType.identifier
-              },
-              {
-                id: 2,
-                label: 'ShortName',
-                value: additionalDataType.shortName
-              },
-              {
-                id: 3,
-                label: 'Description',
-                value: additionalDataType.description
-              },
-              {
-                id: 4,
-                label: 'Type',
-                value: additionalDataType.objectTypeIdentifier
-              },
-              {
-                id: 5,
-                label: 'Data type',
-                value: additionalDataType.formatTypeIdentifier
-              },
-              {
-                id: 6,
-                label: 'Calculate',
-                value: additionalDataType.calculated
-              },
-              {
-                id: 7,
-                label: 'Searchable',
-                value: additionalDataType.searchable
-              },
-              {
-                id: 8,
-                label: 'Multivalue Allowed',
-                value: additionalDataType.multiValueAllowed
-              },
-              {
-                id: 9,
-                label: 'Percentage Allowed',
-                value: additionalDataType.percentageAllowed
-              },
-              {
-                id: 10,
-                label: 'Classification Type',
-                value: additionalDataType.classificationType
-              }
-            ],
-
-            identifier: additionalDataType.identifier,
-            name: additionalDataType.name,
-            shortName: additionalDataType.shortName,
-            objectTypeIdentifier: additionalDataType.objectTypeIdentifier,
-            formatTypeIdentifier: additionalDataType.formatTypeIdentifier,
-            calculated: additionalDataType.calculated,
-            searchable: additionalDataType.searchable,
-            multiValueAllowed: additionalDataType.multiValueAllowed,
-            percentageAllowed: additionalDataType.percentageAllowed,
-            classificationType: additionalDataType.classificationType,
-            multiLingualTextInfoList:
-              additionalDataType.multiLingualTextInfoList,
-            //    },
-            additionalDataValidValuesRange:
-              additionalDataValidValuesRangeMapped,
-            additionalDataValidValueSetList:
-              additionalDataValidValueSetListMapped,
-            productTypeAdditionalDataTypeRelationshipList:
-              productTypeAdditionalDataTypeRelationshipListMapped,
-            prdrtpeReltinqMetaData: [
-              {
-                id: 0,
-                label: 'Maximum Allowed',
-                value:
-                  productTypeAdditionalDataTypeRelationshipList[0]
-                    .maximumAllowed
-              },
-              {
-                id: 1,
-                label: 'Identifier',
-                value:
-                  productTypeAdditionalDataTypeRelationshipList[0].identifier
-              },
-              {
-                id: 1,
-                label: 'Minimum Required',
-                value:
-                  productTypeAdditionalDataTypeRelationshipList[0]
-                    .minimumRequired
-              },
-              {
-                id: 1,
-                label: 'GL Categorization',
-                value:
-                  productTypeAdditionalDataTypeRelationshipList[0]
-                    .glCategarization
-              }
-            ],
-            productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
-            MetdataStatus: item.MetdataStatus
-          };
-
-          // console.log(attribute);
-          return attribute;
-        });
-        // this.attributeData.sort((a, b) => b.identifier - a.identifier);
-        this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
-      }
-    });
-  }
-  private determineTemplate(element: Attribute): TemplateRef<any> {
-    return element.code ? this.addAttributeTemp : this.addExistingAttributeTemp;
-  }
-
-
-  AttributeDelete(element: Attribute): void {
-    if (
-      element.code ===
-      element.productTypeAdditionalDataTypeRelationshipList[0].attributeCode
-    ) {
-      this.metadataService
-        .deleteAttribute(
-          'Attribute',
-          element.productTypeAdditionalDataTypeRelationshipList[0]
-            .attributeIdentifier
-        )
-        .subscribe(response => {
-          const successMsg = 'Attribute Deleted Successfully';
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
-          this.getAttribute();
-        });
-    } else {
-      this.metadataService
-        .deleteAttribute('Attribute', element.identifier)
-        .subscribe(response => {
-          const successMsg = 'Attribute Deleted Successfully';
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
-          this.getAttribute();
-        });
     }
   }
 
-
-  public rowExpanded(element: Attribute) {
-    this.AttributeLocalTable.datasource.data =
-      element.multiLingualTextInfoList || [];
-    this.productRelationTable.datasource.data =
-      element.productTypeAdditionalDataList || [];
+  public isBalanceSubtypeEnabled = false;
+  toggleBalanceSubtype(event: { checked: boolean }) {
+    this.isBalanceSubtypeEnabled = event.checked;
   }
-  /** Initialize Add Balance Hold Form  */
-  private initForm(): void {
-    this.addNewAttributeFormGroup = this.fb.group({
-      code: new UntypedFormControl('', [Validators.required]),
-      // identifier: new UntypedFormControl('', [Validators.required]),
-      identifier: [{ value: '', disabled: true }],
-      name: new UntypedFormControl(''),
-      shortname: new UntypedFormControl('', [Validators.required]),
-      type: new UntypedFormControl('', [Validators.required]),
-      datatype: new UntypedFormControl('', [Validators.required]),
-      calculate: new UntypedFormControl(''),
-      searchable: new UntypedFormControl(true),
-      multivalueallowed: new UntypedFormControl(''),
-      percentageallowed: new UntypedFormControl(''),
-      classificationtype: new UntypedFormControl(''),
-      // validvaluestype: new UntypedFormControl(''),
-      relatetoproducttype: new UntypedFormControl(''),
-      attributevalue: new UntypedFormControl(''),
-      // setname: new UntypedFormControl(''),
-      // setdescription: new UntypedFormControl(''),
-      sequencenumbers: new UntypedFormControl(),
-      percentages: new UntypedFormControl(),
-      valuesearch: new UntypedFormControl(''),
-      isdefault: new UntypedFormControl(false),
-      isvalueoverridden: new UntypedFormControl(false),
-      isprimary: new UntypedFormControl(false),
-      // low: new UntypedFormControl(''),
-      // high: new UntypedFormControl(''),
-      descriptions: [''],
-      validvaluestype: [{ value: '', disabled: true }],
-      productTypeCode: [{ value: '', disabled: true }],
-      max: new UntypedFormControl(),
-      min: new UntypedFormControl(),
-      GLcategorizationAllowed: [''],
-      validtype: [false],
-      rangename: new UntypedFormControl(''),
-      rangedescriptions: new UntypedFormControl(''),
-      displayName: new UntypedFormControl(''),
-      description: new UntypedFormControl(''),
-      localeCode: [{ value: '', disabled: true }]
-    });
-    this.addExistingAttributeFormGroup = this.fb.group({
-      productCode: new UntypedFormControl('', [Validators.required]),
-      max: [''],
-      min: [''],
-      GLcategorizationAllowed: [''],
-      validtype: [false]
-    });
-    this.addNewAttributeFormGroup.get('code')?.valueChanges.subscribe(value => {
-      this.addNewAttributeFormGroup.get('productTypeCode')?.setValue(value);
-    });
-
-    this.addNewAttributeFormGroup
-      .get('relatetoproducttype')
-      ?.valueChanges.subscribe(value => {
-        this.isRelateToProductTemplate = value;
-        if (!value) {
-          this.isValidValueTypes = false;
-          this.addNewAttributeFormGroup
-            .get('validtype')
-            ?.setValue(false, { emitEvent: false });
-        }
-      });
-
-    this.addNewAttributeFormGroup
-      .get('validtype')
-      ?.valueChanges.subscribe(value => {
-        if (this.isRelateToProductTemplate) {
-          this.isValidValueTypes = value;
-        } else {
-          this.isValidValueTypes = false;
-        }
-      });
-  }
-
+  onAddNewBalanceType() {}
   getError(formControl: string, formValidatorKey?: string, customkey?: string) {
-    const fc: AbstractControl = this.addNewAttributeFormGroup.get(`${formControl}`);
+    const fc: AbstractControl = this.addNewBalanceTypeFormGroup.get(
+      `${formControl}`
+    );
     if (fc.errors && fc.errors !== null) {
-      let error: string = '';
+      let error = '';
       Object.keys(fc.errors).forEach(
         key =>
-        (error = key
-          ? key == formValidatorKey
-            ? `BOD.error.${customkey}`
-            : key !== null
+          (error = key
+            ? key == formValidatorKey
+              ? `BOD.error.${customkey}`
+              : key !== null
               ? `BOD.error.${key}`
               : ''
-          : ``)
+            : ``)
       );
       return error;
     }
-  }
-
-  /** On click of Add Button*/
-  inlineAddRowActionClick(index) {
-    this.getTableInput(index).productLine = '';
-    this.getTableInput(index).owner = '';
-    this.getTableInput(index).relationship = '';
-    this.getTableInput(index).lastDebit = 0;
-    this.getTableInput(index).id =
-      'RT_00' + this.getTableData(index).paginationOptions.length;
-    this.getTableInput(index).name =
-      'Newly added row Name:' + this.inputBasic.id;
-    if (index === 1 || index === 2) {
-      this.getTableInput(index).title = '';
-      this.getTableInput(index).firstName = '';
-      this.getTableInput(index).lastName = '';
-    }
-    this.getTableFormGroup(index).controls['start'].setValue(
-      new Date(new Date(Date.now()))
-    );
-  }
-
-  private setDefaultFormValue(): void {
-    this.addNewAttributeFormGroup.patchValue({
-      amount: new Amount(this.defaultCurrency, null),
-      isHoldAll: false,
-      isExpire: false
-    });
-    // this.effectiveDate = DateUtilityService.updateDateFormat(
-    //   new Date(this.bookingDate),
-    //   'MM/dd/YYYY'
-    // );
-    this.addNewAttributeFormGroup.markAsUntouched();
-    this.addNewAttributeFormGroup.markAsPristine();
-  }
-
-  public updateMessages(messages: NotificationMessage[]) {
-    // this.accountWorkspaceService.pageLevelMessages$.next(messages);
-  }
-
-  // public inlineEditRowActionClick(event: InlineEditOutput): void {
-  //   this.updateMessages([]);
-  //   this.currentMode = EditTableAction.EDIT;
-  //   this.selectedHoldId = event.editRowElement['referenceId'];
-  //   this.changeDetectorRef.detectChanges();
-  //   const combinedDateTime = this.combineDateAndTime(
-  //     event.editRowElement['expirationDate'],
-  //     event.editRowElement['expirationTime']
-  //   );
-  // const holdAmount = CurrencyService.getAmountFromCurrencyCodeDescAndValue(
-  //   event.editRowElement['amount'].amount,
-  //   event.editRowElement['amount'].currency?.symbol
-  // );
-  // this.amountFieldValue = this.bodAmountPipe.transform(holdAmount);
-  // this.addNewAttributeFormGroup.removeControl('referenceId');
-  // this.addNewAttributeFormGroup.removeControl('referenceType');
-  // this.holdAllValue = event.editRowElement['isHoldAll'];
-  // this.isExpireValue = event.editRowElement['isExpire'];
-  // this.amountIsRequired = event.editRowElement['isHoldAll'] ? false : true;
-  // this.checkExpirationFieldVisibility();
-  // this.effectiveDate = DateUtilityService.updateDateFormat(
-  //   new Date(this.bookingDate),
-  //   'MM/dd/YYYY'
-  // );
-  //   this.addNewAttributeFormGroup.setValue({
-  //     // amount: holdAmount,
-  //     reason: event.editRowElement['reasonDescription'],
-  //     description: event?.editRowElement['description']
-  //       ? event?.editRowElement['description']
-  //       : '',
-  //     isHoldAll: event.editRowElement['isHoldAll'],
-  //     isExpire: event.editRowElement['isExpire'],
-  //     effective: this.effectiveDate,
-  //     expirationDate: combinedDateTime
-  //   });
-
-  //   this.addNewAttributeFormGroup.controls['effective'].clearValidators();
-  //   this.addNewAttributeFormGroup.controls[
-  //     'effective'
-  //   ].updateValueAndValidity();
-  // }
-
-  private combineDateAndTime(date: string, time: string): Date {
-    const [hours, minutes, seconds] = time.split(':').map(Number);
-    const dateObj = new Date(date);
-    dateObj.setHours(hours, minutes, seconds);
-    return dateObj;
-  }
-  private subscription = new Subscription();
-
-  ngOnDestroy() {
-    if (this.subscription) {
-      this.messages = [];
-      this.subscription.unsubscribe();
-    }
-
   }
 }
