@@ -1,33 +1,112 @@
-private editLocale(locale, name, desc) {
-    console.log("editLocale called with ", locale, name, desc);
+export class ExistingRoleTypeComponent implements OnInit {
+  public translationKey = TranslationKey;
+  public addExistingRoleTypeFormGroup: UntypedFormGroup | undefined;
+  public roleRelationshipForExistingForm: UntypedFormGroup;
+  public roleRelationshipTabledataForExisting: BodTableMetadata;
+  
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  public existingRoleCodes: any[] = [];
+  public roleRelationshipTableActions: BodTableAction[] = roletypeaction;
+  public rowLevelActionsForBasicEdit: BodTableAction[] = roletypeactionDelete;
 
-    // ✅ Find the existing row by matching the locale
-    const existingRow = this.tableWithSimpleEdit.datasource.data.find(row => row.locale === locale);
+  constructor(
+    public roleTypeService: RoleTypeService,
+    private fb: FormBuilder,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService
+  ) {}
 
-    if (existingRow) {
-        // ✅ Modify the existing row directly
-        existingRow.displayName = name;
-        existingRow.description = desc;
-        console.log("editLocale: Row updated:", existingRow);
-    } else {
-        console.log("editLocale: Row not found, keeping existing logic.");
-        
-        let updatedData = {
-            id: this.lastModifiedIndex,
-            locale: locale,
-            action: EditTableAction.ADD,
-            displayName: name,
-            description: desc
-        };
+  ngOnInit(): void {
+    this.initForm();
+    this.loadDropdownData();
+    this.initializeTableData();
+  }
 
-        this.tableWithSimpleEdit.datasource.data.push(updatedData);
-        ++this.lastModifiedIndex;
+  private initForm(): void {
+    this.addExistingRoleTypeFormGroup = this.fb.group({
+      existingRoleCode: new UntypedFormControl('', [Validators.required]),
+    });
+    this.roleRelationshipForExistingForm = this.fb.group({
+      customerType: new UntypedFormControl('', [Validators.required]),
+      maximumAccountAllowed: new UntypedFormControl(''),
+      minimum: new UntypedFormControl(''),
+      maximum: new UntypedFormControl(''),
+      primary: new UntypedFormControl(''),
+      percentageAllowed: new UntypedFormControl(''),
+      applicableOrder: new UntypedFormControl(''), 
+      signatureRequired: new UntypedFormControl(''),
+      ownerCategory: new UntypedFormControl(''),
+      ownerSubCategory: new UntypedFormControl(''),
+      additionalDetails: new UntypedFormControl('')
+    });
+  }
+
+  private initializeTableData(): void {
+    this.roleRelationshipTabledataForExisting = {
+      title: 'Role Relationship Details',
+      columns: [...this.roleTypeService.roleTypecolumn],
+      rowLeftAction: RowLeftAction.expandableRows,
+      enablePagination: true,
+      paginationOptions: {
+        pageSize: 4,
+        length: 12,
+        showLastButton: true,
+        showPageSizeOptions: true
+      },
+      datasource: new MatTableDataSource<RoleRelationshipSampleTable>([]),
+      noRecordsMessage: 'No data Defined'
+    };
+  }
+
+  loadDropdownData(): void {
+    this.roleTypeService.getRoletype().subscribe(data => {
+      this.existingRoleCodes = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+    });
+  }
+
+  onAddForExistingRoleRelationship(formValues: any) {
+    const selectedCustomerType = this.existingRoleCodes.find(
+      item => item.value === formValues.customerType
+    );
+    const custTypeName = selectedCustomerType ? selectedCustomerType.label : '';
+    
+    const newValidValue: RoleRelationshipSampleTable = {
+      customerType: custTypeName || '',
+      maximumAccountAllowed: formValues.maximumAccountAllowed || '',
+      minimum: formValues.minimum || '',
+      maximum: formValues.maximum || '',
+      roleType: [
+        { id: 0, label: 'Primary', value: formValues.primary },
+        { id: 1, label: 'Percentage Allowed', value: formValues.percentageAllowed },
+        { id: 2, label: 'Applicable Order', value: formValues.applicableOrder },
+        { id: 3, label: 'Signature Required', value: formValues.signatureRequired },
+        { id: 4, label: 'Owner Category', value: formValues.ownerCategory },
+        { id: 5, label: 'Owner Sub Category', value: formValues.ownerSubCategory },
+        { id: 6, label: 'Additional Details', value: formValues.additionalDetails }
+      ]
+    };
+    
+    this.roleRelationshipTabledataForExisting.datasource.data = [
+      ...this.roleRelationshipTabledataForExisting.datasource.data,
+      newValidValue
+    ];
+    
+    this.roleRelationshipForExistingForm.reset();
+  }
+
+  handleRowLevelActionsforRoleRelationshipForExisting(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRoleRelationshipForExistingRow(index);
     }
+  }
 
-    // ✅ Ensure UI updates
-    setTimeout(() => {
-        this.changeDetectorRef.detectChanges();
-    }, 100);
-
-    console.log("Updated Table Data:", this.tableWithSimpleEdit.datasource.data);
+  deleteRoleRelationshipForExistingRow(index: number): void {
+    this.roleRelationshipTabledataForExisting.datasource.data.splice(index, 1);
+    this.roleRelationshipTabledataForExisting.datasource.data = [
+      ...this.roleRelationshipTabledataForExisting.datasource.data
+    ];
+  }
 }
