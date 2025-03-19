@@ -1,7 +1,7 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RoleTypeComponent } from '../role-type/role-type.component';
-import { BodCommonDialogService, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableAction, BodTableActionsModule, BodTableActionType, BodTableComponent, BodTableMetadata, BodTableModule, ColumnType, CommonDialogComponent, ControlGroupModule, DirectivesModule, EditTableAction, InlineEditOutput, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, ModeOptions, NotificationMessage, NotificationMessageType, RowLeftAction, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { BodAutoCompleteMetadata, BodAutoCompleteModule, BodCommonDialogService, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableAction, BodTableActionsModule, BodTableActionType, BodTableComponent, BodTableMetadata, BodTableModule, ColumnType, CommonDialogComponent, ControlGroupModule, DirectivesModule, EditTableAction, InlineEditOutput, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, ModeOptions, NotificationMessage, NotificationMessageType, RowLeftAction, SearchFieldModule, SectionContainerModule } from '@bod/common';
 import { MatIconModule } from '@angular/material/icon';
 import { RufIconModule } from '@ruf/shell/icon';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
@@ -30,6 +30,7 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'bod-add-edit-roletype',
   standalone: true,
   imports: [
+    
     RoleTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
@@ -57,7 +58,7 @@ import { MatDialogRef } from '@angular/material/dialog';
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
-
+    BodAutoCompleteModule,
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
@@ -112,8 +113,14 @@ export class AddEditRoletypeComponent implements OnInit {
     //   console.log('edit')
     // }
   }
+  inputForpreconversionSelect1: BodAutoCompleteMetadata = {
+    options: [],
+    isMultiSelect: true
+  };
+  roleCategoryMultidata = this.inputForpreconversionSelect1;
 
   constructor(
+    private cdr : ChangeDetectorRef,
     public roleTypeService: RoleTypeService,
     private fb: FormBuilder,
     private bodCommonDialogService: BodCommonDialogService,
@@ -165,6 +172,22 @@ export class AddEditRoletypeComponent implements OnInit {
   }
   loadDropdownData(): void {
 
+    this.roleTypeService.getRoleCat().subscribe(data => {
+      // this.subBalancetypes = data.map((item: any) => ({
+      //   label: item.code,
+      //   value: item.identifier
+      // }));
+      this.inputForpreconversionSelect1 = {
+        options: data.map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        })),
+        isMultiSelect: true
+      }
+      this.roleCategoryMultidata = this.inputForpreconversionSelect1;
+    });
+      
+
     this.roleTypeService
       .getCustomerType()
       .subscribe(data => (this.customerTypes = data));
@@ -174,7 +197,7 @@ export class AddEditRoletypeComponent implements OnInit {
         label: item.code,
         value: item.identifier
       }));
-      this.roleCategoryValues = mappedData;
+      // this.roleCategoryValues = mappedData;
       this.categorys = mappedData;
     });
     this.roleTypeService
@@ -488,8 +511,8 @@ export class AddEditRoletypeComponent implements OnInit {
             customerType: relationship.customerType,
             percentageAllowed: relationship.percentageAllowed,
             isPrimary: relationship.isPrimary,
-            minimumRequired: relationship.minimumRequired,
-            maximumAllowed: relationship.maximumAllowed,
+            minimumRequired: relationship.minimum,
+            maximumAllowed: relationship.maximum,
             applicableOrder: relationship.applicableOrder,
             maximumAccountAllowed: relationship.maximumAccountAllowed,
             signatureRequired: relationship.signatureRequired,
@@ -524,6 +547,15 @@ export class AddEditRoletypeComponent implements OnInit {
             calculated: roleType.calculated,
             roleCategoryList: roleCategoryListMapped,
             productTypeRoleTypeRelationshipList: productTypeRoleTypeRelationshipListMapped,
+            productTypeRole: [
+              { id: 0, label: "Primary", value: productTypeRoleTypeRelationshipList.primary },
+              // { id: 1, label: "Identifier", value: roleType.identifier },
+              // { id: 2, label: "Short Name", value: roleType.shortName },
+              // { id: 3, label: "Category", value: roleType.category },
+              // { id: 4, label: "Classification", value: roleType.classification },
+              // { id: 5, label: "System Defined", value: roleType.systemDefined },
+              // { id: 6, label: "Calculated", value: roleType.calculated }
+            ],
             productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped
           };
         
@@ -531,7 +563,9 @@ export class AddEditRoletypeComponent implements OnInit {
         }).filter(Boolean); // Remove null values
         
         console.log('Element Data:', JSON.stringify(this.roleTypeData, null, 2));
+        console.log("emmiting data fromchild", this.roleTypeData);
         this.roleTypeDataEvent.emit(this.roleTypeData);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -659,3 +693,4 @@ export class AddEditRoletypeComponent implements OnInit {
     }
   }
 }
+
