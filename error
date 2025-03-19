@@ -1,162 +1,337 @@
-Full GET Response: {
-  "data": [
-    {
-      "Attribute": {
-        "additionalDataType": null,
-        "additionalDataValidValuesRange": null,
-        "additionalDataValidValueSetList": null,
-        "productTypeAdditionalDataTypeRelationshipList": [
-          {
-            "identifier": 1110101,
-            "attributeIdentifier": 112000000006,
-            "attributeCode": "AmountCategory",
-            "minimumRequired": 12,
-            "maximumAllowed": 321,
-            "glCategarization": "N"
-          }
-        ],
-        "productTypeAdditionalDataList": null
+{
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001069,
+        "code": "roletest1j",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000002,
+        "classification": 100000000022,
+        "systemDefined": "Y",
+        "calculated": "N"
       },
-      "MetdataStatus": "INPROGRESS"
-    },
-    {
-      "Attribute": {
-        "additionalDataType": null,
-        "additionalDataValidValuesRange": null,
-        "additionalDataValidValueSetList": null,
-        "productTypeAdditionalDataTypeRelationshipList": [
-          {
-            "identifier": 1110101,
-            "attributeIdentifier": 110120100026,
-            "attributeCode": "ProcessedFlag",
-            "minimumRequired": 34,
-            "maximumAllowed": 342,
-            "glCategarization": "N"
-          }
-        ],
-        "productTypeAdditionalDataList": null
-      },
-      "MetdataStatus": "INPROGRESS"
-    },
-    {
-      "Attribute": {
-        "additionalDataType": null,
-        "additionalDataValidValuesRange": null,
-        "additionalDataValidValueSetList": null,
-        "productTypeAdditionalDataTypeRelationshipList": [
-          {
-            "identifier": 1110101,
-            "attributeIdentifier": 112000000006,
-            "attributeCode": "AmountCategory",
-            "minimumRequired": 21,
-            "maximumAllowed": 32,
-            "glCategarization": "N"
-          }
-        ],
-        "productTypeAdditionalDataList": null
-      },
-      "MetdataStatus": "INPROGRESS"
-    },
-    {
-      "Attribute": {
-        "additionalDataType": null,
-        "additionalDataValidValuesRange": null,
-        "additionalDataValidValueSetList": null,
-        "productTypeAdditionalDataTypeRelationshipList": [
-          {
-            "identifier": 1110101,
-            "attributeIdentifier": 110000000042,
-            "attributeCode": "DateOutOfOverdraft",
-            "minimumRequired": 21,
-            "maximumAllowed": 1,
-            "glCategarization": "N"
-          }
-        ],
-        "productTypeAdditionalDataList": null
-      },
-      "MetdataStatus": "INPROGRESS"
-    },
-    {
-      "Attribute": {
-        "additionalDataType": null,
-        "additionalDataValidValuesRange": null,
-        "additionalDataValidValueSetList": null,
-        "productTypeAdditionalDataTypeRelationshipList": [
-          {
-            "identifier": 1110101,
-            "attributeIdentifier": 110120100030,
-            "attributeCode": "MergerID",
-            "minimumRequired": 21,
-            "maximumAllowed": 31,
-            "glCategarization": "N"
-          }
-        ],
-        "productTypeAdditionalDataList": [
-          {
-            "identifier": 0,
-            "attributeIdentifier": 110120100030,
-            "attributeCode": null,
-            "attributeValue": "da",
-            "attributeValueSource": "",
-            "isDefault": "N",
-            "isPrimary": "N",
-            "percentage": 1,
-            "sequenceNumber": 3,
-            "overrideDefault": "N"
-          }
-        ]
-      },
-      "MetdataStatus": "INPROGRESS"
-    },
-    {
-      "Attribute": {
-        "additionalDataType": {
-          "identifier": 1110400695,
-          "code": "edittesting8",
-          "name": null,
-          "shortName": "swqqs",
-          "objectTypeIdentifier": 1000000000001,
-          "formatTypeIdentifier": 100000001002,
-          "calculated": "Y",
-          "searchable": "N",
-          "multiValueAllowed": "Y",
+      "roleCategoryList": [
+        {
+          "identifier": 11104001069,
+          "code": "roletest1j",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001069,
+          "roleTypeCode": "roletest1j",
+          "customerType": "Individual",
           "percentageAllowed": "Y",
-          "classificationType": "systemDefined",
-          "multiLingualTextInfoList": [
-            {
-              "localeCode": "en",
-              "localeText": "sq",
-              "identifier": 1110400695,
-              "objectType": "1000000000001",
-              "attributeType": "100000001002",
-              "translationText": "english"
-            }
-          ]
-        },
-        "additionalDataValidValuesRange": null,
-        "additionalDataValidValueSetList": null,
-        "productTypeAdditionalDataTypeRelationshipList": [
-          {
-            "identifier": 1110101,
-            "attributeIdentifier": 1110400695,
-            "attributeCode": null,
-            "minimumRequired": 1191,
-            "maximumAllowed": 23,
-            "glCategarization": "N"
-          }
-        ],
-        "productTypeAdditionalDataList": null
+          "isPrimary": "Y",
+          "minimumRequired": 2,
+          "maximumAllowed": 3,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 32,
+          "signatureRequired": "Y",
+          "ownerCategory": "vfdv",
+          "onwerSubCategory": "dfvd",
+          "additionalDetails": "dvf"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001069,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  },
+  {
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001099,
+        "code": "roletestsdveeee",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000001,
+        "classification": 100000000022,
+        "systemDefined": "Y",
+        "calculated": "N"
       },
-      "MetdataStatus": "INPROGRESS"
-    },
-    {
-      "Attribute": {
-        "additionalDataType": {
-          "identifier": 1110400642,
-          "code": "AttrbuteSDK3",
-          "name": "Attributeha1",
-          "shortName": "Attribute1",
-          "objectTypeIdentifier": 1000000000002,
-          "formatTypeIdentifier": 100000001003,
-          "calculated": "N",
-          "searchable": "N",
+      "roleCategoryList": [
+        {
+          "identifier": 11104001099,
+          "code": "roletestsdveeee",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001099,
+          "roleTypeCode": "roletestsdveeee",
+          "customerType": "Individual",
+          "percentageAllowed": "Y",
+          "isPrimary": "Y",
+          "minimumRequired": 3,
+          "maximumAllowed": 43,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 441,
+          "signatureRequired": "Y",
+          "ownerCategory": "fd",
+          "onwerSubCategory": "d",
+          "additionalDetails": "sd"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001099,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  },
+  {
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001100,
+        "code": "roletestsdvee",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000001,
+        "classification": 100000000022,
+        "systemDefined": "Y",
+        "calculated": "N"
+      },
+      "roleCategoryList": [
+        {
+          "identifier": 11104001100,
+          "code": "roletestsdvee",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001100,
+          "roleTypeCode": "roletestsdvee",
+          "customerType": "Individual",
+          "percentageAllowed": "Y",
+          "isPrimary": "Y",
+          "minimumRequired": 3,
+          "maximumAllowed": 43,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 441,
+          "signatureRequired": "Y",
+          "ownerCategory": "fd",
+          "onwerSubCategory": "d",
+          "additionalDetails": "sd"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001100,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  },
+  {
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001047,
+        "code": "roletest",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000001,
+        "classification": 100000000022,
+        "systemDefined": "Y",
+        "calculated": "N"
+      },
+      "roleCategoryList": [
+        {
+          "identifier": 11104001047,
+          "code": "roletest",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001047,
+          "roleTypeCode": "roletest",
+          "customerType": "Individual",
+          "percentageAllowed": "Y",
+          "isPrimary": "Y",
+          "minimumRequired": 2,
+          "maximumAllowed": 21,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 23,
+          "signatureRequired": "Y",
+          "ownerCategory": "workable",
+          "onwerSubCategory": "not",
+          "additionalDetails": "none"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001047,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  },
+  {
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001048,
+        "code": "roletesting3",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000001,
+        "classification": 100000000021,
+        "systemDefined": "Y",
+        "calculated": "N"
+      },
+      "roleCategoryList": [
+        {
+          "identifier": 11104001048,
+          "code": "roletesting3",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001048,
+          "roleTypeCode": "roletesting3",
+          "customerType": "Individual",
+          "percentageAllowed": "Y",
+          "isPrimary": "Y",
+          "minimumRequired": 5,
+          "maximumAllowed": 21,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 23,
+          "signatureRequired": "Y",
+          "ownerCategory": "workable",
+          "onwerSubCategory": "not",
+          "additionalDetails": "none"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001048,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  },
+  {
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001089,
+        "code": "roleteqwer",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000001,
+        "classification": 100000000013,
+        "systemDefined": "Y",
+        "calculated": "N"
+      },
+      "roleCategoryList": [
+        {
+          "identifier": 11104001089,
+          "code": "roleteqwer",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001089,
+          "roleTypeCode": "roleteqwer",
+          "customerType": "Individual",
+          "percentageAllowed": "Y",
+          "isPrimary": "Y",
+          "minimumRequired": 2,
+          "maximumAllowed": 21,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 23,
+          "signatureRequired": "Y",
+          "ownerCategory": "workable",
+          "onwerSubCategory": "ds",
+          "additionalDetails": "none"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001089,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  },
+  {
+    "MetadataStatus": "INPROGRESS",
+    "RoleType": {
+      "roleType": {
+        "identifier": 11104001069,
+        "code": "roletest1j3",
+        "name": "Role1",
+        "shortName": "Role12",
+        "category": 100000000002,
+        "classification": 100000000022,
+        "systemDefined": "Y",
+        "calculated": "N"
+      },
+      "roleCategoryList": [
+        {
+          "identifier": 11104001069,
+          "code": "roletest1j3",
+          "name": "Role1",
+          "shortName": "Role12"
+        }
+      ],
+      "productTypeRoleTypeRelationshipList": [
+        {
+          "identifier": 1110101,
+          "roleTypeIdentifier": 11104001069,
+          "roleTypeCode": "roletest1j3",
+          "customerType": "Individual",
+          "percentageAllowed": "Y",
+          "isPrimary": "Y",
+          "minimumRequired": 2,
+          "maximumAllowed": 3,
+          "applicableOrder": "Y",
+          "maximumAccountAllowed": 32,
+          "signatureRequired": "Y",
+          "ownerCategory": "vfdv",
+          "onwerSubCategory": "dfvd",
+          "additionalDetails": "dvf"
+        }
+      ],
+      "productTypeRoleTypeCatRelationshipList": [
+        {
+          "productTypeIdentifier": 1110101,
+          "roleTypeIdentifier": 11104001069,
+          "categoryIdentifier": 100000000001
+        }
+      ]
+    }
+  }
+]
