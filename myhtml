@@ -111,26 +111,26 @@
       </mat-form-field>
     </bod-control-group>
     <bod-control-group
-    [truncate]="false"
-    [label]="translationKey + 'metadataconfig.classification'"
-    [forTextOnly]="true"
-    [required]="false"
-  >
-    <mat-form-field appearance="outline" fisStyle>
-      <mat-select
-        panelClass="fis-style"
-        formControlName="classification"
-        name="classification"
-      >
-        <mat-option
-          *ngFor="let classification of classifications"
-          value="{{ classification.value }}"
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.classification'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="classification"
+          name="classification"
         >
-          {{ classification.label }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </bod-control-group>
+          <mat-option
+            *ngFor="let classification of classifications"
+            value="{{ classification.value }}"
+          >
+            {{ classification.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </bod-control-group>
     <bod-control-group
       [truncate]="false"
       [label]="translationKey + 'metadataconfig.systemDefined'"
@@ -265,7 +265,6 @@
               fisStyle
               formControlName="minimum"
               name="minimum"
-              [disabled]="true"
             />
           </mat-form-field>
         </bod-control-group>
@@ -282,7 +281,6 @@
               fisStyle
               formControlName="maximum"
               name="maximum"
-              [disabled]="true"
             />
           </mat-form-field>
         </bod-control-group>
@@ -455,7 +453,7 @@
       let-column="column"
       let-index="index"
     >
-      <form [formGroup]="roleCategoryValueForm">
+      <!-- <form [formGroup]="roleCategoryValueForm">
         <bod-input-layout col="1">
           <mat-form-field appearance="outline" fisStyle>
             <mat-select
@@ -475,6 +473,20 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+        </bod-input-layout>
+      </form> -->
+      <form [formGroup]="roleCategoryValueForm">
+        <bod-input-layout [col]="1">
+          <bod-auto-complete
+            [formControl]="
+              roleCategoryValueForm.controls[
+                roleCategoryFormCtrlKeysValue[index]
+              ]
+            "
+            #nameElementRef
+            name="autoCompleteFieldMultiConv"
+            [data]="roleCategoryMultidata"
+          ></bod-auto-complete>
         </bod-input-layout>
       </form>
     </ng-template>
