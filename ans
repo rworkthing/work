@@ -1,112 +1,67 @@
-export class ExistingRoleTypeComponent implements OnInit {
-  public translationKey = TranslationKey;
-  public addExistingRoleTypeFormGroup: UntypedFormGroup | undefined;
-  public roleRelationshipForExistingForm: UntypedFormGroup;
-  public roleRelationshipTabledataForExisting: BodTableMetadata;
-  
-  formType: BodFormTypes = BodFormTypes.SUBMIT;
-  public existingRoleCodes: any[] = [];
-  public roleRelationshipTableActions: BodTableAction[] = roletypeaction;
-  public rowLevelActionsForBasicEdit: BodTableAction[] = roletypeactionDelete;
-
-  constructor(
-    public roleTypeService: RoleTypeService,
-    private fb: FormBuilder,
-    private bodCommonDialogService: BodCommonDialogService,
-    private metadataService: MetadataService
-  ) {}
-
-  ngOnInit(): void {
-    this.initForm();
-    this.loadDropdownData();
-    this.initializeTableData();
+this.roleTypeData = response.data.map((item: any) => {
+  if (!item.RoleType || !item.RoleType.roleType) {
+    console.error("RoleType or roleType is missing in item:", item);
+    return null; // Skip this item
   }
 
-  private initForm(): void {
-    this.addExistingRoleTypeFormGroup = this.fb.group({
-      existingRoleCode: new UntypedFormControl('', [Validators.required]),
-    });
-    this.roleRelationshipForExistingForm = this.fb.group({
-      customerType: new UntypedFormControl('', [Validators.required]),
-      maximumAccountAllowed: new UntypedFormControl(''),
-      minimum: new UntypedFormControl(''),
-      maximum: new UntypedFormControl(''),
-      primary: new UntypedFormControl(''),
-      percentageAllowed: new UntypedFormControl(''),
-      applicableOrder: new UntypedFormControl(''), 
-      signatureRequired: new UntypedFormControl(''),
-      ownerCategory: new UntypedFormControl(''),
-      ownerSubCategory: new UntypedFormControl(''),
-      additionalDetails: new UntypedFormControl('')
-    });
-  }
+  const roleType = item.RoleType.roleType;
+  const roleCategoryList = item.RoleType.roleCategoryList || [];
+  const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
+  const productTypeRoleTypeCatRelationshipList = item.RoleType.productTypeRoleTypeCatRelationshipList || [];
 
-  private initializeTableData(): void {
-    this.roleRelationshipTabledataForExisting = {
-      title: 'Role Relationship Details',
-      columns: [...this.roleTypeService.roleTypecolumn],
-      rowLeftAction: RowLeftAction.expandableRows,
-      enablePagination: true,
-      paginationOptions: {
-        pageSize: 4,
-        length: 12,
-        showLastButton: true,
-        showPageSizeOptions: true
-      },
-      datasource: new MatTableDataSource<RoleRelationshipSampleTable>([]),
-      noRecordsMessage: 'No data Defined'
-    };
-  }
+  let roleCategoryListMapped = roleCategoryList.map((category: any) => ({
+    identifier: category.identifier,
+    code: category.code,
+    name: category.name,
+    shortName: category.shortName
+  }));
 
-  loadDropdownData(): void {
-    this.roleTypeService.getRoletype().subscribe(data => {
-      this.existingRoleCodes = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-    });
-  }
+  let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => ({
+    identifier: relationship.identifier,
+    roleTypeIdentifier: relationship.roleTypeIdentifier,
+    roleTypeCode: relationship.roleTypeCode,
+    customerType: relationship.customerType,
+    percentageAllowed: relationship.percentageAllowed,
+    isPrimary: relationship.isPrimary,
+    minimumRequired: relationship.minimumRequired,
+    maximumAllowed: relationship.maximumAllowed,
+    applicableOrder: relationship.applicableOrder,
+    maximumAccountAllowed: relationship.maximumAccountAllowed,
+    signatureRequired: relationship.signatureRequired,
+    ownerCategory: relationship.ownerCategory,
+    onwerSubCategory: relationship.onwerSubCategory,
+    additionalDetails: relationship.additionalDetails
+  }));
 
-  onAddForExistingRoleRelationship(formValues: any) {
-    const selectedCustomerType = this.existingRoleCodes.find(
-      item => item.value === formValues.customerType
-    );
-    const custTypeName = selectedCustomerType ? selectedCustomerType.label : '';
-    
-    const newValidValue: RoleRelationshipSampleTable = {
-      customerType: custTypeName || '',
-      maximumAccountAllowed: formValues.maximumAccountAllowed || '',
-      minimum: formValues.minimum || '',
-      maximum: formValues.maximum || '',
-      roleType: [
-        { id: 0, label: 'Primary', value: formValues.primary },
-        { id: 1, label: 'Percentage Allowed', value: formValues.percentageAllowed },
-        { id: 2, label: 'Applicable Order', value: formValues.applicableOrder },
-        { id: 3, label: 'Signature Required', value: formValues.signatureRequired },
-        { id: 4, label: 'Owner Category', value: formValues.ownerCategory },
-        { id: 5, label: 'Owner Sub Category', value: formValues.ownerSubCategory },
-        { id: 6, label: 'Additional Details', value: formValues.additionalDetails }
-      ]
-    };
-    
-    this.roleRelationshipTabledataForExisting.datasource.data = [
-      ...this.roleRelationshipTabledataForExisting.datasource.data,
-      newValidValue
-    ];
-    
-    this.roleRelationshipForExistingForm.reset();
-  }
+  let productTypeRoleTypeCatRelationshipListMapped = productTypeRoleTypeCatRelationshipList.map((roleCatRelationship: any) => ({
+    productTypeIdentifier: roleCatRelationship.productTypeIdentifier,
+    roleTypeIdentifier: roleCatRelationship.roleTypeIdentifier,
+    categoryIdentifier: roleCatRelationship.categoryIdentifier
+  }));
 
-  handleRowLevelActionsforRoleRelationshipForExisting(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteRoleRelationshipForExistingRow(index);
-    }
-  }
+  const roleTypeData: RoleTypeList = {
+    code: roleType.code,
+    roleTypeInquiry: [
+      { id: 0, label: "Name", value: roleType.name },
+      { id: 1, label: "Identifier", value: roleType.identifier },
+      { id: 2, label: "Short Name", value: roleType.shortName },
+      { id: 3, label: "Category", value: roleType.category },
+      { id: 4, label: "Classification", value: roleType.classification },
+      { id: 5, label: "System Defined", value: roleType.systemDefined },
+      { id: 6, label: "Calculated", value: roleType.calculated }
+    ],
+    identifier: roleType.identifier,
+    name: roleType.name,
+    shortName: roleType.shortName,
+    category: roleType.category,
+    classification: roleType.classification,
+    systemDefined: roleType.systemDefined,
+    calculated: roleType.calculated,
+    roleCategoryList: roleCategoryListMapped,
+    productTypeRoleTypeRelationshipList: productTypeRoleTypeRelationshipListMapped,
+    productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped
+  };
 
-  deleteRoleRelationshipForExistingRow(index: number): void {
-    this.roleRelationshipTabledataForExisting.datasource.data.splice(index, 1);
-    this.roleRelationshipTabledataForExisting.datasource.data = [
-      ...this.roleRelationshipTabledataForExisting.datasource.data
-    ];
-  }
-}
+  return roleTypeData;
+}).filter(Boolean); // Remove null values
+
