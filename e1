@@ -1,13 +1,129 @@
-public rowExpanded(element: RoleTypeList) {
-    console.log("Expanded Element Data:", element);
-
-    // Update Inquiry Layout Data (for bod-inquiry-layout)
-    this.roleTypeService.getRoleTypeData(element).subscribe((data) => {
-        console.log("Setting Inquiry Layout Data:", data);
-        this.roleTypeTableMetaData.datasource.data = data; 
-    });
-
-    // Update Role Relationship Table Data (for inner bod-table)
-    this.roleRelationshipTable.datasource.data = 
-        element.productTypeRoleTypeRelationshipList || [];
+import { Injectable } from '@angular/core';
+import { Column } from '@bod/common';
+ 
+@Injectable({
+  providedIn: 'root'
+})
+export class AddEditRoleService {
+  public balsubInquiry: Column[] = [
+    {
+      name: 'code',
+      title: 'Balance Subtype Code',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'name',
+      title: 'Balance Subtype Name',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'identifier',
+      title: 'Balance Subtype Identifier',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+ 
+  public addtnRelInquiry: Column[] = [
+    {
+      name: 'id',
+      title: 'ID',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'balanceSubTypeIdentifier',
+      title: 'Value',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+  public roleTypeInquiry: Column[] = [
+    {
+      name: 'roleType',
+      title: 'Type',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'accountingClassification',
+      title: 'Account Classification',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'payee',
+      title: 'Obligator',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'payer',
+      title: 'Beneficiary',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'visible',
+      title: 'Visibility',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+  public roleRelationshipInquiry: Column[] = [
+    {
+      name: 'customerType',
+      title: 'Customer Type',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'maximumAccountAllowed',
+      title: 'Maximum Account Allowed',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'minimum',
+      title: 'Minimum',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'maximum',
+      title: 'Maximum',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
 }
