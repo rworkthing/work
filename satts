@@ -108,7 +108,7 @@ export class RoleTypeComponent {
     enableSorting: true
   };
   onRoleTypeDataReceived(data: any): void {
-    console.log('Received Data:', data);
+    console.log('Received Data in parent:', data);
     this.roleTypeTableMetaData.datasource.data = data;
   }
   public roleRelationshipTable: BodTableMetadata = {
@@ -120,11 +120,12 @@ export class RoleTypeComponent {
   };
 
   public rowExpanded(element: RoleTypeList) {
+    console.log("expanded element", element);
     this.roleRelationshipTable.datasource.data = 
     element.productTypeRoleTypeRelationshipList || [];
   }
 
-  
+
 
   public commonDialogSize: string = 'Large';
   public closeOnCloseIconClick: boolean = false;
