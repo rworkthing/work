@@ -27,15 +27,26 @@
       [data]="roleRelationshipTable"
       [alignContent]="'top'"
       [innerTableContext]="context"
-      [expandedRowTemplate]="expandedRowTemplateTable"
+      [expandedRowTemplate]="expandedRowTemplate"
     >
+    <ng-template #expandedRowTemplate let-context="context">
+    <bod-inquiry-layout
+        [columns]="2"
+        [groups]="roleTypeService.getRoleTypeData(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
+    </ng-template>
     </bod-table>
   </ng-template>
 </bod-table>
 
 <ng-template #addNewRoleTypeTemplate>
-  <bod-add-edit-roletype>
-    (roleTypeDataEvent)="onRoleTypeDataReceived($event)"
+  <bod-add-edit-roletype
+    (roleTypeDataEvent)="onRoleTypeDataReceived($event)">
   </bod-add-edit-roletype>
 </ng-template>
 
