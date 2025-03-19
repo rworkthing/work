@@ -1,495 +1,216 @@
-<bod-form
-  [formGroup]="addNewRoleTypeFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onAddNewRoleType()"
-  fisStyle
->
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.code'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeCode"
-          name="roleTypeCode"
-        />
-        <mat-error>
-          {{ getError('roleTypeCode') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.identifier'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeIdentifier"
-          name="roleTypeIdentifier"
-        />
-        <mat-icon
-          class="fis-icon-md"
-          matSuffix
-          rufId
-          fisIcon="search"
-          (click)="identifierSearch('roleTypeIdentifier')"
-        ></mat-icon>
-        <mat-error>
-          {{ getError('roleTypeIdentifier') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeName"
-          name="roleTypeName"
-        />
-        <mat-error>
-          {{ getError('roleTypeName') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.shortname'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeShortName"
-          name="roleTypeShortName"
-        />
-        <mat-error>
-          {{ getError('roleTypeShortName') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.category'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="category"
-          name="category"
-        >
-          <mat-option
-            *ngFor="let category of categorys"
-            value="{{ category.value }}"
-          >
-            {{ category.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-    [truncate]="false"
-    [label]="translationKey + 'metadataconfig.classification'"
-    [forTextOnly]="true"
-    [required]="false"
-  >
-    <mat-form-field appearance="outline" fisStyle>
-      <mat-select
-        panelClass="fis-style"
-        formControlName="classification"
-        name="classification"
-      >
-        <mat-option
-          *ngFor="let classification of classifications"
-          value="{{ classification.value }}"
-        >
-          {{ classification.label }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.systemDefined'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="systemDefined"
-        name="systemDefined"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.isCalculated'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="isCalculated"
-        name="isCalculated"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Column, InquiryLayoutInput, UIContextService } from '@bod/common';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { RoleRelationshipSampleTable } from '../add-edit-roletype/roletype.model';
+import { RoleTypeList } from '../add-edit-roletype/add-edit-roletype.mode';
 
-  <bod-table
-    #roleRelationshipTable
-    [data]="roleRelationshipTabledata"
-    [tableActions]="roleRelationshipTableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [expandedRowTemplate]="expandedRowTemplate"
-    [inlineModal]="{
-      formGroup: roleRelationshipForm,
-      formTemplateName: roleRelationshipTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddRoleRelationship(roleRelationshipForm.value)"
-    (onInlineFormEditSubmit)="onAddRoleRelationship(roleRelationshipForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteRoleRelationshipActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteRoleRelationshipActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="
-          handleRowLevelActionsforRoleRelationship($event.icon, index)
-        "
-      >
-      </bod-table-actions>
-    </ng-template>
-    <ng-template #expandedRowTemplate let-context="context">
-      <div fullwidth>
-        <bod-inquiry-layout
-          [columns]="2"
-          [groups]="roleTypeService.getExpandedaggregateData(context.element)"
-          [softSeparator]="false"
-          [direction]="direction"
-          [information]="[]"
-          (linkClick)="commonDataService.inquiryLayoutClick($event)"
-        >
-        </bod-inquiry-layout>
-      </div>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="roleRelationshipForm">
-    <ng-template #roleRelationshipTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.customerType'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="customerType"
-              name="customerType"
-            >
-              <mat-option
-                *ngFor="let customerType of customerTypes"
-                [value]="customerType.value"
-              >
-                {{ customerType.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.maximumAccountAllowed'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="number"
-              matInput
-              fisStyle
-              formControlName="maximumAccountAllowed"
-              name="maximumAccountAllowed"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.minimum'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="number"
-              matInput
-              fisStyle
-              formControlName="minimum"
-              name="minimum"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.maximum'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="number"
-              matInput
-              fisStyle
-              formControlName="maximum"
-              name="maximum"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.primary'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="primary"
-            name="primary"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.percentageAllowed'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="percentageAllowed"
-            name="percentageAllowed"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.applicableOrder'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="applicableOrder"
-            name="applicableOrder"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.signatureRequired'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="signatureRequired"
-            name="signatureRequired"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.ownerCategory'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="ownerCategory"
-              name="ownerCategory"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.ownerSubCategory'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="ownerSubCategory"
-              name="ownerSubCategory"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.additionalDetails'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="additionalDetails"
-              name="additionalDetails"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
+@Injectable({
+  providedIn: 'root'
+})
+export class RoleTypeService {
+  
+  private roleTypeUrl = '';
+  private roleCategoryUrl = '';
+  private accountClassificationUrl = '';
+  private saveUrl = '';
+  private retrieveUrl = '';
 
-  <bod-table
-    #roleCategoryTable
-    [data]="roleCategoryTableData"
-    [modeOptions]="modeOptions"
-    [tableActions]="roleCategoryTableActions"
-    (onTableActionClick)="onRoleCategoryTableActionClicked($event)"
-    [primaryColumnName]="'id'"
-    [truncateAfterLine]="1"
-    [customColumnTemplates]="[
-      {
-        columnName: 'roleCategoryId',
-        templateName: roleCategoryIdTemplate
-      },
-      {
-        columnName: 'roleCategoryValue',
-        templateName: roleCategoryValueTemplate
-      },
-      {
-        columnName: 'actionBtns',
-        templateName: actionBtnsTemplate
-      }
-    ]"
-  >
-    <ng-template
-      #roleCategoryIdTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <ng-container>
-        <form [formGroup]="roleCategoryIdForm">
-          <bod-input-layout col="1">
-            <mat-form-field appearance="outline" fisStyle>
-              <mat-select
-                panelClass="fis-style"
-                [formControl]="
-                  roleCategoryIdForm.controls[roleCategoryFormCtrlKeysId[index]]
-                "
-                name="roleCategoryId"
-              >
-                <mat-option
-                  *ngFor="let roleCategoryId of roleCategoryIds"
-                  value="{{ roleCategoryId.value }}"
-                >
-                  {{ roleCategoryId.label }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </bod-input-layout>
-        </form>
-      </ng-container>
-    </ng-template>
-    <ng-template
-      #roleCategoryValueTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <form [formGroup]="roleCategoryValueForm">
-        <bod-input-layout col="1">
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              [formControl]="
-                roleCategoryValueForm.controls[
-                  roleCategoryFormCtrlKeysValue[index]
-                ]
-              "
-              name="roleCategoryValue"
-            >
-              <mat-option
-                *ngFor="let roleCategoryValue of roleCategoryValues"
-                value="{{ roleCategoryValue.value }}"
-              >
-                {{ roleCategoryValue.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-input-layout>
-      </form>
-    </ng-template>
+  constructor(
+    private http: HttpClient,
+    private uiContextService: UIContextService
+  ) {
+    let url =
+      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
+        .sdkServiceUrl.value;
+        this.roleTypeUrl = url + '/basedata/roletype';
+        this.roleCategoryUrl = url + '/basedata/rolecat';
+        this.accountClassificationUrl = url + '/basedata/accountclassification';
+        this.saveUrl = url + '/metadata/create/requirement512';
+        this.retrieveUrl =
+      url +
+      '/metadata/retrieve/requirement512?metadata-config-type=RoleType';
+  }
 
-    <ng-template
-      #actionBtnsTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForRoleCategory"
-        (onActionClick)="deleteRoleCategory(index, element)"
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-</bod-form>
+  getRoletype(): Observable<any> {
+    const headers = new HttpHeaders({
+      'country-code': 'CNTRY01',
+      'client-code': 'CLNT01',
+      'product-line': 'retaildeposits',
+      fe_id: '2800',
+      'user-id': 'T999999',
+      locale: 'en-US',
+      uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+    });
+
+    return this.http.get(`${this.roleTypeUrl}`, { headers });
+  }
+
+  getRoleCat(): Observable<any> {
+    const headers = new HttpHeaders({
+      'country-code': 'CNTRY01',
+      'client-code': 'CLNT01',
+      'product-line': 'retaildeposits',
+      fe_id: '2800',
+      'user-id': 'T999999',
+      locale: 'en-US',
+      uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+    });
+
+    return this.http.get(`${this.roleCategoryUrl}`, { headers });
+  }
+
+  getAccountClassification(): Observable<any> {
+    const headers = new HttpHeaders({
+      'country-code': 'CNTRY01',
+      'client-code': 'CLNT01',
+      'product-line': 'retaildeposits',
+      fe_id: '2800',
+      'user-id': 'T999999',
+      locale: 'en-US',
+      uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+    });
+
+    return this.http.get(`${this.accountClassificationUrl}`, { headers });
+  }
+
+  getCustomerType(): Observable<any> {
+    const customerTypes = [
+      { label: '', value: 'empty' },
+      { label: 'Individual', value: 'individual' },
+      { label: 'Organization', value: 'organization' }
+      
+    ];
+    return of(customerTypes);
+  }
+
+  getRoleCategoryId(): Observable<any> {
+      const roleCategoryIds = [
+        { label: '', value: 'empty' },
+        { label: 'Category', value: 'category' },
+        
+      ];
+      return of(roleCategoryIds);
+    }
+
+
+    saveRoleType(request: any): Observable<any> {
+      const headers = new HttpHeaders({
+        'country-code': 'CNTRY01',
+        'client-code': 'CLNT01',
+        'product-line': 'retaildeposits',
+        fe_id: '2800',
+        'user-id': 'T999999',
+        locale: 'en-US',
+        uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+      });
+  
+      return this.http.post(this.saveUrl, request, { headers });
+    }
+
+    retrieveRoleType(): Observable<any> {
+      const headers = new HttpHeaders({
+        'country-code': 'CNTRY01',
+        'client-code': 'CLNT01',
+        'product-line': 'retaildeposits',
+        fe_id: '2800',
+        'user-id': 'T999999',
+        locale: 'en-US',
+        uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+      });
+  
+      return this.http.get<RoleTypeList[]>(this.retrieveUrl, { headers });
+    }
+
+  public getExpandedaggregateData(
+    element: RoleRelationshipSampleTable
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.roleTypes.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.roleTypes[i].id,
+        label: element.roleTypes[i].label,
+        value: element.roleTypes[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+
+  public getRoleTypeData(
+    element: RoleTypeList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.roleTypeInquiry.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.roleTypeInquiry[i].id,
+        label: element.roleTypeInquiry[i].label,
+        value: element.roleTypeInquiry[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+
+  public columns: Column[] = [
+    {
+      name: 'code',
+      title: 'Role Types',
+      truncate: true,
+      noOverflow: true,
+      width: 70,
+      widthUnit: 'rem'
+    }
+  ];
+  
+  public roleTypecolumn: Column[] = [
+    {
+      name: 'customerType',
+      title: 'Customer Type',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'maximumAccountAllowed',
+      title: 'Maximum Account Allowed',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'minimum',
+      title: 'Minimum',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'maximum',
+      title: 'Maximum',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+
+}
