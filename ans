@@ -1,67 +1,15 @@
-this.roleTypeData = response.data.map((item: any) => {
-  if (!item.RoleType || !item.RoleType.roleType) {
-    console.error("RoleType or roleType is missing in item:", item);
+if (!item.RoleType) {
+    console.error("RoleType is missing in item:", item);
     return null; // Skip this item
-  }
+}
 
-  const roleType = item.RoleType.roleType;
-  const roleCategoryList = item.RoleType.roleCategoryList || [];
-  const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
-  const productTypeRoleTypeCatRelationshipList = item.RoleType.productTypeRoleTypeCatRelationshipList || [];
+const roleType = item.RoleType.roleType || {}; // Default to empty object if null
+const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
 
-  let roleCategoryListMapped = roleCategoryList.map((category: any) => ({
-    identifier: category.identifier,
-    code: category.code,
-    name: category.name,
-    shortName: category.shortName
-  }));
+// If roleType is null, get roleTypeCode from the first relationship
+const roleTypeCode = roleType.code || (productTypeRoleTypeRelationshipList.length > 0 ? productTypeRoleTypeRelationshipList[0].roleTypeCode : null);
 
-  let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => ({
-    identifier: relationship.identifier,
-    roleTypeIdentifier: relationship.roleTypeIdentifier,
-    roleTypeCode: relationship.roleTypeCode,
-    customerType: relationship.customerType,
-    percentageAllowed: relationship.percentageAllowed,
-    isPrimary: relationship.isPrimary,
-    minimumRequired: relationship.minimumRequired,
-    maximumAllowed: relationship.maximumAllowed,
-    applicableOrder: relationship.applicableOrder,
-    maximumAccountAllowed: relationship.maximumAccountAllowed,
-    signatureRequired: relationship.signatureRequired,
-    ownerCategory: relationship.ownerCategory,
-    onwerSubCategory: relationship.onwerSubCategory,
-    additionalDetails: relationship.additionalDetails
-  }));
-
-  let productTypeRoleTypeCatRelationshipListMapped = productTypeRoleTypeCatRelationshipList.map((roleCatRelationship: any) => ({
-    productTypeIdentifier: roleCatRelationship.productTypeIdentifier,
-    roleTypeIdentifier: roleCatRelationship.roleTypeIdentifier,
-    categoryIdentifier: roleCatRelationship.categoryIdentifier
-  }));
-
-  const roleTypeData: RoleTypeList = {
-    code: roleType.code,
-    roleTypeInquiry: [
-      { id: 0, label: "Name", value: roleType.name },
-      { id: 1, label: "Identifier", value: roleType.identifier },
-      { id: 2, label: "Short Name", value: roleType.shortName },
-      { id: 3, label: "Category", value: roleType.category },
-      { id: 4, label: "Classification", value: roleType.classification },
-      { id: 5, label: "System Defined", value: roleType.systemDefined },
-      { id: 6, label: "Calculated", value: roleType.calculated }
-    ],
-    identifier: roleType.identifier,
-    name: roleType.name,
-    shortName: roleType.shortName,
-    category: roleType.category,
-    classification: roleType.classification,
-    systemDefined: roleType.systemDefined,
-    calculated: roleType.calculated,
-    roleCategoryList: roleCategoryListMapped,
-    productTypeRoleTypeRelationshipList: productTypeRoleTypeRelationshipListMapped,
-    productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped
-  };
-
-  return roleTypeData;
-}).filter(Boolean); // Remove null values
-
+if (!roleTypeCode) {
+    console.error("RoleType code is missing in item:", item);
+    return null; // Skip if we still don't have a valid code
+}
