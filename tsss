@@ -1,12 +1,58 @@
-setTimeout(() => {
-    this.changeDetectorRef.detectChanges();
-}, 100);
+<bod-page-container
+  rufId
+  [title]="'Role Type Details' | translate"
+></bod-page-container>
+<bod-table
+  [data]="roleTypeTableMetaData"
+  [tableActions]="roleTypeTableActions"
+  (onTableActionClick)="onTableActionClicked1($event)"
+  [expandedRowTemplate]="expandedRowTemplate"
+  (onRowExpand)="rowExpanded($event)"
+>
+  <ng-template #expandedRowTemplate let-context="context">
+    <div fullwidth>
+      @if(context.element.name){
+      <h1>Balance Type</h1>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="roleTypeService.getRoleTypeData(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
+    }
+    
 
+    <bod-table
+      [data]="roleRelationshipTable"
+      [alignContent]="'top'"
+      [innerTableContext]="context"
+      [expandedRowTemplate]="expandedRowTemplate"
+    >
+    <ng-template #expandedRowTemplate let-context="context">
+    <bod-inquiry-layout
+        [columns]="2"
+        [groups]="roleTypeService.getRoleTypeData(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
 
-setTimeout(() => {
-    console.log("Final table data after 2s:", this.tableWithSimpleEdit.datasource.data);
-}, 2000);
-<div *ngIf="tableWithSimpleEdit.datasource.data.length > 0">
-  <h3>Debugging: Table Data Exists</h3>
-  {{ tableWithSimpleEdit.datasource.data | json }}
-</div>
+    </ng-template>
+    </bod-table>
+    </div>
+  </ng-template>
+</bod-table>
+
+<ng-template #addNewRoleTypeTemplate>
+  <bod-add-edit-roletype>
+  </bod-add-edit-roletype>
+</ng-template>
+
+<ng-template #addExistingRoleTypeTemplate>
+  <bod-existing-role-type></bod-existing-role-type>
+</ng-template>
