@@ -1,10 +1,11 @@
 <bod-form
-  [formGroup]="addNewRoleTypeFormGroup"
+  [formGroup]="addExistingRoleTypeFormGroup"
   rufId
   [type]="formType"
-  (onSubmit)="onAddNewRoleType()"
+  (onSubmit)="onExistingRoleType()"
   fisStyle
 >
+  <bod-page-container title="Product Type Relationship"></bod-page-container>
   <bod-input-layout col="2">
     <bod-control-group
       [truncate]="false"
@@ -13,178 +14,50 @@
       [required]="true"
     >
       <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeCode"
-          name="roleTypeCode"
-        />
-        <mat-error>
-          {{ getError('roleTypeCode') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.identifier'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeIdentifier"
-          name="roleTypeIdentifier"
-        />
-        <mat-icon
-          class="fis-icon-md"
-          matSuffix
-          rufId
-          fisIcon="search"
-          (click)="identifierSearch('roleTypeIdentifier')"
-        ></mat-icon>
-        <mat-error>
-          {{ getError('roleTypeIdentifier') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeName"
-          name="roleTypeName"
-        />
-        <mat-error>
-          {{ getError('roleTypeName') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.shortname'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="roleTypeShortName"
-          name="roleTypeShortName"
-        />
-        <mat-error>
-          {{ getError('roleTypeShortName') | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.category'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
         <mat-select
           panelClass="fis-style"
-          formControlName="category"
-          name="category"
+          formControlName="existingRoleCode"
+          name="existingRoleCode"
         >
           <mat-option
-            *ngFor="let category of categorys"
-            value="{{ category.value }}"
+            *ngFor="let existingRoleCode of existingRoleCodes"
+            [value]="existingRoleCode.value"
           >
-            {{ category.label }}
+            {{ existingRoleCode.label }}
           </mat-option>
         </mat-select>
       </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.classification'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="classification"
-          name="classification"
-        >
-          <mat-option
-            *ngFor="let classification of classifications"
-            value="{{ classification.value }}"
-          >
-            {{ classification.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.systemDefined'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="systemDefined"
-        name="systemDefined"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.isCalculated'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="isCalculated"
-        name="isCalculated"
-      >
-      </mat-slide-toggle>
     </bod-control-group>
   </bod-input-layout>
 
   <bod-table
     #roleRelationshipTable
-    [data]="roleRelationshipTabledata"
+    [data]="roleRelationshipTabledataForExisting"
     [tableActions]="roleRelationshipTableActions"
     (onTableActionClick)="onValidTableActionClicked($event)"
     [expandedRowTemplate]="expandedRowTemplate"
     [inlineModal]="{
-      formGroup: roleRelationshipForm,
-      formTemplateName: roleRelationshipTemplate
+      formGroup: roleRelationshipForExistingForm,
+      formTemplateName: roleRelationshipForExistingTemplate
     }"
-    (onInlineFormAddSubmit)="onAddRoleRelationship(roleRelationshipForm.value)"
-    (onInlineFormEditSubmit)="onAddRoleRelationship(roleRelationshipForm.value)"
+    (onInlineFormAddSubmit)="
+      onAddForExistingRoleRelationship(roleRelationshipForExistingForm.value)
+    "
+    (onInlineFormEditSubmit)="
+      onAddForExistingRoleRelationship(roleRelationshipForExistingForm.value)
+    "
     (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
     (onInlineAddRowActionClick)="inlineAddRowActionClick()"
     [customColumnTemplates]="[
       {
         columnName: 'actions',
-        templateName: deleteRoleRelationshipActionTemplate
+        templateName: deleteRoleRelationshipForExistingActionTemplate
       }
     ]"
     [alignContent]="'top'"
   >
     <ng-template
-      #deleteRoleRelationshipActionTemplate
+      #deleteRoleRelationshipForExistingActionTemplate
       let-element="element"
       let-column="column"
       let-index="index"
@@ -192,7 +65,10 @@
       <bod-table-actions
         [actions]="rowLevelActionsForBasicEdit"
         (onActionClick)="
-          handleRowLevelActionsforRoleRelationship($event.icon, index)
+          handleRowLevelActionsforRoleRelationshipForExisting(
+            $event.icon,
+            index
+          )
         "
       >
       </bod-table-actions>
@@ -211,8 +87,8 @@
       </div>
     </ng-template>
   </bod-table>
-  <form [formGroup]="roleRelationshipForm">
-    <ng-template #roleRelationshipTemplate>
+  <form [formGroup]="roleRelationshipForExistingForm">
+    <ng-template #roleRelationshipForExistingTemplate>
       <bod-input-layout col="2">
         <bod-control-group
           [truncate]="false"
@@ -243,7 +119,7 @@
         >
           <mat-form-field appearance="outline" fisStyle>
             <input
-              type="number"
+              type="text"
               matInput
               fisStyle
               formControlName="maximumAccountAllowed"
@@ -260,11 +136,12 @@
         >
           <mat-form-field appearance="outline" fisStyle>
             <input
-              type="number"
+              type="text"
               matInput
               fisStyle
               formControlName="minimum"
               name="minimum"
+              [disabled]="true"
             />
           </mat-form-field>
         </bod-control-group>
@@ -276,11 +153,12 @@
         >
           <mat-form-field appearance="outline" fisStyle>
             <input
-              type="number"
+              type="text"
               matInput
               fisStyle
               formControlName="maximum"
               name="maximum"
+              [disabled]="true"
             />
           </mat-form-field>
         </bod-control-group>
@@ -396,10 +274,10 @@
   </form>
 
   <bod-table
-    #roleCategoryTable
-    [data]="roleCategoryTableData"
+    #exstRoleCategoryTable
+    [data]="exstRoleCategoryTableData"
     [modeOptions]="modeOptions"
-    [tableActions]="roleCategoryTableActions"
+    [tableActions]="exstRoleCategoryTableActions"
     (onTableActionClick)="onRoleCategoryTableActionClicked($event)"
     [primaryColumnName]="'id'"
     [truncateAfterLine]="1"
@@ -427,23 +305,23 @@
       <ng-container>
         <form [formGroup]="roleCategoryIdForm">
           <bod-input-layout col="1">
-            <mat-form-field appearance="outline" fisStyle>
-              <mat-select
-                panelClass="fis-style"
-                [formControl]="
-                  roleCategoryIdForm.controls[roleCategoryFormCtrlKeysId[index]]
-                "
-                name="roleCategoryId"
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              [formControl]="
+                roleCategoryIdForm.controls[roleCategoryFormCtrlKeysId[index]]
+              "
+              name="roleCategoryId"
+            >
+              <mat-option
+                *ngFor="let roleCategoryId of roleCategoryIds"
+                value="{{ roleCategoryId.value }}"
               >
-                <mat-option
-                  *ngFor="let roleCategoryId of roleCategoryIds"
-                  value="{{ roleCategoryId.value }}"
-                >
-                  {{ roleCategoryId.label }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </bod-input-layout>
+                {{ roleCategoryId.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </bod-input-layout>
         </form>
       </ng-container>
     </ng-template>
@@ -453,7 +331,7 @@
       let-column="column"
       let-index="index"
     >
-      <!-- <form [formGroup]="roleCategoryValueForm">
+      <form [formGroup]="roleCategoryValueForm">
         <bod-input-layout col="1">
           <mat-form-field appearance="outline" fisStyle>
             <mat-select
@@ -473,20 +351,6 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-        </bod-input-layout>
-      </form> -->
-      <form [formGroup]="roleCategoryValueForm">
-        <bod-input-layout [col]="1">
-          <bod-auto-complete
-            [formControl]="
-              roleCategoryValueForm.controls[
-                roleCategoryFormCtrlKeysValue[index]
-              ]
-            "
-            #nameElementRef
-            name="autoCompleteFieldMultiConv"
-            [data]="roleCategoryMultidata"
-          ></bod-auto-complete>
         </bod-input-layout>
       </form>
     </ng-template>
