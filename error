@@ -1,6 +1,7 @@
 	{
-		"productTypeRoleTypeRelationshipList": [
-		{
+	"metadataType": "RoleType",
+	"roleRelationshipTypeList": [{
+		"productTypeRoleTypeRelationshipList": [{
 			"identifier": 1110101,
 			"customerType": "Individual",
 			"percentageAllowed": "Y",
