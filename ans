@@ -1,15 +1,13 @@
-if (!item.RoleType) {
-    console.error("RoleType is missing in item:", item);
-    return null; // Skip this item
-}
+this.roleTypeService.getRoleCat().subscribe(data => {
+    console.log('API Response:', data); // Debugging - Check API response
 
-const roleType = item.RoleType.roleType || {}; // Default to empty object if null
-const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
+    const mappedData = data.map((item: any) => ({
+      label: item.code,
+      value: item.identifier
+    }));
 
-// If roleType is null, get roleTypeCode from the first relationship
-const roleTypeCode = roleType.code || (productTypeRoleTypeRelationshipList.length > 0 ? productTypeRoleTypeRelationshipList[0].roleTypeCode : null);
+    this.roleCategoryValues = mappedData;
+    this.categorys = mappedData; // 🔹 Ensure categorys is assigned correctly
 
-if (!roleTypeCode) {
-    console.error("RoleType code is missing in item:", item);
-    return null; // Skip if we still don't have a valid code
-}
+    console.log('Categorys Data:', this.categorys); // Debugging
+  });
