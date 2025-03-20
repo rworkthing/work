@@ -178,26 +178,25 @@ export class AddEditRoletypeComponent implements OnInit {
   }
   loadDropdownData(): void {
 
-    // this.roleTypeService.getRoleCat().subscribe(data => {
-    //   // this.subBalancetypes = data.map((item: any) => ({
-    //   //   label: item.code,
-    //   //   value: item.identifier
-    //   // }));
-    //   this.inputForpreconversionSelect1 = {
-    //     options: data.map((item: any) => ({
-    //       label: item.code,
-    //       value: item.identifier
-    //     })),
-    //     isMultiSelect: true
-    //   }
-    //   this.roleCategoryMultidata = this.inputForpreconversionSelect1;
-    // });
+    this.roleTypeService.getRoleCat().subscribe(data => {
+      // this.subBalancetypes = data.map((item: any) => ({
+      //   label: item.code,
+      //   value: item.identifier
+      // }));
+      this.inputForpreconversionSelect1 = {
+        options: data.map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        })),
+        isMultiSelect: true
+      }
+      this.roleCategoryMultidata = this.inputForpreconversionSelect1;
+    });
     this.roleTypeService.getRoleCat().subscribe(data => {
       this.cattypes = data.map((item: any) => ({
         label: item.code,
         value: item.identifier
       }));
-      
     });
       
 
@@ -206,26 +205,13 @@ export class AddEditRoletypeComponent implements OnInit {
       .subscribe(data => (this.customerTypes = data));
 
     this.roleTypeService.getRoleCat().subscribe(data => {
-    //   const mappedData = data.map((item: any) => ({
-    //     label: item.code,
-    //     value: item.identifier
-    //   }));
-    //   this.roleCategoryValues = mappedData;
-    //   this.categorys = mappedData;
-
-    //   console.log('Category data', this.categorys);
-    // });
-
-    this.inputForpreconversionSelect1 = {
-      options: data.map((item: any) => ({
+      const mappedData = data.map((item: any) => ({
         label: item.code,
         value: item.identifier
-      })),
-      isMultiSelect: true
-    };
-
-    this.roleCategoryMultidata = this.inputForpreconversionSelect1;
-  });
+      }));
+      this.roleCategoryValues = mappedData;
+      this.categorys = mappedData;
+    });
     this.roleTypeService
       .getRoleCategoryId()
       .subscribe(data => (this.roleCategoryIds = data));
