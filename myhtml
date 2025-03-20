@@ -2,7 +2,7 @@
   [formGroup]="addExistingRoleTypeFormGroup"
   rufId
   [type]="formType"
-  (onSubmit)="onExistingRoleType()"
+  (onSubmit)="onAddExistingRoleType()"
   fisStyle
 >
   <bod-page-container title="Product Type Relationship"></bod-page-container>
