@@ -248,7 +248,7 @@
               fisStyle
               formControlName="maximumAccountAllowed"
               name="maximumAccountAllowed"
-              [disabled]="true"
+              
             />
           </mat-form-field>
         </bod-control-group>
@@ -353,7 +353,7 @@
               fisStyle
               formControlName="ownerCategory"
               name="ownerCategory"
-              [disabled]="true"
+              
             />
           </mat-form-field>
         </bod-control-group>
@@ -370,7 +370,7 @@
               fisStyle
               formControlName="ownerSubCategory"
               name="ownerSubCategory"
-              [disabled]="true"
+              
             />
           </mat-form-field>
         </bod-control-group>
@@ -387,7 +387,7 @@
               fisStyle
               formControlName="additionalDetails"
               name="additionalDetails"
-              [disabled]="true"
+              
             />
           </mat-form-field>
         </bod-control-group>
