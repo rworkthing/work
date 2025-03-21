@@ -14,7 +14,7 @@
   <ng-template #expandedRowTemplate let-context="context">
     <div fullwidth>
       @if(context.element.name){
-      <h1>Balance Type</h1>
+      <h1>Role Type</h1>
       <bod-inquiry-layout
         [columns]="2"
         [groups]="roleTypeService.getRoleTypeData(context.element)"
