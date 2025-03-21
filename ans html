@@ -1,9 +1,7 @@
-// Extract all categoryIdentifiers and join them as a comma-separated string
-const categoryValues = productTypeRoleTypeCatRelationshipList
-    .map(categoryValRelationship => categoryValRelationship.categoryIdentifier)
-    .join(', ');
-
-// Create a single entry in roleCategory with the combined category values
-const roleCategoryMapped = categoryValues
-    ? [{ id: 0, label: "Category", value: categoryValues }]
-    : [];
+this.roleTypeService.getRoleCat().subscribe(data => {
+        this.cattypes = data.map((item: any) => ({
+            label: item.code,   // Store the dropdown label
+            value: item.identifier // Store the corresponding identifier
+        }));
+        console.log("Loaded Categories:", this.cattypes);
+    });
