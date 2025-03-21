@@ -1,102 +1,12 @@
-getNewRoleType(): void {
-    this.roleTypeService.retrieveRoleType().subscribe(response => {
-        if (response.status === 'SUCCESS' && response.data) {
-            console.log('Response Data:', response.data);
-            console.log('Response Data:', JSON.stringify(response.data, null, 2));
+// Convert category identifiers to their corresponding labels
+const categoryLabels = productTypeRoleTypeCatRelationshipList
+    .map(categoryValRelationship => {
+        const category = this.cattypes.find(cat => cat.value === categoryValRelationship.categoryIdentifier);
+        return category ? category.label : categoryValRelationship.categoryIdentifier; // Fallback to identifier if not found
+    })
+    .join(', ');
 
-            this.roleTypeData = response.data.map((item: any) => {
-                if (!item.RoleType) {
-                    console.error("RoleType is missing in item:", item);
-                    return null;
-                }
-
-                const roleType = item.RoleType.roleType || {};
-                const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
-                const productTypeRoleTypeCatRelationshipList = item.RoleType.productTypeRoleTypeCatRelationshipList || [];
-
-                // Extract roleTypeCode
-                const roleTypeCode = roleType.code || 
-                    (productTypeRoleTypeRelationshipList.length > 0 ? productTypeRoleTypeRelationshipList[0].roleTypeCode : null);
-
-                if (!roleTypeCode) {
-                    console.error("RoleType code is missing in item:", item);
-                    return null;
-                }
-
-                // Extract categoryIdentifier from productTypeRoleTypeCatRelationshipList
-                let categoryIdentifier = null;
-                if (productTypeRoleTypeCatRelationshipList.length > 0) {
-                    categoryIdentifier = productTypeRoleTypeCatRelationshipList[0].categoryIdentifier;
-                }
-
-                const roleCategoryList = item.RoleType.roleCategoryList || [];
-                const roleCategoryListMapped = roleCategoryList.map((category: any) => ({
-                    identifier: category.identifier,
-                    code: category.code,
-                    name: category.name,
-                    shortName: category.shortName
-                }));
-
-                const productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => {
-                    return {
-                        identifier: relationship.identifier,
-                        roleTypeIdentifier: relationship.roleTypeIdentifier,
-                        roleTypeCode: relationship.roleTypeCode,
-                        customerType: relationship.customerType,
-                        percentageAllowed: relationship.percentageAllowed,
-                        isPrimary: relationship.isPrimary,
-                        minimum: relationship.minimumRequired,
-                        maximum: relationship.maximumAllowed,
-                        applicableOrder: relationship.applicableOrder,
-                        maximumAccountAllowed: relationship.maximumAccountAllowed,
-                        signatureRequired: relationship.signatureRequired,
-                        ownerCategory: relationship.ownerCategory,
-                        onwerSubCategory: relationship.onwerSubCategory,
-                        additionalDetails: relationship.additionalDetails
-                    };
-                });
-
-                const productTypeRoleTypeCatRelationshipListMapped = productTypeRoleTypeCatRelationshipList.map(
-                    (categoryValRelationship: any) => ({
-                        productTypeIdentifier: categoryValRelationship.productTypeIdentifier,
-                        roleTypeIdentifier: categoryValRelationship.roleTypeIdentifier,
-                        categoryIdentifier: categoryValRelationship.categoryIdentifier
-                    })
-                );
-
-                const roleTypeData: RoleTypeList = {
-                    code: roleTypeCode,
-                    roleTypeInquiry: [
-                        { id: 0, label: "Name", value: roleType.name },
-                        { id: 1, label: "Identifier", value: roleType.identifier },
-                        { id: 2, label: "Short Name", value: roleType.shortName },
-                        { id: 3, label: "Category", value: roleType.category },
-                        { id: 4, label: "Classification", value: roleType.classification },
-                        { id: 5, label: "System Defined", value: roleType.systemDefined },
-                        { id: 6, label: "Calculated", value: roleType.calculated }
-                    ],
-                    identifier: roleType.identifier,
-                    name: roleType.name,
-                    shortName: roleType.shortName,
-                    category: roleType.category,
-                    classification: roleType.classification,
-                    systemDefined: roleType.systemDefined,
-                    calculated: roleType.calculated,
-                    roleCategoryList: roleCategoryListMapped,
-                    productTypeRoleTypeRelationshipList: productTypeRoleTypeRelationshipListMapped,
-                    productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped,
-
-                    // ✅ Correctly setting roleCategory with extracted categoryIdentifier
-                    roleCategory: categoryIdentifier
-                        ? [{ id: 0, label: "Category", value: categoryIdentifier }]
-                        : []
-                };
-
-                return roleTypeData;
-            });
-
-            this.roleTypeTableMetaData.datasource.data = this.roleTypeData;
-            console.log('Final roleTypeData:', JSON.stringify(this.roleTypeData, null, 2));
-        }
-    });
-}
+// Create a single entry in roleCategory with the combined category labels
+const roleCategoryMapped = categoryLabels
+    ? [{ id: 0, label: "Category", value: categoryLabels }]
+    : [];
