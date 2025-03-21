@@ -1,13 +1,44 @@
-this.roleTypeService.getRoleCat().subscribe(data => {
-    console.log('API Response:', data); // Debugging - Check API response
+onAddExistingRoleType() {
+    const formValue = this.addExistingRoleTypeFormGroup.getRawValue();
 
-    const mappedData = data.map((item: any) => ({
-      label: item.code,
-      value: item.identifier
-    }));
+    // Debugging logs
+    console.log("Form Category1 Value:", formValue.category1);
+    console.log("Available Categories:", this.cattypes);
 
-    this.roleCategoryValues = mappedData;
-    this.categorys = mappedData; // 🔹 Ensure categorys is assigned correctly
+    const productTypeRoleTypeCatRelationshipList = (formValue.category1 || []).map(subtype => {
+        const selectedCategoryType = this.cattypes.find(item => item.label === subtype);
 
-    console.log('Categorys Data:', this.categorys); // Debugging
-  });
+        if (!selectedCategoryType) {
+            console.warn(`Category not found for label: ${subtype}`);
+            return null; // Handle missing category gracefully
+        }
+
+        return {
+            productTypeIdentifier: 1110101,
+            roleTypeIdentifier: formValue.roleTypeIdentifier,
+            categoryIdentifier: selectedCategoryType.value
+        };
+    }).filter(item => item !== null); // Remove null entries
+
+    console.log("Mapped Category Relationships:", productTypeRoleTypeCatRelationshipList);
+
+    const roleTypeData = {
+        metadataType: 'RoleType',
+        roleRelationshipTypeList: [
+            {
+                productTypeRoleTypeCatRelationshipList,
+            }
+        ],
+        productTypeList: ['Checking']
+    };
+
+    console.log('Final Role Type Data:', JSON.stringify(roleTypeData, null, 2));
+
+    const serviceCall = this.roleTypeService.saveRoleType(roleTypeData);
+    serviceCall.subscribe({
+        next: resp => this.successResponse(resp, roleTypeData),
+        error: (err: NotificationMessage[]) => this.errorResponse(err)
+    });
+
+    this.addExistingRoleTypeFormGroup.controls['roleTypeIdentifier'].disable();
+}
