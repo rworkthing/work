@@ -364,7 +364,7 @@ export class RoleTypeComponent {
             productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped,
             productTypeRole: [] ,
             roleCategory: [
-              { id: 0, label: "Category", value: productTypeRoleTypeCatRelationshipList.categoryIdentifier },
+              { id: 0, label: "Category", value: roleType.categoryIdentifier },
             ]
           };
 
