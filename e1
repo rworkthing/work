@@ -1,22 +1,138 @@
-public getAddtnlReltns(
-    element: RoleTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    // console.log("recieved element", element);
-    // console.log("returningdata", element.productTypeRoleTypeCatRelationshipList);
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.roleCategory.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.roleCategory[i].id,
-        label: element.roleCategory[i].label,
-        value: element.roleCategory[i].value,
-        isLink: setIsLink
-      });
-    }
+getNewRoleType(): void {
+    this.roleTypeService.retrieveRoleType().subscribe(response => {
+      if (response.status === 'SUCCESS' && response.data) {
+        console.log('Response Data:', response.data);
+        console.log('Response Data:', JSON.stringify(response.data, null, 2));
+        this.roleTypeData = response.data.map((item: any) => {
+          if (!item.RoleType) {
+            console.error("RoleType is missing in item:", item);
+            return null; 
+        }
+        
+        const roleType = item.RoleType.roleType || {}; 
+        const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
+        
+        const roleTypeCode = roleType.code || (productTypeRoleTypeRelationshipList.length > 0 ? productTypeRoleTypeRelationshipList[0].roleTypeCode : null);
+        
+        if (!roleTypeCode) {
+            console.error("RoleType code is missing in item:", item);
+            return null; 
+        }
 
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+          const roleCategoryList = item.RoleType.roleCategoryList || [];
+          const productTypeRoleTypeCatRelationshipList = item.RoleType.productTypeRoleTypeCatRelationshipList || [];
 
-    return $groups;
-    
+          let roleCategoryListMapped = roleCategoryList.map((category: any) => ({
+            identifier: category.identifier,
+            code: category.code,
+            name: category.name,
+            shortName: category.shortName
+          }));
+
+          // let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => ({
+          //   identifier: relationship.identifier,
+          //   roleTypeIdentifier: relationship.roleTypeIdentifier,
+          //   roleTypeCode: relationship.roleTypeCode,
+          //   customerType: relationship.customerType,
+          //   percentageAllowed: relationship.percentageAllowed,
+          //   isPrimary: relationship.isPrimary,
+          //   minimum: relationship.minimumRequired,
+          //   maximum: relationship.maximumAllowed,
+          //   applicableOrder: relationship.applicableOrder,
+          //   maximumAccountAllowed: relationship.maximumAccountAllowed,
+          //   signatureRequired: relationship.signatureRequired,
+          //   ownerCategory: relationship.ownerCategory,
+          //   onwerSubCategory: relationship.onwerSubCategory,
+          //   additionalDetails: relationship.additionalDetails
+          // }));
+
+          let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => {
+            const productTypeRole = [
+                
+                { id: 0, label: "Percentage Allowed", value: relationship.percentageAllowed },
+                { id: 1, label: "Is Primary", value: relationship.isPrimary },
+                { id: 2, label: "Applicable Order", value: relationship.applicableOrder },
+                { id: 3, label: "Signature Required", value: relationship.signatureRequired },
+                { id: 4, label: "Owner Category", value: relationship.ownerCategory },
+                { id: 5, label: "Owner SubCategory", value: relationship.onwerSubCategory },
+                { id: 6, label: "Additional Details", value: relationship.additionalDetails }
+            ];
+
+            return {
+                identifier: relationship.identifier,
+                roleTypeIdentifier: relationship.roleTypeIdentifier,
+                roleTypeCode: relationship.roleTypeCode,
+                customerType: relationship.customerType,
+                percentageAllowed: relationship.percentageAllowed,
+                isPrimary: relationship.isPrimary,
+                minimum: relationship.minimumRequired,
+                maximum: relationship.maximumAllowed,
+                applicableOrder: relationship.applicableOrder,
+                maximumAccountAllowed: relationship.maximumAccountAllowed,
+                signatureRequired: relationship.signatureRequired,
+                ownerCategory: relationship.ownerCategory,
+                onwerSubCategory: relationship.onwerSubCategory,
+                additionalDetails: relationship.additionalDetails,
+                productTypeRole: productTypeRole // Add this line
+            };
+        });
+
+          // let productTypeRoleTypeCatRelationshipListMapped = productTypeRoleTypeCatRelationshipList.map((roleCatRelationship: any) => ({
+          //   productTypeIdentifier: roleCatRelationship.productTypeIdentifier,
+          //   roleTypeIdentifier: roleCatRelationship.roleTypeIdentifier,
+          //   categoryIdentifier: roleCatRelationship.categoryIdentifier
+          // }));
+
+          let productTypeRoleTypeCatRelationshipListMapped = null;
+          if (productTypeRoleTypeCatRelationshipList.length > 0) {
+            productTypeRoleTypeCatRelationshipListMapped =
+            productTypeRoleTypeCatRelationshipList.map(
+                (categoryValRelationship: any) => ({
+                  productTypeIdentifier:
+                  categoryValRelationship.productTypeIdentifier,
+                    roleTypeIdentifier:
+                    categoryValRelationship.roleTypeIdentifier,
+                    categoryIdentifier:
+                    categoryValRelationship.categoryIdentifier
+                })
+              );
+          }
+
+          const roleTypeData: RoleTypeList = {
+            code: roleType.code
+              ? roleType.code
+              : productTypeRoleTypeRelationshipList[0].roleTypeCode,
+            roleTypeInquiry: [
+              { id: 0, label: "Name", value: roleType.name },
+              { id: 1, label: "Identifier", value: roleType.identifier },
+              { id: 2, label: "Short Name", value: roleType.shortName },
+              { id: 3, label: "Category", value: roleType.category },
+              { id: 4, label: "Classification", value: roleType.classification },
+              { id: 5, label: "System Defined", value: roleType.systemDefined },
+              { id: 6, label: "Calculated", value: roleType.calculated }
+            ],
+            identifier: roleType.identifier,
+            name: roleType.name,
+            shortName: roleType.shortName,
+            category: roleType.category,
+            classification: roleType.classification,
+            systemDefined: roleType.systemDefined,
+            calculated: roleType.calculated,
+            roleCategoryList: roleCategoryListMapped,
+            productTypeRoleTypeRelationshipList: productTypeRoleTypeRelationshipListMapped,
+            productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped,
+            productTypeRole: [] ,
+            roleCategory: [
+              { id: 0, label: "Category", value: roleType.categoryIdentifier },
+            ]
+          };
+
+          return roleTypeData;
+        });
+        this.roleTypeTableMetaData.datasource.data = this.roleTypeData;
+
+        console.log('Element Data:', JSON.stringify(this.roleTypeData, null, 2));
+        console.log("emmiting data fromchild", this.roleTypeData);
+      }
+    });
   }
