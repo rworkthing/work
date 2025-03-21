@@ -1,7 +1,2 @@
-this.roleTypeService.getRoleCat().subscribe(data => {
-        this.cattypes = data.map((item: any) => ({
-            label: item.code,   // Store the dropdown label
-            value: item.identifier // Store the corresponding identifier
-        }));
-        console.log("Loaded Categories:", this.cattypes);
-    });
+const categoryLabel = this.cattypes.find(cat => cat.value === roleType.category)?.label || roleType.category;
+const classificationLabel = this.classifications.find(cls => cls.value === roleType.classification)?.label || roleType.classification;
