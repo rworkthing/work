@@ -1,7 +1,9 @@
-const roleCategoryMapped = productTypeRoleTypeCatRelationshipList.length > 0
-    ? productTypeRoleTypeCatRelationshipList.map(categoryValRelationship => ({
-        id: categoryValRelationship.categoryIdentifier,
-        label: "Category",
-        value: categoryValRelationship.categoryIdentifier
-    }))
+// Extract all categoryIdentifiers and join them as a comma-separated string
+const categoryValues = productTypeRoleTypeCatRelationshipList
+    .map(categoryValRelationship => categoryValRelationship.categoryIdentifier)
+    .join(', ');
+
+// Create a single entry in roleCategory with the combined category values
+const roleCategoryMapped = categoryValues
+    ? [{ id: 0, label: "Category", value: categoryValues }]
     : [];
