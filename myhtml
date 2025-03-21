@@ -399,8 +399,8 @@
       <bod-control-group label="{{ 'Category' | translate }}" [forTextOnly]="true" [required]="true">
         <bod-auto-complete 
         #nameElementRef  
-        formControlName="roleCategoryValue"
-        name="roleCategoryValue"
+        formControlName="category"
+        name="category"
       
           name="autoCompleteFieldMultiConv"
           [data]="roleCategoryMultidata"
