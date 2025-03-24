@@ -1,60 +1,125 @@
-	{
-	"metadataType": "RoleType",
-	"roleRelationshipTypeList": [{
-		"productTypeRoleTypeRelationshipList": [{
-			"identifier": 1110101,
-			"customerType": "Individual",
-			"percentageAllowed": "Y",
-			"isPrimary": "Y",
-			"minimumRequired": "33",
-			"maximumAllowed": "34",
-			"applicableOrder": "Y",
-			"maximumAccountAllowed": "435",
-			"signatureRequired": "Y",
-			"ownerCategory": "DFG",
-			"onwerSubCategory": "FDG",
-			"additionalDetails": "DFG"
-		}],
-		"productTypeRoleTypeCatRelationshipList": [{
-			"productTypeIdentifier": 1110101,
-			"categoryIdentifier": 100000000001
-		}]
-	}],
-	"productTypeList": ["Checking"]
-}
-
-
-
-{
-  "metadataType": "RoleType",
-  "roleRelationshipTypeList": [
+FOR NEW EDIT in add edit: {
+  "code": "inquirre",
+  "roleTypeInquiry": [
     {
-      "productTypeRoleTypeRelationshipList": [
+      "id": 0,
+      "label": "Name",
+      "value": "Role1"
+    },
+    {
+      "id": 1,
+      "label": "Identifier",
+      "value": 11104001104
+    },
+    {
+      "id": 2,
+      "label": "Short Name",
+      "value": "Role12"
+    },
+    {
+      "id": 3,
+      "label": "Category",
+      "value": "Primary"
+    },
+    {
+      "id": 4,
+      "label": "Classification",
+      "value": "AssetCashContra"
+    },
+    {
+      "id": 5,
+      "label": "System Defined",
+      "value": "Y"
+    },
+    {
+      "id": 6,
+      "label": "Calculated",
+      "value": "N"
+    }
+  ],
+  "identifier": 11104001104,
+  "name": "Role1",
+  "shortName": "Role12",
+  "category": "Primary",
+  "classification": "AssetCashContra",
+  "systemDefined": "Y",
+  "calculated": "N",
+  "roleCategoryList": [
+    {
+      "identifier": 11104001104,
+      "code": "inquirre",
+      "name": "Role1",
+      "shortName": "Role12"
+    }
+  ],
+  "productTypeRoleTypeRelationshipList": [
+    {
+      "identifier": 1110101,
+      "roleTypeIdentifier": 11104001104,
+      "roleTypeCode": "inquirre",
+      "customerType": "Individual",
+      "percentageAllowed": "Y",
+      "isPrimary": "Y",
+      "minimumRequired": 3,
+      "maximumAllowed": 2,
+      "applicableOrder": "Y",
+      "maximumAccountAllowed": 133,
+      "signatureRequired": "Y",
+      "ownerCategory": "csf",
+      "onwerSubCategory": "sfsff",
+      "additionalDetails": "sfsfs",
+      "productTypeRole": [
         {
-          "identifier": 123456789012345,
-          "roleTypeIdentifier": 123456789012345,
-          "roleTypeCode": "exampleCode",
-          "customerType": "exampleValue",
-          "percentageAllowed": "Y",
-          "isPrimary": "Y",
-          "minimumRequired": 10,
-          "maximumAllowed": 100,
-          "applicableOrder": "Y",
-          "maximumAccountAllowed": 5,
-          "signatureRequired": "Y",
-          "ownerCategory": "string",
-          "onwerSubCategory": "string",
-          "additionalDetails": "string"
-        }
-      ],
-      "productTypeRoleTypeCatRelationshipList": [
+          "id": 0,
+          "label": "Percentage Allowed",
+          "value": "Y"
+        },
         {
-          "productTypeIdentifier": 123456789012345,
-          "roleTypeIdentifier": 123456789012345,
-          "categoryIdentifier": 123456789012345
+          "id": 1,
+          "label": "Is Primary",
+          "value": "Y"
+        },
+        {
+          "id": 2,
+          "label": "Applicable Order",
+          "value": "Y"
+        },
+        {
+          "id": 3,
+          "label": "Signature Required",
+          "value": "Y"
+        },
+        {
+          "id": 4,
+          "label": "Owner Category",
+          "value": "csf"
+        },
+        {
+          "id": 5,
+          "label": "Owner SubCategory",
+          "value": "sfsff"
+        },
+        {
+          "id": 6,
+          "label": "Additional Details",
+          "value": "sfsfs"
         }
       ]
     }
   ],
-  "productTypeList": ["CASA"]
+  "productTypeRoleTypeCatRelationshipList": [
+    {
+      "productTypeIdentifier": 1110101,
+      "roleTypeIdentifier": 11104001104,
+      "categoryIdentifier": 100000000001
+    }
+  ],
+  "productTypeRole": [],
+  "roleCategory": [
+    {
+      "id": 0,
+      "label": "Category",
+      "value": "Primary"
+    }
+  ]
 }
