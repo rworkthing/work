@@ -1,138 +1,293 @@
-getNewRoleType(): void {
-    this.roleTypeService.retrieveRoleType().subscribe(response => {
-      if (response.status === 'SUCCESS' && response.data) {
-        console.log('Response Data:', response.data);
-        console.log('Response Data:', JSON.stringify(response.data, null, 2));
-        this.roleTypeData = response.data.map((item: any) => {
-          if (!item.RoleType) {
-            console.error("RoleType is missing in item:", item);
-            return null; 
-        }
-        
-        const roleType = item.RoleType.roleType || {}; 
-        const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
-        
-        const roleTypeCode = roleType.code || (productTypeRoleTypeRelationshipList.length > 0 ? productTypeRoleTypeRelationshipList[0].roleTypeCode : null);
-        
-        if (!roleTypeCode) {
-            console.error("RoleType code is missing in item:", item);
-            return null; 
-        }
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Column, InquiryLayoutInput, UIContextService } from '@bod/common';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { RoleRelationshipSampleTable } from '../add-edit-roletype/roletype.model';
+import { RoleTypeList } from '../add-edit-roletype/add-edit-roletype.mode';
 
-          const roleCategoryList = item.RoleType.roleCategoryList || [];
-          const productTypeRoleTypeCatRelationshipList = item.RoleType.productTypeRoleTypeCatRelationshipList || [];
+@Injectable({
+  providedIn: 'root'
+})
+export class RoleTypeService {
+  
+  private roleTypeUrl = '';
+  private roleCategoryUrl = '';
+  private accountClassificationUrl = '';
+  private saveUrl = '';
+  private retrieveUrl = '';
+  private deleteUrl = '';
 
-          let roleCategoryListMapped = roleCategoryList.map((category: any) => ({
-            identifier: category.identifier,
-            code: category.code,
-            name: category.name,
-            shortName: category.shortName
-          }));
-
-          // let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => ({
-          //   identifier: relationship.identifier,
-          //   roleTypeIdentifier: relationship.roleTypeIdentifier,
-          //   roleTypeCode: relationship.roleTypeCode,
-          //   customerType: relationship.customerType,
-          //   percentageAllowed: relationship.percentageAllowed,
-          //   isPrimary: relationship.isPrimary,
-          //   minimum: relationship.minimumRequired,
-          //   maximum: relationship.maximumAllowed,
-          //   applicableOrder: relationship.applicableOrder,
-          //   maximumAccountAllowed: relationship.maximumAccountAllowed,
-          //   signatureRequired: relationship.signatureRequired,
-          //   ownerCategory: relationship.ownerCategory,
-          //   onwerSubCategory: relationship.onwerSubCategory,
-          //   additionalDetails: relationship.additionalDetails
-          // }));
-
-          let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => {
-            const productTypeRole = [
-                
-                { id: 0, label: "Percentage Allowed", value: relationship.percentageAllowed },
-                { id: 1, label: "Is Primary", value: relationship.isPrimary },
-                { id: 2, label: "Applicable Order", value: relationship.applicableOrder },
-                { id: 3, label: "Signature Required", value: relationship.signatureRequired },
-                { id: 4, label: "Owner Category", value: relationship.ownerCategory },
-                { id: 5, label: "Owner SubCategory", value: relationship.onwerSubCategory },
-                { id: 6, label: "Additional Details", value: relationship.additionalDetails }
-            ];
-
-            return {
-                identifier: relationship.identifier,
-                roleTypeIdentifier: relationship.roleTypeIdentifier,
-                roleTypeCode: relationship.roleTypeCode,
-                customerType: relationship.customerType,
-                percentageAllowed: relationship.percentageAllowed,
-                isPrimary: relationship.isPrimary,
-                minimum: relationship.minimumRequired,
-                maximum: relationship.maximumAllowed,
-                applicableOrder: relationship.applicableOrder,
-                maximumAccountAllowed: relationship.maximumAccountAllowed,
-                signatureRequired: relationship.signatureRequired,
-                ownerCategory: relationship.ownerCategory,
-                onwerSubCategory: relationship.onwerSubCategory,
-                additionalDetails: relationship.additionalDetails,
-                productTypeRole: productTypeRole // Add this line
-            };
-        });
-
-          // let productTypeRoleTypeCatRelationshipListMapped = productTypeRoleTypeCatRelationshipList.map((roleCatRelationship: any) => ({
-          //   productTypeIdentifier: roleCatRelationship.productTypeIdentifier,
-          //   roleTypeIdentifier: roleCatRelationship.roleTypeIdentifier,
-          //   categoryIdentifier: roleCatRelationship.categoryIdentifier
-          // }));
-
-          let productTypeRoleTypeCatRelationshipListMapped = null;
-          if (productTypeRoleTypeCatRelationshipList.length > 0) {
-            productTypeRoleTypeCatRelationshipListMapped =
-            productTypeRoleTypeCatRelationshipList.map(
-                (categoryValRelationship: any) => ({
-                  productTypeIdentifier:
-                  categoryValRelationship.productTypeIdentifier,
-                    roleTypeIdentifier:
-                    categoryValRelationship.roleTypeIdentifier,
-                    categoryIdentifier:
-                    categoryValRelationship.categoryIdentifier
-                })
-              );
-          }
-
-          const roleTypeData: RoleTypeList = {
-            code: roleType.code
-              ? roleType.code
-              : productTypeRoleTypeRelationshipList[0].roleTypeCode,
-            roleTypeInquiry: [
-              { id: 0, label: "Name", value: roleType.name },
-              { id: 1, label: "Identifier", value: roleType.identifier },
-              { id: 2, label: "Short Name", value: roleType.shortName },
-              { id: 3, label: "Category", value: roleType.category },
-              { id: 4, label: "Classification", value: roleType.classification },
-              { id: 5, label: "System Defined", value: roleType.systemDefined },
-              { id: 6, label: "Calculated", value: roleType.calculated }
-            ],
-            identifier: roleType.identifier,
-            name: roleType.name,
-            shortName: roleType.shortName,
-            category: roleType.category,
-            classification: roleType.classification,
-            systemDefined: roleType.systemDefined,
-            calculated: roleType.calculated,
-            roleCategoryList: roleCategoryListMapped,
-            productTypeRoleTypeRelationshipList: productTypeRoleTypeRelationshipListMapped,
-            productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped,
-            productTypeRole: [] ,
-            roleCategory: [
-              { id: 0, label: "Category", value: roleType.categoryIdentifier },
-            ]
-          };
-
-          return roleTypeData;
-        });
-        this.roleTypeTableMetaData.datasource.data = this.roleTypeData;
-
-        console.log('Element Data:', JSON.stringify(this.roleTypeData, null, 2));
-        console.log("emmiting data fromchild", this.roleTypeData);
-      }
-    });
+  constructor(
+    private http: HttpClient,
+    private uiContextService: UIContextService
+  ) {
+    let url =
+      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
+        .sdkServiceUrl.value;
+        this.roleTypeUrl = url + '/basedata/roletype';
+        this.roleCategoryUrl = url + '/basedata/rolecat';
+        this.accountClassificationUrl = url + '/basedata/accountclassification';
+        this.saveUrl = url + '/metadata/create/requirement512';
+        this.retrieveUrl =
+      url +
+      '/metadata/retrieve/requirement512?metadata-config-type=RoleType';
+      this.deleteUrl = url + '/metadata/delete/requirement512';
   }
+
+  getRoletype(): Observable<any> {
+    const headers = new HttpHeaders({
+      'country-code': 'CNTRY01',
+      'client-code': 'CLNT01',
+      'product-line': 'retaildeposits',
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID()
+    });
+
+    return this.http.get(`${this.roleTypeUrl}`, { headers });
+  }
+
+  getRoleCat(): Observable<any> {
+    const headers = new HttpHeaders({
+      'country-code': 'CNTRY01',
+      'client-code': 'CLNT01',
+      'product-line': 'retaildeposits',
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID()
+    });
+
+    return this.http.get(`${this.roleCategoryUrl}`, { headers });
+  }
+
+  getAccountClassification(): Observable<any> {
+    const headers = new HttpHeaders({
+      'country-code': 'CNTRY01',
+      'client-code': 'CLNT01',
+      'product-line': 'retaildeposits',
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID()
+    });
+
+    return this.http.get(`${this.accountClassificationUrl}`, { headers });
+  }
+
+  getCustomerType(): Observable<any> {
+    const customerTypes = [
+      { label: '', value: 'empty' },
+      { label: 'Individual', value: 'individual' },
+      { label: 'Organization', value: 'organization' }
+      
+    ];
+    return of(customerTypes);
+  }
+
+  getRoleCategoryId(): Observable<any> {
+      const roleCategoryIds = [
+        { label: '', value: 'empty' },
+        { label: 'Category', value: 'category' },
+        
+      ];
+      return of(roleCategoryIds);
+    }
+
+
+    saveRoleType(request: any): Observable<any> {
+      const headers = new HttpHeaders({
+        'country-code': 'CNTRY01',
+        'client-code': 'CLNT01',
+        'product-line': 'retaildeposits',
+        fe_id: this.uiContextService.getTenantId(),
+        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+        uuid: this.generateUUID()
+      });
+  
+      return this.http.post(this.saveUrl, request, { headers });
+    }
+
+    retrieveRoleType(): Observable<any> {
+      const headers = new HttpHeaders({
+        'country-code': 'CNTRY01',
+        'client-code': 'CLNT01',
+        'product-line': 'retaildeposits',
+        fe_id: this.uiContextService.getTenantId(),
+        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+        uuid: this.generateUUID()
+      });
+  
+      return this.http.get<RoleTypeList[]>(this.retrieveUrl, { headers });
+    }
+
+    deleteRoleType(
+      metadataConfigType: string,
+      metadataConfigIdfr: number
+    ): Observable<any> {
+      const headers = new HttpHeaders({
+        'country-code': 'CNTRY01',
+        'client-code': 'CLNT01',
+        'product-line': 'retaildeposits',
+        fe_id: this.uiContextService.getTenantId(),
+        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+        uuid: this.generateUUID()
+      });
+  
+      const params = {
+        'metadata-config-type': metadataConfigType,
+        'metadata-config-idfr': metadataConfigIdfr
+      };
+  
+      return this.http.delete(this.deleteUrl, { headers, params });
+    }
+    generateUUID(): string {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g,
+        function (c) {
+          const r = (Math.random() * 16) | 0,
+            v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        }
+      );
+    }
+
+  public getExpandedRelationshipData(
+    element: RoleRelationshipSampleTable
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.roleTypes.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.roleTypes[i].id,
+        label: element.roleTypes[i].label,
+        value: element.roleTypes[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+
+  public getRoleTypeData(
+    element: RoleTypeList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.roleTypeInquiry.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.roleTypeInquiry[i].id,
+        label: element.roleTypeInquiry[i].label,
+        value: element.roleTypeInquiry[i].value,
+        isLink: setIsLink
+      });
+    }
+    
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+
+  public getRoleRelationshipTypeData(
+    element: RoleTypeList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.productTypeRole.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.productTypeRole[i].id,
+        label: element.productTypeRole[i].label,
+        value: element.productTypeRole[i].value,
+        isLink: setIsLink
+      });
+    }
+    
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+
+  public getAddtnlReltns(
+    element: RoleTypeList
+  ): Observable<InquiryLayoutInput[]> {
+    // console.log("recieved element", element);
+    // console.log("returningdata", element.productTypeRoleTypeCatRelationshipList);
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.roleCategory.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.roleCategory[i].id,
+        label: element.roleCategory[i].label,
+        value: element.roleCategory[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+    
+  }
+  public columns: Column[] = [
+    {
+      name: 'code',
+      title: 'Role Types',
+      truncate: true,
+      noOverflow: true,
+      width: 70,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+  
+  public roleTypecolumn: Column[] = [
+    {
+      name: 'customerType',
+      title: 'Customer Type',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'maximumAccountAllowed',
+      title: 'Maximum Account Allowed',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'minimumRequired',
+      title: 'Minimum',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'maximumAllowed',
+      title: 'Maximum',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+
+}
