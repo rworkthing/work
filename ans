@@ -1,25 +1,29 @@
 private roleTypeForm(element: RoleTypeList): void {
   this.isAdd = false;
 
-  console.log('FOR NEW EDIT in add edit:', JSON.stringify(element, null, 2));
+  // Ensure dropdown data is available before setting form values
+  if (!this.categorys.length || !this.classifications.length) {
+    this.roleTypeService.getRoleCat().subscribe(data => {
+      this.categorys = data.map((item: any) => ({ label: item.code, value: item.identifier }));
+      this.setDropdownValues(element); // Set values after data loads
+    });
 
-  // Convert Category & Classification from Label to Identifier
-  const selectedCategory = this.categorys.find(cat => cat.label === element.category);
-  const selectedClassification = this.classifications.find(cls => cls.label === element.classification);
+    this.roleTypeService.getAccountClassification().subscribe(data => {
+      this.classifications = data.map((item: any) => ({ label: item.code, value: item.identifier }));
+      this.setDropdownValues(element);
+    });
+  } else {
+    this.setDropdownValues(element); // Data is already available, set values immediately
+  }
+}
+
+// New helper method to set dropdown values
+private setDropdownValues(element: RoleTypeList) {
+  const selectedCategory = this.categorys.find(cat => cat.value === element.category);
+  const selectedClassification = this.classifications.find(cls => cls.value === element.classification);
 
   this.addNewRoleTypeFormGroup.patchValue({
-    roleTypeCode: element.code,
-    roleTypeIdentifier: element.identifier,
-    roleTypeName: element.name,
-    roleTypeShortName: element.shortName,
-    category: selectedCategory ? selectedCategory.value : null,  // Set identifier
-    classification: selectedClassification ? selectedClassification.value : null,  // Set identifier
-    systemDefined: element.systemDefined,
-    isCalculated: element.calculated,
-    category1: element.productTypeRoleTypeCatRelationshipList
-      ?.filter(item => item.roleTypeIdentifier === element.identifier)
-      .map(item => item.categoryIdentifier) || []
+    category: selectedCategory ? selectedCategory.value : null,
+    classification: selectedClassification ? selectedClassification.value : null
   });
-
-  console.log("Updated Form Values:", this.addNewRoleTypeFormGroup.value);
 }
