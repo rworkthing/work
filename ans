@@ -1,7 +1,25 @@
-const roleCategorySubTypes =
-  element.productTypeRoleTypeCatRelationshipList
-    ?.filter(item => item.roleTypeIdentifier === element.identifier)
-    .map(item => {
-      const matchedItem = this.cattypes.find(cat => cat.value === item.categoryIdentifier);
-      return matchedItem ? matchedItem.label : item.categoryIdentifier;
-    }) || [];
+private roleTypeForm(element: RoleTypeList): void {
+  this.isAdd = false;
+
+  console.log('FOR NEW EDIT in add edit:', JSON.stringify(element, null, 2));
+
+  // Convert Category & Classification from Label to Identifier
+  const selectedCategory = this.categorys.find(cat => cat.label === element.category);
+  const selectedClassification = this.classifications.find(cls => cls.label === element.classification);
+
+  this.addNewRoleTypeFormGroup.patchValue({
+    roleTypeCode: element.code,
+    roleTypeIdentifier: element.identifier,
+    roleTypeName: element.name,
+    roleTypeShortName: element.shortName,
+    category: selectedCategory ? selectedCategory.value : null,  // Set identifier
+    classification: selectedClassification ? selectedClassification.value : null,  // Set identifier
+    systemDefined: element.systemDefined,
+    isCalculated: element.calculated,
+    category1: element.productTypeRoleTypeCatRelationshipList
+      ?.filter(item => item.roleTypeIdentifier === element.identifier)
+      .map(item => item.categoryIdentifier) || []
+  });
+
+  console.log("Updated Form Values:", this.addNewRoleTypeFormGroup.value);
+}
