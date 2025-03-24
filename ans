@@ -63,3 +63,28 @@ private loadRoleRelationshipData(element: RoleTypeList): void {
   this.roleRelationshipTabledata.datasource.data = [...this.roleRelationshipTabledata.datasource.data];
 }
 
+private setDropdownValues(element: RoleTypeList) {
+  console.log("Dropdown categories:", this.categorys); // Debugging
+  console.log("Dropdown classifications:", this.classifications); // Debugging
+  console.log("Element category:", element.category); // Debugging
+  console.log("Element classification:", element.classification); // Debugging
+
+  // ✅ Match based on label instead of value
+  const selectedCategory = this.categorys.find(cat => cat.label === element.category);
+  const selectedClassification = this.classifications.find(cls => cls.label === element.classification);
+
+  console.log("Selected Category:", selectedCategory); // Debugging
+  console.log("Selected Classification:", selectedClassification); // Debugging
+
+  // Convert category identifiers to corresponding labels
+  const categoryLabels = element.productTypeRoleTypeCatRelationshipList.map(rel => {
+    const matchedCategory = this.categorys.find(cat => cat.value === rel.categoryIdentifier);
+    return matchedCategory ? matchedCategory.label : rel.categoryIdentifier.toString(); // Fallback to identifier if not found
+  });
+
+  this.addNewRoleTypeFormGroup.patchValue({
+    category: selectedCategory ? selectedCategory.value : null,  // ✅ Now correctly setting the value
+    classification: selectedClassification ? selectedClassification.value : null,  // ✅ Now correctly setting the value
+    category1: categoryLabels // ✅ Show category labels instead of raw identifiers
+  });
+}
