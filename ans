@@ -1,11 +1,11 @@
 private roleTypeForm(element: RoleTypeList): void {
   this.isAdd = false;
 
-  // Ensure dropdown data is available before setting form values
+  // ✅ Ensure dropdown data is available before setting form values
   if (!this.categorys.length || !this.classifications.length) {
     this.roleTypeService.getRoleCat().subscribe(data => {
       this.categorys = data.map((item: any) => ({ label: item.code, value: item.identifier }));
-      this.setDropdownValues(element); // Set values after data loads
+      this.setDropdownValues(element); // ✅ Set values after dropdown data loads
     });
 
     this.roleTypeService.getAccountClassification().subscribe(data => {
@@ -13,17 +13,25 @@ private roleTypeForm(element: RoleTypeList): void {
       this.setDropdownValues(element);
     });
   } else {
-    this.setDropdownValues(element); // Data is already available, set values immediately
+    this.setDropdownValues(element); // ✅ If data already exists, set values immediately
   }
 }
 
-// New helper method to set dropdown values
+// ✅ Helper method to correctly set dropdown and category1 values
 private setDropdownValues(element: RoleTypeList) {
+  // ✅ Match category and classification values correctly
   const selectedCategory = this.categorys.find(cat => cat.value === element.category);
   const selectedClassification = this.classifications.find(cls => cls.value === element.classification);
 
+  // ✅ Convert category1 identifiers to corresponding labels
+  const category1Labels = element.category1.map(identifier => {
+    const matchedCategory = this.categorys.find(cat => cat.value === identifier);
+    return matchedCategory ? matchedCategory.label : identifier; // Fallback to identifier if not found
+  });
+
   this.addNewRoleTypeFormGroup.patchValue({
-    category: selectedCategory ? selectedCategory.value : null,
-    classification: selectedClassification ? selectedClassification.value : null
+    category: selectedCategory ? selectedCategory.value : null,  // ✅ Fix: Ensure category dropdown value is set correctly
+    classification: selectedClassification ? selectedClassification.value : null,  // ✅ Fix: Ensure classification dropdown value is set correctly
+    category1: category1Labels // ✅ Fix: Show category labels instead of raw identifiers
   });
 }
