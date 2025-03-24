@@ -30,7 +30,7 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'bod-add-edit-roletype',
   standalone: true,
   imports: [
-    
+
     RoleTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
@@ -131,7 +131,7 @@ export class AddEditRoletypeComponent implements OnInit {
   roleCategoryMultidata = this.inputForpreconversionSelect1;
 
   constructor(
-    private cdr : ChangeDetectorRef,
+    private cdr: ChangeDetectorRef,
     public roleTypeService: RoleTypeService,
     private fb: FormBuilder,
     private bodCommonDialogService: BodCommonDialogService,
@@ -172,7 +172,7 @@ export class AddEditRoletypeComponent implements OnInit {
     this.initForm();
     // this.getNewRoleType();
     this.loadDropdownData();
-    if( this.editRoleTypeRow){
+    if (this.editRoleTypeRow) {
       console.log('Edit Role Type Row:', this.editRoleTypeRow);
       this.roleTypeForm(this.editRoleTypeRow);
     }
@@ -207,7 +207,7 @@ export class AddEditRoletypeComponent implements OnInit {
         value: item.identifier
       }));
     });
-      
+
 
     this.roleTypeService
       .getCustomerType()
@@ -301,7 +301,7 @@ export class AddEditRoletypeComponent implements OnInit {
       classification: new UntypedFormControl('', [Validators.required]),
       systemDefined: new UntypedFormControl(''),
       isCalculated: new UntypedFormControl(''),
-      category1:new UntypedFormControl([])
+      category1: new UntypedFormControl([])
 
     });
     this.roleRelationshipForm = this.fb.group({
@@ -466,9 +466,9 @@ export class AddEditRoletypeComponent implements OnInit {
         );
 
         return {
-        productTypeIdentifier: 1110101,
-        roleTypeIdentifier: formValue.roleTypeIdentifier,
-        categoryIdentifier: selectedCategoryType.value
+          productTypeIdentifier: 1110101,
+          roleTypeIdentifier: formValue.roleTypeIdentifier,
+          categoryIdentifier: selectedCategoryType.value
         };
       }
     );
@@ -538,19 +538,19 @@ export class AddEditRoletypeComponent implements OnInit {
   //           console.error("RoleType or roleType is missing in item:", item);
   //           return null; // Skip this item
   //         }
-        
+
   //         const roleType = item.RoleType.roleType;
   //         const roleCategoryList = item.RoleType.roleCategoryList || [];
   //         const productTypeRoleTypeRelationshipList = item.RoleType.productTypeRoleTypeRelationshipList || [];
   //         const productTypeRoleTypeCatRelationshipList = item.RoleType.productTypeRoleTypeCatRelationshipList || [];
-        
+
   //         let roleCategoryListMapped = roleCategoryList.map((category: any) => ({
   //           identifier: category.identifier,
   //           code: category.code,
   //           name: category.name,
   //           shortName: category.shortName
   //         }));
-        
+
   //         let productTypeRoleTypeRelationshipListMapped = productTypeRoleTypeRelationshipList.map((relationship: any) => ({
   //           identifier: relationship.identifier,
   //           roleTypeIdentifier: relationship.roleTypeIdentifier,
@@ -567,13 +567,13 @@ export class AddEditRoletypeComponent implements OnInit {
   //           onwerSubCategory: relationship.onwerSubCategory,
   //           additionalDetails: relationship.additionalDetails
   //         }));
-        
+
   //         let productTypeRoleTypeCatRelationshipListMapped = productTypeRoleTypeCatRelationshipList.map((roleCatRelationship: any) => ({
   //           productTypeIdentifier: roleCatRelationship.productTypeIdentifier,
   //           roleTypeIdentifier: roleCatRelationship.roleTypeIdentifier,
   //           categoryIdentifier: roleCatRelationship.categoryIdentifier
   //         }));
-        
+
   //         const roleTypeData: RoleTypeList = {
   //           code: roleType.code,
   //           roleTypeInquiry: [
@@ -605,10 +605,10 @@ export class AddEditRoletypeComponent implements OnInit {
   //           ],
   //           productTypeRoleTypeCatRelationshipList: productTypeRoleTypeCatRelationshipListMapped
   //         };
-        
+
   //         return roleTypeData;
   //       }).filter(Boolean); // Remove null values
-        
+
   //       console.log('Element Data:', JSON.stringify(this.roleTypeData, null, 2));
   //       console.log("emmiting data fromchild", this.roleTypeData);
   //       this.roleTypeDataEvent.emit(this.roleTypeData);
@@ -728,15 +728,21 @@ export class AddEditRoletypeComponent implements OnInit {
     const roleCategorySubTypes =
       element.productTypeRoleTypeCatRelationshipList
         ?.filter(item => item.roleTypeIdentifier === element.identifier)
-        .map(item => item.categoryIdentifier) || [];
+        .map(item => {
+          const matchedItem = this.cattypes.find(cat => cat.value === item.categoryIdentifier);
+          return matchedItem ? matchedItem.label : item.categoryIdentifier;
+        }) || [];
+
+    const selectedCategory = this.categorys.find(cat => cat.label === element.category);
+    const selectedClassification = this.classifications.find(cls => cls.label === element.classification);
     console.log('FOR NEW EDIT in add edit:', JSON.stringify(element, null, 2));
     this.addNewRoleTypeFormGroup.patchValue({
       roleTypeCode: element.code,
       roleTypeIdentifier: element.identifier,
       roleTypeName: element.name,
       roleTypeShortName: element.shortName,
-      category: element.category,
-      classification: element.classification,
+      category: selectedCategory ? selectedCategory.value : null,  // Set identifier
+      classification: selectedClassification ? selectedClassification.value : null,  // Set identifier
       systemDefined: element.systemDefined,
       isCalculated: element.calculated,
       category1: roleCategorySubTypes,
