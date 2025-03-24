@@ -15,6 +15,7 @@ export class RoleTypeService {
   private accountClassificationUrl = '';
   private saveUrl = '';
   private retrieveUrl = '';
+  private deleteUrl = '';
 
   constructor(
     private http: HttpClient,
@@ -30,6 +31,7 @@ export class RoleTypeService {
         this.retrieveUrl =
       url +
       '/metadata/retrieve/requirement512?metadata-config-type=RoleType';
+      this.deleteUrl = url + '/metadata/delete/requirement512';
   }
 
   getRoletype(): Observable<any> {
@@ -37,10 +39,9 @@ export class RoleTypeService {
       'country-code': 'CNTRY01',
       'client-code': 'CLNT01',
       'product-line': 'retaildeposits',
-      fe_id: '2800',
-      'user-id': 'T999999',
-      locale: 'en-US',
-      uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID()
     });
 
     return this.http.get(`${this.roleTypeUrl}`, { headers });
@@ -51,10 +52,9 @@ export class RoleTypeService {
       'country-code': 'CNTRY01',
       'client-code': 'CLNT01',
       'product-line': 'retaildeposits',
-      fe_id: '2800',
-      'user-id': 'T999999',
-      locale: 'en-US',
-      uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID()
     });
 
     return this.http.get(`${this.roleCategoryUrl}`, { headers });
@@ -65,10 +65,9 @@ export class RoleTypeService {
       'country-code': 'CNTRY01',
       'client-code': 'CLNT01',
       'product-line': 'retaildeposits',
-      fe_id: '2800',
-      'user-id': 'T999999',
-      locale: 'en-US',
-      uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID()
     });
 
     return this.http.get(`${this.accountClassificationUrl}`, { headers });
@@ -99,10 +98,9 @@ export class RoleTypeService {
         'country-code': 'CNTRY01',
         'client-code': 'CLNT01',
         'product-line': 'retaildeposits',
-        fe_id: '2800',
-        'user-id': 'T999999',
-        locale: 'en-US',
-        uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+        fe_id: this.uiContextService.getTenantId(),
+        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+        uuid: this.generateUUID()
       });
   
       return this.http.post(this.saveUrl, request, { headers });
@@ -113,16 +111,46 @@ export class RoleTypeService {
         'country-code': 'CNTRY01',
         'client-code': 'CLNT01',
         'product-line': 'retaildeposits',
-        fe_id: '2800',
-        'user-id': 'T999999',
-        locale: 'en-US',
-        uuid: 'd5ba53c2-8068-410e-af41-9ee1136bd9af'
+        fe_id: this.uiContextService.getTenantId(),
+        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+        uuid: this.generateUUID()
       });
   
       return this.http.get<RoleTypeList[]>(this.retrieveUrl, { headers });
     }
 
-  public getExpandedaggregateData(
+    deleteRoleType(
+      metadataConfigType: string,
+      metadataConfigIdfr: number
+    ): Observable<any> {
+      const headers = new HttpHeaders({
+        'country-code': 'CNTRY01',
+        'client-code': 'CLNT01',
+        'product-line': 'retaildeposits',
+        fe_id: this.uiContextService.getTenantId(),
+        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+        uuid: this.generateUUID()
+      });
+  
+      const params = {
+        'metadata-config-type': metadataConfigType,
+        'metadata-config-idfr': metadataConfigIdfr
+      };
+  
+      return this.http.delete(this.deleteUrl, { headers, params });
+    }
+    generateUUID(): string {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g,
+        function (c) {
+          const r = (Math.random() * 16) | 0,
+            v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        }
+      );
+    }
+
+  public getExpandedRelationshipData(
     element: RoleRelationshipSampleTable
   ): Observable<InquiryLayoutInput[]> {
     const groups: InquiryLayoutInput[] = [];
@@ -156,12 +184,56 @@ export class RoleTypeService {
         isLink: setIsLink
       });
     }
+    
 
     const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
 
     return $groups;
   }
 
+  public getRoleRelationshipTypeData(
+    element: RoleTypeList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.productTypeRole.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.productTypeRole[i].id,
+        label: element.productTypeRole[i].label,
+        value: element.productTypeRole[i].value,
+        isLink: setIsLink
+      });
+    }
+    
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+
+  public getAddtnlReltns(
+    element: RoleTypeList
+  ): Observable<InquiryLayoutInput[]> {
+    // console.log("recieved element", element);
+    // console.log("returningdata", element.productTypeRoleTypeCatRelationshipList);
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.roleCategory.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.roleCategory[i].id,
+        label: element.roleCategory[i].label,
+        value: element.roleCategory[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+    
+  }
   public columns: Column[] = [
     {
       name: 'code',
@@ -170,6 +242,11 @@ export class RoleTypeService {
       noOverflow: true,
       width: 70,
       widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
     }
   ];
   
@@ -191,7 +268,7 @@ export class RoleTypeService {
       widthUnit: 'rem'
     },
     {
-      name: 'minimum',
+      name: 'minimumRequired',
       title: 'Minimum',
       truncate: true,
       noOverflow: true,
@@ -199,7 +276,7 @@ export class RoleTypeService {
       widthUnit: 'rem'
     },
     {
-      name: 'maximum',
+      name: 'maximumAllowed',
       title: 'Maximum',
       truncate: true,
       noOverflow: true,
