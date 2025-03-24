@@ -1,262 +1,104 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Column, InquiryLayoutInput, UIContextService } from '@bod/common';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { RoleRelationshipSampleTable } from '../add-edit-roletype/roletype.model';
-import { RoleTypeList } from '../add-edit-roletype/add-edit-roletype.mode';
-
+import { Column } from '@bod/common';
+ 
 @Injectable({
   providedIn: 'root'
 })
-export class RoleTypeService {
-  
-  private roleTypeUrl = '';
-  private roleCategoryUrl = '';
-  private accountClassificationUrl = '';
-  private saveUrl = '';
-  private retrieveUrl = '';
-  private deleteUrl = '';
-
-  constructor(
-    private http: HttpClient,
-    private uiContextService: UIContextService
-  ) {
-    let url =
-      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
-        .sdkServiceUrl.value;
-        this.roleTypeUrl = url + '/basedata/roletype';
-        this.roleCategoryUrl = url + '/basedata/rolecat';
-        this.accountClassificationUrl = url + '/basedata/accountclassification';
-        this.saveUrl = url + '/metadata/create/requirement512';
-        this.retrieveUrl =
-      url +
-      '/metadata/retrieve/requirement512?metadata-config-type=RoleType';
-      this.deleteUrl = url + '/metadata/delete/requirement512';
-  }
-
-  getRoletype(): Observable<any> {
-    const headers = new HttpHeaders({
-      'country-code': 'CNTRY01',
-      'client-code': 'CLNT01',
-      'product-line': 'retaildeposits',
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID()
-    });
-
-    return this.http.get(`${this.roleTypeUrl}`, { headers });
-  }
-
-  getRoleCat(): Observable<any> {
-    const headers = new HttpHeaders({
-      'country-code': 'CNTRY01',
-      'client-code': 'CLNT01',
-      'product-line': 'retaildeposits',
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID()
-    });
-
-    return this.http.get(`${this.roleCategoryUrl}`, { headers });
-  }
-
-  getAccountClassification(): Observable<any> {
-    const headers = new HttpHeaders({
-      'country-code': 'CNTRY01',
-      'client-code': 'CLNT01',
-      'product-line': 'retaildeposits',
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID()
-    });
-
-    return this.http.get(`${this.accountClassificationUrl}`, { headers });
-  }
-
-  getCustomerType(): Observable<any> {
-    const customerTypes = [
-      { label: '', value: 'empty' },
-      { label: 'Individual', value: 'individual' },
-      { label: 'Organization', value: 'organization' }
-      
-    ];
-    return of(customerTypes);
-  }
-
-  getRoleCategoryId(): Observable<any> {
-      const roleCategoryIds = [
-        { label: '', value: 'empty' },
-        { label: 'Category', value: 'category' },
-        
-      ];
-      return of(roleCategoryIds);
-    }
-
-
-    saveRoleType(request: any): Observable<any> {
-      const headers = new HttpHeaders({
-        'country-code': 'CNTRY01',
-        'client-code': 'CLNT01',
-        'product-line': 'retaildeposits',
-        fe_id: this.uiContextService.getTenantId(),
-        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-        uuid: this.generateUUID()
-      });
-  
-      return this.http.post(this.saveUrl, request, { headers });
-    }
-
-    retrieveRoleType(): Observable<any> {
-      const headers = new HttpHeaders({
-        'country-code': 'CNTRY01',
-        'client-code': 'CLNT01',
-        'product-line': 'retaildeposits',
-        fe_id: this.uiContextService.getTenantId(),
-        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-        uuid: this.generateUUID()
-      });
-  
-      return this.http.get<RoleTypeList[]>(this.retrieveUrl, { headers });
-    }
-
-    deleteRoleType(
-      metadataConfigType: string,
-      metadataConfigIdfr: number
-    ): Observable<any> {
-      const headers = new HttpHeaders({
-        'country-code': 'CNTRY01',
-        'client-code': 'CLNT01',
-        'product-line': 'retaildeposits',
-        fe_id: this.uiContextService.getTenantId(),
-        'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-        uuid: this.generateUUID()
-      });
-  
-      const params = {
-        'metadata-config-type': metadataConfigType,
-        'metadata-config-idfr': metadataConfigIdfr
-      };
-  
-      return this.http.delete(this.deleteUrl, { headers, params });
-    }
-    generateUUID(): string {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-        /[xy]/g,
-        function (c) {
-          const r = (Math.random() * 16) | 0,
-            v = c === 'x' ? r : (r & 0x3) | 0x8;
-          return v.toString(16);
-        }
-      );
-    }
-
-  public getExpandedRelationshipData(
-    element: RoleRelationshipSampleTable
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.roleTypes.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.roleTypes[i].id,
-        label: element.roleTypes[i].label,
-        value: element.roleTypes[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public getRoleTypeData(
-    element: RoleTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.roleTypeInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.roleTypeInquiry[i].id,
-        label: element.roleTypeInquiry[i].label,
-        value: element.roleTypeInquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-    
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public getRoleRelationshipTypeData(
-    element: RoleTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.productTypeRole.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.productTypeRole[i].id,
-        label: element.productTypeRole[i].label,
-        value: element.productTypeRole[i].value,
-        isLink: setIsLink
-      });
-    }
-    
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public getAddtnlReltns(
-    element: RoleTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    // console.log("recieved element", element);
-    // console.log("returningdata", element.productTypeRoleTypeCatRelationshipList);
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.roleCategory.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.roleCategory[i].id,
-        label: element.roleCategory[i].label,
-        value: element.roleCategory[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-    
-  }
-  public columns: Column[] = [
+export class AddEditRoleService {
+  public balsubInquiry: Column[] = [
     {
       name: 'code',
-      title: 'Role Types',
+      title: 'Balance Subtype Code',
       truncate: true,
       noOverflow: true,
-      width: 70,
+      width: 8,
       widthUnit: 'rem'
     },
     {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
+      name: 'name',
+      title: 'Balance Subtype Name',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'identifier',
+      title: 'Balance Subtype Identifier',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
     }
   ];
-  
-  public roleTypecolumn: Column[] = [
+ 
+  public addtnRelInquiry: Column[] = [
+    {
+      name: 'id',
+      title: 'ID',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'balanceSubTypeIdentifier',
+      title: 'Value',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+  public roleTypeInquiry: Column[] = [
+    {
+      name: 'roleType',
+      title: 'Type',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'accountingClassification',
+      title: 'Account Classification',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'payee',
+      title: 'Obligator',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'payer',
+      title: 'Beneficiary',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'visible',
+      title: 'Visibility',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+  public roleRelationshipInquiry: Column[] = [
     {
       name: 'customerType',
       title: 'Customer Type',
       truncate: true,
       noOverflow: true,
-      width: 10,
+      width: 8,
       widthUnit: 'rem'
     },
     {
@@ -264,7 +106,7 @@ export class RoleTypeService {
       title: 'Maximum Account Allowed',
       truncate: true,
       noOverflow: true,
-      width: 10,
+      width: 8,
       widthUnit: 'rem'
     },
     {
@@ -272,7 +114,7 @@ export class RoleTypeService {
       title: 'Minimum',
       truncate: true,
       noOverflow: true,
-      width: 10,
+      width: 8,
       widthUnit: 'rem'
     },
     {
@@ -280,14 +122,8 @@ export class RoleTypeService {
       title: 'Maximum',
       truncate: true,
       noOverflow: true,
-      width: 10,
+      width: 8,
       widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
     }
   ];
-
 }
