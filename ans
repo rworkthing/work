@@ -1,12 +1,7 @@
-// Convert category identifiers to their corresponding labels
-const categoryLabels = productTypeRoleTypeCatRelationshipList
-    .map(categoryValRelationship => {
-        const category = this.cattypes.find(cat => cat.value === categoryValRelationship.categoryIdentifier);
-        return category ? category.label : categoryValRelationship.categoryIdentifier; // Fallback to identifier if not found
-    })
-    .join(', ');
-
-// Create a single entry in roleCategory with the combined category labels
-const roleCategoryMapped = categoryLabels
-    ? [{ id: 0, label: "Category", value: categoryLabels }]
-    : [];
+const roleCategorySubTypes =
+  element.productTypeRoleTypeCatRelationshipList
+    ?.filter(item => item.roleTypeIdentifier === element.identifier)
+    .map(item => {
+      const matchedItem = this.cattypes.find(cat => cat.value === item.categoryIdentifier);
+      return matchedItem ? matchedItem.label : item.categoryIdentifier;
+    }) || [];
