@@ -35,3 +35,31 @@ private setDropdownValues(element: RoleTypeList) {
     category1: category1Labels // ✅ Fix: Show category labels instead of raw identifiers
   });
 }
+
+
+
+private loadRoleRelationshipData(element: RoleTypeList): void {
+  this.roleRelationshipTabledata.datasource.data = [];  // Clear existing data
+  this.dataWithRoleRelationshipvalues = [];  // Clear existing data
+
+  element.productTypeRoleTypeRelationshipList?.forEach(relationship => {
+    let obj = {} as RoleRelationshipSampleTable;
+    obj.customerType = String(relationship.customerType);
+    obj.maximumAccountAllowed = relationship.maximumAccountAllowed;
+    obj.minimumRequired = relationship.minimumRequired;
+    obj.maximumAllowed = relationship.maximumAllowed;
+    obj.roleTypes = relationship.productTypeRole.map(role => ({
+      id: role.id,
+      label: role.label,
+      value: role.value
+    }));
+
+    // ✅ Add the data to the table and list
+    this.roleRelationshipTabledata.datasource.data.push(obj);
+    this.dataWithRoleRelationshipvalues.push(obj);
+  });
+
+  // ✅ Ensure Angular detects changes
+  this.roleRelationshipTabledata.datasource.data = [...this.roleRelationshipTabledata.datasource.data];
+}
+
