@@ -1,125 +1,80 @@
-FOR NEW EDIT in add edit: {
-  "code": "inquirre",
-  "roleTypeInquiry": [
-    {
-      "id": 0,
-      "label": "Name",
-      "value": "Role1"
-    },
-    {
-      "id": 1,
-      "label": "Identifier",
-      "value": 11104001104
-    },
-    {
-      "id": 2,
-      "label": "Short Name",
-      "value": "Role12"
-    },
-    {
-      "id": 3,
-      "label": "Category",
-      "value": "Primary"
-    },
-    {
-      "id": 4,
-      "label": "Classification",
-      "value": "AssetCashContra"
-    },
-    {
-      "id": 5,
-      "label": "System Defined",
-      "value": "Y"
-    },
-    {
-      "id": 6,
-      "label": "Calculated",
-      "value": "N"
-    }
-  ],
-  "identifier": 11104001104,
-  "name": "Role1",
-  "shortName": "Role12",
-  "category": "Primary",
-  "classification": "AssetCashContra",
-  "systemDefined": "Y",
-  "calculated": "N",
-  "roleCategoryList": [
-    {
-      "identifier": 11104001104,
-      "code": "inquirre",
-      "name": "Role1",
-      "shortName": "Role12"
-    }
-  ],
-  "productTypeRoleTypeRelationshipList": [
-    {
-      "identifier": 1110101,
-      "roleTypeIdentifier": 11104001104,
-      "roleTypeCode": "inquirre",
-      "customerType": "Individual",
-      "percentageAllowed": "Y",
-      "isPrimary": "Y",
-      "minimumRequired": 3,
-      "maximumAllowed": 2,
-      "applicableOrder": "Y",
-      "maximumAccountAllowed": 133,
-      "signatureRequired": "Y",
-      "ownerCategory": "csf",
-      "onwerSubCategory": "sfsff",
-      "additionalDetails": "sfsfs",
-      "productTypeRole": [
-        {
-          "id": 0,
-          "label": "Percentage Allowed",
-          "value": "Y"
-        },
-        {
-          "id": 1,
-          "label": "Is Primary",
-          "value": "Y"
-        },
-        {
-          "id": 2,
-          "label": "Applicable Order",
-          "value": "Y"
-        },
-        {
-          "id": 3,
-          "label": "Signature Required",
-          "value": "Y"
-        },
-        {
-          "id": 4,
-          "label": "Owner Category",
-          "value": "csf"
-        },
-        {
-          "id": 5,
-          "label": "Owner SubCategory",
-          "value": "sfsff"
-        },
-        {
-          "id": 6,
-          "label": "Additional Details",
-          "value": "sfsfs"
-        }
-      ]
-    }
-  ],
-  "productTypeRoleTypeCatRelationshipList": [
-    {
-      "productTypeIdentifier": 1110101,
-      "roleTypeIdentifier": 11104001104,
-      "categoryIdentifier": 100000000001
-    }
-  ],
-  "productTypeRole": [],
-  "roleCategory": [
-    {
-      "id": 0,
-      "label": "Category",
-      "value": "Primary"
-    }
-  ]
+export interface RoleTypeList {
+
+    identifier: number;
+    code: string;
+    name: string;
+    shortName: string;
+    category: number;
+    classification: number;
+    systemDefined: string;
+    calculated: string;
+    roleTypeInquiry: RoleTypeInquiry[];
+    roleCategoryList: RoleCategoryList[];
+    productTypeRoleTypeRelationshipList: RoleTypeRelationshipInsertion[];
+    productTypeRoleTypeCatRelationshipList: ProductTypeRoleTypeCatRelationship[];
+    productTypeRole: ProductTypeRole[];
+    roleCategory: RoleTypeInquiry[];
 }
+
+export interface RoleTypeInquiry {
+    id: number;
+    label: string;
+    value: string;
+  }
+
+  export interface ProductTypeRole {
+    id: number;
+    label: string;
+    value: string;
+  }
+
+
+
+export interface RoleCategoryList {
+    identifier: number;
+    code: string;
+    name: string;
+    shortName: string;
+
+}
+
+
+export interface RoleTypeRelationshipInsertion {
+    identifier: number;
+    roleTypeIdentifier: number;
+    roleTypeCode: string;
+    customerType: string;
+    percentageAllowed: string;
+    isPrimary:string;
+    minimumRequired: number;
+    maximumAllowed: number;
+    applicableOrder: string;
+    maximumAccountAllowed: number;
+    signatureRequired: string;
+    ownerCategory: string;
+    onwerSubCategory: string;
+    additionalDetails: string;
+    productTypeRole: ProductTypeRole[];
+}
+
+
+export interface ProductTypeRoleTypeCatRelationship {
+    productTypeIdentifier: number;
+    roleTypeIdentifier: number;
+    categoryIdentifier: number;
+}
+
+
+
+
+Property 'category1' does not exist on type 'RoleTypeList'. Did you mean 'category'?
+
+762     const category1Labels = element.category1.map(identifier => {
+                                        ~~~~~~~~~
+
+  libs/sd-kit-staging/src/lib/add-edit-roletype/add-edit-roletype.mode.ts:7:5
+    7     category: number;
+          ~~~~~~~~
+    'category' is declared here.
+
+
