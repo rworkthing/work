@@ -1,45 +1,29 @@
-private editRoleTypes(element: RoleTypeList) {
-    this.isAdd = false;
-    this.editRoleType = element;
-    console.log("FOR NEW EDIT", element);
+private addNewRoleType() {
+    this.isAdd = true;
 
-    let selectedTemplate: TemplateRef<any>;
-    let dialogTitle: string;
+    // ✅ Force a fresh instance of the form (instead of just resetting)
+    this.addNewRoleTypeFormGroup = this.fb.group({
+        roleTypeCode: new UntypedFormControl('', [Validators.required]),
+        roleTypeIdentifier: new UntypedFormControl({ value: '', disabled: true }),
+        roleTypeName: new UntypedFormControl(''),
+        roleTypeShortName: new UntypedFormControl(''),
+        category: new UntypedFormControl('', [Validators.required]),
+        classification: new UntypedFormControl('', [Validators.required]),
+        systemDefined: new UntypedFormControl(''),
+        isCalculated: new UntypedFormControl(''),
+        category1: new UntypedFormControl([])
+    });
 
-    if (element.shortName) {
-        selectedTemplate = this.addNewRoleTypeTemp;
-        dialogTitle = 'Edit Role Type';
+    console.log("After Reset (Add New Role):", this.addNewRoleTypeFormGroup.value);
 
-        // ✅ Reset form before patching values
-        this.addNewRoleTypeFormGroup.reset();
-        
-        this.addNewRoleTypeFormGroup.patchValue({
-            roleTypeCode: element.code,
-            roleTypeName: element.name,
-            roleTypeShortName: element.shortName,
-            category: element.category,
-            classification: element.classification,
-            systemDefined: element.systemDefined,
-            isCalculated: element.calculated
-        });
+    this.cdr.detectChanges();  // ✅ Force UI refresh to ensure the new form state is applied
 
-    } else {
-        selectedTemplate = this.addExstRoleTypeTemp;
-        dialogTitle = 'Edit Existing Role Type';
-
-        // ✅ Reset form before patching values
-        this.addExistingRoleTypeFormGroup.reset();
-
-        this.addExistingRoleTypeFormGroup.patchValue({
-            existingRoleCode: element.code,
-            category1: element.productTypeRoleTypeCatRelationshipList.map(rel => rel.categoryIdentifier)
-        });
-    }
-
-    const dialogModel: BodCommonDialogModel = {
-        formTemplate: selectedTemplate,
-        title: dialogTitle
+    let dialogModel: BodCommonDialogModel = {
+        formTemplate: this.addNewRoleTypeTemp,
+        title: 'Add New Role Type'
     };
 
-    this.openDialog(dialogModel);
+    setTimeout(() => {  
+        this.openDialog(dialogModel);
+    });
 }
