@@ -2,3 +2,31 @@ ngOnInit() {
     console.log("On Init - Add New Role Form:", this.addNewRoleTypeFormGroup.value);
     console.log("On Init - Existing Role Form:", this.addExistingRoleTypeFormGroup.value);
 }
+
+ngOnInit() {
+    
+    this.getNewRoleType();
+    this.adDropdownData();
+    this.initializeForms();
+    
+  }
+
+  private initializeForms() {
+    this.addNewRoleTypeFormGroup = this.fb.group({
+      roleTypeCode: new UntypedFormControl('', [Validators.required]),
+      roleTypeIdentifier: [{ value: '', disabled: true }],
+      roleTypeName: new UntypedFormControl(''),
+      roleTypeShortName: new UntypedFormControl(''),
+      category: new UntypedFormControl('', [Validators.required]),
+      classification: new UntypedFormControl('', [Validators.required]),
+      systemDefined: new UntypedFormControl(''),
+      isCalculated: new UntypedFormControl(''),
+      category1: new UntypedFormControl([])
+    });
+    this.addExistingRoleTypeFormGroup = this.fb.group({
+      existingRoleCode: new UntypedFormControl('', [Validators.required]),
+      roleTypeIdentifier: [{ value: '', disabled: true }],
+      category1: new UntypedFormControl([])
+
+    });
+  }
