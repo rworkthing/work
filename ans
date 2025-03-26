@@ -1,90 +1,45 @@
-private roleTypeForm(element: RoleTypeList): void {
-  this.isAdd = false;
+private editRoleTypes(element: RoleTypeList) {
+    this.isAdd = false;
+    this.editRoleType = element;
+    console.log("FOR NEW EDIT", element);
 
-  // ✅ Ensure dropdown data is available before setting form values
-  if (!this.categorys.length || !this.classifications.length) {
-    this.roleTypeService.getRoleCat().subscribe(data => {
-      this.categorys = data.map((item: any) => ({ label: item.code, value: item.identifier }));
-      this.setDropdownValues(element); // ✅ Set values after dropdown data loads
-    });
+    let selectedTemplate: TemplateRef<any>;
+    let dialogTitle: string;
 
-    this.roleTypeService.getAccountClassification().subscribe(data => {
-      this.classifications = data.map((item: any) => ({ label: item.code, value: item.identifier }));
-      this.setDropdownValues(element);
-    });
-  } else {
-    this.setDropdownValues(element); // ✅ If data already exists, set values immediately
-  }
-}
+    if (element.shortName) {
+        selectedTemplate = this.addNewRoleTypeTemp;
+        dialogTitle = 'Edit Role Type';
 
-// ✅ Helper method to correctly set dropdown and category1 values
-private setDropdownValues(element: RoleTypeList) {
-  // ✅ Match category and classification values correctly
-  const selectedCategory = this.categorys.find(cat => cat.value === element.category);
-  const selectedClassification = this.classifications.find(cls => cls.value === element.classification);
+        // ✅ Reset form before patching values
+        this.addNewRoleTypeFormGroup.reset();
+        
+        this.addNewRoleTypeFormGroup.patchValue({
+            roleTypeCode: element.code,
+            roleTypeName: element.name,
+            roleTypeShortName: element.shortName,
+            category: element.category,
+            classification: element.classification,
+            systemDefined: element.systemDefined,
+            isCalculated: element.calculated
+        });
 
-  // ✅ Convert category1 identifiers to corresponding labels
-  const category1Labels = element.category1.map(identifier => {
-    const matchedCategory = this.categorys.find(cat => cat.value === identifier);
-    return matchedCategory ? matchedCategory.label : identifier; // Fallback to identifier if not found
-  });
+    } else {
+        selectedTemplate = this.addExstRoleTypeTemp;
+        dialogTitle = 'Edit Existing Role Type';
 
-  this.addNewRoleTypeFormGroup.patchValue({
-    category: selectedCategory ? selectedCategory.value : null,  // ✅ Fix: Ensure category dropdown value is set correctly
-    classification: selectedClassification ? selectedClassification.value : null,  // ✅ Fix: Ensure classification dropdown value is set correctly
-    category1: category1Labels // ✅ Fix: Show category labels instead of raw identifiers
-  });
-}
+        // ✅ Reset form before patching values
+        this.addExistingRoleTypeFormGroup.reset();
 
+        this.addExistingRoleTypeFormGroup.patchValue({
+            existingRoleCode: element.code,
+            category1: element.productTypeRoleTypeCatRelationshipList.map(rel => rel.categoryIdentifier)
+        });
+    }
 
+    const dialogModel: BodCommonDialogModel = {
+        formTemplate: selectedTemplate,
+        title: dialogTitle
+    };
 
-private loadRoleRelationshipData(element: RoleTypeList): void {
-  this.roleRelationshipTabledata.datasource.data = [];  // Clear existing data
-  this.dataWithRoleRelationshipvalues = [];  // Clear existing data
-
-  element.productTypeRoleTypeRelationshipList?.forEach(relationship => {
-    let obj = {} as RoleRelationshipSampleTable;
-    obj.customerType = String(relationship.customerType);
-    obj.maximumAccountAllowed = relationship.maximumAccountAllowed;
-    obj.minimumRequired = relationship.minimumRequired;
-    obj.maximumAllowed = relationship.maximumAllowed;
-    obj.roleTypes = relationship.productTypeRole.map(role => ({
-      id: role.id,
-      label: role.label,
-      value: role.value
-    }));
-
-    // ✅ Add the data to the table and list
-    this.roleRelationshipTabledata.datasource.data.push(obj);
-    this.dataWithRoleRelationshipvalues.push(obj);
-  });
-
-  // ✅ Ensure Angular detects changes
-  this.roleRelationshipTabledata.datasource.data = [...this.roleRelationshipTabledata.datasource.data];
-}
-
-private setDropdownValues(element: RoleTypeList) {
-  console.log("Dropdown categories:", this.categorys); // Debugging
-  console.log("Dropdown classifications:", this.classifications); // Debugging
-  console.log("Element category:", element.category); // Debugging
-  console.log("Element classification:", element.classification); // Debugging
-
-  // ✅ Match based on label instead of value
-  const selectedCategory = this.categorys.find(cat => cat.label === element.category);
-  const selectedClassification = this.classifications.find(cls => cls.label === element.classification);
-
-  console.log("Selected Category:", selectedCategory); // Debugging
-  console.log("Selected Classification:", selectedClassification); // Debugging
-
-  // Convert category identifiers to corresponding labels
-  const categoryLabels = element.productTypeRoleTypeCatRelationshipList.map(rel => {
-    const matchedCategory = this.categorys.find(cat => cat.value === rel.categoryIdentifier);
-    return matchedCategory ? matchedCategory.label : rel.categoryIdentifier.toString(); // Fallback to identifier if not found
-  });
-
-  this.addNewRoleTypeFormGroup.patchValue({
-    category: selectedCategory ? selectedCategory.value : null,  // ✅ Now correctly setting the value
-    classification: selectedClassification ? selectedClassification.value : null,  // ✅ Now correctly setting the value
-    category1: categoryLabels // ✅ Show category labels instead of raw identifiers
-  });
+    this.openDialog(dialogModel);
 }
