@@ -1,26 +1,4 @@
-private addExistingRoleType() {
-    this.isAdd = true;
-    if (this.addExistingRoleTypeFormGroup) {
-        this.addExistingRoleTypeFormGroup.reset(); // ✅ Always reset before opening
-    }
-
-    let dialogModel: BodCommonDialogModel = {
-        formTemplate: this.addExstRoleTypeTemp,
-        title: 'Relate Existing Role'
-    };
-    this.openDialog(dialogModel);
-}
-
-
-private addNewRoleType() {
-    this.isAdd = true;
-    if (this.addNewRoleTypeFormGroup) {
-        this.addNewRoleTypeFormGroup.reset(); // ✅ Always reset before opening
-    }
-
-    let dialogModel: BodCommonDialogModel = {
-        formTemplate: this.addNewRoleTypeTemp,
-        title: 'Add New Role Type'
-    };
-    this.openDialog(dialogModel);
+ngOnInit() {
+    console.log("On Init - Add New Role Form:", this.addNewRoleTypeFormGroup.value);
+    console.log("On Init - Existing Role Form:", this.addExistingRoleTypeFormGroup.value);
 }
