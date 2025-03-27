@@ -1,125 +1,200 @@
-FOR NEW EDIT in add edit: {
-  "code": "inquirre",
-  "roleTypeInquiry": [
-    {
-      "id": 0,
-      "label": "Name",
-      "value": "Role1"
-    },
-    {
-      "id": 1,
-      "label": "Identifier",
-      "value": 11104001104
-    },
-    {
-      "id": 2,
-      "label": "Short Name",
-      "value": "Role12"
-    },
-    {
-      "id": 3,
-      "label": "Category",
-      "value": "Primary"
-    },
-    {
-      "id": 4,
-      "label": "Classification",
-      "value": "AssetCashContra"
-    },
-    {
-      "id": 5,
-      "label": "System Defined",
-      "value": "Y"
-    },
-    {
-      "id": 6,
-      "label": "Calculated",
-      "value": "N"
-    }
-  ],
-  "identifier": 11104001104,
-  "name": "Role1",
-  "shortName": "Role12",
-  "category": "Primary",
-  "classification": "AssetCashContra",
-  "systemDefined": "Y",
-  "calculated": "N",
-  "roleCategoryList": [
-    {
-      "identifier": 11104001104,
-      "code": "inquirre",
-      "name": "Role1",
-      "shortName": "Role12"
-    }
-  ],
-  "productTypeRoleTypeRelationshipList": [
-    {
-      "identifier": 1110101,
-      "roleTypeIdentifier": 11104001104,
-      "roleTypeCode": "inquirre",
-      "customerType": "Individual",
-      "percentageAllowed": "Y",
-      "isPrimary": "Y",
-      "minimumRequired": 3,
-      "maximumAllowed": 2,
-      "applicableOrder": "Y",
-      "maximumAccountAllowed": 133,
-      "signatureRequired": "Y",
-      "ownerCategory": "csf",
-      "onwerSubCategory": "sfsff",
-      "additionalDetails": "sfsfs",
-      "productTypeRole": [
-        {
-          "id": 0,
-          "label": "Percentage Allowed",
-          "value": "Y"
-        },
-        {
-          "id": 1,
-          "label": "Is Primary",
-          "value": "Y"
-        },
-        {
-          "id": 2,
-          "label": "Applicable Order",
-          "value": "Y"
-        },
-        {
-          "id": 3,
-          "label": "Signature Required",
-          "value": "Y"
-        },
-        {
-          "id": 4,
-          "label": "Owner Category",
-          "value": "csf"
-        },
-        {
-          "id": 5,
-          "label": "Owner SubCategory",
-          "value": "sfsff"
-        },
-        {
-          "id": 6,
-          "label": "Additional Details",
-          "value": "sfsfs"
-        }
-      ]
-    }
-  ],
-  "productTypeRoleTypeCatRelationshipList": [
-    {
-      "productTypeIdentifier": 1110101,
-      "roleTypeIdentifier": 11104001104,
-      "categoryIdentifier": 100000000001
-    }
-  ],
-  "productTypeRole": [],
-  "roleCategory": [
-    {
-      "id": 0,
-      "label": "Category",
-      "value": "Primary"
-    }
-  ]
-}
+  getAttribute(): void {
+    this.metadataService.retrieveAttribute().subscribe(response => {
+
+      console.log('Response from retrieveAttribute:', response);
+      if (response.status === 'SUCCESS' && response.data) {
+        this.attributeData = response.data.map((item: any) => {
+          const attributeData = item.Attribute || {};
+          const additionalDataType = attributeData.additionalDataType || {};
+          const productTypeAdditionalDataList =
+            attributeData.productTypeAdditionalDataList || [];
+          const productTypeAdditionalDataTypeRltnpList =
+            attributeData.productTypeAdditionalDataTypeRltnpList || [];
+          const additionalDataValidValueSetList =
+            attributeData.additionalDataValidValueSetList || [];
+          const additionalDataValidValuesRange =
+            attributeData.additionalDataValidValuesRange;
+
+          let additionalDataValidValueSetListMapped = null;
+          if (additionalDataValidValueSetList.length > 0) {
+            additionalDataValidValueSetListMapped =
+              additionalDataValidValueSetList.map((valueSet: any) => ({
+                identifier: valueSet.identifier,
+                attributeIdentifier: valueSet.attributeIdentifier,
+                name: valueSet.name,
+                description: valueSet.description,
+                value: valueSet.value,
+                isDefault: valueSet.isDefault,
+                isPrimary: valueSet.isPrimary,
+                percentage: valueSet.percentage,
+                sequenceNumber: valueSet.sequenceNumber,
+                overrideDefault: valueSet.overrideDefault,
+                multiLingualTextInfoList: valueSet.multiLingualTextInfoList
+              }));
+          }
+
+          let productTypeAdditionalDataTypeRltnpListMapped = null;
+          if (productTypeAdditionalDataTypeRltnpList.length > 0) {
+            productTypeAdditionalDataTypeRltnpListMapped =
+              productTypeAdditionalDataTypeRltnpList.map(
+                (relationship: any) => ({
+                  identifier: relationship.identifier,
+                  attributeCode: relationship.attributeCode,
+                  attributeIdentifier: relationship.attributeIdentifier,
+                  minimumRequired: relationship.minimumRequired,
+                  maximumAllowed: relationship.maximumAllowed,
+                  glCategarization: relationship.glCategarization
+                })
+              );
+          }
+
+          let productTypeAdditionalDataListMapped = null;
+          if (productTypeAdditionalDataList.length > 0) {
+            productTypeAdditionalDataListMapped =
+              productTypeAdditionalDataList.map((data: any) => ({
+                identifier: data.identifier,
+                attributeIdentifier: data.attributeIdentifier,
+                attributeValue: data.attributeValue,
+                attributeValueSource: data.attributeValueSource,
+                isDefault: data.isDefault,
+                isPrimary: data.isPrimary,
+                percentage: data.percentage,
+                sequenceNumber: data.sequenceNumber,
+                overrideDefault: data.overrideDefault
+              }));
+          }
+
+          let additionalDataValidValuesRangeMapped = null;
+          if (additionalDataValidValuesRange) {
+            additionalDataValidValuesRangeMapped = {
+              identifier: additionalDataValidValuesRange.identifier,
+              attributeIdentifier:
+                additionalDataValidValuesRange.attributeIdentifier,
+              name: additionalDataValidValuesRange.name,
+              description: additionalDataValidValuesRange.description,
+              lowValue: additionalDataValidValuesRange.lowValue,
+              highValue: additionalDataValidValuesRange.highValue,
+              multiLingualTextInfoList:
+                additionalDataValidValuesRange.multiLingualTextInfoList
+            };
+          }
+
+          const attribute: Attribute = {
+            //   additionalDataType: {
+            code: additionalDataType.code
+              ? additionalDataType.code
+              : productTypeAdditionalDataTypeRltnpList[0].attributeCode,
+            descriptions: [
+              {
+                id: 0,
+                label: 'Name',
+                value: additionalDataType.name
+              },
+              {
+                id: 1,
+                label: 'Identifier',
+                value: additionalDataType.identifier
+              },
+              {
+                id: 2,
+                label: 'ShortName',
+                value: additionalDataType.shortName
+              },
+              // {
+              //   id: 3,
+              //   label: 'Description',
+              //   value: additionalDataType.description
+              // },
+              {
+                id: 4,
+                label: 'Type',
+                value: this.type(additionalDataType.objectTypeIdentifier)
+              },
+              {
+                id: 5,
+                label: 'Data type',
+                value: this.formatdatatype(
+                  additionalDataType.formatTypeIdentifier
+                )
+              },
+              {
+                id: 6,
+                label: 'Calculate',
+                value: additionalDataType.calculated
+              },
+              {
+                id: 7,
+                label: 'Searchable',
+                value: additionalDataType.searchable
+              },
+              {
+                id: 8,
+                label: 'Multivalue Allowed',
+                value: additionalDataType.multiValueAllowed
+              },
+              {
+                id: 9,
+                label: 'Percentage Allowed',
+                value: additionalDataType.percentageAllowed
+              },
+              {
+                id: 10,
+                label: 'Classification Type',
+                value: additionalDataType.classificationType
+              }
+            ],
+
+            identifier: additionalDataType.identifier,
+            name: additionalDataType.name,
+            shortName: additionalDataType.shortName,
+            objectTypeIdentifier: additionalDataType.objectTypeIdentifier,
+            formatTypeIdentifier: additionalDataType.formatTypeIdentifier,
+            calculated: additionalDataType.calculated,
+            searchable: additionalDataType.searchable,
+            multiValueAllowed: additionalDataType.multiValueAllowed,
+            percentageAllowed: additionalDataType.percentageAllowed,
+            classificationType: additionalDataType.classificationType,
+            multiLingualTextInfoList:
+              additionalDataType.multiLingualTextInfoList,
+            //    },
+            additionalDataValidValuesRange:
+              additionalDataValidValuesRangeMapped,
+            additionalDataValidValueSetList:
+              additionalDataValidValueSetListMapped,
+            productTypeAdditionalDataTypeRltnpList:
+              productTypeAdditionalDataTypeRltnpListMapped,
+            prdrtpeReltinqMetaData: [
+              {
+                id: 0,
+                label: 'Maximum Allowed',
+                value: productTypeAdditionalDataTypeRltnpList[0].maximumAllowed
+              },
+              {
+                id: 1,
+                label: 'Identifier',
+                value: productTypeAdditionalDataTypeRltnpList[0].identifier
+              },
+              {
+                id: 1,
+                label: 'Minimum Required',
+                value: productTypeAdditionalDataTypeRltnpList[0].minimumRequired
+              },
+              {
+                id: 1,
+                label: 'GL Categorization',
+                value:
+                  productTypeAdditionalDataTypeRltnpList[0].glCategarization
+              }
+            ],
+            productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
+            MetdataStatus: item.MetdataStatus
+          };
+
+          // console.log(attribute);
+          return attribute;
+        });
+        // this.attributeData.sort((a, b) => b.identifier - a.identifier);
+        this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
+      }
+    });
+  }
