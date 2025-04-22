@@ -1,92 +1,120 @@
-<bod-message-container rufId [messages]="messages"></bod-message-container>
-{{messages}}
-
-<bod-table
-  #customTable
-  [customColumnTemplates]="[
-    {
-      columnName: 'actions',
-      templateName: editActionTemplate
-    }
-  ]"
-  [data]="roleTypeTableMetaData"
-  [tableActions]="roleTypeTableActions"
-  (onTableActionClick)="onTableActionClicked1($event)"
-  [expandedRowTemplate]="expandedRowTemplate"
-  (onRowExpand)="rowExpanded($event)"
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
 >
-  <ng-template
-    #editActionTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="actionsForSimple"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
   >
-    <bod-table-actions 
-      sectionActions
-      [actions]="editactions1"
-      (onActionClick)="iconActionClicked($event, element)"
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
     >
-    </bod-table-actions>
-  </ng-template>
-  <ng-template #expandedRowTemplate let-context="context">
-    <div fullwidth>
-      @if(context.element.name){
-      <h1>Role Type</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="roleTypeService.getRoleTypeData(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
       >
-      </bod-inquiry-layout>
-      }
-
-      <bod-table
-        [data]="roleRelationshipTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplate"
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
       >
-        <ng-template #expandedRowTemplate let-context="context">
-          <bod-inquiry-layout
-            [columns]="2"
-            [groups]="
-              roleTypeService.getRoleRelationshipTypeData(context.element)
-            "
-            [softSeparator]="false"
-            [direction]="direction"
-            [information]="[]"
-            (linkClick)="commonDataService.inquiryLayoutClick($event)"
-          >
-          </bod-inquiry-layout>
-        </ng-template>
-      </bod-table>
-      <h1>Role Category Relationships</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="roleTypeService.getAddtnlReltns(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-    </div>
-  </ng-template>
-</bod-table>
-
-<ng-template #addNewRoleTypeTemplate>
-  <bod-add-edit-roletype 
-  (apiResponse)="addRoleTypeEvent($event)"
-  [editRoleTypeRow]="editRoleType">
-  </bod-add-edit-roletype>
-</ng-template>
-
-<ng-template #addExistingRoleTypeTemplate>
-  <bod-existing-role-type 
-  (apiResponse)="addRoleTypeEvent($event)"
-  [editRoleTypeRow]="editRoleType">
-  </bod-existing-role-type>
-</ng-template>
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+    <!-- <bod-control-group
+[truncate]="false"
+[label]="translationKey + 'metadataconfig.locale'"
+[forTextOnly]="true"
+[required]="true"
+>
+<mat-form-field appearance="outline" fisStyle>
+  <mat-select
+    panelClass="fis-style"
+    formControlName="localeCode"
+    name="localeCode"
+  >
+    <mat-option
+      *ngFor="let localeCode of localeCodes"
+      [value]="localeCode.value"
+    >
+      {{ localeCode.label }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+</bod-control-group> -->
+  </bod-table>
+  <!-- <form [formGroup]="localeForm">
+    <ng-template #localeTemplate>
+        <h1>harshit {{locales}}</h1>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.locale'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="locale"
+              name="locale"
+            >
+              <mat-option
+                *ngFor="let locale of locales"
+                [value]="locale.value"
+              >
+                {{ locale.label | json }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </ng-template>
+  </form> -->
+</bod-page-container>
