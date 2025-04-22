@@ -1,3 +1,4 @@
-TypeError: object is not iterable (cannot read property Symbol(Symbol.iterator))
-    at AddEditRoletypeComponent.successResponse (add-edit-roletype.component.ts:540:30)
-    at Object.next (add-edit-roletype.component.ts:527:26)
+Error: libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:626:10 - error TS2551: Property 'localeTableData' does not exist on type 'MetadataConfigComponent'. Did you mean 'localetablesetdata'?
+
+626     this.localeTableData = localeList;    // <-- new variable
+             ~~~~~~~~~~~~~~~
