@@ -1,26 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { MetadataService } from '../metadata.service';
-
-@Component({
-  selector: 'app-your-component',
-  templateUrl: './your-component.component.html',
-  styleUrls: ['./your-component.component.scss']
-})
-export class YourComponent implements OnInit {
-  constructor(private metadataService: MetadataService) {}
-
-  ngOnInit() {
-    this.retrieveAttributes();
-  }
-
-  retrieveAttributes() {
-    this.metadataService.retrieveAttribute().subscribe(
-      (response) => {
-        console.log('Response from retrieveAttribute:', response);
-      },
-      (error) => {
-        console.error('Error retrieving attribute:', error);
-      }
-    );
-  }
+@Input() set localeData(data: BodLocaleTable[]) {
+  this.dataWithSimpleEdit = data || [];
+  this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
 }
+
+
+const localeList: BodLocaleTable[] = (element.multiLingualTextInfoList || []).map(locale => ({
+  locale: locale.localeCode,
+  displayName: locale.translationText,
+  description: locale.localeText
+}));
+
+this.dataWithSimpleEdit = localeList; // optional if still used elsewhere
+this.localeTableData = localeList;    // <-- new variable
+
+
+<bod-simple-edit-table [localeData]="localeTableData"></bod-simple-edit-table>
+
+
+this.tableWithSimpleEdit.datasource.data.push(obj);
