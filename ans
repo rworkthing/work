@@ -1,9 +1,19 @@
-const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+public deleteTableData(index: number): void {
+  if (this.selectedTabIndex === 0) {
+    this.simpleEditTableRef.deleteRow(index);
+    this.tableWithSimpleEdit.datasource.data.splice(index, 1);
+  }
 
-if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
-  const lastKey = this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1];
-  const match = lastKey?.match(/\d+$/); // Extract the number at the end of the key (e.g., groupId_3)
-  index = match ? parseInt(match[0], 10) + 1 : 0;
-} else {
-  index = 0;
+  // Remove controls associated with the deleted row
+  this.searchFieldFormCtrlKeys = this.removeFormControl(this.searchFieldColumnForm, this.searchFieldFormCtrlKeys, index);
+  this.useExistingFormCtrlKeys = this.removeFormControl(this.useExistingColForm, this.useExistingFormCtrlKeys, index);
+  this.overrideDefaultColFormCtrKeys = this.removeFormControl(this.overrideDefaultColumnForm, this.overrideDefaultColFormCtrKeys, index);
+  this.requiredColFormCtrKeys = this.removeFormControl(this.requiredColumnForm, this.requiredColFormCtrKeys, index);
+
+  this.searchFieldObjArr.splice(index, 1);
+
+  // Rebuild forms to re-align indices properly
+  this.setSearchFieldsData(false);
+  this.setOverrideDefaultFieldsData(false);
+  this.setRequiredFieldsData(false);
 }
