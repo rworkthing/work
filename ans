@@ -1,19 +1,34 @@
 public deleteTableData(index: number): void {
-  if (this.selectedTabIndex === 0) {
-    this.simpleEditTableRef.deleteRow(index);
-    this.tableWithSimpleEdit.datasource.data.splice(index, 1);
+  // Step 1: Get the current data
+  const currentData = this.tableWithSimpleEdit.datasource.data;
+
+  // Step 2: Remove the item at the given index
+  currentData.splice(index, 1);
+
+  // Step 3: Update the table's data source with the new array
+  this.tableWithSimpleEdit.datasource.data = [...currentData];
+
+  // Step 4: Remove associated form controls if needed
+  if (this.searchFieldFormCtrlKeys?.length) {
+    this.searchFieldFormCtrlKeys = this.removeFormControl(this.searchFieldColumnForm, this.searchFieldFormCtrlKeys, index);
+  }
+  if (this.useExistingFormCtrlKeys?.length) {
+    this.useExistingFormCtrlKeys = this.removeFormControl(this.useExistingColForm, this.useExistingFormCtrlKeys, index);
+  }
+  if (this.overrideDefaultColFormCtrKeys?.length) {
+    this.overrideDefaultColFormCtrKeys = this.removeFormControl(this.overrideDefaultColumnForm, this.overrideDefaultColFormCtrKeys, index);
+  }
+  if (this.requiredColFormCtrKeys?.length) {
+    this.requiredColFormCtrKeys = this.removeFormControl(this.requiredColumnForm, this.requiredColFormCtrKeys, index);
   }
 
-  // Remove controls associated with the deleted row
-  this.searchFieldFormCtrlKeys = this.removeFormControl(this.searchFieldColumnForm, this.searchFieldFormCtrlKeys, index);
-  this.useExistingFormCtrlKeys = this.removeFormControl(this.useExistingColForm, this.useExistingFormCtrlKeys, index);
-  this.overrideDefaultColFormCtrKeys = this.removeFormControl(this.overrideDefaultColumnForm, this.overrideDefaultColFormCtrKeys, index);
-  this.requiredColFormCtrKeys = this.removeFormControl(this.requiredColumnForm, this.requiredColFormCtrKeys, index);
+  // Step 5: Update searchFieldObjArr and reset relevant controls
+  if (this.searchFieldObjArr.length > index) {
+    this.searchFieldObjArr.splice(index, 1);
+  }
 
-  this.searchFieldObjArr.splice(index, 1);
+  // Step 6: Notify that the form/table may be dirty or changed
+  this.tableDirty.emit(true);
 
-  // Rebuild forms to re-align indices properly
-  this.setSearchFieldsData(false);
-  this.setOverrideDefaultFieldsData(false);
-  this.setRequiredFieldsData(false);
+  console.log(`🗑️ Row at index ${index} deleted successfully.`);
 }
