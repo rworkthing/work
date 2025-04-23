@@ -97,6 +97,8 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
   public formStatus = false;
   public precision = 0;
   public translationKey = TranslationKey;
+  public showActionsForSimple: boolean = false;
+
   @Output() tableDirty = new EventEmitter<boolean>();
   @Output() completeDeltaChange = new EventEmitter<any>();
   @Output() translationDetails = new EventEmitter<any>();
@@ -115,7 +117,8 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       this.messages = [];
       this.modeOptionsSimple = { input: true, reset: false };
       this.pageModeSimple = PageMode.INPUT;
-      this.rowLevelActionsForBasicEdit[0].disabled = true;
+      // this.rowLevelActionsForBasicEdit[0].disabled = true;
+      this.showActionsForSimple = true;
       // this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
       //   ...obj
       // }));
@@ -127,6 +130,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       this.modeOptionsSimple = { input: false, reset: true };
       this.pageModeSimple = PageMode.INQUIRY;
       this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.showActionsForSimple = false
     }
   }
 
@@ -149,12 +153,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
   };
 
   public rowLevelActionsForBasicEdit: BodTableAction[] = [
-    {
-      id: 0,
-      icon: 'edit',
-      label: 'mbpBod.demo.microsite.tableActions.labels.edit',
-      mostCommon: true
-    },
+    
     {
       id: 1,
       icon: 'trash',
@@ -291,6 +290,10 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
   public columnSimpleEdit = this.columns;
 
   public localeCodes: { label: string, value: string }[] = [];
+
+  public getCurrentTableData(): BodLocaleTable[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
 
 
   public successMsg: NotificationMessage = {
@@ -449,13 +452,12 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
     // logic to get index from last search field control key and create new search field control
     switch (this.selectedTabIndex) {
       case 0: {
-        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
-          lastSearchFieldCtrl =
-            this.searchFieldFormCtrlKeys[
-            this.searchFieldFormCtrlKeys.length - 1
-            ];
-          index =
-            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+        const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+
+        if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
+          const lastKey = this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1];
+          const match = lastKey?.match(/\d+$/); // Extract the number at the end of the key (e.g., groupId_3)
+          index = match ? parseInt(match[0], 10) + 1 : 0;
         } else {
           index = 0;
         }
@@ -802,22 +804,32 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       };
       this.pageModeSimple = PageMode.INQUIRY;
       this.rowLevelActionsForBasicEdit[0].disabled = false;
-
-      // Add translationObject to the array
-      this.translationObjectsArray.push(this.translationObject);
-
-      console.log("translationObject after save = ", this.translationObject);
-      console.log("translationObjectsArray after save = ", this.translationObjectsArray);
-
-      this.translationDetails.emit(this.tableWithSimpleEdit.datasource.data);
+    
+      // 💡 Type cast and check values
+      const updatedRow = this.translationObject as BodLocaleTable;
+      const allRows = this.tableWithSimpleEdit.datasource.data as BodLocaleTable[];
+    
+      console.log('%c📝 DEBUG: translationObject:', 'color: cyan', updatedRow);
+      console.log('%c📋 DEBUG: All Rows Before Update:', 'color: orange', [...allRows]);
+    
+      // 🛠 Match and update row
+      const existingIndex = allRows.findIndex(row => row.id === updatedRow.id);
+    
+      if (existingIndex !== -1) {
+        console.log(`🔄 Updating row at index ${existingIndex}`);
+        allRows[existingIndex] = { ...updatedRow };
+      } else {
+        console.warn('⚠️ Row not found, pushing new one:', updatedRow);
+        allRows.push(updatedRow);
+      }
+    
+      this.translationObjectsArray = [...allRows];
+    
+      console.log('%c✅ DEBUG: Final translationObjectsArray to emit:', 'color: green', this.translationObjectsArray);
+    
+      this.translationDetails.emit(this.translationObjectsArray);
+    
       this.updateFormStateAsPristine();
-    } else if ($event === 'reset') {
-      this.singleRowEdit = {
-        modeOptions: { input: false, reset: true },
-        index: 0
-      };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
     }
   }
 
