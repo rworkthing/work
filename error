@@ -1,4 +1,2 @@
-Error: libs/sd-kit-staging/src/lib/metadat-config/metadata-config.component.ts:626:10 - error TS2551: Property 'localeTableData' does not exist on type 'MetadataConfigComponent'. Did you mean 'localetablesetdata'?
-
-626     this.localeTableData = localeList;    // <-- new variable
-             ~~~~~~~~~~~~~~~
+Cannot read properties of undefined (reading 'length')
+    at SimpleEditTableComponent.updateCustomColumnFormFields (simple-edit-table.component.ts:462:62)
