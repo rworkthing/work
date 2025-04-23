@@ -1,37 +1,34 @@
-@Input() set localeData(data: BodLocaleTable[]) {
-  this.dataWithSimpleEdit = data || [];
-  this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+else if ($event === 'save') {
+  this.singleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  this.pageModeSimple = PageMode.INQUIRY;
+  this.rowLevelActionsForBasicEdit[0].disabled = false;
 
-  // Rebuild forms based on new data
-  this.buildLocaleForms();
-}
+  // 💡 Type cast and check values
+  const updatedRow = this.translationObject as BodLocaleTable;
+  const allRows = this.tableWithSimpleEdit.datasource.data as BodLocaleTable[];
 
+  console.log('%c📝 DEBUG: translationObject:', 'color: cyan', updatedRow);
+  console.log('%c📋 DEBUG: All Rows Before Update:', 'color: orange', [...allRows]);
 
-buildLocaleForms() {
-  this.inputLocaleLayoutFormDisplayName = new UntypedFormGroup({});
-  this.inputLocaleLayoutFormLocale = new UntypedFormGroup({});
-  this.inputLocaleLayoutFormDesc = new UntypedFormGroup({});
+  // 🛠 Match and update row
+  const existingIndex = allRows.findIndex(row => row.id === updatedRow.id);
 
-  this.useExistingFormCtrlKeysDisplayName = [];
-  this.useExistingFormCtrlKeysLocale = [];
-  this.useExistingFormCtrlKeysDesc = [];
+  if (existingIndex !== -1) {
+    console.log(`🔄 Updating row at index ${existingIndex}`);
+    allRows[existingIndex] = { ...updatedRow };
+  } else {
+    console.warn('⚠️ Row not found, pushing new one:', updatedRow);
+    allRows.push(updatedRow);
+  }
 
-  this.dataWithSimpleEdit.forEach((row, index) => {
-    this.inputLocaleLayoutFormLocale.addControl(
-      `locale${index}`,
-      new UntypedFormControl(row.locale, Validators.required)
-    );
-    this.inputLocaleLayoutFormDisplayName.addControl(
-      `displayName${index}`,
-      new UntypedFormControl(row.displayName)
-    );
-    this.inputLocaleLayoutFormDesc.addControl(
-      `description${index}`,
-      new UntypedFormControl(row.description)
-    );
+  this.translationObjectsArray = [...allRows];
 
-    this.useExistingFormCtrlKeysLocale.push(`locale${index}`);
-    this.useExistingFormCtrlKeysDisplayName.push(`displayName${index}`);
-    this.useExistingFormCtrlKeysDesc.push(`description${index}`);
-  });
+  console.log('%c✅ DEBUG: Final translationObjectsArray to emit:', 'color: green', this.translationObjectsArray);
+
+  this.translationDetails.emit(this.translationObjectsArray);
+
+  this.updateFormStateAsPristine();
 }
