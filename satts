@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { Amount, BodAutoCompleteMetadata, BodCommonModule, BodConfirmAlertDialogsService, BodConfirmDialogModel, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormStateService, BodKeyValuePairMetadata, BodPageContainerModule, BodPipeName, BodTableAction, BodTableActionsModule, BodTableComponent, BodTableDataSource, BodTableMetadata, BodTableModule, Column, ColumnType, ControlGroupModule, Currency, DirectivesModule, InputLayoutModule, InquiryLayoutModule, ListType, MaxLengthStrategy, MessageContainerModule, ModeOptions, NotificationMessage, NotificationMessageType, PageAction, PageMode, SearchFieldModule, SectionContainerModule, SingleRowEdit } from '@bod/common';
@@ -97,7 +97,14 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
   public formStatus = false;
   public precision = 0;
   public translationKey = TranslationKey;
+  @Output() completeDeltaChange = new EventEmitter<any>();
   @Output() translationDetails = new EventEmitter<any>();
+  @Input() set localeData(data: BodLocaleTable[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+  }
+
+  
 
   public onPageAction(event) {
     if (event === PageAction.EDIT) {
@@ -725,6 +732,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
     );
     this.translationObject = {};
     console.log('CompleteDelta::', event.completeDelta);
+    this.completeDeltaChange.emit(event.completeDelta);
     if (event.currentChanges.rowData.locale != undefined) {
       Object.assign(this.translationObject, { "locale": event.currentChanges.rowData.locale });
       // console.log('locale::', event.currentChanges.rowData.locale);
