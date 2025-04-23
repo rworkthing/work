@@ -1,5 +1,21 @@
-const multiLingualTextInfoList = (this.completeDeltaData || []).map(delta => ({
-  localeCode: delta.rowData?.locale || '',
-  translationText: delta.rowData?.displayName || '',
-  localeText: delta.rowData?.description || ''
-}));
+let multiLingualTextInfoList: MultiLingualTextInfo[] = [];
+
+if (Array.isArray(this.completeDeltaData)) {
+  multiLingualTextInfoList = this.completeDeltaData.map((item: any) => {
+    const rowData = item.rowData || {};
+
+    return {
+      localeCode: rowData.locale,                // e.g., "en", "fr", etc.
+      localeText: rowData.description,           // Localized description
+      translationText: rowData.displayName,      // Localized display name
+      identifier: formValues.identifier,         // Comes from main form
+      objectType: formValues.type,               // Comes from main form
+      attributeType: formValues.datatype         // Comes from main form
+    };
+  }).filter(item => !!item.localeCode); // Filter out incomplete entries
+
+  console.log('multiLingualTextInfoList:', multiLingualTextInfoList);
+} else {
+  console.error('completeDeltaData is not an array:', this.completeDeltaData);
+}
+
