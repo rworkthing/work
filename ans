@@ -27,3 +27,16 @@ onSave() {
   console.log('📦 Final submission payload:', payload);
   this.metadataService.submitAttribute(payload).subscribe(...);
 }
+
+
+const localeTableData = this.simpleEditTableRef.getCurrentTableData?.() || [];
+
+const multiLingualTextInfoList: MultiLingualTextInfo[] = localeTableData.map(item => ({
+  localeCode: item.locale,
+  localeText: item.description,
+  translationText: item.displayName,
+  identifier: formValue.identifier,
+  objectType: formValue.type,
+  attributeType: formValue.datatype
+}));
+
