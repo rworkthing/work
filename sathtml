@@ -7,7 +7,7 @@
 >
   <bod-table
     [data]="tableWithSimpleEdit"
-    [tableActions]="actionsForSimple"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []" 
     [modeOptions]="modeOptionsSimple"
     [singleRowEdit]="singleRowEdit"
     [customColumnTemplates]="[
