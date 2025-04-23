@@ -102,7 +102,10 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
   @Input() set localeData(data: BodLocaleTable[]) {
     this.dataWithSimpleEdit = data || [];
     this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log("dataWithSimpleEdit: ", this.dataWithSimpleEdit );
   }
+
+
 
   
 
@@ -112,12 +115,12 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       this.modeOptionsSimple = { input: true, reset: false };
       this.pageModeSimple = PageMode.INPUT;
       this.rowLevelActionsForBasicEdit[0].disabled = true;
-      this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-        ...obj
-      }));
-      this.setSearchFieldsData(false);
-      this.setOverrideDefaultFieldsData(false);
-      this.setRequiredFieldsData(false);
+      // this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      //   ...obj
+      // }));
+      // this.setSearchFieldsData(false);
+      // this.setOverrideDefaultFieldsData(false);
+      // this.setRequiredFieldsData(false);
     } else {
       this.checkStatus(false);
       this.modeOptionsSimple = { input: false, reset: true };
@@ -321,6 +324,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
 
   ngOnInit(): void {
     this.loadDropdownData();
+    this.onPageAction("")
 
     this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
     this.subscriptions.add(
@@ -748,6 +752,19 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       // console.log('CurrentChanges::', event.currentChanges.rowData.description);
       console.log("translationObject2 = ", this.translationObject);
     }
+  }
+
+
+  public resetTableForm() {
+    this.translationObject = {};
+    this.translationObjectsArray = [];
+    this.dataWithSimpleEdit = [];
+    this.tableWithSimpleEdit.datasource.data = [];
+  
+    setTimeout(() => {
+      this.simpleEditTableRef?.tableFormGroup.reset();
+      this.formStateService.formState$.next(false);
+    });
   }
 
   /**
