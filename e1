@@ -1,5 +1,298 @@
-export interface BodLocaleTable {
-  locale: string;
-  displayName: string;
-  description: string;
-}
+ public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+    });
+    // logic to get index from last search field control key and create new search field control
+    switch (this.selectedTabIndex) {
+      case 0: {
+        const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+
+        if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
+          const lastKey = this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1];
+          const match = lastKey?.match(/\d+$/); // Extract the number at the end of the key (e.g., groupId_3)
+          index = match ? parseInt(match[0], 10) + 1 : 0;
+        } else {
+          index = 0;
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'groupId',
+      index,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeys = this.addFormControl(
+      this.useExistingColForm,
+      'useExisting',
+      index,
+      false,
+      'No'
+    );
+
+    this.overrideDefaultColFormCtrKeys = this.addFormControl(
+      this.overrideDefaultColumnForm,
+      'overrideDefault',
+      index,
+      false,
+      'true'
+    );
+
+    this.requiredColFormCtrKeys = this.addFormControl(
+      this.requiredColumnForm,
+      'required',
+      index,
+      false,
+      'true'
+    );
+  }
+
+  public setOverrideDefaultFieldsData(isReset: any) {
+    const overrideDefaultCtrlObj = {};
+    let data: any;
+    switch (this.selectedTabIndex) {
+      case 0: {
+        data = isReset
+          ? this.dataForReset
+          : this.tableWithSimpleEdit.datasource.data;
+        break;
+      }
+
+      default:
+        break;
+    }
+    data.forEach((row, ind) => {
+      if (
+        !this.singleRowEdit?.modeOptions?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        overrideDefaultCtrlObj['overrideDefault' + ind] =
+          new UntypedFormControl(row.overrideDefault);
+      }
+    });
+    this.overrideDefaultColumnForm = this.formBuilder.group(
+      overrideDefaultCtrlObj
+    );
+    this.overrideDefaultColFormCtrKeys = Object.keys(
+      this.overrideDefaultColumnForm.controls
+    );
+  }
+
+  public setSearchFieldsData(isReset) {
+    const useExistingFormCtrlObj = {};
+    const searchFieldFormCtrlObj = {};
+    this.searchFieldObjArr = [];
+    let data: any;
+    switch (this.selectedTabIndex) {
+      case 0: {
+        data = isReset
+          ? this.dataForReset
+          : this.tableWithSimpleEdit.datasource.data;
+        break;
+      }
+      default:
+        break;
+    }
+    data.forEach((row, ind) => {
+      if (
+        !this.singleRowEdit?.modeOptions?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
+          row.groupId,
+          Validators.required
+        );
+        useExistingFormCtrlObj['useExistingGroupId' + ind] =
+          new UntypedFormControl(row.useExistingGroupId);
+        this.searchFieldObjArr[ind] = {
+          searchFieldData: {
+            label: '',
+            fieldName: 'groupId',
+            descFieldName: 'groupName',
+            required: true,
+            hideLabel: true,
+            hideFilterCriteria: true,
+            disableInput: true,
+            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
+            hideDescription: false
+          },
+          searchTableData: {
+            columns: this.columnsForDemoService,
+            enablePagination: true,
+            paginationOptions: {
+              pageSize: 5,
+              length: 12
+            },
+            datasource: new BodTableDataSource<SampleEC>(
+              new DemoTableDataService(this.http)
+            ),
+            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+          }
+        };
+      }
+    });
+    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
+    this.searchFieldFormCtrlKeys = Object.keys(
+      this.searchFieldColumnForm.controls
+    );
+    this.useExistingFormCtrlKeys = Object.keys(
+      this.useExistingColForm.controls
+    );
+  }
+
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+    this.setSearchFieldsData(false);
+    this.setOverrideDefaultFieldsData(false);
+    this.setRequiredFieldsData(false);
+  }
+
+  public setRequiredFieldsData(isReset) {
+    const requiredCtrlObj = {};
+    let data: any;
+    switch (this.selectedTabIndex) {
+      case 0: {
+        data = isReset
+          ? this.dataForReset
+          : this.tableWithSimpleEdit.datasource.data;
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    data.forEach((row, ind) => {
+      if (
+        !this.singleRowEdit?.modeOptions?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        requiredCtrlObj['required' + ind] = new UntypedFormControl(
+          row.required
+        );
+      }
+    });
+    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
+    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
+
+    // disable child (required) control based on the parent (overrideDefault) control value
+    if (this.singleRowEdit?.modeOptions?.input) {
+      if (
+        !this.overrideDefaultColumnForm.controls[
+          'overrideDefault' + this.singleRowEdit?.index
+        ].value
+      ) {
+        this.requiredColumnForm.controls[
+          'required' + this.singleRowEdit?.index
+        ].disable({
+          emitEvent: true
+        });
+      }
+    } else {
+      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
+        (key, ind) => {
+          if (!this.overrideDefaultColumnForm.controls[key].value) {
+            this.requiredColumnForm.controls['required' + ind].disable({
+              emitEvent: true
+            });
+          }
+        }
+      );
+    }
+  }
+  public selectedLocaleData: any[] = [];
+
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+
+    const updatedData = {
+      // id: ++this.lastModifiedIndex,
+      // useExistingGroupId: 'Yes',
+      // mailingType: this.inputForSelectKeyValue.options[0].value,
+      // activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
+      // verifiedAddress: true,
+      // groupId: '123',
+      // groupName: 'Insurance',
+      // amount: new Amount(this.currencies[0], 1200),
+      // country: this.inputForSingleSelectWithFlagIcon.options[2].value,
+      // analyzedOn: new Date('Sep 10 2018'),
+      // updatedOn: new Date('Sep 12 2018'),
+      // deliveryMethod: 'email',
+      // pointOfContact: 'Home',
+      // authorizeCheckbox: Boolean(
+      //   this.inputForAuthorizeCheckboxValue.options[0].value
+      // ),
+      // usePreferred: 'No',
+      // address: 'emily.daily@xyz.com',
+      // time: moment(new Date()),
+      // dateTime: new Date(),
+      // addressOrder: Number('1'),
+      // overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
+      // required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+    };
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input) {
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setSearchFieldsData(false);
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+
+  public addFormControl(form, columnName, index, isRequired, defaultValue) {
+    isRequired
+      ? form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue, Validators.required)
+      )
+      : form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue)
+      );
+    return Object.keys(form.controls);
+  }
