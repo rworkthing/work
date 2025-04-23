@@ -224,12 +224,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   // public checkStatus(status) {
   //   this.formStatus = status;
   // }
-
   @Input() editAttributeRow: Attribute;
   @Output() selectedRole: EventEmitter<BodLocaleTable[]> = new EventEmitter<
     BodLocaleTable[]
   >();
-  @ViewChild('simpleEditTableRef', { static: false })
+  @ViewChild('simpleEditTableRef')
   simpleEditTableRef: SimpleEditTableComponent;
   @ViewChild(MatTable) localetable!: MatTable<any>;
 
@@ -328,6 +327,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   isRelateToProductTemplate = false;
   isValidValueTypes = false;
   public categorySearchVal: UntypedFormControl = new UntypedFormControl('');
+  public onTableDirty():void {
+    this.addNewAttributeFormGroup.markAsDirty();
+  }
 
   // if (this.isEdit) {
   //   this.tableLevelAction = this.hasAddPermission
@@ -504,6 +506,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.inputLocaleLayoutFormDisplayName.reset();
     this.inputLocaleLayoutFormDesc.reset();
     this.inputLayoutForm.reset();
+    this.localeTableData = [];
     if (this.simpleEditTableRef) {
       this.simpleEditTableRef.resetTableForm();
     }
