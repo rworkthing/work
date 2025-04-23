@@ -1,34 +1,19 @@
-else if ($event === 'save') {
-  this.singleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
+public addTableData() {
+  // Add a new row with empty/default values
+  const newRow = {
+    locale: '',
+    displayName: '',
+    description: ''
   };
-  this.pageModeSimple = PageMode.INQUIRY;
-  this.rowLevelActionsForBasicEdit[0].disabled = false;
 
-  // 💡 Type cast and check values
-  const updatedRow = this.translationObject as BodLocaleTable;
-  const allRows = this.tableWithSimpleEdit.datasource.data as BodLocaleTable[];
+  // Add the row to the table
+  this.simpleEditTableRef.addRow(newRow);
 
-  console.log('%c📝 DEBUG: translationObject:', 'color: cyan', updatedRow);
-  console.log('%c📋 DEBUG: All Rows Before Update:', 'color: orange', [...allRows]);
-
-  // 🛠 Match and update row
-  const existingIndex = allRows.findIndex(row => row.id === updatedRow.id);
-
-  if (existingIndex !== -1) {
-    console.log(`🔄 Updating row at index ${existingIndex}`);
-    allRows[existingIndex] = { ...updatedRow };
-  } else {
-    console.warn('⚠️ Row not found, pushing new one:', updatedRow);
-    allRows.push(updatedRow);
-  }
-
-  this.translationObjectsArray = [...allRows];
-
-  console.log('%c✅ DEBUG: Final translationObjectsArray to emit:', 'color: green', this.translationObjectsArray);
-
-  this.translationDetails.emit(this.translationObjectsArray);
-
-  this.updateFormStateAsPristine();
+  // Set up edit mode for the newly added row
+  const newIndex = this.tableWithSimpleEdit.datasource.data.length - 1;
+  this.singleRowEdit = {
+    modeOptions: { input: true, reset: false },
+    index: newIndex
+  };
+  this.pageModeSimple = PageMode.NONE;
 }
