@@ -220,6 +220,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   };
   public modeOptionsSimple = this.modeOptions;
   public pageModeSimple = this.pageMode;
+  public localeTableData: BodLocaleTable[] = [];
   // public checkStatus(status) {
   //   this.formStatus = status;
   // }
@@ -616,16 +617,14 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.dataWithExsistingValidvalues = [];
     this.tableWithSimpleEdit.datasource.data = [];
 
-    element.multiLingualTextInfoList?.forEach(element => {
-      let obj = {} as BodLocaleTable;
-      obj.locale = element.localeCode;
-      obj.displayName = element.translationText;
-      obj.description = element.localeText;
-      this.tableWithSimpleEdit.datasource.data.push(obj);
-      this.dataWithlocale.push(obj);
+    const localeList: BodLocaleTable[] = (element.multiLingualTextInfoList || []).map(locale => ({
+      locale: locale.localeCode,
+      displayName: locale.translationText,
+      description: locale.localeText
+    }));
 
-
-    });
+    this.dataWithSimpleEdit = localeList; // optional if still used elsewhere
+    this.localeTableData = localeList;    // <-- new variable
 
 
     element.productTypeAdditionalDataList?.forEach(element => {
@@ -1100,6 +1099,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     ),
     noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
   };
+
   public localetablerangedata: BodTableMetadata;
   public localetablesetdata: BodTableMetadata;
 
@@ -2309,6 +2309,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     console.log('CompleteDelta::', event.completeDelta);
   }
 
+  completeDeltaData: any;
+  handleCompleteDeltaChange(data: any) {
+    this.completeDeltaData = data;
+    console.log('Received CompleteDelta from child:', this.completeDeltaData);
+  }
+
 
 
   deleteLocaleRowrange(index: number) {
@@ -2436,23 +2442,26 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         this.datatypes.find(item => item.label === selectedFormatType)?.value,
         10
       ) || parseInt(selectedFormatType, 10);
+
     let multiLingualTextInfoList: MultiLingualTextInfo[] = [];
-    if (Array.isArray(this.receivedTranslationDetails)) {
-      multiLingualTextInfoList = this.receivedTranslationDetails.map((item: any, index: number) => {
+
+    // Ensure completeDeltaData is an array
+    if (Array.isArray(this.completeDeltaData)) {
+      multiLingualTextInfoList = this.completeDeltaData.map((item: any, index: number) => {
         return {
           localeCode: item.locale, // From receivedTranslationDetails
           localeText: item.description, // From receivedTranslationDetails
           identifier: formValue.identifier,
           objectType: formValue.type,
           attributeType: formValue.datatype,
-          translationText: item.displayName
-          // From receivedTranslationDetails
+          translationText: item.displayName // From receivedTranslationDetails
         };
       }).filter(item => item.localeCode);
       console.log('multiLingualTextInfoList:', multiLingualTextInfoList);
     } else {
-      console.error('receivedTranslationDetails is not an array:', this.receivedTranslationDetails);
+      console.error('completeDeltaData is not an array:', this.completeDeltaData);
     }
+
 
 
     const multiLingualTextInfoRangeList = Object.keys(
@@ -3207,7 +3216,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       classificationtype: [{ value: 'systemDefined', disabled: true }],
       // validvaluestype: new UntypedFormControl(''),
       relatetoproducttype: new UntypedFormControl(''),
-      multiLingualTextInfoList:  new UntypedFormControl(''),
+      multiLingualTextInfoList: new UntypedFormControl(''),
       attributevalue: new UntypedFormControl(''),
       // setname: new UntypedFormControl(''),
       // setdescription: new UntypedFormControl(''),
