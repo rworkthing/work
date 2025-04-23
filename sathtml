@@ -1,856 +1,120 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { Amount, BodAutoCompleteMetadata, BodCommonModule, BodConfirmAlertDialogsService, BodConfirmDialogModel, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormStateService, BodKeyValuePairMetadata, BodPageContainerModule, BodPipeName, BodTableAction, BodTableActionsModule, BodTableComponent, BodTableDataSource, BodTableMetadata, BodTableModule, Column, ColumnType, ControlGroupModule, Currency, DirectivesModule, InputLayoutModule, InquiryLayoutModule, ListType, MaxLengthStrategy, MessageContainerModule, ModeOptions, NotificationMessage, NotificationMessageType, PageAction, PageMode, SearchFieldModule, SectionContainerModule, SingleRowEdit } from '@bod/common';
-import moment from 'moment';
-
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { CommonModule } from '@angular/common';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { RufIconModule } from '@ruf/shell/icon';
-import { Subscription, take } from 'rxjs';
-import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { BodEditableSampleTable, BodLocaleTable, SearchFieldInputData } from '../bod-table-demo.model';
-import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
-import { SystemMessageService } from '../system-message.service';
-import { MetadataService } from '../metadat-config/metada-config.service';
-import { TranslationKey } from '../metadat-config/codegen-config.constant';
-
-@Component({
-  selector: 'bod-simple-edit-table',
-  standalone: true,
-  imports: [
-    BodTableModule,
-    TranslateModule,
-    MatTableModule,
-    MatTabsModule,
-    BodTableActionsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    CommonModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    ControlGroupModule,
-    ReactiveFormsModule,
-    MessageContainerModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    BodPageContainerModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    MatDatepickerModule,
-    BodCommonModule
-  ],
-  templateUrl: './simple-edit-table.component.html',
-  styleUrl: './simple-edit-table.component.css'
-})
-export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewInit {
-
-  private subscriptions: Subscription = new Subscription();
-  public messages: NotificationMessage[] = [];
-  translationObject = {};
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
-  selectedTabIndex = 0;
-  public localeForm: UntypedFormGroup;
-  showEdit = true;
-  public lastModifiedIndex: number;
-  public requiredColumnForm: UntypedFormGroup;
-  public overrideDefaultColumnForm: UntypedFormGroup;
-  public useExistingColForm: UntypedFormGroup;
-  public useExistingFormCtrlKeys: string[] = [];
-  public requiredColFormCtrKeys: string[] = [];
-  public searchFieldFormCtrlKeys: string[] = [];
-  public searchFieldObjArr: SearchFieldInputData[] = [];
-  public overrideDefaultColFormCtrKeys: string[] = [];
-  public tableRefArray: any[] = [];
-  public searchFieldColumnForm: UntypedFormGroup;
-  @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef: BodTableComponent;
-  public pageMode = PageMode.INQUIRY;
-  public pageModeSimple = this.pageMode;
-  private dataForReset: BodEditableSampleTable[] = [];
-  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
-  public maxLength = 5;
-  public minAmount = 2;
-  public maxAmount = 9999;
-  public minNumber = 1;
-  public maxNumber = 1000;
-  public formStatus = false;
-  public precision = 0;
-  public translationKey = TranslationKey;
-  @Output() completeDeltaChange = new EventEmitter<any>();
-  @Output() translationDetails = new EventEmitter<any>();
-  @Input() set localeData(data: BodLocaleTable[]) {
-    this.dataWithSimpleEdit = data || [];
-    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
-  }
-
-  
-
-  public onPageAction(event) {
-    if (event === PageAction.EDIT) {
-      this.messages = [];
-      this.modeOptionsSimple = { input: true, reset: false };
-      this.pageModeSimple = PageMode.INPUT;
-      this.rowLevelActionsForBasicEdit[0].disabled = true;
-      this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-        ...obj
-      }));
-      this.setSearchFieldsData(false);
-      this.setOverrideDefaultFieldsData(false);
-      this.setRequiredFieldsData(false);
-    } else {
-      this.checkStatus(false);
-      this.modeOptionsSimple = { input: false, reset: true };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-    }
-  }
-
-
-  public currencies: Currency[] = [
-    new Currency('USD', 'United States Dollar', 2, ''),
-    new Currency('EUR', 'EURO', 2, ''),
-    new Currency('CRC', 'Costa Rican Colón', 2, ''),
-    new Currency('GBP', 'Pound Sterling', 2, ''),
-    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
-    new Currency('JPY', 'Japanese Yen', 0, ''),
-    new Currency('CNY', 'Chinese Yuan', 2, '')
-  ];
-
-  public ConfirmData: BodConfirmDialogModel = {
-    title: 'mbpBod.demo.microsite.dialogs.confirm.title',
-    message: 'mbpBod.demo.microsite.table.confirmDialog.message',
-    confirm: 'mbpBod.demo.microsite.table.confirmDialog.delete',
-    dismiss: 'mbpBod.demo.microsite.table.confirmDialog.cancel'
-  };
-
-  public rowLevelActionsForBasicEdit: BodTableAction[] = [
-    {
-      id: 0,
-      icon: 'edit',
-      label: 'mbpBod.demo.microsite.tableActions.labels.edit',
-      mostCommon: true
-    },
-    {
-      id: 1,
-      icon: 'trash',
-      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
-      mostCommon: false
-    }
-  ];
-
-  public actionsForSimple: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'add',
-      label: 'mbpBod.demo.microsite.tableActions.labels.add',
-      mostCommon: false
-    }
-  ];
-
-  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Yes'
-      },
-      {
-        value: false,
-        label: 'No'
-      }
-    ]
-  };
-
-  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
-    options: [
-      {
-        value: 'MX',
-        label: 'Mexico'
-      },
-      {
-        value: 'IN',
-        label: 'India'
-      },
-      {
-        value: 'US',
-        label: 'California United States of America USA '
-      }
-    ],
-    type: ListType.COUNTRY,
-    required: true
-  };
-
-  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Yes'
-      },
-      {
-        value: false,
-        label: 'No'
-      }
-    ]
-  };
-
-  public inputForCheckboxValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Active'
-      },
-      {
-        value: false,
-        label: 'Inactive'
-      }
-    ]
-  };
-
-  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: '1',
-        label: 'Primary Shipping'
-      },
-      {
-        value: '2',
-        label: 'Primary Billing'
-      }
-    ]
-  };
-
-  public columns: Column[] = [
-    {
-      name: 'locale',
-      title: 'Locale',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [],
-        validators: {
-          required: true,
-          max: 20,
-          maxLengthStrategy: this.selectedStrategy
-        },
-
-      }
-    },
-    {
-      name: 'displayName',
-      title: 'Display Name',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.input,
-
-        isNotEditable: false,
-        existingDataNotEditable: false
-      }
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.input,
-
-        isNotEditable: false,
-        existingDataNotEditable: false
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true,
-      width: 7
-    }
-  ];
-  public columnSimpleEdit = this.columns;
-
-  public localeCodes: { label: string, value: string }[] = [];
-
-
-  public successMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant(
-      'mbpBod.demo.microsite.table.messages.success'
-    ),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
-  public resetMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
-
-  constructor(
-    public commonDataService: BodTableDemoCommonDataService,
-    private http: HttpClient,
-    private formBuilder: UntypedFormBuilder,
-    private translate: TranslateService,
-    private systemMessage: SystemMessageService,
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    private formStateService: BodFormStateService,
-    private metadataService: MetadataService,
-  ) {
-    this.selectedLocaleData = [];
-  }
-
-  ngOnInit(): void {
-    this.loadDropdownData();
-
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-    this.subscriptions.add(
-      this.translate.onTranslationChange.subscribe(lang => {
-        const keys = [
-          'mbpBod.demo.microsite.table.messages.success',
-          'mbpBod.demo.microsite.table.messages.reset'
-        ];
-        this.translate
-          .get(keys)
-          .pipe(take(1))
-          .subscribe(value => {
-            this.successMsg.text = value[keys[0]];
-            this.resetMsg.text = value[keys[1]];
-          });
-      })
-    );
-  }
-  loadDropdownData(): void {
-    // this.metadataService.getLocaleCodes().subscribe(
-    //   (data: string[]) => {
-    //     console.log('Received data:', data); // Log the received data
-    //     const mappedData = data.map(item => ({
-    //       label: item, // Use the string itself as the label
-    //       value: item  // Use the string itself as the value
-    //     }));
-
-    //     this.columns[0].inputModeOptions.model = mappedData;
-    //     console.log('Mapped data:', mappedData); // Log the mapped data
-    //   }
-    // );
-
-    this.metadataService.getLocaleCodes().subscribe((locales: any[]) => {
-      const localeValues = locales.map(locale => locale);
-      this.columns[0].inputModeOptions.model = localeValues;
-    });
-
-
-
-
-  }
-  ngAfterViewInit() {
-    this.tableRefArray = [this.simpleEditTableRef];
-  }
-  ngOnDestroy() {
-    this.subscriptions.unsubscribe();
-  }
-
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
-  };
-
-
-
-  public columnsForDemoService: Column[] = [
-    { name: 'groupId', title: 'mbpBod.demo.microsite.table.labels.groupID' },
-    {
-      name: 'groupName',
-      title: 'mbpBod.demo.microsite.table.labels.groupName',
-      disableSorting: true
-    },
-    {
-      name: 'startDate',
-      title: 'mbpBod.demo.microsite.table.labels.startDate',
-      pipe: { name: BodPipeName.BodDate },
-      disableSorting: true
-    },
-    {
-      name: 'relationship',
-      title: 'mbpBod.demo.microsite.table.labels.relationship',
-      disableSorting: true
-    }
-  ];
-
-
-
-
-
-  public dataWithSimpleEdit: BodLocaleTable[] = [
-
-  ];
-
-  public tableWithSimpleEdit: BodTableMetadata = {
-    title: 'Locale Table',
-    columns: this.columnSimpleEdit,
-    datasource: new MatTableDataSource<BodLocaleTable>(
-      this.dataWithSimpleEdit
-    ),
-    noRecordsMessage: 'No Locale Defined'
-  };
-
-
-  public updateCustomColumnFormFields() {
-    let lastSearchFieldCtrl;
-    let index;
-    this.searchFieldObjArr.push({
-      searchFieldData: {
-        label: '',
-        fieldName: 'groupId',
-        descFieldName: 'groupName',
-        required: true,
-        hideLabel: true,
-        hideFilterCriteria: true,
-        disableInput: true,
-        hideDescription: false
-      },
-      searchTableData: {
-        columns: this.columnsForDemoService,
-        enablePagination: true,
-        paginationOptions: {
-          pageSize: 5,
-          length: 12
-        },
-        datasource: new BodTableDataSource<SampleEC>(
-          new DemoTableDataService(this.http)
-        ),
-        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-      }
-    });
-    // logic to get index from last search field control key and create new search field control
-    switch (this.selectedTabIndex) {
-      case 0: {
-        if (this.tableWithSimpleEdit.datasource.data.length > 1) {
-          lastSearchFieldCtrl =
-            this.searchFieldFormCtrlKeys[
-            this.searchFieldFormCtrlKeys.length - 1
-            ];
-          index =
-            parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
-        } else {
-          index = 0;
-        }
-        break;
-      }
-
-      default:
-        break;
-    }
-    this.searchFieldFormCtrlKeys = this.addFormControl(
-      this.searchFieldColumnForm,
-      'groupId',
-      index,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeys = this.addFormControl(
-      this.useExistingColForm,
-      'useExisting',
-      index,
-      false,
-      'No'
-    );
-
-    this.overrideDefaultColFormCtrKeys = this.addFormControl(
-      this.overrideDefaultColumnForm,
-      'overrideDefault',
-      index,
-      false,
-      'true'
-    );
-
-    this.requiredColFormCtrKeys = this.addFormControl(
-      this.requiredColumnForm,
-      'required',
-      index,
-      false,
-      'true'
-    );
-  }
-
-  public setOverrideDefaultFieldsData(isReset: any) {
-    const overrideDefaultCtrlObj = {};
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-
-      default:
-        break;
-    }
-    data.forEach((row, ind) => {
-      if (
-        !this.singleRowEdit?.modeOptions?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        overrideDefaultCtrlObj['overrideDefault' + ind] =
-          new UntypedFormControl(row.overrideDefault);
-      }
-    });
-    this.overrideDefaultColumnForm = this.formBuilder.group(
-      overrideDefaultCtrlObj
-    );
-    this.overrideDefaultColFormCtrKeys = Object.keys(
-      this.overrideDefaultColumnForm.controls
-    );
-  }
-
-  public setSearchFieldsData(isReset) {
-    const useExistingFormCtrlObj = {};
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-      default:
-        break;
-    }
-    data.forEach((row, ind) => {
-      if (
-        !this.singleRowEdit?.modeOptions?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
-          row.groupId,
-          Validators.required
-        );
-        useExistingFormCtrlObj['useExistingGroupId' + ind] =
-          new UntypedFormControl(row.useExistingGroupId);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'groupId',
-            descFieldName: 'groupName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
-            hideDescription: false
-          },
-          searchTableData: {
-            columns: this.columnsForDemoService,
-            enablePagination: true,
-            paginationOptions: {
-              pageSize: 5,
-              length: 12
-            },
-            datasource: new BodTableDataSource<SampleEC>(
-              new DemoTableDataService(this.http)
-            ),
-            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-          }
-        };
-      }
-    });
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(
-      this.searchFieldColumnForm.controls
-    );
-    this.useExistingFormCtrlKeys = Object.keys(
-      this.useExistingColForm.controls
-    );
-  }
-
-  setDataForSingleLineEditMode(editIndex: number) {
-    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-      ...obj
-    }));
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: editIndex
-    };
-    this.pageModeSimple = PageMode.NONE;
-    this.setSearchFieldsData(false);
-    this.setOverrideDefaultFieldsData(false);
-    this.setRequiredFieldsData(false);
-  }
-
-  public setRequiredFieldsData(isReset) {
-    const requiredCtrlObj = {};
-    let data: any;
-    switch (this.selectedTabIndex) {
-      case 0: {
-        data = isReset
-          ? this.dataForReset
-          : this.tableWithSimpleEdit.datasource.data;
-        break;
-      }
-
-      default:
-        break;
-    }
-
-    data.forEach((row, ind) => {
-      if (
-        !this.singleRowEdit?.modeOptions?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        requiredCtrlObj['required' + ind] = new UntypedFormControl(
-          row.required
-        );
-      }
-    });
-    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
-    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
-
-    // disable child (required) control based on the parent (overrideDefault) control value
-    if (this.singleRowEdit?.modeOptions?.input) {
-      if (
-        !this.overrideDefaultColumnForm.controls[
-          'overrideDefault' + this.singleRowEdit?.index
-        ].value
-      ) {
-        this.requiredColumnForm.controls[
-          'required' + this.singleRowEdit?.index
-        ].disable({
-          emitEvent: true
-        });
-      }
-    } else {
-      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
-        (key, ind) => {
-          if (!this.overrideDefaultColumnForm.controls[key].value) {
-            this.requiredColumnForm.controls['required' + ind].disable({
-              emitEvent: true
-            });
-          }
-        }
-      );
-    }
-  }
-  public selectedLocaleData: any[] = [];
-
-  public addTableData() {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-
-    const updatedData = {
-      // id: ++this.lastModifiedIndex,
-      // useExistingGroupId: 'Yes',
-      // mailingType: this.inputForSelectKeyValue.options[0].value,
-      // activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
-      // verifiedAddress: true,
-      // groupId: '123',
-      // groupName: 'Insurance',
-      // amount: new Amount(this.currencies[0], 1200),
-      // country: this.inputForSingleSelectWithFlagIcon.options[2].value,
-      // analyzedOn: new Date('Sep 10 2018'),
-      // updatedOn: new Date('Sep 12 2018'),
-      // deliveryMethod: 'email',
-      // pointOfContact: 'Home',
-      // authorizeCheckbox: Boolean(
-      //   this.inputForAuthorizeCheckboxValue.options[0].value
-      // ),
-      // usePreferred: 'No',
-      // address: 'emily.daily@xyz.com',
-      // time: moment(new Date()),
-      // dateTime: new Date(),
-      // addressOrder: Number('1'),
-      // overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
-      // required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
-    };
-
-    this.simpleEditTableRef.addRow(updatedData);
-
-    if (this.modeOptionsSimple?.input) {
-      this.updateCustomColumnFormFields();
-    } else {
-      this.singleRowEdit = {
-        modeOptions: { input: true, reset: false },
-        index: this.tableWithSimpleEdit.datasource.data.length - 1
-      };
-      this.setSearchFieldsData(false);
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
-    }
-  }
-
-  public addFormControl(form, columnName, index, isRequired, defaultValue) {
-    isRequired
-      ? form.addControl(
-        columnName + index,
-        new UntypedFormControl(defaultValue, Validators.required)
-      )
-      : form.addControl(
-        columnName + index,
-        new UntypedFormControl(defaultValue)
-      );
-    return Object.keys(form.controls);
-  }
-
-  /**
-   * Method to update formstatus
-   */
-  public checkStatus(status: any) {
-    this.formStatus = status;
-  }
-
-  // Method to display SystemMessage with current event and EditTable delta log
-
-
-
-  public onEditTableAction(event) {
-    this.commonDataService.updateMessage(
-      'mbpBod.demo.microsite.table.editTableEvent',
-      JSON.stringify(event.currentChanges)
-    );
-    this.translationObject = {};
-    console.log('CompleteDelta::', event.completeDelta);
-    this.completeDeltaChange.emit(event.completeDelta);
-    if (event.currentChanges.rowData.locale != undefined) {
-      Object.assign(this.translationObject, { "locale": event.currentChanges.rowData.locale });
-      // console.log('locale::', event.currentChanges.rowData.locale);
-      console.log("translationObject1 = ", this.translationObject);
-    }
-    if (event.currentChanges.rowData.displayName != undefined) {
-      Object.assign(this.translationObject, { "displayName": event.currentChanges.rowData.displayName });
-      // console.log('CurrentChanges::', event.currentChanges.rowData.displayName);
-      console.log("translationObject2 = ", this.translationObject);
-    }
-    if (event.currentChanges.rowData.description != undefined) {
-      Object.assign(this.translationObject, { "description": event.currentChanges.rowData.description });
-      // console.log('CurrentChanges::', event.currentChanges.rowData.description);
-      console.log("translationObject2 = ", this.translationObject);
-    }
-  }
-
-  /**
-   * Method to handle row level actions for basic edit table
-   */
-
-  translationObjectsArray: any[] = [];
-
-
-  handleRowLevelActions($event: any, index: any) {
-    if ($event === 'edit') {
-      this.setDataForSingleLineEditMode(index);
-    } else if ($event === 'trash') {
-      if (this.modeOptionsSimple?.input) {
-        this.deleteTableData(index);
-      } else {
-        this.subscriptions.add(
-          this.bodConfirmAlertDialogsService
-            .confirm(this.ConfirmData)
-            .subscribe(val => {
-              if (val) {
-                this.deleteTableData(index);
-              }
-            })
-        );
-      }
-    } else if ($event === 'save') {
-      this.singleRowEdit = {
-        modeOptions: { input: false, reset: false },
-        index: 0
-      };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-
-      // Add translationObject to the array
-      this.translationObjectsArray.push(this.translationObject);
-
-      console.log("translationObject after save = ", this.translationObject);
-      console.log("translationObjectsArray after save = ", this.translationObjectsArray);
-
-      this.translationDetails.emit(this.translationObjectsArray);
-      this.updateFormStateAsPristine();
-    } else if ($event === 'reset') {
-      this.singleRowEdit = {
-        modeOptions: { input: false, reset: true },
-        index: 0
-      };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-    }
-  }
-
-
-  private updateFormStateAsPristine() {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef?.tableFormGroup.markAsPristine();
-        this.formStateService.formState$.next(
-          this.simpleEditTableRef.tableFormGroup.dirty
-        );
-        break;
-      }
-
-      default:
-        break;
-    }
-  }
-
-  /**
-   * Method to delete row of a table
-   */
-  public deleteTableData(index) {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef.deleteRow(index);
-        break;
-      }
-
-      default:
-        break;
-    }
-
-    if (this.searchFieldColumnForm) {
-      this.searchFieldFormCtrlKeys = this.removeFormControl(
-        this.searchFieldColumnForm,
-        this.searchFieldFormCtrlKeys,
-        index
-      );
-      this.searchFieldObjArr.splice(index, 1);
-      this.useExistingFormCtrlKeys = this.removeFormControl(
-        this.useExistingColForm,
-        this.useExistingFormCtrlKeys,
-        index
-      );
-    }
-  }
-
-  /**
-   * This method is to remove form control from form and return formcontrol Keys array when a row is deleted
-   */
-  public removeFormControl(form: any, formControlKeys: any, index: any) {
-    form.removeControl(formControlKeys[index]);
-    return Object.keys(form.controls);
-  }
-
-}
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="actionsForSimple"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+    <!-- <bod-control-group
+[truncate]="false"
+[label]="translationKey + 'metadataconfig.locale'"
+[forTextOnly]="true"
+[required]="true"
+>
+<mat-form-field appearance="outline" fisStyle>
+  <mat-select
+    panelClass="fis-style"
+    formControlName="localeCode"
+    name="localeCode"
+  >
+    <mat-option
+      *ngFor="let localeCode of localeCodes"
+      [value]="localeCode.value"
+    >
+      {{ localeCode.label }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+</bod-control-group> -->
+  </bod-table>
+  <!-- <form [formGroup]="localeForm">
+    <ng-template #localeTemplate>
+        <h1>harshit {{locales}}</h1>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.locale'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="locale"
+              name="locale"
+            >
+              <mat-option
+                *ngFor="let locale of locales"
+                [value]="locale.value"
+              >
+                {{ locale.label | json }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </ng-template>
+  </form> -->
+</bod-page-container>
