@@ -229,9 +229,10 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   @Output() selectedRole: EventEmitter<BodLocaleTable[]> = new EventEmitter<
     BodLocaleTable[]
   >();
-  @ViewChild(MatTable) localetable!: MatTable<any>;
   @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef: BodTableComponent;
+  simpleEditTableRef: SimpleEditTableComponent;
+  @ViewChild(MatTable) localetable!: MatTable<any>;
+
   @ViewChild('customTable', { static: true })
   expandableTable1Ref: BodTableComponent;
   @ViewChild('addNewAttributeTemplate')
@@ -503,6 +504,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.inputLocaleLayoutFormDisplayName.reset();
     this.inputLocaleLayoutFormDesc.reset();
     this.inputLayoutForm.reset();
+    if (this.simpleEditTableRef) {
+      this.simpleEditTableRef.resetTableForm();
+    }
 
     this.isAdd = true;
     // this.editAttribute = null;
@@ -617,7 +621,10 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.dataWithExsistingValidvalues = [];
     this.tableWithSimpleEdit.datasource.data = [];
 
-    const localeList: BodLocaleTable[] = (element.multiLingualTextInfoList || []).map(locale => ({
+
+
+    const localeList: BodLocaleTable[] = (element.multiLingualTextInfoList || []).map((locale, i) => ({
+      id: i,
       locale: locale.localeCode,
       displayName: locale.translationText,
       description: locale.localeText
@@ -625,6 +632,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     this.dataWithSimpleEdit = localeList; // optional if still used elsewhere
     this.localeTableData = localeList;    // <-- new variable
+    console.log("localedataa:", this.localeTableData );
 
 
     element.productTypeAdditionalDataList?.forEach(element => {
@@ -2032,47 +2040,47 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       'true'
     );
   }
-  public addTableData() {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+  // public addTableData() {
+  //   this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
 
-    const updatedData = {
-      id: ++this.lastModifiedIndex,
-      useExistingGroupId: 'Yes',
-      mailingType: this.inputForSelectKeyValue.options[0].value,
-      activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
-      verifiedAddress: true,
-      groupId: '123',
-      groupName: 'Insurance',
-      amount: new Amount(this.currencies[0], 1200),
-      country: this.inputForSingleSelectWithFlagIcon.options[2].value,
-      analyzedOn: new Date('Sep 10 2018'),
-      updatedOn: new Date('Sep 12 2018'),
-      deliveryMethod: 'email',
-      pointOfContact: 'Home',
-      authorizeCheckbox: Boolean(
-        this.inputForAuthorizeCheckboxValue.options[0].value
-      ),
-      usePreferred: 'No',
-      address: 'emily.daily@xyz.com',
-      time: moment(new Date()),
-      dateTime: new Date(),
-      addressOrder: Number('1'),
-      overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
-      required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
-    };
+  //   const updatedData = {
+  //     id: ++this.lastModifiedIndex,
+  //     useExistingGroupId: 'Yes',
+  //     mailingType: this.inputForSelectKeyValue.options[0].value,
+  //     activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
+  //     verifiedAddress: true,
+  //     groupId: '123',
+  //     groupName: 'Insurance',
+  //     amount: new Amount(this.currencies[0], 1200),
+  //     country: this.inputForSingleSelectWithFlagIcon.options[2].value,
+  //     analyzedOn: new Date('Sep 10 2018'),
+  //     updatedOn: new Date('Sep 12 2018'),
+  //     deliveryMethod: 'email',
+  //     pointOfContact: 'Home',
+  //     authorizeCheckbox: Boolean(
+  //       this.inputForAuthorizeCheckboxValue.options[0].value
+  //     ),
+  //     usePreferred: 'No',
+  //     address: 'emily.daily@xyz.com',
+  //     time: moment(new Date()),
+  //     dateTime: new Date(),
+  //     addressOrder: Number('1'),
+  //     overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
+  //     required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+  //   };
 
-    this.simpleEditTableRef.addRow(updatedData);
+  //   this.simpleEditTableRef.addRow(updatedData);
 
-    if (this.modeOptionsSimple?.input) {
-      this.updateCustomColumnFormFields();
-    } else {
-      this.singleRowEdit = {
-        modeOptions: { input: true, reset: false },
-        index: this.tableWithSimpleEdit.datasource.data.length - 1
-      };
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
-    }
-  }
+  //   if (this.modeOptionsSimple?.input) {
+  //     this.updateCustomColumnFormFields();
+  //   } else {
+  //     this.singleRowEdit = {
+  //       modeOptions: { input: true, reset: false },
+  //       index: this.tableWithSimpleEdit.datasource.data.length - 1
+  //     };
+  //     this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+  //   }
+  // }
 
 
   public addSimpleTableData() {
@@ -2445,22 +2453,25 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     let multiLingualTextInfoList: MultiLingualTextInfo[] = [];
 
-    // Ensure completeDeltaData is an array
     if (Array.isArray(this.completeDeltaData)) {
-      multiLingualTextInfoList = this.completeDeltaData.map((item: any, index: number) => {
+      multiLingualTextInfoList = this.completeDeltaData.map((item: any) => {
+        const rowData = item.rowData || {};
+
         return {
-          localeCode: item.locale, // From receivedTranslationDetails
-          localeText: item.description, // From receivedTranslationDetails
+          localeCode: rowData.locale,
+          localeText: rowData.description,
+          translationText: rowData.displayName,
           identifier: formValue.identifier,
           objectType: formValue.type,
-          attributeType: formValue.datatype,
-          translationText: item.displayName // From receivedTranslationDetails
+          attributeType: formValue.datatype
         };
-      }).filter(item => item.localeCode);
+      }).filter(item => !!item.localeCode); // Filter out incomplete entries
+
       console.log('multiLingualTextInfoList:', multiLingualTextInfoList);
     } else {
       console.error('completeDeltaData is not an array:', this.completeDeltaData);
     }
+
 
 
 
