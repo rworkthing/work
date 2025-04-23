@@ -1,21 +1,32 @@
-let multiLingualTextInfoList: MultiLingualTextInfo[] = [];
+else if ($event === 'save') {
+  this.singleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  this.pageModeSimple = PageMode.INQUIRY;
+  this.rowLevelActionsForBasicEdit[0].disabled = false;
 
-if (Array.isArray(this.completeDeltaData)) {
-  multiLingualTextInfoList = this.completeDeltaData.map((item: any) => {
-    const rowData = item.rowData || {};
+  // ✅ Update the specific row in the data source
+  const updatedRow = this.translationObject;
+  const allRows = this.tableWithSimpleEdit.datasource.data;
 
-    return {
-      localeCode: rowData.locale,                // e.g., "en", "fr", etc.
-      localeText: rowData.description,           // Localized description
-      translationText: rowData.displayName,      // Localized display name
-      identifier: formValues.identifier,         // Comes from main form
-      objectType: formValues.type,               // Comes from main form
-      attributeType: formValues.datatype         // Comes from main form
-    };
-  }).filter(item => !!item.localeCode); // Filter out incomplete entries
+  const existingIndex = allRows.findIndex(
+    row => row.locale === updatedRow.locale
+  );
 
-  console.log('multiLingualTextInfoList:', multiLingualTextInfoList);
-} else {
-  console.error('completeDeltaData is not an array:', this.completeDeltaData);
+  if (existingIndex !== -1) {
+    allRows[existingIndex] = { ...updatedRow }; // Replace existing
+  } else {
+    allRows.push(updatedRow); // Add new if somehow missing
+  }
+
+  // ✅ Reset or update your array accordingly
+  this.translationObjectsArray = [...allRows];
+
+  console.log("✅ All Translations After Save:", this.translationObjectsArray);
+
+  // ✅ Emit all rows, not just the edited one
+  this.translationDetails.emit(this.translationObjectsArray);
+
+  this.updateFormStateAsPristine();
 }
-
