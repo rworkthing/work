@@ -1,20 +1,26 @@
-@Input() set localeData(data: BodLocaleTable[]) {
-  this.dataWithSimpleEdit = data || [];
-  this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+public resetTableForm() {
+  this.translationObject = {};
+  this.translationObjectsArray = [];
+  this.dataWithSimpleEdit = [];
+  this.tableWithSimpleEdit.datasource.data = [];
+
+  setTimeout(() => {
+    this.simpleEditTableRef?.tableFormGroup.reset();
+    this.formStateService.formState$.next(false);
+  });
 }
 
+@ViewChild('simpleEditTableRef', { static: false })
+simpleEditTableRef: SimpleEditTableComponent;
 
-const localeList: BodLocaleTable[] = (element.multiLingualTextInfoList || []).map(locale => ({
-  locale: locale.localeCode,
-  displayName: locale.translationText,
-  description: locale.localeText
-}));
+private addNewAttribute() {
+  // ...existing logic
+  this.addNewAttributeFormGroup.reset();
 
-this.dataWithSimpleEdit = localeList; // optional if still used elsewhere
-this.localeTableData = localeList;    // <-- new variable
+  // ✅ Reset the locale table form in the child
+  if (this.simpleEditTableRef) {
+    this.simpleEditTableRef.resetTableForm();
+  }
 
-
-<bod-simple-edit-table [localeData]="localeTableData"></bod-simple-edit-table>
-
-
-this.tableWithSimpleEdit.datasource.data.push(obj);
+  // ...rest of your logic
+}
