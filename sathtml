@@ -1,3 +1,4 @@
+{{tableWithSimpleEdit.datasource.data | json}}
 <bod-page-container
   [pageMode]="pageModeSimple"
   (pageAction)="onPageAction($event)"
