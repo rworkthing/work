@@ -523,6 +523,7 @@
             <bod-simple-edit-table (translationDetails)="receiveTranslationDetailsValues($event)"
             [localeData]="localeTableData"
             (completeDeltaChange)="handleCompleteDeltaChange($event)"
+            (tableDirty) = "onTableDirty()"
             >
           </bod-simple-edit-table>
           </bod-input-layout> 
