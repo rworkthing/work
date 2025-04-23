@@ -1,32 +1,29 @@
-else if ($event === 'save') {
-  this.singleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
+public getCurrentTableData(): BodLocaleTable[] {
+  return this.tableWithSimpleEdit?.datasource?.data || [];
+}
+
+
+@ViewChild('simpleEditTableRef')
+simpleEditTableRef: SimpleEditTableComponent;
+
+
+<bod-simple-edit-table
+  #simpleEditTableRef
+  [localeData]="localeTableData"
+>
+</bod-simple-edit-table>
+
+
+onSave() {
+  const localeTableData = this.simpleEditTableRef.getCurrentTableData();
+  console.log('🌍 Locale table data being submitted:', localeTableData);
+
+  // Add to the payload or form submission logic
+  const payload = {
+    ...this.addNewAttributeFormGroup.value,
+    multiLingualTextInfoList: localeTableData
   };
-  this.pageModeSimple = PageMode.INQUIRY;
-  this.rowLevelActionsForBasicEdit[0].disabled = false;
 
-  // ✅ Update the specific row in the data source
-  const updatedRow = this.translationObject;
-  const allRows = this.tableWithSimpleEdit.datasource.data;
-
-  const existingIndex = allRows.findIndex(
-    row => row.locale === updatedRow.locale
-  );
-
-  if (existingIndex !== -1) {
-    allRows[existingIndex] = { ...updatedRow }; // Replace existing
-  } else {
-    allRows.push(updatedRow); // Add new if somehow missing
-  }
-
-  // ✅ Reset or update your array accordingly
-  this.translationObjectsArray = [...allRows];
-
-  console.log("✅ All Translations After Save:", this.translationObjectsArray);
-
-  // ✅ Emit all rows, not just the edited one
-  this.translationDetails.emit(this.translationObjectsArray);
-
-  this.updateFormStateAsPristine();
+  console.log('📦 Final submission payload:', payload);
+  this.metadataService.submitAttribute(payload).subscribe(...);
 }
