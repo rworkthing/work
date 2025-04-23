@@ -97,6 +97,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
   public formStatus = false;
   public precision = 0;
   public translationKey = TranslationKey;
+  @Output() tableDirty = new EventEmitter<boolean>();
   @Output() completeDeltaChange = new EventEmitter<any>();
   @Output() translationDetails = new EventEmitter<any>();
   @Input() set localeData(data: BodLocaleTable[]) {
@@ -752,6 +753,8 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       // console.log('CurrentChanges::', event.currentChanges.rowData.description);
       console.log("translationObject2 = ", this.translationObject);
     }
+
+    this.tableDirty.emit(true);
   }
 
 
@@ -765,6 +768,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       this.simpleEditTableRef?.tableFormGroup.reset();
       this.formStateService.formState$.next(false);
     });
+    console.log("resetting locale table")
   }
 
   /**
@@ -805,7 +809,7 @@ export class SimpleEditTableComponent implements OnInit, OnDestroy, AfterViewIni
       console.log("translationObject after save = ", this.translationObject);
       console.log("translationObjectsArray after save = ", this.translationObjectsArray);
 
-      this.translationDetails.emit(this.translationObjectsArray);
+      this.translationDetails.emit(this.tableWithSimpleEdit.datasource.data);
       this.updateFormStateAsPristine();
     } else if ($event === 'reset') {
       this.singleRowEdit = {
