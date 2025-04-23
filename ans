@@ -1,42 +1,9 @@
-public getCurrentTableData(): BodLocaleTable[] {
-  return this.tableWithSimpleEdit?.datasource?.data || [];
+const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+
+if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
+  const lastKey = this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1];
+  const match = lastKey?.match(/\d+$/); // Extract the number at the end of the key (e.g., groupId_3)
+  index = match ? parseInt(match[0], 10) + 1 : 0;
+} else {
+  index = 0;
 }
-
-
-@ViewChild('simpleEditTableRef')
-simpleEditTableRef: SimpleEditTableComponent;
-
-
-<bod-simple-edit-table
-  #simpleEditTableRef
-  [localeData]="localeTableData"
->
-</bod-simple-edit-table>
-
-
-onSave() {
-  const localeTableData = this.simpleEditTableRef.getCurrentTableData();
-  console.log('🌍 Locale table data being submitted:', localeTableData);
-
-  // Add to the payload or form submission logic
-  const payload = {
-    ...this.addNewAttributeFormGroup.value,
-    multiLingualTextInfoList: localeTableData
-  };
-
-  console.log('📦 Final submission payload:', payload);
-  this.metadataService.submitAttribute(payload).subscribe(...);
-}
-
-
-const localeTableData = this.simpleEditTableRef.getCurrentTableData?.() || [];
-
-const multiLingualTextInfoList: MultiLingualTextInfo[] = localeTableData.map(item => ({
-  localeCode: item.locale,
-  localeText: item.description,
-  translationText: item.displayName,
-  identifier: formValue.identifier,
-  objectType: formValue.type,
-  attributeType: formValue.datatype
-}));
-
