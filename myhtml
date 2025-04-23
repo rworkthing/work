@@ -520,7 +520,11 @@
           </bod-table>
            -->
           <bod-input-layout>
-            <bod-simple-edit-table (translationDetails)="receiveTranslationDetailsValues($event)"></bod-simple-edit-table>
+            <bod-simple-edit-table (translationDetails)="receiveTranslationDetailsValues($event)"
+            [localeData]="localeTableData"
+            (completeDeltaChange)="handleCompleteDeltaChange($event)"
+            >
+          </bod-simple-edit-table>
           </bod-input-layout> 
 
           <!-- <bod-input-layout>
