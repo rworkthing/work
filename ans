@@ -1,26 +1,5 @@
-public resetTableForm() {
-  this.translationObject = {};
-  this.translationObjectsArray = [];
-  this.dataWithSimpleEdit = [];
-  this.tableWithSimpleEdit.datasource.data = [];
-
-  setTimeout(() => {
-    this.simpleEditTableRef?.tableFormGroup.reset();
-    this.formStateService.formState$.next(false);
-  });
-}
-
-@ViewChild('simpleEditTableRef', { static: false })
-simpleEditTableRef: SimpleEditTableComponent;
-
-private addNewAttribute() {
-  // ...existing logic
-  this.addNewAttributeFormGroup.reset();
-
-  // ✅ Reset the locale table form in the child
-  if (this.simpleEditTableRef) {
-    this.simpleEditTableRef.resetTableForm();
-  }
-
-  // ...rest of your logic
-}
+const multiLingualTextInfoList = (this.completeDeltaData || []).map(delta => ({
+  localeCode: delta.rowData?.locale || '',
+  translationText: delta.rowData?.displayName || '',
+  localeText: delta.rowData?.description || ''
+}));
