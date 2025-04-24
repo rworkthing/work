@@ -126,10 +126,10 @@ import { RoleTypeComponent } from '../role-type/role-type.component';
 import { BalanceTypeComponent } from '../balance-type/balance-type.component';
 import { BalanceTypeService } from '../balance-type/balance-type-service';
 import { BalanceTypeTableLevelActions } from '../balance-type/balance-type-constants';
-import moment from 'moment';
-import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
-import { HttpClient } from '@angular/common/http';
 import { SimpleEditTableComponent } from '../simple-edit-table/simple-edit-table.component';
+import { HttpClient } from '@angular/common/http';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+import { ConditionDetailComponent } from '../conditions/condition-detail.component';
 interface TableProps {
   formGroup: UntypedFormGroup;
   data: BodTableMetadata;
@@ -143,6 +143,7 @@ interface TabIndexTableMap {
   selector: 'bod-metadata-config',
   standalone: true,
   imports: [
+    ConditionDetailComponent,
     RoleTypeComponent,
     BalanceTypeComponent,
     InquiryLayoutModule,
@@ -196,7 +197,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   public pageMode = PageMode.INQUIRY;
   public searchFieldObjArr: SearchFieldInputData[] = [];
   public searchFieldColumnForm: UntypedFormGroup;
-  public useExistingColForm: UntypedFormGroup;
+  // public useExistingColForm: UntypedFormGroup;
   public overrideDefaultColumnForm: UntypedFormGroup;
   public requiredColumnForm: UntypedFormGroup;
   public searchFieldFormCtrlKeys: string[] = [];
@@ -221,17 +222,15 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   public modeOptionsSimple = this.modeOptions;
   public pageModeSimple = this.pageMode;
   public localeTableData: BodLocaleTable[] = [];
-  // public checkStatus(status) {
-  //   this.formStatus = status;
-  // }
+
   @Input() editAttributeRow: Attribute;
   @Output() selectedRole: EventEmitter<BodLocaleTable[]> = new EventEmitter<
     BodLocaleTable[]
   >();
   @ViewChild('simpleEditTableRef')
   simpleEditTableRef: SimpleEditTableComponent;
-  @ViewChild(MatTable) localetable!: MatTable<any>;
 
+  @ViewChild(MatTable) localetable!: MatTable<any>;
   @ViewChild('customTable', { static: true })
   expandableTable1Ref: BodTableComponent;
   @ViewChild('addNewAttributeTemplate')
@@ -307,6 +306,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   public addExistingAttributeFormGroup: UntypedFormGroup;
   public addLocaleFormGroup: UntypedFormGroup;
   public useExistingFormCtrlKeysDisplayName: string[] = [];
+  public useExistingColForm: UntypedFormGroup = new UntypedFormGroup({});
   useExistingFormCtrlKeysLocale: string[] = [];
   useExistingFormCtrlKeysDesc: string[] = [];
   useExistingFormCtrlKeysRangeLocale: string[] = [];
@@ -420,84 +420,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.openDialog(dialogModel);
     this.dataWithExsistingValidvalues = [];
   }
-  public currencies: Currency[] = [
-    new Currency('USD', 'United States Dollar', 2, ''),
-    new Currency('EUR', 'EURO', 2, ''),
-    new Currency('CRC', 'Costa Rican Colón', 2, ''),
-    new Currency('GBP', 'Pound Sterling', 2, ''),
-    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
-    new Currency('JPY', 'Japanese Yen', 0, ''),
-    new Currency('CNY', 'Chinese Yuan', 2, '')
-  ];
-  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
-    options: [
-      {
-        value: 'MX',
-        label: 'Mexico'
-      },
-      {
-        value: 'IN',
-        label: 'India'
-      },
-      {
-        value: 'US',
-        label: 'California United States of America USA '
-      }
-    ],
-    type: ListType.COUNTRY,
-    required: true
-  };
-
-  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: '1',
-        label: 'Primary Shipping'
-      },
-      {
-        value: '2',
-        label: 'Primary Billing'
-      }
-    ]
-  };
-  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Yes'
-      },
-      {
-        value: false,
-        label: 'No'
-      }
-    ]
-  };
-
-
-  public inputForCheckboxValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Active'
-      },
-      {
-        value: false,
-        label: 'Inactive'
-      }
-    ]
-  };
-  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
-    options: [
-      {
-        value: true,
-        label: 'Yes'
-      },
-      {
-        value: false,
-        label: 'No'
-      }
-    ]
-  };
   private addNewAttribute() {
     this.tableWithSimpleEdit.datasource.data = [];
     this.ValidvalueArray.datasource.data = [];
@@ -594,6 +516,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         rangename: element.additionalDataValidValuesRange?.name || '',
         rangedescriptions:
           element.additionalDataValidValuesRange?.description || ''
+        // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
+        // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
       });
     } else {
       selectedTemplate = this.addExistingAttributeTemp;
@@ -602,7 +526,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       const firstRelation = element.productTypeAdditionalDataTypeRltnpList?.[0];
 
       this.addExistingAttributeFormGroup.setValue({
-        productCode: firstRelation?.attributeIdentifier || '',
+        productCode: firstRelation?.attributeCode || '',
         min: firstRelation?.minimumRequired || '',
         max: firstRelation?.maximumAllowed || '',
         GLcategorizationAllowed: firstRelation?.glCategarization === 'Y'
@@ -635,7 +559,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     this.dataWithSimpleEdit = localeList; // optional if still used elsewhere
     this.localeTableData = localeList;    // <-- new variable
-    console.log("localedataa:", this.localeTableData );
 
 
     element.productTypeAdditionalDataList?.forEach(element => {
@@ -651,13 +574,97 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       this.dataWithValidvalues.push(obj);
       this.dataWithExsistingValidvalues.push(obj);
     });
+    // console.log(this.inputLayoutForm);
+    // console.log(this.ValidvalueArray);
+    // element.productTypeAdditionalDataList?.forEach(element => {
+    //   let obj = {} as BodSampleTable1;
+    //   obj.additionaldatavalue = element.attributeValue;
+    //   obj.defaultindicator = element.isDefault;
+    //   obj.overrideindicator = element.overrideDefault;
+    //   obj.percentagevalue = element.percentage;
+    //   obj.sequencenumber = element.sequenceNumber;
+    //   this.ValidvalueArray.datasource.data.push(obj);
+    // })
 
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: selectedTemplate,
-      title: dialogTitle
-    };
+    // element.multiLingualTextInfoList?.forEach(element => {
 
-    this.openDialog(dialogModel);
+    //   this.editLocale(element.localeCode, element.translationText, element.localeText)
+    //   console.log("processinglocale", element.localeCode)
+    //   let obj = {} as BodLocaleTable;
+    //   obj.locale = element.localeCode;
+    //   // this.inputLocaleLayoutFormLocale.get('localeCode')?.setValue(element.localeCode)
+    //   obj.displayName = element.translationText;
+    //   obj.description = element.localeText;
+    //   const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+    //     row => row.locale === obj.locale
+    //   );
+    //   if (!existingRow) {
+    //     this.tableWithSimpleEdit.datasource.data.push(obj);
+    //   }
+
+    // })
+    // console.log(this.inputLayoutForm);
+    this.tableWithSimpleEdit.datasource.data = [];
+    if (
+      element.multiLingualTextInfoList &&
+      element.multiLingualTextInfoList.length > 0
+    ) {
+      console.log(
+        'Processing multiLingualTextInfoList:',
+        element.multiLingualTextInfoList
+      );
+
+      element.multiLingualTextInfoList.forEach(item => {
+        this.editLocale(item.localeCode, item.translationText, item.localeText);
+
+        let obj = {
+          locale: item.localeCode,
+          displayName: item.translationText,
+          description: item.localeText
+        };
+
+        const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+          row => row.locale === obj.locale
+        );
+        if (!existingRow) {
+          this.tableWithSimpleEdit.datasource.data.push(obj);
+        }
+      });
+      this.tableWithSimpleEdit.datasource.data = [
+        ...this.tableWithSimpleEdit.datasource.data
+      ];
+      setTimeout(() => {
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+
+      console.log(
+        'Updated multiLingualTextInfoList in table:',
+        this.tableWithSimpleEdit.datasource.data
+      );
+    }
+
+    console.log(this.inputLocaleLayoutFormLocale);
+
+    if (
+      !this.dialogRef$ ||
+      this.dialogRef$.getState() === MatDialogState.CLOSED
+    ) {
+      let dialogModel: BodCommonDialogModel = {
+        formTemplate: selectedTemplate,
+        title: dialogTitle
+      };
+      setTimeout(() => {
+        console.log(
+          'Final table data after 2s:',
+          this.tableWithSimpleEdit.datasource.data
+        );
+      }, 2000);
+      console.log(
+        'FinalData in table:',
+        this.tableWithSimpleEdit.datasource.data
+      );
+      this.openDialog(dialogModel);
+    }
 
     this.isEdit = true;
   }
@@ -679,6 +686,41 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       identifier: event.identifier
     });
   }
+  // private deleteAttributes(name: string, element: Attribute) {
+  //   this._subscription.add(
+  //     this._attributeService
+  //       // .deleteFeAttributeValue(name, element)
+  //       .subscribe(
+  //         resp => this.deleteSuccess(resp),
+  //         (err: NotificationMessage[]) => this.handleErrorResp(err)
+  //       )
+  //   );
+  // }
+  // private deleteSuccess(resp) {
+  //   let qualifier1,
+  //     qualifier2 = null;
+  //   this._notify.setMessages('are you sure'
+  //     // this._ecAdminMessageService.getSuccessMsg(
+  //     //   'mbpEc.feAttributeValue.details.delete.messages.success'
+  //     // )
+  //   );
+  // this.getAllAttribute(
+  //   this.feAttrName,
+  //   // this.filterCriteria.segment,
+  //   qualifier1,
+  //   qualifier2
+  // );
+  // }
+  // private handleErrorResp(errMessage: NotificationMessage[]) {
+  //   if (errMessage && errMessage.length>0) {
+  //     this._notify.setMessages(errMessage);
+  //   }else{
+  //     this.tableData.paginationOptions.length = 0;
+  //     this.bodAttrTableRef.updateDatasource(
+  //       new MatTableDataSource<Attribute>([])
+  //     );
+  //   }
+  // }
   private getConfirmationModel(): BodConfirmDialogModel {
     return {
       title: 'mbpEc.feAttributeValue.details.delete.dialog.title',
@@ -1048,6 +1090,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     //   console.log('edit')
     // }
   }
+
   public columns: Column[] = [
     {
       name: 'locale',
@@ -1415,7 +1458,15 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
           title: 'Attribute Code',
           truncate: true,
           noOverflow: true,
-          width: 50,
+          width: 30,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'MetdataStatus',
+          title: 'Status',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
           widthUnit: 'rem'
         },
         {
@@ -2086,18 +2137,18 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   // }
 
 
-  public addSimpleTableData() {
-    const newRow: BodLocaleTable = {
-      locale: 'defaultLocale', // Replace with a default or dynamic value as needed
-      displayName: 'New Display Name', // Replace with a default or dynamic value as needed
-      description: 'New Description' // Replace with a default or dynamic value as needed
-    };
+  // public addSimpleTableData() {
+  //   const newRow: BodLocaleTable = {
+  //     locale: 'defaultLocale', // Replace with a default or dynamic value as needed
+  //     displayName: 'New Display Name', // Replace with a default or dynamic value as needed
+  //     description: 'New Description' // Replace with a default or dynamic value as needed
+  //   };
 
-    this.dataWithSimpleEdit.push(newRow);
+  //   this.dataWithSimpleEdit.push(newRow);
 
-    // Assuming you have a method to refresh or update the table view
-    this.refreshTableView();
-  }
+  //   // Assuming you have a method to refresh or update the table view
+  //   this.refreshTableView();
+  // }
 
 
 
@@ -2454,26 +2505,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         10
       ) || parseInt(selectedFormatType, 10);
 
-    let multiLingualTextInfoList: MultiLingualTextInfo[] = [];
+      const localeTableData = this.simpleEditTableRef.getCurrentTableData?.() || [];
 
-    if (Array.isArray(this.completeDeltaData)) {
-      multiLingualTextInfoList = this.completeDeltaData.map((item: any) => {
-        const rowData = item.rowData || {};
-
-        return {
-          localeCode: rowData.locale,
-          localeText: rowData.description,
-          translationText: rowData.displayName,
-          identifier: formValue.identifier,
-          objectType: formValue.type,
-          attributeType: formValue.datatype
-        };
-      }).filter(item => !!item.localeCode); // Filter out incomplete entries
-
-      console.log('multiLingualTextInfoList:', multiLingualTextInfoList);
-    } else {
-      console.error('completeDeltaData is not an array:', this.completeDeltaData);
-    }
+      const multiLingualTextInfoList: MultiLingualTextInfo[] = localeTableData.map(item => ({
+        localeCode: item.locale,
+        localeText: item.description,
+        translationText: item.displayName,
+        identifier: formValue.identifier,
+        objectType: formValue.type,
+        attributeType: formValue.datatype
+      }));
 
 
 
@@ -2520,12 +2561,23 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         objectTypeIdentifier: objectTypeIdentifier,
         formatTypeIdentifier: formatTypeIdentifier,
         calculated: formValue.calculate ? 'Y' : 'N',
-        searchable: formValue.searchable ? 'Y' : 'N',
+        searchable: formValue.searchable ? 'Y' : 'Y',
         multiValueAllowed: formValue.multivalueallowed ? 'Y' : 'N',
         percentageAllowed: formValue.percentageallowed ? 'Y' : 'N',
         classificationType: formValue.classificationtype,
         multiLingualTextInfoList: multiLingualTextInfoList
       }
+
+      // productTypeAdditionalDataTypeRltnpList: [
+      //   {
+      //     identifier: 1110101,
+      //     attributeIdentifier: formValue.identifier,
+      //     minimumRequired: formValue.min,
+      //     maximumAllowed: formValue.max,
+      //     glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+      //   }
+      // ],
+      // productTypeAdditionalDataList: productTypeAdditionalDataList
     };
 
     if (formValue.validvaluestype === 'rangevalues') {
@@ -2537,6 +2589,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         lowValue: formValue.low,
         highValue: formValue.high,
         multiLingualTextInfoList: multiLingualTextInfoRangeList
+        // [
+        //   {
+        //     localeCode: formValues.localeCode,
+        //     localeText: formValue.description,
+        //     identifier: formValue.identifier,
+        //     objectType: formValue.type,
+        //     attributeType: formValue.datatype,
+        //     translationText: formValue.description
+        //   }
+        // ]
       };
     }
     if (formValue.validvaluestype === 'setvalues') {
@@ -2553,6 +2615,16 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
           sequenceNumber: formValue.sequencenumbers,
           overrideDefault: formValue.isvalueoverridden ? 'Y' : 'N',
           multiLingualTextInfoList: multiLingualTextInfoSetList
+          //  [
+          //   {
+          //     localeCode: formValues.localeCode,
+          //     localeText: 'Deposit product',
+          //     identifier: formValue.identifier,
+          //     objectType: formValue.type,
+          //     attributeType: 'product market name',
+          //     translationText: formValue.description
+          //   }
+          // ]
         }
       ];
     }
@@ -2585,16 +2657,21 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         })
       );
       attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
-
     }
-
+   
     this.addNewAttributeFormGroup.markAllAsTouched();
     this.addNewAttributeFormGroup.updateValueAndValidity();
 
     const request = {
       metadataType: 'Attribute',
       attributeList: [attribute],
-      productTypeList: ['CASA']
+      
+      productTypeList: [
+        {
+          identifier: 1110101,
+          code: 'Checking'
+        }
+      ]
     };
     console.log('API REQUEST', request);
     console.log('request SEND:', JSON.stringify(request, null, 2));
@@ -2648,10 +2725,12 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
               });
               console.log('DATAAAAA', this.tableWithSimpleEdit);
 
-
+              // ✅ Replace the data source
+              // this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
               this.tableWithSimpleEdit.datasource.data = updatedData;
 
-
+              // ✅ Manually trigger Angular change detection
+              // this.changeDetectorRef.detectChanges();
               setTimeout(() => {
                 this.changeDetectorRef.detectChanges();
               }, 100);
@@ -2664,6 +2743,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
             }
           });
         } else {
+          // ✅ Normal case if PUT returns correct data
           const updatedData =
             response.attributeList[0].multiLingualTextInfoList.map(item => ({
               locale: item.localeCode,
@@ -2671,6 +2751,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
               description: item.localeText
             }));
 
+          // ✅ Use new MatTableDataSource() to force UI refresh
           this.tableWithSimpleEdit.datasource = new MatTableDataSource(
             updatedData
           );
@@ -2696,7 +2777,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   handleSuccess(isAdd: boolean, request?: any) {
     this.dialogRef$.close();
     console.log('Attribute saved successfully:', request);
-
     let attributeCode = 'Unknown Code';
 
     if (request?.attributeList?.[0]?.additionalDataType?.code) {
@@ -2704,10 +2784,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     } else if (request?.attributeList[0].productTypeAdditionalDataTypeRltnpList?.[0]?.attributeCode) {
       attributeCode = request.attributeList[0].productTypeAdditionalDataTypeRltnpList[0].attributeCode;
     }
-
-    console.log(attributeCode);
-
-
     const successMsg = isAdd
       ? `${attributeCode} Added successfully`
       : `${attributeCode} Updated successfully`;
@@ -2728,7 +2804,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     if (error.errorCode === 'MAX_LESS_THAN_MIN') {
       errorMsg = 'Error: Minimum Value cannot be Greater or Equal to Maximum Value.';
-    } else if (error.errorCode === 'MBP_SDK_BUS_ERR_005') {
+    } else if (error.error.errorCode === "MBP_SDK_BUS_ERR_005") {
       errorMsg = 'Code already exists.';
     } else if (error.status === 400) {
       errorMsg = 'Please fill the required fields.';
@@ -2749,7 +2825,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       this.messages1 = this.messages1.filter(
         msg => msg.text !== errorMsg
       );
-    }, 6000);
+    }, 12000);
   }
 
   private handleError1(error: any) {
@@ -2918,7 +2994,13 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     const request = {
       metadataType: 'Attribute',
       attributeList: [attribute],
-      productTypeList: ['CASA']
+      // productTypeList: ['CASA']
+      productTypeList: [
+        {
+          identifier: 1110101,
+          code: 'Checking'
+        }
+      ]
     };
 
     console.log('request SEND:', JSON.stringify(request, null, 2));
@@ -2930,7 +3012,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     serviceCall.subscribe(
       response => {
-        this.handleSuccess(isAdd, request);
+        this.handleSuccess(isAdd, response);
         console.log('after:', response);
       },
       error => this.handleErrorforExisting(error, isAdd)
@@ -3018,201 +3100,211 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
             };
           }
 
-          const attribute: Attribute = {
-            //   additionalDataType: {
-            code: additionalDataType.code
-              ? additionalDataType.code
-              : productTypeAdditionalDataTypeRltnpList[0].attributeCode,
-            descriptions: [
-              {
-                id: 0,
-                label: 'Name',
-                value: additionalDataType.name
-              },
-              // {
-              //   id: 1,
-              //   label: 'Identifier',
-              //   value: additionalDataType.identifier
-              // },
-              {
-                id: 2,
-                label: 'ShortName',
-                value: additionalDataType.shortName
-              },
-              // {
-              //   id: 3,
-              //   label: 'Description',
-              //   value: additionalDataType.description
-              // },
-              {
-                id: 4,
-                label: 'Type',
-                value: this.type(additionalDataType.objectTypeIdentifier)
-              },
-              {
-                id: 5,
-                label: 'Data type',
-                value: this.formatdatatype(
-                  additionalDataType.formatTypeIdentifier
-                )
-              },
-              {
-                id: 6,
-                label: 'Calculate',
-                value: additionalDataType.calculated
-              },
-              {
-                id: 7,
-                label: 'Searchable',
-                value: additionalDataType.searchable
-              },
-              {
-                id: 8,
-                label: 'Multivalue Allowed',
-                value: additionalDataType.multiValueAllowed
-              },
-              {
-                id: 9,
-                label: 'Percentage Allowed',
-                value: additionalDataType.percentageAllowed
-              },
-              {
-                id: 10,
-                label: 'Classification Type',
-                value: additionalDataType.classificationType
-              }
-            ],
+          const code = additionalDataType.code
+            ? additionalDataType.code
+            : productTypeAdditionalDataTypeRltnpList[0].attributeCode;
 
-            identifier: additionalDataType.identifier,
-            name: additionalDataType.name,
-            shortName: additionalDataType.shortName,
-            objectTypeIdentifier: additionalDataType.objectTypeIdentifier,
-            formatTypeIdentifier: additionalDataType.formatTypeIdentifier,
-            calculated: additionalDataType.calculated,
-            searchable: additionalDataType.searchable,
-            multiValueAllowed: additionalDataType.multiValueAllowed,
-            percentageAllowed: additionalDataType.percentageAllowed,
-            classificationType: additionalDataType.classificationType,
-            multiLingualTextInfoList:
-              additionalDataType.multiLingualTextInfoList,
-            //    },
-            additionalDataValidValuesRange:
-              additionalDataValidValuesRangeMapped,
-            additionalDataValidValueSetList:
-              additionalDataValidValueSetListMapped,
-            productTypeAdditionalDataTypeRltnpList:
-              productTypeAdditionalDataTypeRltnpListMapped,
-            prdrtpeReltinqMetaData: [
-              {
-                id: 0,
-                label: 'Maximum Allowed',
-                value: productTypeAdditionalDataTypeRltnpList[0].maximumAllowed
-              },
-              // {
-              //   id: 1,
-              //   label: 'Identifier',
-              //   value: productTypeAdditionalDataTypeRltnpList[0].identifier
-              // },
-              {
-                id: 1,
-                label: 'Minimum Required',
-                value: productTypeAdditionalDataTypeRltnpList[0].minimumRequired
-              },
-              {
-                id: 1,
-                label: 'GL Categorization',
-                value:
-                  productTypeAdditionalDataTypeRltnpList[0].glCategarization
-              }
-            ],
-            productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
-            MetdataStatus: item.MetdataStatus
+          const status = item.MetadataStatus
+
+
+
+          const translateStatus = (status: string): string => {
+
+          // Add your translation logic here
+          // For example, you might map certain status values to new values
+          const translations: { [key: string]: string } = {
+            "INPROGRESS": "In Progress",
+            "READY": "Ready",
+            "GENERATED":"Generated",
+            "DELETED":"Deleted",
+            // Add more translations as needed
           };
 
-          // console.log(attribute);
-          return attribute;
-        });
-        // this.attributeData.sort((a, b) => b.identifier - a.identifier);
-        this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
-      }
-    });
-  }
-  private determineTemplate(element: Attribute): TemplateRef<any> {
-    return element.code ? this.addAttributeTemp : this.addExistingAttributeTemp;
-  }
+          return translations[status] || status; // Return the translated value or the original if no translation is found
+        };
 
-  AttributeDelete(element: Attribute): void {
-    if (
-      element.code ===
+
+
+        const attribute: Attribute = {
+          //   additionalDataType: {
+          code: code,
+          MetdataStatus: translateStatus(status),
+          descriptions: [
+            {
+              id: 0,
+              label: 'Name',
+              value: additionalDataType.name
+            },
+
+            {
+              id: 2,
+              label: 'ShortName',
+              value: additionalDataType.shortName
+            },
+
+            {
+              id: 4,
+              label: 'Type',
+              value: this.type(additionalDataType.objectTypeIdentifier)
+            },
+            {
+              id: 5,
+              label: 'Data type',
+              value: this.formatdatatype(
+                additionalDataType.formatTypeIdentifier
+              )
+            },
+            {
+              id: 6,
+              label: 'Calculate',
+              value: additionalDataType.calculated
+            },
+            {
+              id: 7,
+              label: 'Searchable',
+              value: additionalDataType.searchable
+            },
+            {
+              id: 8,
+              label: 'Multivalue Allowed',
+              value: additionalDataType.multiValueAllowed
+            },
+            {
+              id: 9,
+              label: 'Percentage Allowed',
+              value: additionalDataType.percentageAllowed
+            },
+            {
+              id: 10,
+              label: 'Classification Type',
+              value: additionalDataType.classificationType
+            }
+          ],
+
+          identifier: additionalDataType.identifier,
+          name: additionalDataType.name,
+          shortName: additionalDataType.shortName,
+          objectTypeIdentifier: additionalDataType.objectTypeIdentifier,
+          formatTypeIdentifier: additionalDataType.formatTypeIdentifier,
+          calculated: additionalDataType.calculated,
+          searchable: additionalDataType.searchable,
+          multiValueAllowed: additionalDataType.multiValueAllowed,
+          percentageAllowed: additionalDataType.percentageAllowed,
+          classificationType: additionalDataType.classificationType,
+          multiLingualTextInfoList:
+            additionalDataType.multiLingualTextInfoList,
+
+          additionalDataValidValuesRange:
+            additionalDataValidValuesRangeMapped,
+          additionalDataValidValueSetList:
+            additionalDataValidValueSetListMapped,
+          productTypeAdditionalDataTypeRltnpList:
+            productTypeAdditionalDataTypeRltnpListMapped,
+          prdrtpeReltinqMetaData: [
+            {
+              id: 0,
+              label: 'Maximum Allowed',
+              value: productTypeAdditionalDataTypeRltnpList[0].maximumAllowed
+            },
+
+            {
+              id: 1,
+              label: 'Minimum Required',
+              value: productTypeAdditionalDataTypeRltnpList[0].minimumRequired
+            },
+            {
+              id: 1,
+              label: 'GL Categorization',
+              value:
+                productTypeAdditionalDataTypeRltnpList[0].glCategarization
+            }
+          ],
+          productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
+
+        };
+
+        return attribute;
+      });
+    this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
+  }
+});
+  }
+  private determineTemplate(element: Attribute): TemplateRef < any > {
+  return element.code ? this.addAttributeTemp : this.addExistingAttributeTemp;
+}
+
+AttributeDelete(element: Attribute): void {
+  if(
+    element.code ===
       element.productTypeAdditionalDataTypeRltnpList[0].attributeCode
     ) {
-      this.metadataService
-        .deleteAttribute(
-          'Attribute',
-          element.productTypeAdditionalDataTypeRltnpList[0].attributeIdentifier
-        )
-        .subscribe(response => {
-          const successMsg = 'Attribute Deleted Successfully';
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
+  this.metadataService
+    .deleteAttribute(
+      'Attribute',
+      element.productTypeAdditionalDataTypeRltnpList[0].attributeIdentifier
+    )
+    .subscribe(response => {
+      const successMsg = 'Attribute Deleted Successfully';
+      this.message = {
+        code: '204',
+        text: successMsg,
+        type: NotificationMessageType.SUCCESS
+      };
+      this.messages.push(this.message);
 
-          this.getAttribute();
-          console.log('State after getAttribute:', this.attributeData); // Log state
-          this.changeDetectorRef.detectChanges();
-        });
-    } else {
-      this.metadataService
-        .deleteAttribute('Attribute', element.identifier)
-        .subscribe(response => {
-          const successMsg = 'Attribute Deleted Successfully';
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
-          this.getAttribute();
-          this.changeDetectorRef.detectChanges();
-        });
-    }
+      this.getAttribute();
+      console.log('State after getAttribute:', this.attributeData); // Log state
+      this.changeDetectorRef.detectChanges();
+    });
+} else {
+  this.metadataService
+    .deleteAttribute('Attribute', element.identifier)
+    .subscribe(response => {
+      const successMsg = 'Attribute Deleted Successfully';
+      this.message = {
+        code: '204',
+        text: successMsg,
+        type: NotificationMessageType.SUCCESS
+      };
+      this.messages.push(this.message);
+      this.getAttribute();
+      this.changeDetectorRef.detectChanges();
+    });
+}
   }
 
   public rowExpanded(element: Attribute) {
-    this.AttributeLocalTable.datasource.data =
-      element.multiLingualTextInfoList || [];
-    this.productRelationTable.datasource.data =
-      element.productTypeAdditionalDataList || [];
-  }
-  nonNegativeValidator(): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const value = control.value;
-      return value < 0 ? { negativeValue: { value: value } } : null;
-    };
-  }
+  this.AttributeLocalTable.datasource.data =
+    element.multiLingualTextInfoList || [];
+  this.productRelationTable.datasource.data =
+    element.productTypeAdditionalDataList || [];
+}
+nonNegativeValidator(): ValidatorFn {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const value = control.value;
+    return value < 0 ? { negativeValue: { value: value } } : null;
+  };
+}
 
-  nonZeroValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-      return value === 0 ? { zeroValue: true } : null;
-    };
-  }
-  maxLengthValidator(maxLength: number) {
-    return (control: AbstractControl): ValidationErrors | null => {
-      return control.value && control.value.toString().length > maxLength
-        ? { maxLength: true }
-        : null;
-    };
-  }
-  integerValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-      return Number.isInteger(value) ? null : { notInteger: true };
-    };
-  }
+nonZeroValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    return value === 0 ? { zeroValue: true } : null;
+  };
+}
+maxLengthValidator(maxLength: number) {
+  return (control: AbstractControl): ValidationErrors | null => {
+    return control.value && control.value.toString().length > maxLength
+      ? { maxLength: true }
+      : null;
+  };
+}
+integerValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    return Number.isInteger(value) ? null : { notInteger: true };
+  };
+}
   /** Initialize Add Balance Hold Form  */
   private initForm(): void {
     this.addNewAttributeFormGroup = this.fb.group({
@@ -3300,94 +3392,94 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       this.addNewAttributeFormGroup.get('productTypeCode')?.setValue(value);
     });
 
-    this.addNewAttributeFormGroup
-      .get('relatetoproducttype')
-      ?.valueChanges.subscribe(value => {
-        this.isRelateToProductTemplate = value;
-        if (!value) {
-          this.isValidValueTypes = false;
-          this.addNewAttributeFormGroup
-            .get('validtype')
-            ?.setValue(false, { emitEvent: false });
-        }
-      });
+  this.addNewAttributeFormGroup
+    .get('relatetoproducttype')
+    ?.valueChanges.subscribe(value => {
+      this.isRelateToProductTemplate = value;
+      if (!value) {
+        this.isValidValueTypes = false;
+        this.addNewAttributeFormGroup
+          .get('validtype')
+          ?.setValue(false, { emitEvent: false });
+      }
+    });
 
-    this.addNewAttributeFormGroup
-      .get('validtype')
-      ?.valueChanges.subscribe(value => {
-        if (this.isRelateToProductTemplate) {
-          this.isValidValueTypes = value;
-        } else {
-          this.isValidValueTypes = false;
-        }
-      });
-  }
+  this.addNewAttributeFormGroup
+    .get('validtype')
+    ?.valueChanges.subscribe(value => {
+      if (this.isRelateToProductTemplate) {
+        this.isValidValueTypes = value;
+      } else {
+        this.isValidValueTypes = false;
+      }
+    });
+}
 
-  getError(formControl: string, formValidatorKey?: string, customkey?: string) {
-    const fc: AbstractControl = this.addNewAttributeFormGroup.get(
-      `${formControl}`
+getError(formControl: string, formValidatorKey ?: string, customkey ?: string) {
+  const fc: AbstractControl = this.addNewAttributeFormGroup.get(
+    `${formControl}`
+  );
+  if (fc.errors && fc.errors !== null) {
+    let error: string = '';
+    Object.keys(fc.errors).forEach(
+      key =>
+      (error = key
+        ? key == formValidatorKey
+          ? `BOD.error.${customkey}`
+          : key !== null
+            ? `BOD.error.${key}`
+            : ''
+        : ``)
     );
-    if (fc.errors && fc.errors !== null) {
-      let error: string = '';
-      Object.keys(fc.errors).forEach(
-        key =>
-        (error = key
-          ? key == formValidatorKey
-            ? `BOD.error.${customkey}`
-            : key !== null
-              ? `BOD.error.${key}`
-              : ''
-          : ``)
-      );
-      return error;
-    }
+    return error;
   }
-  getExistingError(
-    formControl: string,
-    formValidatorKey?: string,
-    customkey?: string
-  ) {
-    const fc: AbstractControl = this.addExistingAttributeFormGroup.get(
-      `${formControl}`
+}
+getExistingError(
+  formControl: string,
+  formValidatorKey ?: string,
+  customkey ?: string
+) {
+  const fc: AbstractControl = this.addExistingAttributeFormGroup.get(
+    `${formControl}`
+  );
+  if (fc.errors && fc.errors !== null) {
+    let error: string = '';
+    Object.keys(fc.errors).forEach(
+      key =>
+      (error = key
+        ? key == formValidatorKey
+          ? `BOD.error.${customkey}`
+          : key !== null
+            ? `BOD.error.${key}`
+            : ''
+        : ``)
     );
-    if (fc.errors && fc.errors !== null) {
-      let error: string = '';
-      Object.keys(fc.errors).forEach(
-        key =>
-        (error = key
-          ? key == formValidatorKey
-            ? `BOD.error.${customkey}`
-            : key !== null
-              ? `BOD.error.${key}`
-              : ''
-          : ``)
-      );
-      return error;
-    }
+    return error;
   }
+}
 
-  /** On click of Add Button*/
-  inlineAddRowActionClick(index) {
-    this.inputLayoutForm.reset();
-  }
+/** On click of Add Button*/
+inlineAddRowActionClick(index) {
+  this.inputLayoutForm.reset();
+}
 
   private setDefaultFormValue(): void {
-    this.addNewAttributeFormGroup.patchValue({
-      amount: new Amount(this.defaultCurrency, null),
-      isHoldAll: false,
-      isExpire: false
-    });
-    // this.effectiveDate = DateUtilityService.updateDateFormat(
-    //   new Date(this.bookingDate),
-    //   'MM/dd/YYYY'
-    // );
-    this.addNewAttributeFormGroup.markAsUntouched();
-    this.addNewAttributeFormGroup.markAsPristine();
-  }
+  this.addNewAttributeFormGroup.patchValue({
+    amount: new Amount(this.defaultCurrency, null),
+    isHoldAll: false,
+    isExpire: false
+  });
+  // this.effectiveDate = DateUtilityService.updateDateFormat(
+  //   new Date(this.bookingDate),
+  //   'MM/dd/YYYY'
+  // );
+  this.addNewAttributeFormGroup.markAsUntouched();
+  this.addNewAttributeFormGroup.markAsPristine();
+}
 
   public updateMessages(messages: NotificationMessage[]) {
-    // this.accountWorkspaceService.pageLevelMessages$.next(messages);
-  }
+  // this.accountWorkspaceService.pageLevelMessages$.next(messages);
+}
 
   // public inlineEditRowActionClick(event: InlineEditOutput): void {
   //   this.updateMessages([]);
@@ -3432,17 +3524,17 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   // }
 
   private combineDateAndTime(date: string, time: string): Date {
-    const [hours, minutes, seconds] = time.split(':').map(Number);
-    const dateObj = new Date(date);
-    dateObj.setHours(hours, minutes, seconds);
-    return dateObj;
-  }
+  const [hours, minutes, seconds] = time.split(':').map(Number);
+  const dateObj = new Date(date);
+  dateObj.setHours(hours, minutes, seconds);
+  return dateObj;
+}
   private subscription = new Subscription();
 
-  ngOnDestroy() {
-    if (this.subscription) {
-      this.messages = [];
-      this.subscription.unsubscribe();
-    }
+ngOnDestroy() {
+  if (this.subscription) {
+    this.messages = [];
+    this.subscription.unsubscribe();
   }
+}
 }
