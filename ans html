@@ -1,19 +1,11 @@
-public addTableData() {
-  // Add a new row with empty/default values
-  const newRow = {
-    locale: '',
-    displayName: '',
-    description: ''
-  };
-
-  // Add the row to the table
-  this.simpleEditTableRef.addRow(newRow);
-
-  // Set up edit mode for the newly added row
-  const newIndex = this.tableWithSimpleEdit.datasource.data.length - 1;
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: newIndex
-  };
-  this.pageModeSimple = PageMode.NONE;
-}
+<ng-container *ngIf="!['Flag', 'YesNo'].includes(addNewAttributeFormGroup.get('datatype')?.value)">
+  <bod-control-group 
+    [truncate]="false"
+    [label]="translationKey + 'metadataconfig.validtype'"
+    [forTextOnly]="true"
+    [required]="false"
+  >
+    <mat-slide-toggle formControlName="validtype" name="validtype">
+    </mat-slide-toggle>
+  </bod-control-group>
+</ng-container>
