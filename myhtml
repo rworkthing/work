@@ -1,4 +1,6 @@
 <bod-page-container title="Metadata Configurations"></bod-page-container>
+
+
 <section demo fullWidth>
   <mat-tab-group fisStyle mat-stretch-tabs="false" tableDemoTabGroug>
     <mat-tab label="{{ 'BOD.metadataconfig.attributes' | translate }}">
@@ -90,12 +92,14 @@
         let-column="column"
         let-index="index"
       >
+      
         <bod-table-actions
-          sectionActions
+        sectionActions
           [actions]="editactions"
           (onActionClick)="iconActionClicked($event, element)"
         >
         </bod-table-actions>
+        
       </ng-template>
       <ng-template #addNewAttributeTemplate>
         <bod-message-container
@@ -113,11 +117,14 @@
           <bod-input-layout col="2">
             <bod-control-group
               [truncate]="false"
-              [label]="translationKey + 'metadataconfig.code'"
+              [label]="translationKey + 'metadataconfig.attributeCode'"
               [forTextOnly]="true"
               [required]="true"
             >
-              <mat-form-field appearance="outline" fisStyle>
+            <div *ngIf="isEdit">
+              {{ addNewAttributeFormGroup.get('code')?.value }}
+            </div>
+              <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
                 <input
                   type="text"
                   matInput
@@ -229,7 +236,7 @@
               </mat-form-field>
             </bod-control-group>
 
-            <bod-control-group
+            <!-- <bod-control-group
               [truncate]="false"
               [label]="translationKey + 'metadataconfig.calculate'"
               [forTextOnly]="true"
@@ -256,7 +263,7 @@
                 name="searchable"
               >
               </mat-slide-toggle>
-            </bod-control-group>
+            </bod-control-group> -->
             <bod-control-group
               [truncate]="false"
               [label]="translationKey + 'metadataconfig.multivalueallowed'"
@@ -431,96 +438,11 @@
             </ng-template>
           </bod-table> -->
 
-          <!-- <bod-table
-            [data]="tableWithSimpleEdit"
-            [tableActions]="balanceHoldsTableActions1"
-            [modeOptions]="modeOptionsSimple"
-            [singleRowEdit]="singleRowEdit"
-            [customColumnTemplates]="[
-              { columnName: 'actions', templateName: editActionsTemplate1 },
-            ]"
-            (inputValidationStatus)="checkStatus($event)"
-            (onTableActionClick)="addTableData()"
-            [primaryColumnName]="'id'"
+          
+           <bod-input-layout>
+            <bod-simple-edit-table 
             #simpleEditTableRef
-          >
-            <ng-template
-              #editActionsTemplate1
-              let-element="element"
-              let-column="column"
-              let-index="index"
-            >
-              <div
-                *ngIf="
-                  !this.singleRowEdit.modeOptions?.input ||
-                  (this.singleRowEdit?.modeOptions?.input &&
-                    this.singleRowEdit?.index !== index)
-                "
-              >
-                <bod-table-actions
-                  [actions]="rowLevelActionsForBasicEdit"
-                  (onActionClick)="handleRowLevelActions($event.icon, index)"
-                >
-                </bod-table-actions>
-              </div>
-              <div
-                *ngIf="
-                  this.singleRowEdit?.modeOptions?.input &&
-                  this.singleRowEdit?.index === index
-                "
-              >
-                <button
-                  matTooltip="{{
-                    'mbpBod.demo.microsite.buttons.save' | translate
-                  }}"
-                  [matTooltipPosition]="'below'"
-                  rufId
-                  mat-mini-fab
-                  color="primary"
-                  fisStyle
-                  (click)="handleRowLevelActions('save', index)"
-                >
-                  <mat-icon
-                    fisStyle
-                    rufIconStyle="sm"
-                    fisIcon="check"
-                  ></mat-icon>
-                </button>
-                <button
-                  rufId
-                  fisStyle
-                  mat-icon-button
-                  matTooltip="{{
-                    'mbpBod.demo.microsite.buttons.cancel' | translate
-                  }}"
-                  [matTooltipPosition]="'below'"
-                  class="ruf-ghost-button"
-                  (click)="handleRowLevelActions('reset', index)"
-                >
-                  <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
-                </button>
-              </div>
-            </ng-template>
-            <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
-              <button
-                mat-raised-button
-                fisStyle
-                type="button"
-                color="primary"
-                (click)="saveTableData()"
-                [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
-              >
-                {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
-              </button>
-              <button mat-stroked-button fisStyle type="button" (click)="reset()">
-                {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
-              </button>
-            </div>
-
-          </bod-table>
-           -->
-          <bod-input-layout>
-            <bod-simple-edit-table (translationDetails)="receiveTranslationDetailsValues($event)"
+            (translationDetails)="receiveTranslationDetailsValues($event)"
             [localeData]="localeTableData"
             (completeDeltaChange)="handleCompleteDeltaChange($event)"
             (tableDirty) = "onTableDirty()"
@@ -528,9 +450,6 @@
           </bod-simple-edit-table>
           </bod-input-layout> 
 
-          <!-- <bod-input-layout>
-         <bod-simple-edit-table></bod-simple-edit-table>
-    </bod-input-layout> -->
 
           <bod-input-layout col="2">
             <bod-control-group
@@ -1065,7 +984,7 @@
             <bod-input-layout col="2">
               <bod-control-group
                 [truncate]="false"
-                [label]="translationKey + 'metadataconfig.code'"
+                [label]="translationKey + 'metadataconfig.attributeCode'"
                 [forTextOnly]="true"
                 [required]="true"
               >
@@ -1247,64 +1166,63 @@
                 <ng-template #inputLayoutTemplate>
                   <bod-input-layout col="2">
                     <bod-control-group
-                      [truncate]="false"
-                      [label]="
-                        translationKey + 'metadataconfig.additionaldatavalue'
-                      "
-                      [forTextOnly]="true"
-                      [required]="true"
-                    >
-                      <mat-form-field appearance="outline" fisStyle>
-                        <input
-                          *ngIf="inputType === 'number'"
-                          type="number"
-                          matInput
-                          fisStyle
-                          formControlName="additionaldatavalue"
-                          name="additionaldatavalue"
-                          [disabled]="isDisabled"
-                        />
-                        <input
-                          *ngIf="inputType === 'time'"
-                          type="time"
-                          matInput
-                          fisStyle
-                          formControlName="additionaldatavalue"
-                          name="additionaldatavalue"
-                          [disabled]="isDisabled"
-                        />
-                        <input
-                          *ngIf="inputType === 'date'"
-                          type="date"
-                          matInput
-                          fisStyle
-                          formControlName="additionaldatavalue"
-                          name="additionaldatavalue"
-                          [disabled]="isDisabled"
-                        />
-                        <input
-                          *ngIf="inputType === 'text'"
-                          type="text"
-                          matInput
-                          fisStyle
-                          formControlName="additionaldatavalue"
-                          name="additionaldatavalue"
-                          [disabled]="isDisabled"
-                        />
-                        <input
-                          *ngIf="inputType === 'datetime-local'"
-                          type="datetime-local"
-                          matInput
-                          fisStyle
-                          formControlName="additionaldatavalue"
-                          name="additionaldatavalue"
-                          [disabled]="isDisabled"
-                        />
-                        <!-- <mat-error>
+                    [truncate]="false"
+                    [label]="translationKey + 'metadataconfig.additionaldatavalue'"
+                    [forTextOnly]="true"
+                    [required]="true"
+                  >
+                    <mat-form-field appearance="outline" fisStyle>
+                      <input
+                        *ngIf="inputType === 'number'"
+                        type="number"
+                        matInput
+                        fisStyle
+                        formControlName="additionaldatavalue"
+                        name="additionaldatavalue"
+                        [disabled]="isDisabled"
+                      />
+                      <input
+                        *ngIf="inputType === 'time'"
+                        type="time"
+                        matInput
+                        fisStyle
+                        formControlName="additionaldatavalue"
+                        name="additionaldatavalue"
+                        [disabled]="isDisabled"
+                      />
+                      <input
+                        *ngIf="inputType === 'date'"
+                        type="date"
+                        matInput
+                        fisStyle
+                        formControlName="additionaldatavalue"
+                        name="additionaldatavalue"
+                        [disabled]="isDisabled"
+                      />
+                      <input
+                        *ngIf="inputType === 'text'"
+                        type="text"
+                        matInput
+                        fisStyle
+                        formControlName="additionaldatavalue"
+                        name="additionaldatavalue"
+                        [disabled]="isDisabled"
+                      />
+                      <input
+                        *ngIf="inputType === 'datetime-local'"
+                        type="datetime-local"
+                        matInput
+                        fisStyle
+                        formControlName="additionaldatavalue"
+                        name="additionaldatavalue"
+                        [disabled]="isDisabled"
+                      />
+                      <!-- <mat-error>
                         {{ getError('additionaldatavalue') | translate }}
                       </mat-error> -->
-                      </mat-form-field>
-                    </bod-control-group>
+                     
+                    </mat-form-field>
+                  </bod-control-group>
                     <bod-control-group
                       [truncate]="false"
                       [label]="
@@ -1342,7 +1260,7 @@
                     <bod-control-group
                       [truncate]="false"
                       [label]="
-                        translationKey + 'metadataconfig.defaulatindicator'
+                        translationKey + 'metadataconfig.defaultindicator'
                       "
                       [forTextOnly]="true"
                       [required]="false"
@@ -1412,11 +1330,14 @@
           <bod-input-layout col="2">
             <bod-control-group
               [truncate]="false"
-              [label]="translationKey + 'metadataconfig.code'"
+              [label]="translationKey + 'metadataconfig.attributeCode'"
               [forTextOnly]="true"
               [required]="true"
             >
-              <mat-form-field appearance="outline" fisStyle>
+            <div *ngIf="isEdit">
+              {{ addExistingAttributeFormGroup.get('productCode')?.value }}
+            </div>
+              <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
                 <mat-select
                   panelClass="fis-style"
                   formControlName="productCode"
@@ -1633,6 +1554,7 @@
                         <!-- <mat-error>
                             {{ getError('additionaldatavalue') | translate }}
                           </mat-error> -->
+                        
                       </mat-form-field>
                     </bod-control-group>
                     <bod-control-group
@@ -1672,7 +1594,7 @@
                     <bod-control-group
                       [truncate]="false"
                       [label]="
-                        translationKey + 'metadataconfig.defaulatindicator'
+                        translationKey + 'metadataconfig.defaultindicator'
                       "
                       [forTextOnly]="true"
                       [required]="false"
@@ -1733,6 +1655,7 @@
       <bod-role-type> </bod-role-type>
     </mat-tab>
     <mat-tab label="{{ 'BOD.metadataconfig.conditions' | translate }}">
+      <bod-condition-detail></bod-condition-detail>
     </mat-tab>
     <mat-tab label="{{ 'BOD.metadataconfig.transactiontype' | translate }}">
     </mat-tab>
