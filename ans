@@ -1,6 +1,15 @@
 const isEditMode = this.isEdit;
   const currentCode = this.addNewAttributeFormGroup?.get('code')?.value;
 
+
+ if (isEditMode) {
+    // Restore 'code' value and keep it disabled
+    this.addNewAttributeFormGroup.get('code')?.setValue(currentCode);
+    this.addNewAttributeFormGroup.get('code')?.disable();
+  } else {
+    this.addNewAttributeFormGroup.get('code')?.enable();
+  }
+
 export const nonNegativeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
   return value != null && value < 0 ? { negativeValue: 'Negative numbers are not allowed' } : null;
