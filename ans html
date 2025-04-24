@@ -9,3 +9,9 @@
     </mat-slide-toggle>
   </bod-control-group>
 </ng-container>
+
+
+
+this.addNewAttributeFormGroup.get('datatype')?.valueChanges.subscribe(() => {
+  this.changeDetectorRef.detectChanges();
+});
