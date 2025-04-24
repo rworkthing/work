@@ -1,6 +1,5 @@
 <bod-page-container title="Metadata Configurations"></bod-page-container>
 
-
 <section demo fullWidth>
   <mat-tab-group fisStyle mat-stretch-tabs="false" tableDemoTabGroug>
     <mat-tab label="{{ 'BOD.metadataconfig.attributes' | translate }}">
@@ -92,14 +91,12 @@
         let-column="column"
         let-index="index"
       >
-      
         <bod-table-actions
-        sectionActions
+          sectionActions
           [actions]="editactions"
           (onActionClick)="iconActionClicked($event, element)"
         >
         </bod-table-actions>
-        
       </ng-template>
       <ng-template #addNewAttributeTemplate>
         <bod-message-container
@@ -111,7 +108,7 @@
           rufId
           [type]="formType"
           (onSubmit)="onSave(isAdd)"
-          (onReset)="onReset()"
+          (onReset)="onReset(isAdd)"
           fisStyle
         >
           <bod-input-layout col="2">
@@ -121,9 +118,9 @@
               [forTextOnly]="true"
               [required]="true"
             >
-            <div *ngIf="isEdit">
-              {{ addNewAttributeFormGroup.get('code')?.value }}
-            </div>
+              <div *ngIf="isEdit">
+                {{ addNewAttributeFormGroup.get('code')?.value }}
+              </div>
               <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
                 <input
                   type="text"
@@ -438,18 +435,16 @@
             </ng-template>
           </bod-table> -->
 
-          
-           <bod-input-layout>
-            <bod-simple-edit-table 
-            #simpleEditTableRef
-            (translationDetails)="receiveTranslationDetailsValues($event)"
-            [localeData]="localeTableData"
-            (completeDeltaChange)="handleCompleteDeltaChange($event)"
-            (tableDirty) = "onTableDirty()"
+          <bod-input-layout>
+            <bod-simple-edit-table
+              #simpleEditTableRef
+              (translationDetails)="receiveTranslationDetailsValues($event)"
+              [localeData]="localeTableData"
+              (completeDeltaChange)="handleCompleteDeltaChange($event)"
+              (tableDirty)="onTableDirty()"
             >
-          </bod-simple-edit-table>
-          </bod-input-layout> 
-
+            </bod-simple-edit-table>
+          </bod-input-layout>
 
           <bod-input-layout col="2">
             <bod-control-group
@@ -768,6 +763,9 @@
                     formControlName="sequencenumbers"
                     name="sequencenumbers"
                   />
+                  <mat-error *ngIf="control.hasError('negativeValue')">
+                    Negative numbers are not allowed
+                  </mat-error>
                 </mat-form-field>
               </bod-control-group>
               <bod-control-group
@@ -781,9 +779,18 @@
                     type="number"
                     matInput
                     fisStyle
-                    formControlName="percentages"
-                    name="percentages"
+                    formControlName="percentagevalue"
+                    name="percentagevalue"
                   />
+                  <mat-error
+                    *ngIf="
+                      inputLayoutForm
+                        .get('percentagevalue')
+                        .hasError('negativeValue')
+                    "
+                  >
+                    Negative numbers are not allowed
+                  </mat-error>
                 </mat-form-field>
               </bod-control-group>
               <bod-control-group
@@ -1166,63 +1173,79 @@
                 <ng-template #inputLayoutTemplate>
                   <bod-input-layout col="2">
                     <bod-control-group
-                    [truncate]="false"
-                    [label]="translationKey + 'metadataconfig.additionaldatavalue'"
-                    [forTextOnly]="true"
-                    [required]="true"
-                  >
-                    <mat-form-field appearance="outline" fisStyle>
-                      <input
-                        *ngIf="inputType === 'number'"
-                        type="number"
-                        matInput
-                        fisStyle
-                        formControlName="additionaldatavalue"
-                        name="additionaldatavalue"
-                        [disabled]="isDisabled"
-                      />
-                      <input
-                        *ngIf="inputType === 'time'"
-                        type="time"
-                        matInput
-                        fisStyle
-                        formControlName="additionaldatavalue"
-                        name="additionaldatavalue"
-                        [disabled]="isDisabled"
-                      />
-                      <input
-                        *ngIf="inputType === 'date'"
-                        type="date"
-                        matInput
-                        fisStyle
-                        formControlName="additionaldatavalue"
-                        name="additionaldatavalue"
-                        [disabled]="isDisabled"
-                      />
-                      <input
-                        *ngIf="inputType === 'text'"
-                        type="text"
-                        matInput
-                        fisStyle
-                        formControlName="additionaldatavalue"
-                        name="additionaldatavalue"
-                        [disabled]="isDisabled"
-                      />
-                      <input
-                        *ngIf="inputType === 'datetime-local'"
-                        type="datetime-local"
-                        matInput
-                        fisStyle
-                        formControlName="additionaldatavalue"
-                        name="additionaldatavalue"
-                        [disabled]="isDisabled"
-                      />
-                      <!-- <mat-error>
-                        {{ getError('additionaldatavalue') | translate }}
-                      </mat-error> -->
-                     
-                    </mat-form-field>
-                  </bod-control-group>
+                      [truncate]="false"
+                      [label]="
+                        translationKey + 'metadataconfig.additionaldatavalue'
+                      "
+                      [forTextOnly]="true"
+                      [required]="true"
+                    >
+                      <mat-form-field appearance="outline" fisStyle>
+                        <input
+                          *ngIf="inputType === 'number'"
+                          type="number"
+                          matInput
+                          fisStyle
+                          formControlName="additionaldatavalue"
+                          name="additionaldatavalue"
+                          [disabled]="isDisabled"
+                        />
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('additionaldatavalue')
+                              .hasError('negativeValue')
+                          "
+                          >Value cannot be negative.</mat-error
+                        >
+                        <input
+                          *ngIf="inputType === 'time'"
+                          type="time"
+                          matInput
+                          fisStyle
+                          formControlName="additionaldatavalue"
+                          name="additionaldatavalue"
+                          [disabled]="isDisabled"
+                        />
+                        <input
+                          *ngIf="inputType === 'date'"
+                          type="date"
+                          matInput
+                          fisStyle
+                          formControlName="additionaldatavalue"
+                          name="additionaldatavalue"
+                          [disabled]="isDisabled"
+                        />
+                        <input
+                          *ngIf="inputType === 'text'"
+                          type="text"
+                          matInput
+                          fisStyle
+                          formControlName="additionaldatavalue"
+                          name="additionaldatavalue"
+                          [disabled]="isDisabled"
+                        />
+                        <input
+                          *ngIf="inputType === 'datetime-local'"
+                          type="datetime-local"
+                          matInput
+                          fisStyle
+                          formControlName="additionaldatavalue"
+                          name="additionaldatavalue"
+                          [disabled]="isDisabled"
+                        />
+
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('additionaldatavalue')
+                              .hasError('required')
+                          "
+                        >
+                          This field is required.
+                        </mat-error>
+                      </mat-form-field>
+                    </bod-control-group>
                     <bod-control-group
                       [truncate]="false"
                       [label]="
@@ -1239,6 +1262,53 @@
                           formControlName="percentagevalue"
                           name="percentagevalue"
                         />
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('percentagevalue')
+                              .hasError('negativeValue')
+                          "
+                        >
+                          Value cannot be negative.
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('percentagevalue')
+                              .hasError('zeroValue')
+                          "
+                        >
+                          Value cannot be zero
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('percentagevalue')
+                              .hasError('maxLength')
+                          "
+                        >
+                          Exceeds maximum length
+                        </mat-error>
+
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('percentagevalue')
+                              .hasError('maxValueExceeded')
+                          "
+                        >
+                        Value cannot be more than 100.
+                        </mat-error>
+
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('percentagevalue')
+                              .hasError('notInteger')
+                          "
+                        >
+                          Decimal values not allowed
+                        </mat-error>
                       </mat-form-field>
                     </bod-control-group>
                     <bod-control-group
@@ -1255,6 +1325,42 @@
                           formControlName="sequencenumber"
                           name="sequencenumber"
                         />
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('sequencenumber')
+                              .hasError('negativeValue')
+                          "
+                        >
+                          Value cannot be negative.
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('sequencenumber')
+                              .hasError('zeroValue')
+                          "
+                        >
+                          Value cannot be zero
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('sequencenumber')
+                              .hasError('maxLength')
+                          "
+                        >
+                          Exceeds maximum length
+                        </mat-error>
+                        <mat-error
+                          *ngIf="
+                            inputLayoutForm
+                              .get('sequencenumber')
+                              .hasError('notInteger')
+                          "
+                        >
+                          Decimal values not allowed
+                        </mat-error>
                       </mat-form-field>
                     </bod-control-group>
                     <bod-control-group
@@ -1334,9 +1440,9 @@
               [forTextOnly]="true"
               [required]="true"
             >
-            <div *ngIf="isEdit">
-              {{ addExistingAttributeFormGroup.get('productCode')?.value }}
-            </div>
+              <div *ngIf="isEdit">
+                {{ addExistingAttributeFormGroup.get('productCode')?.value }}
+              </div>
               <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
                 <mat-select
                   panelClass="fis-style"
@@ -1554,7 +1660,6 @@
                         <!-- <mat-error>
                             {{ getError('additionaldatavalue') | translate }}
                           </mat-error> -->
-                        
                       </mat-form-field>
                     </bod-control-group>
                     <bod-control-group
