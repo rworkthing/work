@@ -1,34 +1,25 @@
-public deleteTableData(index: number): void {
-  // Step 1: Get the current data
-  const currentData = this.tableWithSimpleEdit.datasource.data;
+export const nonNegativeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const value = control.value;
+  return value != null && value < 0 ? { negativeValue: 'Negative numbers are not allowed' } : null;
+};
 
-  // Step 2: Remove the item at the given index
-  currentData.splice(index, 1);
 
-  // Step 3: Update the table's data source with the new array
-  this.tableWithSimpleEdit.datasource.data = [...currentData];
+this.inputLayoutForm.addControl(
+  'additionaldatavalue',
+  new FormControl('', [Validators.required, nonNegativeValidator])
+);
 
-  // Step 4: Remove associated form controls if needed
-  if (this.searchFieldFormCtrlKeys?.length) {
-    this.searchFieldFormCtrlKeys = this.removeFormControl(this.searchFieldColumnForm, this.searchFieldFormCtrlKeys, index);
-  }
-  if (this.useExistingFormCtrlKeys?.length) {
-    this.useExistingFormCtrlKeys = this.removeFormControl(this.useExistingColForm, this.useExistingFormCtrlKeys, index);
-  }
-  if (this.overrideDefaultColFormCtrKeys?.length) {
-    this.overrideDefaultColFormCtrKeys = this.removeFormControl(this.overrideDefaultColumnForm, this.overrideDefaultColFormCtrKeys, index);
-  }
-  if (this.requiredColFormCtrKeys?.length) {
-    this.requiredColFormCtrKeys = this.removeFormControl(this.requiredColumnForm, this.requiredColFormCtrKeys, index);
-  }
+this.inputLayoutForm.addControl(
+  'percentagevalue',
+  new FormControl('', [nonNegativeValidator])
+);
 
-  // Step 5: Update searchFieldObjArr and reset relevant controls
-  if (this.searchFieldObjArr.length > index) {
-    this.searchFieldObjArr.splice(index, 1);
-  }
+this.inputLayoutForm.addControl(
+  'sequencenumber',
+  new FormControl('', [nonNegativeValidator])
+);
 
-  // Step 6: Notify that the form/table may be dirty or changed
-  this.tableDirty.emit(true);
 
-  console.log(`🗑️ Row at index ${index} deleted successfully.`);
-}
+<mat-error *ngIf="control.hasError('negativeValue')">
+  Negative numbers are not allowed
+</mat-error>
