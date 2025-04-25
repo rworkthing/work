@@ -1195,6 +1195,14 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     dismiss: 'BOD.metadataconfig.cancel'
   };
 
+  private codeTranslationMap: { [key: string]: string } = {
+    'CHRG_CUST_PARAM': 'Charge Parameter',
+    'APD_AR': 'Arrangement',
+    'APD_AR_IP_RLTNP': 'Role Relationship',
+    'APD_AR_NOTE_DP': 'Arrangement Note'
+  };
+
+
   constructor(
     private bodCommonDialogService: BodCommonDialogService,
     public commonDataService: BodTableDemoCommonDataService,
@@ -1671,6 +1679,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.addNewAttributeFormGroup.get('datatype')?.valueChanges.subscribe(value => {
       this.updateAdditionalDataValueType(value);
     });
+    this.addNewAttributeFormGroup.get('datatype')?.valueChanges.subscribe(() => {
+      this.changeDetectorRef.detectChanges();
+    });
   }
 
   private updateAdditionalDataValueType(datatype: string) {
@@ -1720,7 +1731,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
         break;
       case 'YesNo':
       case 'Flag':
-        this.inputType = 'text';
+        this.inputType = 'disable';
         this.isDisabled = true;
         break;
       default:
@@ -1904,16 +1915,17 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
   loadDropdownData(): void {
 
+
     this.metadataService.getTypes().subscribe(data => {
       const mappedData = data.map((item: any) => ({
-        label: item.code,
+        label: this.codeTranslationMap[item.code] || item.code,
         value: item.identifier
       }));
       mappedData.sort((a, b) => a.label.localeCompare(b.label));
       this.types = mappedData;
-
-      // console.log('fetching data from API' + this.types);
     });
+
+
 
     this.metadataService.getDataTypes().subscribe(
       (data: any[]) => {
@@ -2182,11 +2194,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   onSubmit(event: Event) { }
   onReset(isAdd: boolean): void {
     const isEditMode = this.isEdit;
-  const currentCode = this.addNewAttributeFormGroup?.get('code')?.value;
+    const currentCode = this.addNewAttributeFormGroup?.get('code')?.value;
     this.inputRangeLocaleLayoutFormLocale.reset();
     this.inputRangeLocaleLayoutFormDisplayName.reset();
     this.inputRangeLocaleLayoutFormDesc.reset();
-    this.dataWithlocale = [];
+    this.dataWithSimpleEdit = [];
     this.inputLayoutForm.reset();
     this.dataWithValidvalues = [];
     this.dataWithExsistingValidvalues = [];
@@ -2198,9 +2210,9 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     if (this.ExistingValidvalueArray && this.ExistingValidvalueArray.datasource) {
       this.ExistingValidvalueArray.datasource.data = [...this.dataWithExsistingValidvalues];
     }
-    // if (this.tableWithSimpleEdit && this.tableWithSimpleEdit.datasource) {
-    //   this.tableWithSimpleEdit.datasource.data = [...this.dataWithlocale];
-    // }
+    if (this.tableWithSimpleEdit && this.tableWithSimpleEdit.datasource) {
+      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
+    }
 
     if (isEditMode) {
       // Restore 'code' value and keep it disabled
