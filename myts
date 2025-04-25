@@ -222,6 +222,10 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   public modeOptionsSimple = this.modeOptions;
   public pageModeSimple = this.pageMode;
   public localeTableData: BodLocaleTable[] = [];
+  public retainedCode: string = '';
+  public retainedIdentifier: number = 0;
+  public retainedCodeForExt: string = '';
+  public retainedIdentifierForExt: number = 0;
 
   @Input() editAttributeRow: Attribute;
   @Output() selectedRole: EventEmitter<BodLocaleTable[]> = new EventEmitter<
@@ -462,12 +466,20 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   private editAttributes(element: Attribute) {
     console.log('Element Data:', JSON.stringify(element, null, 2)); // Log the full element data
     this.isAdd = false;
+    this.retainedIdentifier = element.identifier ?? 0;
+    this.retainedCode = element.code || '';
     this.addNewAttributeFormGroup.reset();
+
+    const additionalData = element.productTypeAdditionalDataTypeRltnpList?.[0];
+    this.retainedIdentifierForExt = additionalData?.attributeIdentifier ?? 0;
+    this.retainedCodeForExt = additionalData?.attributeCode || '';
+
     this.addExistingAttributeFormGroup.reset();
     this.addNewAttributeFormGroup.removeControl('validtype');
     this.addExistingAttributeFormGroup.removeControl('validtype');
     const previousLocaleData = [...this.tableWithSimpleEdit.datasource.data];
-    console.log(this.addNewAttributeFormGroup);
+    // console.log(JSON.stringify(getResponse, null, 2)"formmmmmm:",this.addNewAttributeFormGroup);
+    console.log('formmmmmm:', JSON.stringify(this.addNewAttributeFormGroup.getRawValue, null, 2));
     //this.addNewAttributeFormGroup.addControl("validtype",true)
     let selectedTemplate: TemplateRef<any>;
     let dialogTitle: string;
@@ -532,6 +544,11 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
           element.additionalDataValidValuesRange?.description || ''
         // setname: element.additionalDataValidValueSetList?.[0]?.name || '',
         // setdescriptions: element.additionalDataValidValueSetList?.[0]?.description || ''
+      });
+
+      this.addNewAttributeFormGroup.patchValue({
+        code: this.retainedCode,
+        identifier: this.retainedIdentifier
       });
     } else {
       selectedTemplate = this.addExistingAttributeTemp;
@@ -2194,7 +2211,6 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
   onSubmit(event: Event) { }
   onReset(isAdd: boolean): void {
     const isEditMode = this.isEdit;
-    const currentCode = this.addNewAttributeFormGroup?.get('code')?.value;
     this.inputRangeLocaleLayoutFormLocale.reset();
     this.inputRangeLocaleLayoutFormDisplayName.reset();
     this.inputRangeLocaleLayoutFormDesc.reset();
@@ -2203,6 +2219,10 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
     this.dataWithValidvalues = [];
     this.dataWithExsistingValidvalues = [];
     this.tableWithSimpleEdit.datasource.data = [];
+    this.addNewAttributeFormGroup.reset();
+
+    this.addNewAttributeFormGroup.markAsPristine();
+
 
     if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
       this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
@@ -2216,10 +2236,19 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     if (isEditMode) {
       // Restore 'code' value and keep it disabled
-      this.addNewAttributeFormGroup.get('code')?.setValue(currentCode);
+      this.addNewAttributeFormGroup.get('code')?.setValue(this.retainedCode);
       this.addNewAttributeFormGroup.get('code')?.disable();
+      this.addNewAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifier);
+      this.addNewAttributeFormGroup.get('identifier')?.disable();
+      this.addExistingAttributeFormGroup.get('productTypeCode')?.setValue(this.retainedCodeForExt);
+      this.addExistingAttributeFormGroup.get('productTypeCode')?.disable();
+      this.addExistingAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifierForExt);
+      this.addExistingAttributeFormGroup.get('identifier')?.disable();
     } else {
       this.addNewAttributeFormGroup.get('code')?.enable();
+      this.addNewAttributeFormGroup.get('identifier')?.enable();
+      this.addExistingAttributeFormGroup.get('code')?.enable();
+      this.addExistingAttributeFormGroup.get('identifier')?.enable();
     }
     this.changeDetectorRef.detectChanges();
   }
