@@ -1,37 +1,21 @@
-const isEditMode = this.isEdit;
-  const currentCode = this.addNewAttributeFormGroup?.get('code')?.value;
+if (isEditMode) {
+  // Restore 'code' value and keep it disabled
+  this.addNewAttributeFormGroup.get('code')?.setValue(this.retainedCode);
+  this.addNewAttributeFormGroup.get('code')?.disable();
+  this.addNewAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifier);
+  this.addNewAttributeFormGroup.get('identifier')?.disable();
 
-
- if (isEditMode) {
-    // Restore 'code' value and keep it disabled
-    this.addNewAttributeFormGroup.get('code')?.setValue(currentCode);
-    this.addNewAttributeFormGroup.get('code')?.disable();
-  } else {
-    this.addNewAttributeFormGroup.get('code')?.enable();
+  const productTypeCodeControl = this.addExistingAttributeFormGroup.get('productTypeCode');
+  if (productTypeCodeControl) {
+    productTypeCodeControl.enable({ emitEvent: false });
+    productTypeCodeControl.setValue(this.retainedCodeForExt);
+    productTypeCodeControl.disable({ emitEvent: false });
   }
 
-export const nonNegativeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const value = control.value;
-  return value != null && value < 0 ? { negativeValue: 'Negative numbers are not allowed' } : null;
-};
-
-
-this.inputLayoutForm.addControl(
-  'additionaldatavalue',
-  new FormControl('', [Validators.required, nonNegativeValidator])
-);
-
-this.inputLayoutForm.addControl(
-  'percentagevalue',
-  new FormControl('', [nonNegativeValidator])
-);
-
-this.inputLayoutForm.addControl(
-  'sequencenumber',
-  new FormControl('', [nonNegativeValidator])
-);
-
-
-<mat-error *ngIf="control.hasError('negativeValue')">
-  Negative numbers are not allowed
-</mat-error>
+  const identifierControl = this.addExistingAttributeFormGroup.get('identifier');
+  if (identifierControl) {
+    identifierControl.enable({ emitEvent: false });
+    identifierControl.setValue(this.retainedIdentifierForExt);
+    identifierControl.disable({ emitEvent: false });
+  }
+}
