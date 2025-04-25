@@ -1108,15 +1108,19 @@
                   </mat-error>
                 </mat-form-field>
               </bod-control-group>
-              <bod-control-group
-                [truncate]="false"
-                [label]="translationKey + 'metadataconfig.validtype'"
-                [forTextOnly]="true"
-                [required]="false"
-              >
-                <mat-slide-toggle formControlName="validtype" name="validtype">
-                </mat-slide-toggle>
-              </bod-control-group>
+
+              
+                <bod-control-group 
+                  [truncate]="false"
+                  [label]="translationKey + 'metadataconfig.validtype'"
+                  [forTextOnly]="true"
+                  [required]="false"
+                >
+                  <mat-slide-toggle formControlName="validtype" name="validtype">
+                  </mat-slide-toggle>
+                </bod-control-group>
+              
+              
 
               <!-- <bod-control-group [truncate]="false" [label]="translationKey + 'metadataconfig.validtype'"
             [forTextOnly]="true" [required]="false">
@@ -1125,7 +1129,7 @@
             </bod-control-group> -->
             </bod-input-layout>
           </div>
-
+          <ng-container *ngIf="inputType !== 'disable'">
           @if(addNewAttributeFormGroup.get('validtype').value){
           <div>
             <bod-page-container
@@ -1417,6 +1421,7 @@
             </bod-input-layout>
           </div>
           }
+          </ng-container>
         </bod-form>
       </ng-template>
 
