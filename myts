@@ -2240,8 +2240,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       this.addNewAttributeFormGroup.get('code')?.disable();
       this.addNewAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifier);
       this.addNewAttributeFormGroup.get('identifier')?.disable();
-      this.addExistingAttributeFormGroup.get('productTypeCode')?.setValue(this.retainedCodeForExt);
-      this.addExistingAttributeFormGroup.get('productTypeCode')?.disable();
+      this.addExistingAttributeFormGroup.get('productCode')?.setValue(this.retainedCodeForExt);
+      this.addExistingAttributeFormGroup.get('productCode')?.disable();
       this.addExistingAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifierForExt);
       this.addExistingAttributeFormGroup.get('identifier')?.disable();
     } else {
@@ -2897,7 +2897,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       this.messages1 = this.messages1.filter(
         msg => msg.text !== errorMsg
       );
-    }, 12000);
+    }, 30000);
   }
 
   private handleError1(error: any) {
@@ -3084,8 +3084,8 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
 
     serviceCall.subscribe(
       response => {
-        this.handleSuccess(isAdd, response);
-        console.log('after:', response);
+        this.handleSuccess(isAdd, request);
+        console.log('after:', request);
       },
       error => this.handleErrorforExisting(error, isAdd)
     );
@@ -3409,7 +3409,7 @@ export class MetadataConfigComponent implements OnInit, OnDestroy {
       percentageallowed: new UntypedFormControl(''),
       classificationtype: [{ value: 'systemDefined', disabled: true }],
       // validvaluestype: new UntypedFormControl(''),
-      relatetoproducttype: new UntypedFormControl(''),
+      relatetoproducttype: new UntypedFormControl(true),
       multiLingualTextInfoList: new UntypedFormControl(''),
       attributevalue: new UntypedFormControl(''),
       // setname: new UntypedFormControl(''),
