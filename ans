@@ -69,3 +69,96 @@ export function localeDuplicateValidator(getRows: () => any[], getCurrentRowId: 
   };
 }
 
+
+
+<bod-page-container
+  title="Locale"
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'actions', templateName: editActionsTemplate1 },
+      { columnName: 'locale', templateName: editLocaleTemplate }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+
+    <!-- ✅ Custom Template for Locale -->
+    <ng-template #editLocaleTemplate let-control="control" let-index="index">
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select [formControl]="control">
+          <mat-option *ngFor="let locale of localeCodes" [value]="locale.value">
+            {{ locale.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="control.hasError('duplicateLocale')">
+          {{ control.getError('duplicateLocale') }}
+        </mat-error>
+      </mat-form-field>
+    </ng-template>
+
+    <!-- ✅ Actions Template (Existing) -->
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+
+  </bod-table>
+</bod-page-container>
+
