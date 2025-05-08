@@ -45,3 +45,27 @@ export function localeDuplicateValidator(getRows: () => any[], getCurrentRowId: 
   </mat-error>
 </mat-form-field>
 
+
+import { AbstractControl, ValidatorFn } from '@angular/forms';
+
+export function localeDuplicateValidator(getRows: () => any[], getCurrentRowId: () => number): ValidatorFn {
+  return (control: AbstractControl) => {
+    const currentValue = control.value;
+    if (!currentValue) return null;
+
+    const rows = getRows();
+    const currentId = getCurrentRowId();
+
+    const isDuplicate = rows.some(row =>
+      row.locale === currentValue && row.id !== currentId
+    );
+
+    if (isDuplicate) {
+      console.error(`❌ Duplicate locale selected: '${currentValue}' already exists in another row.`);
+      return { duplicateLocale: 'This locale is already selected.' };
+    }
+
+    return null;
+  };
+}
+
