@@ -1,21 +1,47 @@
-if (isEditMode) {
-  // Restore 'code' value and keep it disabled
-  this.addNewAttributeFormGroup.get('code')?.setValue(this.retainedCode);
-  this.addNewAttributeFormGroup.get('code')?.disable();
-  this.addNewAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifier);
-  this.addNewAttributeFormGroup.get('identifier')?.disable();
+import { AbstractControl, ValidatorFn } from '@angular/forms';
 
-  const productTypeCodeControl = this.addExistingAttributeFormGroup.get('productTypeCode');
-  if (productTypeCodeControl) {
-    productTypeCodeControl.enable({ emitEvent: false });
-    productTypeCodeControl.setValue(this.retainedCodeForExt);
-    productTypeCodeControl.disable({ emitEvent: false });
-  }
+export function localeDuplicateValidator(getRows: () => any[], getCurrentRowId: () => number): ValidatorFn {
+  return (control: AbstractControl) => {
+    const currentValue = control.value;
+    if (!currentValue) return null;
 
-  const identifierControl = this.addExistingAttributeFormGroup.get('identifier');
-  if (identifierControl) {
-    identifierControl.enable({ emitEvent: false });
-    identifierControl.setValue(this.retainedIdentifierForExt);
-    identifierControl.disable({ emitEvent: false });
+    const rows = getRows();
+    const currentId = getCurrentRowId();
+
+    const isDuplicate = rows.some(row =>
+      row.locale === currentValue && row.id !== currentId
+    );
+
+    return isDuplicate ? { duplicateLocale: 'This locale is already selected.' } : null;
+  };
+}
+{
+  name: 'locale',
+  title: 'Locale',
+  width: 2,
+  inputModeOptions: {
+    type: ColumnType.select,
+    model: this.localeCodes,  // already populated from service
+    validators: {
+      required: true,
+      max: 20,
+      maxLengthStrategy: this.selectedStrategy,
+      custom: localeDuplicateValidator(
+        () => this.tableWithSimpleEdit.datasource.data,
+        () => this.singleRowEdit.index
+      )
+    }
   }
 }
+
+<mat-form-field appearance="outline">
+  <mat-select [formControl]="control">
+    <mat-option *ngFor="let locale of localeCodes" [value]="locale.value">
+      {{ locale.label }}
+    </mat-option>
+  </mat-select>
+  <mat-error *ngIf="control.hasError('duplicateLocale')">
+    {{ control.getError('duplicateLocale') }}
+  </mat-error>
+</mat-form-field>
+
