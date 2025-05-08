@@ -1,2 +1,1 @@
-Cannot read properties of undefined (reading 'length')
-    at SimpleEditTableComponent.updateCustomColumnFormFields (simple-edit-table.component.ts:462:62)
+[ { "id": 0, "locale": "en-US", "displayName": "csa", "description": "sas" }, { "id": 2, "locale": "en-US", "displayName": "sa", "description": "asc" } ]
