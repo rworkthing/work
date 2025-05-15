@@ -1,29 +1,38 @@
 import {
   ChangeDetectorRef,
   Component,
-  CUSTOM_ELEMENTS_SCHEMA,
-  NO_ERRORS_SCHEMA,
-  TemplateRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
   ViewChild
 } from '@angular/core';
-import { TranslationKey } from '../metadat-config/codegen-config.constant';
+import { CommonModule } from '@angular/common';
 import {
+  AbstractControl,
   FormBuilder,
+  FormGroup,
   FormsModule,
   ReactiveFormsModule,
   UntypedFormControl,
   UntypedFormGroup,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { BalanceTypeService } from '../balance-type-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
 import {
-  BodCommonDialogModel,
+  BodAutoCompleteMetadata,
+  BodAutoCompleteModule,
+  BodAutoCompleteOption,
   BodCommonDialogService,
   BodCommonModule,
-  BodConfirmAlertDialogsService,
-  BodConfirmDialogModel,
   BodCurrencyControlModule,
   BodDynamicFormModule,
   BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
   BodPageContainerModule,
   BodTableAction,
   BodTableActionsModule,
@@ -34,48 +43,56 @@ import {
   CommonDialogComponent,
   ControlGroupModule,
   DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
+  InlineEditOutput,
   InputLayoutModule,
   InquiryLayoutModule,
   MessageContainerModule,
+  ModeOptions,
   NotificationMessage,
   NotificationMessageType,
   RowLeftAction,
   SearchFieldModule,
   SectionContainerModule
 } from '@bod/common';
-import {
-  editDeleteActions,
-  roletypeactionDelete,
-  RoleTypeTableLevelActions
-} from './role-type-constants';
-import { BodSampleTable } from '../bod-table-demo.model';
-import { MetadataService } from '../metadat-config/metada-config.service';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatDialogRef } from '@angular/material/dialog';
-import { TranslateModule } from '@ngx-translate/core';
+import { BalanceTypeComponent } from '../balance-type.component';
 import { MatIconModule } from '@angular/material/icon';
 import { RufIconModule } from '@ruf/shell/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
-import { CommonModule } from '@angular/common';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { TranslateModule } from '@ngx-translate/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { RoleTypeService } from './role-type-service';
-import { AddEditRoletypeComponent } from '../add-edit-roletype/add-edit-roletype.component';
-import { ExistingRoleTypeComponent } from '../existing-role-type/existing-role-type.component';
-import { AddEditRoleService } from '../add-edit-roletype/add-edit-role-service';
-import { RoleTypeList } from '../add-edit-roletype/add-edit-roletype.mode';
+import {
+  roletypeaction,
+  roletypeactionDelete
+} from '../balance-type-constants';
+import { MatTableDataSource } from '@angular/material/table';
+import { BodSampleTable } from '../../bod-table-demo.model';
+import {
+  AddtRelationTable,
+  AggregateSampleTable,
+  BalanceTypePeriod,
+  BalSybTypeTable,
+  PstgSampleTable,
+  RoleTypeSampleTable
+} from './balancetype.model';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { MatDialogRef } from '@angular/material/dialog';
+import { BalanceTypeList } from './add-edit-balancetype.mode';
+import { elementAt } from 'rxjs';
 
 @Component({
-  selector: 'bod-role-type',
+  selector: 'bod-add-edit-balancetype',
   standalone: true,
   imports: [
-    AddEditRoletypeComponent,
-    ExistingRoleTypeComponent,
+    BodAutoCompleteModule,
+    BalanceTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
     MatIconModule,
@@ -88,6 +105,7 @@ import { RoleTypeList } from '../add-edit-roletype/add-edit-roletype.mode';
     TranslateModule,
     BodPageContainerModule,
     BodTableModule,
+    TranslateModule,
     BodTableActionsModule,
     FormsModule,
     InputLayoutModule,
@@ -100,476 +118,1469 @@ import { RoleTypeList } from '../add-edit-roletype/add-edit-roletype.mode';
     BodDynamicFormModule,
     SectionContainerModule,
     MatInputModule,
+    TranslateModule,
+
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
+    MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './role-type.component.html',
-  styleUrl: './role-type.component.scss',
-  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
+  templateUrl: './add-edit-balancetype.component.html',
+  styleUrl: './add-edit-balancetype.component.scss'
 })
-export class RoleTypeComponent {
+export class AddEditBalancetypeComponent implements OnInit {
   public translationKey = TranslationKey;
-  public addNewRoleTypeFormGroup: UntypedFormGroup;
-  public addExistingRoleTypeFormGroup: UntypedFormGroup;
-  public editactions1: BodTableAction[] = editDeleteActions;
-  public retainedCode: string = '';
-  public retainedIdentifier: number = 0;
+  public addNewBalanceTypeFormGroup: UntypedFormGroup;
+  public balanceSubtypeForm: UntypedFormGroup;
+  public additionalRelationIDForm: UntypedFormGroup = new UntypedFormGroup({});
+  public additionalRelationValueForm: UntypedFormGroup = new UntypedFormGroup(
+    {}
+  );
 
-  @ViewChild('addNewRoleTypeTemplate')
-  public addNewRoleTypeTemp: TemplateRef<any>;
-  @ViewChild('addExistingRoleTypeTemplate')
-  public addExstRoleTypeTemp: TemplateRef<any>;
-  private adminTableRef: BodTableComponent | undefined;
+  public aggregateForm: UntypedFormGroup;
+  public roleTypeForm: UntypedFormGroup;
+  public postingApplicationForm: UntypedFormGroup;
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  public accountclassifications: any[] = [];
+  public roletypes: any[] = [];
+  public relationshiptypes: any[] = [];
+
+  public roleaccountclassifications: any[] = [];
+  public postingapplicationmethods: any[] = [];
+  public producttypes: any[] = [];
+  public balancetypes: any[] = [];
+  public subBalancetypes: any[] = [];
+  public subBalancetypes2: any[] = [];
+  public debittransactiontypes: any[] = [];
+  public credittransactiontypes: any[] = [];
+  public payees: any[] = [];
+  public payers: any[] = [];
+  useExistingFormCtrlKeysId: string[] = [];
+  useExistingFormCtrlKeysValue: string[] = [];
+  private lastModifiedIndex = 0;
+  public additionalRelationActions: BodTableAction[] = roletypeaction;
+  public roleTypetableActions: BodTableAction[] = roletypeaction;
+  public aggregateTableActions: BodTableAction[] = roletypeaction;
+  public postingAppTableActions: BodTableAction[] = roletypeaction;
+  public balanceSubTypeTableActions: BodTableAction[] = roletypeaction;
+  public rowLevelActionsForBasicEdit: BodTableAction[] = roletypeactionDelete;
+  public rowLevelActionsForRelationshipedit: BodTableAction[] =
+    roletypeactionDelete;
+  public isExistingItem: any = true;
+  public balancesubtypeerr: any = false;
+  // @Output() balanceTypeDataEvent = new EventEmitter<any>();
+  @Input() retainedCode: string = '';
+  @Input() retainedIdentifier: number = 0;
+  @Input() retainedName: string = '';
+  @Input() retainedSystemBalance: boolean = false;
+  @Input() retainedAccountClassification: number = 0;
+  @Input() retainedDateValue: string = '';
+  @Input() retainedPayer: number = 0;
+  @Input() retainedPayee: number = 0;
+  @Input() retainedStatementDisplay: boolean = false;
+  @Input() retainedChargeBase: boolean = false;
+  @Input() retainedPersisted: boolean = false;
+  @Input() retainedCalculated: boolean = false;
+  @Input() retainedAutoCreation: boolean = false;
+  @Input() retainedLogHistory: boolean = false;
+  @Input() retainedDailySnapshot: boolean = false;
+  @Input() retainedInquiryRequired: boolean = false;
+  @Input() retainedGenerateFinancialResults: boolean = false;
+  @Input() retainedGLMapping: boolean = false;
+  @Input() retainedSummaryRequired: boolean = false;
+  @Input() retainedBalanceSubType: boolean = false;
+  @Input() retainedBalancePeriodType: string[] = [];
+  @Input() retainedBalanceSubTypeData: BalSybTypeTable[] = [];
+  @Input() retainedRoleTypeData: RoleTypeSampleTable[] = [];
+  @Input() retainedAggregateDetailsData: AggregateSampleTable[] = [];
+
+
+
+  @Input() editBalanceTypeRow: BalanceTypeList;
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+  public errorMessages: NotificationMessage[] = [];
+
+  // @Output() closeDialog: EventEmitter<boolean> = new EventEmitter<boolean>();
+
+  public modeOptions: ModeOptions = { input: false, reset: false };
+
+  @ViewChild('additionalRelationships')
+  public addRelationID: BodTableComponent;
   @ViewChild('systemMessage', { static: true }) systemMessage: any;
-  @ViewChild(AddEditRoletypeComponent)
-  private addEditRoletypeComponent!: AddEditRoletypeComponent;
-  public messages: NotificationMessage[] = [];
-  public cattypes: any[] = [];
-  public classifications: any[] = [];
-  public message: NotificationMessage | undefined;
-  isAdd: boolean = true;
-  value: string = '123';
-  isEdit: boolean = false;
 
-  public ConfirmData: BodConfirmDialogModel = {
-    title: 'BOD.metadataconfig.title',
-    message: 'BOD.metadataconfig.message',
-    confirm: 'BOD.metadataconfig.delete',
-    dismiss: 'BOD.metadataconfig.cancel'
+  public onValidTableActionClicked(event: BodTableAction): void { }
+  public onEditTableAction(event: EditTableEventData) { }
+
+  //This is related to columns which are inaddtnRelInquiry for multi select input dropdown
+  // public updateColumnData(columnName, value, index) {
+  //   const updatedData = this.additionalRelationData.datasource.data;
+  //   updatedData[index][columnName] = value;
+  //   if (value === 'BalancePeriodType') {
+  //     //periodData
+  //     // this.inputForpreconversionSelect.options = this.periodTypes;
+  //     this.periodData = this.inputForpreconversionSelect;
+  // this.periodDataArr[0] = {
+  //   options: [
+  //     { value: 'monthly', label: 'Monthly' },
+  //     { value: 'yearly', label: 'Yearly' },
+  //     { value: 'statement', label: 'Statement' },
+  //     { value: 'lifetodate', label: 'LifeToDate' }
+  //   ],
+  //   isMultiSelect: true
+  // };
+  //  inputForpreconversionSelect: BodAutoCompleteMetadata = {
+  //   options: this.periodTypes,
+  //   isMultiSelect: true
+  // };
+  // this.periodData.options = this.periodDataArr[0];
+  //thi
+  // this.periodDataArr = [
+  //   {
+  //     options: [
+  //       { value: 'monthly', label: 'Monthly' },
+  //       { value: 'yearly', label: 'Yearly' },
+  //       { value: 'statement', label: 'Statement' },
+  //       { value: 'lifetodate', label: 'LifeToDate' }
+  //     ],
+  //     isMultiSelect: true
+  //   },
+  //   {
+  //     options: [
+  //       { value: 'monthly', label: 'Monthly' },
+  //       { value: 'yearly', label: 'Yearly' }
+  //     ],
+  //     isMultiSelect: true
+  //   }
+  // ];
+  //   this.periodData.options = this.periodTypes;
+  //   this.periodDataArr[index] = this.periodData;
+  // } else {
+  // inputForpreconversionSelect: BodAutoCompleteMetadata = {
+  //   options: this.periodTypes,
+  //   isMultiSelect: true
+  // };
+  // this.additionalRelationValueForm.reset();
+  //   this.periodData = this.inputForpreconversionSelect1;
+  // }
+
+  //   (
+  //     this.additionalRelationData
+  //       .datasource as MatTableDataSource<AddtRelationTable>
+  //   ).data = updatedData;
+  //   // this.simpleEditTableRef.updateDeltaForCustomColumn(
+  //   //   EditTableAction.EDIT,
+  //   //   index
+  //   // );
+  // }
+  public onRelationTableActionClicked(event: BodTableAction) {
+    if (event.id === BodTableActionType.ADD) {
+      this.addRelationData();
+    }
+  }
+
+  private addRelationData() {
+    const updatedData = {
+      id: this.lastModifiedIndex,
+      relationshipid: '',
+      action: EditTableAction.ADD,
+      value: ''
+    };
+    this.addRelationID.addRow(updatedData);
+    this.useExistingFormCtrlKeysId = FormUtilityService.addFormControl(
+      this.additionalRelationIDForm,
+      'relationshipid',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeysValue = FormUtilityService.addFormControl(
+      this.additionalRelationValueForm,
+      'value',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
+
+    ++this.lastModifiedIndex;
+    //this.addNewAttributeFormGroup.markAsDirty();
+  }
+
+  public inlineAddRowActionClick() {
+    this.balanceSubtypeForm.reset();
+    this.roleTypeForm.reset();
+    this.postingApplicationForm.reset();
+
+    if (this.aggregateForm) {
+      // Store the current aggregationname value
+      const currentAggregationName = this.aggregateForm.get('aggregationname')?.value;
+
+      // Reset the form
+      this.aggregateForm.reset();
+
+      // Set the aggregationname value back
+      this.aggregateForm.get('aggregationname')?.setValue(currentAggregationName);
+    }
+  }
+  public inlineEditRowActionClick(_event: InlineEditOutput) { }
+
+  dateValues = [
+    { value: 'BookingDate', label: 'Booking Date' },
+    { value: 'EffectiveDate', label: 'Effective Date' },
+    { value: 'ValueDate', label: 'Value Date' }
+
+  ];
+  applicationTypes = [
+    { value: 'MaximumBalance', label: 'Maximum Balance' },
+    { value: 'RemainingAmount', label: 'Remaining Amount' },
+    { value: 'Amount', label: 'Amount' }
+  ];
+  customizationTypes = [
+    { value: 'Before', label: 'Before' },
+    { value: 'None', label: 'None' },
+    { value: 'After', label: 'After' },
+    { value: 'CustomOnly', label: 'Custom Only' }
+  ];
+  additionalRelations = [
+    { value: 'BalSubType', label: 'Balance sub Type' },
+    { value: 'BalancePeriodType', label: 'Balance Period Type' }
+  ];
+  // periodTypes = [
+  //   { value: 'monthly', label: 'Monthly' },
+  //   { value: 'yearly', label: 'Yearly' },
+  //   { value: 'statement', label: 'Statement' },
+  //   { value: 'lifetodate', label: 'LifeToDate' }
+  // ];
+  autoCompleteFieldMultiConv: any;
+  autoCompleteFieldMultiConv1: any;
+  public periodTypes: BodAutoCompleteOption[] = [
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'Yearly', label: 'Yearly' },
+    { value: 'Statement', label: 'Statement' },
+    { value: 'LifeToDate', label: 'LifeToDate' }
+  ];
+  public periodDataArr: BodAutoCompleteMetadata[] = [
+    { options: [], isMultiSelect: true }
+  ];
+  truncate = false;
+
+  // inputForpreconversionSelect: BodAutoCompleteMetadata = {
+  //   options: [],
+  //   isMultiSelect: true
+  // };
+  // periodData = this.inputForpreconversionSelect;
+  inputForpreconversionSelect: BodAutoCompleteMetadata = {
+    options: this.periodTypes,
+    isMultiSelect: true
   };
+  periodData = this.inputForpreconversionSelect;
 
+  inputForpreconversionSelect1: BodAutoCompleteMetadata = {
+    options: [],
+    isMultiSelect: true
+  };
+  periodData1 = this.inputForpreconversionSelect1;
+
+  // showBalanceSubtype = boolean;
+  // showBalancePeriodType: boolean;
+  // showBalanceSubtype: boolean;
+
+  onSelectionChange(selectedValue: string) {
+    // this.showBalanceSubtype = selectedValue === 'BalSubType';
+    // this.showBalancePeriodType = selectedValue === 'BalancePeriodType';
+    //this.periodData.options = [];
+    // this.periodData = {
+    //   isMultiSelect: true,
+    //   required: false,
+    //   options: []
+    // };
+    if (selectedValue === 'BalancePeriodType') {
+      //periodData
+      // this.inputForpreconversionSelect.options = this.periodTypes;
+      this.periodData = this.inputForpreconversionSelect;
+      this.periodData.options = this.periodTypes;
+    } else {
+      // inputForpreconversionSelect: BodAutoCompleteMetadata = {
+      //   options: this.periodTypes,
+      //   isMultiSelect: true
+      // };
+      // this.additionalRelationValueForm.reset();
+      this.periodData = this.inputForpreconversionSelect1;
+    }
+
+    if (selectedValue === 'BalancePeriodType') {
+      this.subBalancetypes2 = this.periodTypes;
+    } else {
+      this.subBalancetypes2 = this.subBalancetypes;
+    }
+  }
+  // onSelectionChange(value: string) {
+  //   // Update visibility based on the selected value
+  //   if (value === 'Balance Subtype') {
+  //     this.showBalanceSubtype = true;
+  //   } else if (value === 'Balance Period Type') {
+  //     this.showBalancePeriodType = true;
+  //   }
+  // }
   constructor(
-    private cdr: ChangeDetectorRef,
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    public roleTypeService: RoleTypeService,
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodFormStateService: BodFormStateService,
+    public balanceTypeService: BalanceTypeService,
     private fb: FormBuilder,
     private bodCommonDialogService: BodCommonDialogService,
-    private metadataService: MetadataService,
-    public addEditRoleService: AddEditRoleService
-  ) {}
+    private metadataService: MetadataService //roleTypetabledata
+  ) {
+    // this.getNewBalanceType();
+  }
 
   ngOnInit() {
-    this.getNewRoleType();
-    this.adDropdownData();
-    this.addNewRoleTypeFormGroup = this.fb.group({
-      roleTypeCode: new UntypedFormControl('', [Validators.required]),
-      roleTypeIdentifier: [{ value: '', disabled: true }],
-      roleTypeName: new UntypedFormControl(''),
-      roleTypeShortName: new UntypedFormControl(''),
-      category: new UntypedFormControl('', [Validators.required]),
-      classification: new UntypedFormControl('', [Validators.required]),
-      systemDefined: new UntypedFormControl(''),
-      isCalculated: new UntypedFormControl(''),
-      category1: new UntypedFormControl([])
-    });
-    this.addExistingRoleTypeFormGroup = this.fb.group({
-      existingRoleCode: new UntypedFormControl('', [Validators.required]),
-      roleTypeIdentifier: [{ value: '', disabled: true }],
-      category1: new UntypedFormControl([])
-    });
-  }
-
-  public roleTypeTableActions: BodTableAction[] = RoleTypeTableLevelActions;
-  public roleTypeTableMetaData: BodTableMetadata = {
-    title: 'Role Type Details',
-    columns: [...this.roleTypeService.columns],
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 4,
-      length: 12,
-      pageSizeOptions: [2, 3, 4, 6],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Role Types defined',
-    rowLeftAction: RowLeftAction.expandableRows,
-    enableSorting: true
-  };
-
-  public roleRelationshipTable: BodTableMetadata = {
-    title: 'Role Relationship Details',
-    columns: [...this.addEditRoleService.roleRelationshipInquiry],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No data Defined',
-    rowLeftAction: RowLeftAction.expandableRows
-  };
-
-  public rowExpanded(element: RoleTypeList) {
-    this.roleRelationshipTable.datasource.data =
-      element.productTypeRoleTypeRelationshipList || [];
-  }
-
-  public commonDialogSize: string = 'Large';
-  public closeOnCloseIconClick: boolean = false;
-  private onCloseClick() {
-    this.systemMessage.message = 'Custom Function called on close';
-    this.systemMessage.show();
-    this.dialogRef$.close();
-  }
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-  private openDialog(dialogModel: any) {
-    let onClose = this.closeOnCloseIconClick
-      ? this.onCloseClick.bind(this)
-      : undefined;
-    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
-      dialogModel,
-      onClose,
-      this.commonDialogSize
-    );
-  }
-
-  public onTableActionClicked1(event: BodTableAction) {
-    this.isEdit = false;
-    this.messages = [];
-    if (event.id === 12) {
-      this.addNewRoleType();
-    } else if (event.id === 13) {
-      this.addExistingRoleType();
+    this.initForm();
+    // this.getNewBalanceType();
+    this.loadDropdownData();
+    if (this.editBalanceTypeRow) {
+      this.balanceTypeForm(this.editBalanceTypeRow);
     }
-  }
-  private addNewRoleType() {
-    this.editRoleType = undefined;
-    if (this.addNewRoleTypeFormGroup) {
-      this.addNewRoleTypeFormGroup.reset();
-    } else {
-      console.error('addNewRoleTypeFormGroup is undefined');
-    }
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addNewRoleTypeTemp,
-      title: 'Add New Role Type'
-    };
-    this.openDialog(dialogModel);
-  }
-  private addExistingRoleType() {
-    // this.editAttribute = null;
-    this.editRoleType = undefined;
-    this.addExistingRoleTypeFormGroup.reset();
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addExstRoleTypeTemp,
-      title: 'Relate Existing Role'
-    };
-    this.openDialog(dialogModel);
-  }
-  public msg: NotificationMessage | undefined;
-  addRoleTypeEvent(event: any) {
-    if (event) {
-      this.getNewRoleType();
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 4000);
-    }
-    this.dialogRef$.close();
-  }
-  addRoleTypeEventForExst(event: any) {
-    if (event) {
-      this.getNewRoleType();
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 4000);
-    }
-    this.dialogRef$.close();
+    this.addNewBalanceTypeFormGroup
+      .get('balanceTypeCode')
+      ?.valueChanges.subscribe(value => {
+        this.aggregateForm.get('aggregationname')?.setValue(value);
+      });
   }
 
-  adDropdownData(): void {
-    this.roleTypeService.getAccountClassification().subscribe(data => {
+  loadDropdownData(): void {
+    this.balanceTypeService.getAccntClassification().subscribe(data => {
       const mappedData = data.map((item: any) => ({
         label: item.code,
         value: item.identifier
       }));
-      this.classifications = mappedData;
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.accountclassifications = mappedData;
+      this.roleaccountclassifications = mappedData;
     });
-    this.roleTypeService.getRoleCat().subscribe(data => {
-      this.cattypes = data.map((item: any) => ({
-        label: item.code, // Store the dropdown label
-        value: item.identifier // Store the corresponding identifier
+
+    this.balanceTypeService.getRoletype().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
       }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.roletypes = mappedData;
+      this.payers = mappedData;
+      this.payees = mappedData;
+    });
+
+    this.balanceTypeService.getPostMethod().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.postingapplicationmethods = mappedData;
+    });
+
+    this.balanceTypeService.getRelationshipType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.relationshiptypes = mappedData
+    });
+    this.balanceTypeService.getProductType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.producttypes = mappedData
+    });
+    this.balanceTypeService.getBalanceType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.balancetypes = mappedData
+    });
+
+    this.balanceTypeService.getSubBalanceType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.subBalancetypes = mappedData
+    });
+    // this.balanceTypeService.getSubBalanceType().subscribe(data => {
+    //   // this.subBalancetypes = data.map((item: any) => ({
+    //   //   label: item.code,
+    //   //   value: item.identifier
+    //   // }));
+    //   this.inputForpreconversionSelect1 = {
+    //     options: data.map((item: any) => ({
+    //       label: item.code,
+    //       value: item.identifier
+    //     })).sort((a, b) => a.label.localeCompare(b.label))
+    //     isMultiSelect: true
+    //   };
+
+    //   this.periodData1 = this.inputForpreconversionSelect1;
+    // });
+    this.balanceTypeService.getSubBalanceType().subscribe(data => {
+      const sortedOptions = data.map((item: any) => ({
+        label: item.code,
+        value: item.code
+      })).sort((a, b) => a.label.localeCompare(b.label));
+
+      this.inputForpreconversionSelect1 = {
+        options: sortedOptions,
+        isMultiSelect: true
+      };
+
+      this.periodData1 = this.inputForpreconversionSelect1;
+      this.balancesubtypeerr = true
+      // if (this.editBalanceTypeRow) {
+      //   this.balanceTypeForm(this.editBalanceTypeRow);
+      // }
+    });
+
+    this.balanceTypeService.getPostingSTD().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.debittransactiontypes = mappedData;
+      this.credittransactiontypes = mappedData;
+    });
+  }
+  public dataWithBalSubTypevalues: BalSybTypeTable[] = [];
+  onAddBalSubType(formValues: any) {
+    if (this.balanceSubtypeForm.invalid) {
+      // alert('Please fill all the required fields.');
+      return;
+    }
+    this.dataWithBalSubTypevalues = this.dataWithBalSubTypevalues || [];
+    this.balanceSubtypeForm.controls['balsubtypeIdentifier'].enable();
+    const updatedFormValues = this.balanceSubtypeForm.getRawValue();
+    this.balanceSubtypeForm.controls['balsubtypeIdentifier'].disable();
+    const newValidValue: BalSybTypeTable = {
+      code: formValues.balancesubtypename || '',
+      name: formValues.balancesubtypecode || '',
+      identifier: updatedFormValues.balsubtypeIdentifier || ''
+    };
+
+    this.dataWithBalSubTypevalues.push(newValidValue);
+    if (this.balanceSubTypeData && this.balanceSubTypeData.datasource) {
+      this.balanceSubTypeData.datasource.data = [
+        ...this.dataWithBalSubTypevalues
+      ];
+    }
+    if (this.balanceSubtypeForm) {
+      this.balanceSubtypeForm.reset();
+    }
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
+  public dataWithRoleTypevalues: RoleTypeSampleTable[] = [];
+  onAdd(formValues: any) {
+    this.errorMessages = [];
+    const selectedRoleType = this.roletypes.find(
+      item => item.value === formValues.roletype
+    );
+    const roleTypeCode = selectedRoleType ? selectedRoleType.label : '';
+    const selectedAccountClassification = this.accountclassifications.find(
+      item => item.value === formValues.roleaccountclassification
+    );
+    const accountClassificationCode = selectedAccountClassification
+      ? selectedAccountClassification.label
+      : '';
+    if (this.roleTypeForm.invalid) {
+      // alert('Please fill all the required fields.');
+      return;
+    }
+    const existingRoleType = this.dataWithRoleTypevalues.find(
+      item => item.type === roleTypeCode
+    );
+    if (existingRoleType) {
+      this.handleError1({
+        errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
+        status: 400
+      });
+      return;
+    }
+    this.dataWithRoleTypevalues = this.dataWithRoleTypevalues || [];
+    const newValidValue: RoleTypeSampleTable = {
+      type: roleTypeCode || '',
+      accountingClassification: accountClassificationCode ?? '',
+      obligator: formValues.obligator ? 'Y' : 'N',
+      beneficiary: formValues.beneficiary ? 'Y' : 'N',
+      visibility: formValues.isvisible ? 'Y' : 'N'
+    };
+
+    this.dataWithRoleTypevalues.push(newValidValue);
+    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
+      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    }
+    if (this.roleTypeForm) {
+      this.roleTypeForm.reset();
+    }
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
+
+  public errorMessages2: NotificationMessage[] = [];
+  private handleError1(error: any) {
+    let errorMsg = '';
+    switch (error.errorCode) {
+      case 'ROLE_TYPE_ALREADY_EXISTS':
+        errorMsg = 'Error: Role type already exists.';
+        break;
+      default:
+        errorMsg = 'Unknown error occurred.';
+    }
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages2.push(this.message);
+    setTimeout(() => {
+      this.errorMessages2 = this.errorMessages2.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 4000);
+  }
+  initialAggregationName: string | null = null;
+  public dataWithAggregatevalues: AggregateSampleTable[] = [];
+
+
+  onAddAggregate(formValues: any) {
+    //convert from idfr to code
+    const selectedBalanceType = this.balancetypes.find(
+      item => item.value === formValues.balancetype
+    );
+
+    const balTypeName = selectedBalanceType ? selectedBalanceType.label : '';
+    const selectedProductType = this.producttypes.find(
+      item => item.value === formValues.producttype
+    );
+    const prdtTypeName = selectedProductType ? selectedProductType.label : '';
+    const selecteDebitType = this.debittransactiontypes.find(
+      item => item.value === formValues.debittransactiontype
+    );
+    const debitTransType = selecteDebitType ? selecteDebitType.label : '';
+    const selecteCreditType = this.credittransactiontypes.find(
+      item => item.value === formValues.credittransactiontype
+    );
+    const creditTransType = selecteCreditType ? selecteCreditType.label : '';
+
+    const selecteRltnpType = this.relationshiptypes.find(
+      item => item.value === formValues.relationshiptype
+    );
+    const rltnType = selecteRltnpType ? selecteRltnpType.label : '';
+    if (!this.initialAggregationName) {
+      this.initialAggregationName =
+        this.aggregateForm.get('aggregationname')?.value || '';
+    }
+    if (this.aggregateForm.invalid || !this.initialAggregationName) {
+      // alert('Please fill all the required fields.');
+      return;
+    }
+    this.dataWithAggregatevalues = this.dataWithAggregatevalues || [];
+    const newValidValue: AggregateSampleTable = {
+      aggregationname: this.initialAggregationName || '',
+      balancetype: balTypeName || '',
+      aggregationLevel:
+        formValues.aggregationlevel !== undefined
+          ? formValues.aggregationlevel
+          : '',
+      relationshiptype: rltnType || '',
+      aggregates: [
+        {
+          id: 0,
+          label: 'Product Type',
+          value: prdtTypeName
+        },
+        {
+          id: 1,
+          label: 'Debit Transaction Type',
+          value: debitTransType
+        },
+        {
+          id: 2,
+          label: 'Credit Transaction Type',
+          value: creditTransType
+        },
+        {
+          id: 3,
+          label: 'Other Currency',
+          value: formValues.othercurrency ? 'Y' : 'N'
+        },
+        {
+          id: 4,
+          label: 'Reverse',
+          value: formValues.reverse ? 'Y' : 'N'
+        }
+      ]
+    };
+    this.dataWithAggregatevalues.push(newValidValue);
+    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
+      this.aggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
+      ];
+    }
+    if (this.aggregateForm) {
+      // Reset the form but keep the aggregationname value
+      const currentAggregationName =
+        this.aggregateForm.get('aggregationname')?.value;
+      this.aggregateForm.reset();
+      this.aggregateForm
+        .get('aggregationname')
+        ?.setValue(currentAggregationName);
+    }
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
+
+  public dataWithPostngStdvalues: PstgSampleTable[] = [];
+  onAddPstgStd(formValues: any) {
+    const selectedPstgStd = this.postingapplicationmethods.find(
+      item => item.value === formValues.postingapplicationmethod
+    );
+    const pstgApplicationName = selectedPstgStd ? selectedPstgStd.label : '';
+
+    this.dataWithPostngStdvalues = this.dataWithPostngStdvalues || [];
+    const newValidValue: PstgSampleTable = {
+      postingapplicationmethod: pstgApplicationName || '',
+      postingapplicationtype: formValues.applicationtype || '',
+      customizationtype: formValues.customizationtype || '',
+      instructionorder: formValues.instructionorder || ''
+    };
+    this.dataWithPostngStdvalues.push(newValidValue);
+    if (
+      this.postingApplicationTabledata &&
+      this.postingApplicationTabledata.datasource
+    ) {
+      this.postingApplicationTabledata.datasource.data = [
+        ...this.dataWithPostngStdvalues
+      ];
+    }
+    if (this.postingApplicationForm) {
+      this.postingApplicationForm.reset();
+    }
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
+  public balanceSubTypeData: BodTableMetadata = {
+    title: 'Balance Sub Type Details',
+    columns: [...this.balanceTypeService.balanceSubTypeColumn],
+    // enablePagination: true,
+
+    datasource: new MatTableDataSource<BalSybTypeTable>(
+      this.dataWithBalSubTypevalues
+    ),
+    noRecordsMessage: 'No Balance Sub Type Data Defined'
+  };
+  public additionalRelationData: BodTableMetadata = {
+    title: 'Additional Relationship',
+    columns: [...this.balanceTypeService.addtnlRelationColmn],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<AddtRelationTable>(),
+    noRecordsMessage: 'No data Defined'
+  };
+
+  public roleTypetabledata: BodTableMetadata = {
+    title: 'Role Type Details',
+    columns: [...this.balanceTypeService.roletypecolumns],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<RoleTypeSampleTable>(
+      this.dataWithRoleTypevalues
+    ),
+    noRecordsMessage: 'No Role Type Data Defined'
+  };
+  public aggregateTabledata: BodTableMetadata = {
+    title: 'Aggregate Details',
+    columns: [...this.balanceTypeService.aggregatecolmn],
+    rowLeftAction: RowLeftAction.expandableRows,
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<AggregateSampleTable>(
+      this.dataWithAggregatevalues
+    ),
+    noRecordsMessage: 'No Aggregate Data Defined'
+  };
+  public postingApplicationTabledata: BodTableMetadata = {
+    title: 'Posting Application Instruction',
+    columns: [...this.balanceTypeService.postingAppcolumn],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<PstgSampleTable>(
+      this.dataWithPostngStdvalues
+    ),
+    noRecordsMessage: 'No Posting Application Instruction Data Defined'
+  };
+  nonNegativeValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const value = control.value;
+      return value < 0 ? { negativeValue: { value: value } } : null;
+    };
+  }
+  noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
+      return forbidden
+        ? { noSpecialCharacters: { value: control.value } }
+        : null;
+    };
+  }
+  private initForm(): void {
+    this.addNewBalanceTypeFormGroup = this.fb.group({
+      // balanceTypeCode: new UntypedFormControl('', [Validators.required]),
+      balanceTypeCode: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator()
+      ]),
+      balTypeIdentifier: [{ value: '', disabled: true }],
+      balanceTypeName: new UntypedFormControl('', [Validators.required]),
+      balancesubtype: [false],
+
+      systembalance: new UntypedFormControl(),
+      accountclassification: new UntypedFormControl('', [Validators.required]),
+      datevalue: new UntypedFormControl('', [Validators.required]),
+      payer: new UntypedFormControl('', [Validators.required]),
+      payee: new UntypedFormControl('', [Validators.required]),
+      statementdisplay: new UntypedFormControl(),
+      chargebase: new UntypedFormControl(),
+      persisted: new UntypedFormControl(),
+      calculated: new UntypedFormControl(),
+      autocreation: new UntypedFormControl(),
+      // systembal: new UntypedFormControl(),
+      loghistory: new UntypedFormControl(),
+      dailysnapshot: new UntypedFormControl(),
+      inquiryrequired: new UntypedFormControl(),
+      generatefinancialresults: new UntypedFormControl(),
+      glmapping: new UntypedFormControl(),
+      summaryrequired: new UntypedFormControl(),
+      balsubtype: new UntypedFormControl('', [Validators.required]),
+      balperiodtype: [[]]
+    });
+    this.balanceSubtypeForm = this.fb.group({
+      balancesubtypecode: new UntypedFormControl('', [Validators.required]),
+      balsubtypeIdentifier: [{ value: '', disabled: true }],
+      balancesubtypename: new UntypedFormControl('', [Validators.required])
+    });
+
+    this.additionalRelationIDForm = this.fb.group({});
+    this.additionalRelationValueForm = this.fb.group({});
+
+    this.roleTypeForm = this.fb.group({
+      roletype: ['', Validators.required],
+      roleaccountclassification: new UntypedFormControl(''),
+      obligator: new UntypedFormControl(),
+      beneficiary: new UntypedFormControl(),
+      isvisible: new UntypedFormControl()
+    });
+    this.aggregateForm = this.fb.group({
+      aggregationname: new UntypedFormControl({ value: '', disabled: true }, [
+        Validators.required
+      ]),
+      producttype: new UntypedFormControl(''),
+      balancetype: new UntypedFormControl('', [Validators.required]),
+      relationshiptype: new UntypedFormControl(),
+      aggregationlevel: new UntypedFormControl('', [
+        Validators.required,
+        this.nonNegativeValidator()
+      ]),
+      debittransactiontype: new UntypedFormControl(''),
+      credittransactiontype: new UntypedFormControl(''),
+      othercurrency: new UntypedFormControl(''),
+      reverse: new UntypedFormControl('')
+    });
+    this.postingApplicationForm = this.fb.group({
+      postingapplicationmethod: new UntypedFormControl('', [
+        Validators.required
+      ]),
+      applicationtype: new UntypedFormControl('', [Validators.required]),
+      instructionorder: new UntypedFormControl('', [Validators.required]),
+      customizationtype: new UntypedFormControl('', [Validators.required])
     });
   }
 
-  private cate(identifier: any) {
-    this.value = '';
-    //this.datatypes.find(identifier)
-    const item = this.cattypes.find(item => item.value === identifier);
-    return item ? item.label : undefined;
-
-    //return this.value;
+  identifierSearch(field: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.metadataService.idfrSearch().subscribe(
+        (response: string) => {
+          if (field === 'balTypeIdentifier') {
+            this.addNewBalanceTypeFormGroup.controls[
+              'balTypeIdentifier'
+            ].setValue(response);
+          } else if (field === 'balsubtypeIdentifier') {
+            this.balanceSubtypeForm.controls['balsubtypeIdentifier'].setValue(
+              response
+            );
+          }
+          this.addNewBalanceTypeFormGroup.markAsDirty();
+          resolve();
+        },
+        error => {
+          console.error('Error:', error);
+          reject(error);
+        }
+      );
+    });
   }
 
-  roleTypeData: RoleTypeList[] = [];
-  getNewRoleType(): void {
-    this.roleTypeService.retrieveRoleType().subscribe(response => {
-      if (response.status === 'SUCCESS' && response.data) {
-        this.roleTypeData = response.data.map((item: any) => {
-          if (!item.RoleType) {
-            return null;
-          }
+  handleRowLevelActionsforBalSubType(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteBalSubType(index);
+    }
+  }
+  handleRowLevelActionsforRoletype(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRow(index);
+    }
+  }
+  handleRowLevelActionsforaggergate(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteAggregateRow(index);
+    }
+  }
+  handleRowLevelActionsforPstgStd(action: string, index: number) {
+    if (action === 'trash') {
+      this.deletePstStdRow(index);
+    }
+  }
+  deleteRow(index: number) {
+    this.dataWithRoleTypevalues.splice(index, 1);
+    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
 
-          const roleType = item.RoleType.roleType || {};
-          const productTypeRoleTypeRelationshipList =
-            item.RoleType.productTypeRoleTypeRelationshipList || [];
+  deleteBalSubType(index: number) {
+    this.dataWithBalSubTypevalues.splice(index, 1);
+    this.balanceSubTypeData.datasource.data = [
+      ...this.dataWithBalSubTypevalues
+    ];
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
+  deleteAggregateRow(index: number): void {
+    this.dataWithAggregatevalues.splice(index, 1);
+    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
+      this.aggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
+      ];
+      this.addNewBalanceTypeFormGroup.markAsDirty();
+    }
+  }
+  deletePstStdRow(index: number): void {
+    this.dataWithPostngStdvalues.splice(index, 1);
+    if (
+      this.postingApplicationTabledata &&
+      this.postingApplicationTabledata.datasource
+    ) {
+      this.postingApplicationTabledata.datasource.data = [
+        ...this.dataWithPostngStdvalues
+      ];
+    }
+    this.addNewBalanceTypeFormGroup.markAsDirty();
+  }
 
-          const roleTypeCode =
-            roleType.code ||
-            (productTypeRoleTypeRelationshipList.length > 0
-              ? productTypeRoleTypeRelationshipList[0].roleTypeCode
-              : null);
+  //this method is related to delete the multi select input dropdown
+  // deleteAddtnlRltnRow(index: number, element: Partial<AddtRelationTable>) {
+  //   if (index !== undefined && index >= 0) {
+  //     this.addRelationID.deleteRow(index);
+  //   } else {
+  //     console.error('Invalid index:', index);
+  //   }
+  //   this.useExistingFormCtrlKeysId = FormUtilityService.removeFormControl(
+  //     this.additionalRelationIDForm,
+  //     this.useExistingFormCtrlKeysId,
+  //     index
+  //   );
+  //   this.useExistingFormCtrlKeysValue = FormUtilityService.removeFormControl(
+  //     this.additionalRelationValueForm,
+  //     this.useExistingFormCtrlKeysValue,
+  //     index
+  //   );
 
-          if (!roleTypeCode) {
-            console.error('RoleType code is missing in item:', item);
-            return null;
-          }
+  //   // this.addNewAttributeFormGroup.markAsDirty();
+  // }
 
-          const roleCategoryList = item.RoleType.roleCategoryList || [];
-          const productTypeRoleTypeCatRelationshipList =
-            item.RoleType.productTypeRoleTypeCatRelationshipList || [];
+  public isBalanceSubtypeEnabled = false;
+  toggleBalanceSubtype(event: { checked: boolean }) {
+    this.isBalanceSubtypeEnabled = event.checked;
+  }
 
-          const categoryLabels = productTypeRoleTypeCatRelationshipList
-            .map((categoryValRelationship: { categoryIdentifier: any }) => {
-              const category = this.cattypes.find(
-                cat => cat.value === categoryValRelationship.categoryIdentifier
-              );
-              return category
-                ? category.label
-                : categoryValRelationship.categoryIdentifier; // Fallback to identifier if not found
-            })
-            .join(', ');
-
-          // Create a single entry in roleCategory with the combined category labels
-          const roleCategoryMapped = categoryLabels
-            ? [{ id: 0, label: 'Category', value: categoryLabels }]
-            : [];
-
-          const categoryLabel =
-            this.cattypes.find(cat => cat.value === roleType.category)?.label ||
-            roleType.category;
-          const classificationLabel =
-            this.classifications.find(
-              cls => cls.value === roleType.classification
-            )?.label || roleType.classification;
-
-          const roleCategoryListMapped = roleCategoryList.map(
-            (category: any) => ({
-              identifier: category.identifier,
-              code: category.code,
-              name: category.name,
-              shortName: category.shortName
-            })
-          );
-
-          const productTypeRoleTypeRelationshipListMapped =
-            productTypeRoleTypeRelationshipList.map((relationship: any) => {
-              const productTypeRole = [
-                {
-                  id: 0,
-                  label: 'Percentage Allowed',
-                  value: relationship.percentageAllowed
-                },
-                { id: 1, label: 'Is Primary', value: relationship.isPrimary },
-                {
-                  id: 2,
-                  label: 'Applicable Order',
-                  value: relationship.applicableOrder
-                },
-                {
-                  id: 3,
-                  label: 'Signature Required',
-                  value: relationship.signatureRequired
-                },
-                {
-                  id: 4,
-                  label: 'Owner Category',
-                  value: relationship.ownerCategory
-                },
-                {
-                  id: 5,
-                  label: 'Owner SubCategory',
-                  value: relationship.onwerSubCategory
-                },
-                {
-                  id: 6,
-                  label: 'Additional Details',
-                  value: relationship.additionalDetails
-                }
-              ];
-
-              return {
-                identifier: relationship.identifier,
-                roleTypeIdentifier: relationship.roleTypeIdentifier,
-                roleTypeCode: relationship.roleTypeCode,
-                customerType: relationship.customerType,
-                percentageAllowed: relationship.percentageAllowed,
-                isPrimary: relationship.isPrimary,
-                minimumRequired: relationship.minimumRequired,
-                maximumAllowed: relationship.maximumAllowed,
-                applicableOrder: relationship.applicableOrder,
-                maximumAccountAllowed: relationship.maximumAccountAllowed,
-                signatureRequired: relationship.signatureRequired,
-                ownerCategory: relationship.ownerCategory,
-                onwerSubCategory: relationship.onwerSubCategory,
-                additionalDetails: relationship.additionalDetails,
-                productTypeRole: productTypeRole // Add this line
-              };
-            });
-
-          let productTypeRoleTypeCatRelationshipListMapped = null;
-          if (productTypeRoleTypeCatRelationshipList.length > 0) {
-            productTypeRoleTypeCatRelationshipListMapped =
-              productTypeRoleTypeCatRelationshipList.map(
-                (categoryValRelationship: any) => ({
-                  productTypeIdentifier:
-                    categoryValRelationship.productTypeIdentifier,
-                  roleTypeIdentifier:
-                    categoryValRelationship.roleTypeIdentifier,
-                  categoryIdentifier: categoryValRelationship.categoryIdentifier
-                })
-              );
-          }
-
-          const roleTypeData: RoleTypeList = {
-            code: roleType.code
-              ? roleType.code
-              : productTypeRoleTypeRelationshipList[0].roleTypeCode,
-            roleTypeInquiry: [
-              { id: 0, label: 'Name', value: roleType.name },
-              // { id: 1, label: 'Identifier', value: roleType.identifier },
-              { id: 2, label: 'Short Name', value: roleType.shortName },
-              // { id: 3, label: 'Category', value: this.cate(roleType.category) },
-              // { id: 4, label: 'Classification', value: classificationLabel },
-              { id: 5, label: 'System Defined', value: roleType.systemDefined },
-              { id: 6, label: 'Calculated', value: roleType.calculated }
-            ],
-            identifier: roleType.identifier,
-            name: roleType.name,
-            shortName: roleType.shortName,
-            category: categoryLabel,
-            classification: classificationLabel,
-            systemDefined: roleType.systemDefined,
-            calculated: roleType.calculated,
-            roleCategoryList: roleCategoryListMapped,
-            productTypeRoleTypeRelationshipList:
-              productTypeRoleTypeRelationshipListMapped,
-            productTypeRoleTypeCatRelationshipList:
-              productTypeRoleTypeCatRelationshipListMapped,
-            productTypeRole: [],
-            roleCategory: roleCategoryMapped
-          };
-
-          return roleTypeData;
-        });
-        this.roleTypeTableMetaData.datasource.data = this.roleTypeData;
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
       }
-    });
-  }
-
-  iconActionClicked(event: BodTableAction, element: RoleTypeList) {
-    this.isEdit = true;
-    this.messages = [];
-    if (event.id === BodTableActionType.EDIT) {
-      // this.editAttributes(element);
-      this.editRoleTypes(element);
-    } else if (event.id === 1) {
-      this.bodConfirmAlertDialogsService
-        .confirm(this.ConfirmData)
-        .subscribe(val => {
-          if (val) {
-            this.roleTypeDelete(element);
-          }
-        });
     }
   }
 
-  editRoleType: RoleTypeList | undefined;
+  public messages: NotificationMessage[] = [];
+  public messages1: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+  isAdd = true;
 
-  private editRoleTypes(element: RoleTypeList) {
+  onAddNewBalanceType(isAdd: boolean) {
+    const promises = [];
+
+    if (isAdd) {
+      promises.push(this.identifierSearch('balTypeIdentifier'));
+    }
+
+    if (this.dataWithBalSubTypevalues.length > 0) {
+      promises.push(this.identifierSearch('balsubtypeIdentifier'));
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        this.submitForm(isAdd);
+      })
+      .catch(error => {
+        console.error('Error during identifier search:', error);
+      });
+  }
+
+  submitForm(isAdd: boolean) {
+    if (this.addNewBalanceTypeFormGroup.invalid) {
+      return;
+    }
+    // this.isAdd = true;
+    const formValue = this.addNewBalanceTypeFormGroup.getRawValue();
+    this.addNewBalanceTypeFormGroup.controls['balTypeIdentifier'].enable();
+    const formValue1 = this.balanceSubtypeForm.getRawValue();
+
+    const balanceType = {
+      identifier: formValue.balTypeIdentifier,
+      code: formValue.balanceTypeCode,
+      name: formValue.balanceTypeName,
+      systemBalance: formValue.systembalance ? 'Y' : 'N'
+    };
+    const balanceSubTypeList =
+      this.dataWithBalSubTypevalues.length > 0
+        ? this.dataWithBalSubTypevalues.map(item => ({
+          identifier: formValue1.balsubtypeIdentifier,
+          code: item.code,
+          name: item.name
+        }))
+        : [];
+
+    const balanceAggregationInsertionList =
+      this.dataWithAggregatevalues.length > 0
+        ? this.dataWithAggregatevalues.map(item => {
+          const productType = this.producttypes.find(
+            pt =>
+              pt.label ===
+              item.aggregates.find(
+                aggregate => aggregate.label === 'Product Type'
+              )?.value
+          )?.value;
+          const debitTransactionType = this.debittransactiontypes.find(
+            dt =>
+              dt.label ===
+              item.aggregates.find(
+                aggregate => aggregate.label === 'Debit Transaction Type'
+              )?.value
+          )?.value;
+          const creditTransactionType = this.credittransactiontypes.find(
+            ct =>
+              ct.label ===
+              item.aggregates.find(
+                aggregate => aggregate.label === 'Credit Transaction Type'
+              )?.value
+          )?.value;
+          const otherCurrency = item.aggregates.find(
+            aggregate => aggregate.label === 'Other Currency'
+          )?.value;
+          const reverse = item.aggregates.find(
+            aggregate => aggregate.label === 'Reverse'
+          )?.value;
+          const balanceTypeIdentifier = this.balancetypes.find(
+            bt => bt.label === item.balancetype
+          )?.value;
+
+          return {
+            balanceTypeIdentifier: balanceTypeIdentifier || null,
+            productTypeIdentifier: 1110101,
+            name: item.aggregationname,
+            productTypeAggrIdfr: productType || null,
+            aggrBalanceTypeIdentifier:
+              this.balancetypes.find(bt => bt.label === item.balancetype)
+                ?.value || null,
+            // relationshipType: item.relationshiptype || null,
+            relationshipType:
+              this.relationshiptypes.find(
+                rt => rt.label === item.relationshiptype
+              )?.value || null,
+            relationshipTypeCode: item.relationshiptype,
+            aggregationLevel:
+              item.aggregationLevel !== undefined
+                ? item.aggregationLevel
+                : null,
+            balanceTypeCode: item.balancetype,
+            otherCurrencyAggregation: otherCurrency === 'Y' ? 'Y' : 'N',
+            reverseAggregation: reverse === 'Y' ? 'Y' : 'N',
+            postingStandardIdentifierForDebit: debitTransactionType || null,
+            postingStandardIdentifierForCredit: creditTransactionType || null
+          };
+        })
+        : [];
+
+    const productTypeBalanceTypeRelationshipList = [
+      {
+        identifier: 1110101,
+        balanceTypeIdentifier: formValue.balTypeIdentifier,
+        balanceTypeCode: formValue.balanceTypeCode,
+        persisted: formValue.persisted ? 'Y' : 'N',
+        calculated: formValue.calculated ? 'Y' : 'N',
+        autoCreated: formValue.autocreation ? 'Y' : 'N',
+        statementProcess: formValue.statementdisplay ? 'Y' : 'N',
+        accountingClassification: formValue.accountclassification,
+        snapshotRequired: formValue.dailysnapshot ? 'Y' : 'N',
+        payerIdentifier: formValue.payer,
+        payeeIdentifier: formValue.payee,
+        chargeCalculation: formValue.chargebase ? 'Y' : 'N',
+        logAudit: formValue.loghistory ? 'Y' : 'N',
+        financialResultRequired: formValue.generatefinancialresults ? 'Y' : 'N',
+        glRequired: formValue.glmapping ? 'Y' : 'N',
+        dateValue: formValue.datevalue,
+        enquiryRequired: formValue.inquiryrequired ? 'Y' : 'N',
+        summaryRequired: formValue.summaryrequired ? 'Y' : 'N'
+      }
+    ];
+
+    const productTypeBalanceSubTypeRelationshipList = formValue.balsubtype.map(
+      subtype => {
+        const selectedBalanceType = this.subBalancetypes.find(
+          item => item.label === subtype
+        );
+
+        return {
+          productTypeIdentifier: 1110101,
+          balanceTypeIdentifier: formValue.balTypeIdentifier,
+          balanceSubTypeIdentifier: selectedBalanceType.value,
+          balanceSubTypeCode: selectedBalanceType.label
+        };
+      }
+    );
+
+    let productTypeBalanceTypePeriodList = [];
+
+    if (formValue.balperiodtype && formValue.balperiodtype.length > 0) {
+      productTypeBalanceTypePeriodList = formValue.balperiodtype.map(
+        subtype => {
+          return {
+            productTypeIdentifier: 1110101,
+            balanceTypeIdentifier: formValue.balTypeIdentifier,
+            periodType: subtype
+          };
+        }
+      );
+    }
+
+    const productTypeBalanceTypeRoletypeRelationshipList =
+      this.dataWithRoleTypevalues.length > 0
+        ? this.dataWithRoleTypevalues.map(roleType => ({
+          productTypeIdentifier: 1110101,
+          balanceTypeIdentifier: formValue.balTypeIdentifier,
+          roleType: this.roletypes.find(rt => rt.label === roleType.type)
+            ?.value,
+          accountingClassification: this.accountclassifications.find(
+            ac => ac.label === roleType.accountingClassification
+          )?.value,
+          roleTypeCode: roleType.type,
+          accountingClassificationCode: roleType.accountingClassification,
+          visible: roleType.visibility === 'Y' ? 'Y' : 'N',
+          payee: roleType.beneficiary === 'Y' ? 'Y' : 'N',
+          payer: roleType.obligator === 'Y' ? 'Y' : 'N'
+        }))
+        : [];
+
+    const balanceTypeData = {
+      metadataType: 'BalanceType',
+      balanceTypeList: [
+        {
+          balanceType,
+          balanceSubTypeList,
+          balanceAggregationInsertionList,
+          productTypeBalanceTypeRelationshipList,
+          productTypeBalanceSubTypeRelationshipList,
+          productTypeBalanceTypePeriodList,
+          productTypeBalanceTypeRoletypeRelationshipList
+        }
+      ],
+      // productTypeList: ['Checking']
+      productTypeList: [
+        {
+          identifier: 1110101,
+          code: 'Checking'
+        }
+      ]
+    };
+
+    if (this.addNewBalanceTypeFormGroup.invalid) {
+      this.addNewBalanceTypeFormGroup.markAllAsTouched();
+
+      const missingFields = this.getInvalidRequiredFields(this.addNewBalanceTypeFormGroup);
+      console.warn('Missing required fields:', missingFields);
+
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        },
+        isAdd
+      );
+      return;
+    }
+    const serviceCall = isAdd
+      ? this.balanceTypeService.saveBalanceType(balanceTypeData)
+      : this.balanceTypeService.updateBalanceType(balanceTypeData);
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, balanceTypeData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+    this.addNewBalanceTypeFormGroup.controls['balTypeIdentifier'].disable();
+  }
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+      const invalidFields: string[] = [];
+  
+      Object.keys(formGroup.controls).forEach(key => {
+        const control = formGroup.get(key);
+        if (control && control.errors?.['required']) {
+          invalidFields.push(key);
+        }
+      });
+  
+      return invalidFields;
+    }
+
+  private successResponse(resp, _balanceTypeData, isAdd) {
+    const balanceTypeCode =
+      _balanceTypeData.balanceTypeList[0]
+        .productTypeBalanceTypeRelationshipList[0].balanceTypeCode;
+    const SuccessMsg = isAdd
+      ? `${balanceTypeCode} Added successfully`
+      : `${balanceTypeCode} Updated successfully`;
+    this.apiResponse.emit({ ..._balanceTypeData, SuccessMsg });
+  }
+  private handleError(error: any, isAdd: boolean) {
+    let errorMsg = ' ';
+
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
+    } else if (error.status === 400) {
+      errorMsg = 'Please fill the Role Type fields.';
+    }else {
+      errorMsg = 'Unknown error occurred.';
+    }
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages.push(this.message);
+
+    // if (isAdd) {
+    //   this.errorMessages.push(this.message);
+    // }
+    setTimeout(() => {
+      this.errorMessages = this.errorMessages.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 30000);
+  }
+
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+    this.addNewBalanceTypeFormGroup.reset();
+    this.balanceSubtypeForm.reset();
+    this.roleTypeForm.reset();
+    this.aggregateForm.reset();
+    this.postingApplicationForm.reset();
+    this.dataWithBalSubTypevalues = [];
+    this.dataWithRoleTypevalues = [];
+    this.dataWithAggregatevalues = [];
+    this.dataWithPostngStdvalues = [];
+    if (this.balanceSubTypeData && this.balanceSubTypeData.datasource) {
+      this.balanceSubTypeData.datasource.data = [
+        ...this.dataWithBalSubTypevalues
+      ];
+    }
+    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
+      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    }
+    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
+      this.aggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
+      ];
+    }
+
+    if (
+      this.postingApplicationTabledata &&
+      this.postingApplicationTabledata.datasource
+    ) {
+      this.postingApplicationTabledata.datasource.data = [
+        ...this.dataWithPostngStdvalues
+      ];
+    }
+    if (isEditMode) {
+      // Restore 'code' value and keep it disabled
+      this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.setValue(this.retainedCode);
+      this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.disable();
+      this.addNewBalanceTypeFormGroup.get('balTypeIdentifier')?.setValue(this.retainedIdentifier);
+      this.addNewBalanceTypeFormGroup.get('balTypeIdentifier')?.disable();
+
+      this.addNewBalanceTypeFormGroup.get('balanceTypeName')?.setValue(this.retainedName);
+      this.addNewBalanceTypeFormGroup.get('systembalance')?.setValue(this.retainedSystemBalance);
+      this.addNewBalanceTypeFormGroup.get('accountclassification')?.setValue(this.retainedAccountClassification);
+      this.addNewBalanceTypeFormGroup.get('datevalue')?.setValue(this.retainedDateValue);
+      this.addNewBalanceTypeFormGroup.get('payer')?.setValue(this.retainedPayer);
+      this.addNewBalanceTypeFormGroup.get('payee')?.setValue(this.retainedPayee);
+      this.addNewBalanceTypeFormGroup.get('statementdisplay')?.setValue(this.retainedStatementDisplay);
+      this.addNewBalanceTypeFormGroup.get('chargebase')?.setValue(this.retainedChargeBase);
+      this.addNewBalanceTypeFormGroup.get('persisted')?.setValue(this.retainedPersisted);
+      this.addNewBalanceTypeFormGroup.get('calculated')?.setValue(this.retainedCalculated);
+      this.addNewBalanceTypeFormGroup.get('autocreation')?.setValue(this.retainedAutoCreation);
+      this.addNewBalanceTypeFormGroup.get('loghistory')?.setValue(this.retainedLogHistory);
+      this.addNewBalanceTypeFormGroup.get('dailysnapshot')?.setValue(this.retainedDailySnapshot);
+      this.addNewBalanceTypeFormGroup.get('inquiryrequired')?.setValue(this.retainedInquiryRequired);
+      this.addNewBalanceTypeFormGroup.get('generatefinancialresults')?.setValue(this.retainedGenerateFinancialResults);
+      this.addNewBalanceTypeFormGroup.get('glmapping')?.setValue(this.retainedGLMapping);
+      this.addNewBalanceTypeFormGroup.get('summaryrequired')?.setValue(this.retainedSummaryRequired);
+      this.addNewBalanceTypeFormGroup.get('balancesubtype')?.setValue(this.retainedBalanceSubType);
+
+      this.addNewBalanceTypeFormGroup.value.balperiodtype = [...this.retainedBalancePeriodType];
+      this.balanceSubTypeData.datasource.data = [...this.retainedBalanceSubTypeData];
+      this.dataWithBalSubTypevalues = [...this.retainedBalanceSubTypeData];
+
+      this.roleTypetabledata.datasource.data = [...this.retainedRoleTypeData];
+      this.dataWithRoleTypevalues = [...this.retainedRoleTypeData];
+
+      this.aggregateTabledata.datasource.data = [...this.retainedAggregateDetailsData];
+      this.dataWithAggregatevalues = [...this.retainedAggregateDetailsData];
+
+
+    } else {
+      this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.enable();
+      this.addNewBalanceTypeFormGroup.get('balTypeIdentifier')?.enable();
+
+    }
+
+    this.changeDetectorRef.detectChanges();
+  }
+
+  balancesubtype = false;
+  isEdit = false;
+
+  private balanceTypeForm(element: BalanceTypeList): void {
     this.isAdd = false;
-    this.editRoleType = element;
     this.retainedIdentifier = element.identifier ?? 0;
     this.retainedCode = element.code || '';
-    this.addNewRoleTypeFormGroup.reset();
-    this.addExistingRoleTypeFormGroup.reset();
-    let selectedTemplate: TemplateRef<any>;
-    let dialogTitle: string;
-    if (element.classification) {
-      selectedTemplate = this.addNewRoleTypeTemp;
-      dialogTitle = 'Edit Role Type';
-    } else {
-      selectedTemplate = this.addExstRoleTypeTemp;
-      dialogTitle = 'Edit Existing Role Type';
+
+    this.retainedName = element.name || '';
+    this.retainedSystemBalance = element.systemBalance === 'Y';
+    this.retainedAccountClassification = element.productTypeBalanceTypeRelationshipList?.[0]?.accountingClassification ?? 0;
+    this.retainedDateValue = element.productTypeBalanceTypeRelationshipList?.[0]?.dateValue || '';
+    this.retainedPayer = element.productTypeBalanceTypeRelationshipList?.[0]?.payerIdentifier ?? 0;
+    this.retainedPayee = element.productTypeBalanceTypeRelationshipList?.[0]?.payeeIdentifier ?? 0;
+    this.retainedStatementDisplay = element.productTypeBalanceTypeRelationshipList?.[0]?.statementProcess === 'Y';
+    this.retainedChargeBase = element.productTypeBalanceTypeRelationshipList?.[0]?.chargeCalculation === 'Y';
+    this.retainedPersisted = element.productTypeBalanceTypeRelationshipList?.[0]?.persisted === 'Y';
+    this.retainedCalculated = element.productTypeBalanceTypeRelationshipList?.[0]?.calculated === 'Y';
+    this.retainedAutoCreation = element.productTypeBalanceTypeRelationshipList?.[0]?.autoCreated === 'Y';
+    this.retainedLogHistory = element.productTypeBalanceTypeRelationshipList?.[0]?.logAudit === 'Y';
+    this.retainedDailySnapshot = element.productTypeBalanceTypeRelationshipList?.[0]?.snapshotRequired === 'Y';
+    this.retainedInquiryRequired = element.productTypeBalanceTypeRelationshipList?.[0]?.enquiryRequired === 'Y';
+    this.retainedGenerateFinancialResults = element.productTypeBalanceTypeRelationshipList?.[0]?.financialResultRequired === 'Y';
+    this.retainedGLMapping = element.productTypeBalanceTypeRelationshipList?.[0]?.glRequired === 'Y';
+    this.retainedSummaryRequired = element.productTypeBalanceTypeRelationshipList?.[0]?.summaryRequired === 'Y';
+    this.retainedBalanceSubType = element.balanceSubTypeList?.length > 0;
+    // this.retainedBalancePeriodType = element.productTypeBalanceTypePeriodList || [];
+    this.retainedBalanceSubTypeData = element.balanceSubTypeList?.map(element => {
+      let obj = {} as BalSybTypeTable;
+      obj.identifier = element.identifier;
+      obj.code = element.code;
+      obj.name = element.name;
+      return obj;
+    }) || [];
+
+
+    this.retainedRoleTypeData = element.productTypeBalanceTypeRoletypeRelationshipList?.map(element => {
+      let obj = {} as RoleTypeSampleTable;
+      obj.type = element.roleTypeCode;
+      obj.accountingClassification = element.accountingClassificationCode;
+      obj.beneficiary = element.payer;
+      obj.obligator = element.payee;
+      obj.visibility = element.visible;
+      return obj;
+    }) || [];
+
+    this.retainedAggregateDetailsData = element.balanceAggregationInsertionList?.map(element => {
+      let obj = {} as AggregateSampleTable;
+      obj.aggregationname = String(element.name);
+      obj.balancetype = element.balanceTypeCode;
+      obj.aggregationLevel = String(element.aggregationLevel);
+      obj.relationshiptype = element.relationshipTypeCode;
+      obj.aggregates = element.aggregateInquiry1.map(aggr => ({
+        id: aggr.id,
+        label: aggr.label,
+        value: aggr.value
+      }));
+      return obj;
+    }) || [];
+    // this.addNewBalanceTypeFormGroup.reset();
+
+    // this.addNewBalanceTypeFormGroup.removeControl('balancesubtype');
+    const balanceSubTypes =
+      element.productTypeBalanceSubTypeRelationshipList
+        ?.filter(item => item.balanceTypeIdentifier === element.identifier)
+        .map(item => item.balanceSubTypeCode) || [];
+    const periodTypes =
+      element.productTypeBalanceTypePeriodList
+        ?.filter(item => item.balanceTypeIdentifier === element.identifier)
+        .map(item => item.periodType) || [];
+
+
+    this.retainedBalancePeriodType = periodTypes
+
+    this.addNewBalanceTypeFormGroup.reset();
+    this.addNewBalanceTypeFormGroup.removeControl('balancesubtype');
+
+
+
+    this.addNewBalanceTypeFormGroup.patchValue({
+      balTypeIdentifier: element.identifier,
+      balanceTypeCode: element.code,
+      balanceTypeName: element.name,
+      systembalance: element.systemBalance === 'Y',
+      accountclassification:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.accountingClassification || '',
+      datevalue:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.dateValue || '',
+      payer:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.payerIdentifier ||
+        '',
+      payee:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.payeeIdentifier ||
+        '',
+      chargebase:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.chargeCalculation === 'Y',
+      statementdisplay:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.statementProcess === 'Y',
+      persisted:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.persisted === 'Y',
+      calculated:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.calculated === 'Y',
+      autocreation:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.autoCreated === 'Y',
+      loghistory:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.logAudit === 'Y',
+      dailysnapshot:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.snapshotRequired === 'Y',
+      summaryrequired:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.summaryRequired ===
+        'Y',
+      inquiryrequired:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.enquiryRequired ===
+        'Y',
+      generatefinancialresults:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.financialResultRequired === 'Y',
+      glmapping:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.glRequired === 'Y',
+      // balsubtype:
+      // element.productTypeBalanceSubTypeRelationshipList?.[0]?.balanceSubTypeIdentifier||''
+      // balsubtype: balanceSubTypes,
+      balsubtype: balanceSubTypes,
+      balperiodtype: periodTypes
+    });
+    this.balancesubtype =
+      element?.balanceSubTypeList?.length > 0 ? true : false;
+    this.addNewBalanceTypeFormGroup.addControl(
+      'balancesubtype',
+      this.fb.control(this.balancesubtype)
+    );
+    this.balanceSubTypeData.datasource.data = [];
+    this.dataWithBalSubTypevalues = [];
+    element.balanceSubTypeList?.forEach(element => {
+      let obj = {} as BalSybTypeTable;
+      obj.identifier = element.identifier;
+      obj.code = element.code;
+      obj.name = element.name;
+      this.balanceSubTypeData.datasource.data.push(obj);
+      this.dataWithBalSubTypevalues.push(obj);
+    });
+    this.roleTypetabledata.datasource.data = [];
+    this.dataWithRoleTypevalues = [];
+    element.productTypeBalanceTypeRoletypeRelationshipList?.forEach(element => {
+      let obj = {} as RoleTypeSampleTable;
+
+      obj.type = element.roleTypeCode;
+      obj.accountingClassification = element.accountingClassificationCode;
+      obj.beneficiary = element.payer;
+      obj.obligator = element.payee;
+      obj.visibility = element.visible;
+      this.roleTypetabledata.datasource.data.push(obj);
+      this.dataWithRoleTypevalues.push(obj);
+    });
+
+    this.aggregateTabledata.datasource.data = [];
+    this.dataWithAggregatevalues = [];
+    element.balanceAggregationInsertionList?.forEach(element => {
+      let obj = {} as AggregateSampleTable;
+      obj.aggregationname = String(element.name);
+      obj.balancetype = element.balanceTypeCode;
+      obj.aggregationLevel = String(element.aggregationLevel);
+      obj.relationshiptype = element.relationshipTypeCode;
+      obj.aggregates = element.aggregateInquiry1.map(aggr => ({
+        id: aggr.id,
+        label: aggr.label,
+        value: aggr.value
+      }));
+      this.aggregateTabledata.datasource.data.push(obj);
+      this.dataWithAggregatevalues.push(obj);
+    });
+
+    if (this.aggregateForm) {
+      // Store the current balanceTypeCode
+      const currentBalanceTypeCode =
+        this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.value;
+
+      // Reset the form
+      this.aggregateForm.reset();
+
+      // Set aggregationname to the stored balanceTypeCode
+      this.aggregateForm
+        .get('aggregationname')
+        ?.setValue(currentBalanceTypeCode);
     }
-    const dialogModel: BodCommonDialogModel = {
-      formTemplate: selectedTemplate,
-      title: dialogTitle
-    };
-    this.openDialog(dialogModel);
-    this.addNewRoleTypeFormGroup.reset();
+
+    this.isEdit = true;
   }
 
-  roleTypeDelete(element: RoleTypeList): void {
-    if (
-      element.code ===
-      element.productTypeRoleTypeRelationshipList[0].roleTypeCode
-    ) {
-      this.roleTypeService
-        .deleteRoleType(
-          'RoleType',
-          element.productTypeRoleTypeRelationshipList[0].roleTypeIdentifier
-        )
-        .subscribe(response => {
-          const successMsg = `${element.code} Deleted Successfully`;
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
-          setTimeout(() => {
-            this.messages = this.messages.filter(
-              msg => msg.text !== successMsg
-            );
-          }, 4000);
-
-          this.getNewRoleType();
-          this.cdr.detectChanges();
-        });
-    } else {
-      this.roleTypeService
-        .deleteRoleType('RoleType', element.identifier)
-        .subscribe(response => {
-          const successMsg = `${element.code} Deleted Successfully`;
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
-          setTimeout(() => {
-            this.messages = this.messages.filter(
-              msg => msg.text !== successMsg
-            );
-          }, 4000);
-        });
-      console.log('Calling getNewRoleType after deletion');
-
-      this.getNewRoleType();
-      this.cdr.detectChanges();
-    }
+  private convertAccntclassIdfrToCode(identifier: any): string | undefined {
+    const item = this.accountclassifications.find(
+      item => item.value === identifier
+    );
+    return item ? item.label : undefined;
   }
 }
