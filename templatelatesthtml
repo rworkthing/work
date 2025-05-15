@@ -1,57 +1,121 @@
-onPageAction(event) {
-    switch (event) {
-      case PageAction.EDIT:
-        this.currentMode = this.pageMode = PageMode.INPUT;
-        this.modeOptionsTable = { input: true, reset: false };
-
-        this.basicDetailForm.patchValue({
-          nickName: this.basicInfo[0]?.value
-        });
-
-        this.cdr.detectChanges();
-        if (this.basicDetailForm.get('accountTitles')) {
-          this.basicDetailForm.setControl(
-            'accountTitles',
-            this.accountListTableRef.tableFormGroup
-          );
-        } else {
-          this.basicDetailForm.addControl(
-            'accountTitles',
-            this.accountListTableRef.tableFormGroup
-          );
-        }
-        this.basicDetailForm.markAsPristine();
-        this.setRowLevelActionButton();
-        this.messages = [];
-        break;
-      case PageAction.CANCEL:
-        this.messages = [];
-        this.onReset();
-        this.currentMode = this.pageMode = PageMode.INQUIRY;
-        this.modeOptionsTable = { input: false, reset: false };
-        break;
-    }
-  }
-
-
-
-
- public onPageAction(event) {
-    if (event === PageAction.EDIT) {
-      this.messages = [];
-      this.modeOptionsSimple = { input: true, reset: false };
-      this.pageModeSimple = PageMode.INPUT;
-      this.rowLevelActionsForBasicEdit[0].disabled = true;
-      this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-        ...obj
-      }));
-      this.setSearchFieldsData(false);
-      this.setOverrideDefaultFieldsData(false);
-      this.setRequiredFieldsData(false);
-    } else {
-      this.checkStatus(false);
-      this.modeOptionsSimple = { input: false, reset: true };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-    }
-  }
+<bod-page-container
+  title="Locale"
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+    <!-- <bod-control-group
+[truncate]="false"
+[label]="translationKey + 'metadataconfig.locale'"
+[forTextOnly]="true"
+[required]="true"
+>
+<mat-form-field appearance="outline" fisStyle>
+  <mat-select
+    panelClass="fis-style"
+    formControlName="localeCode"
+    name="localeCode"
+  >
+    <mat-option
+      *ngFor="let localeCode of localeCodes"
+      [value]="localeCode.value"
+    >
+      {{ localeCode.label }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+</bod-control-group> -->
+  </bod-table>
+  <!-- <form [formGroup]="localeForm">
+    <ng-template #localeTemplate>
+        <h1>harshit {{locales}}</h1>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.locale'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="locale"
+              name="locale"
+            >
+              <mat-option
+                *ngFor="let locale of locales"
+                [value]="locale.value"
+              >
+                {{ locale.label | json }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </ng-template>
+  </form> -->
+</bod-page-container>
