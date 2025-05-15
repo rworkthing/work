@@ -1,1054 +1,170 @@
-<bod-message-container [messages]="errorMessages"></bod-message-container>
-<bod-form
-  [formGroup]="addNewBalanceTypeFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onAddNewBalanceType(isAdd)"
-  (onReset)="onReset(isAdd)"
-  fisStyle
+<bod-message-container rufId [messages]="messages"></bod-message-container>
+{{ messages }}
+
+<bod-table
+  #customTable
+  [customColumnTemplates]="[
+    {
+      columnName: 'actions',
+      templateName: editActionTemplate
+    }
+  ]"
+  [data]="balanceTypeTableMetaData"
+  [tableActions]="balanceTypeTableActions"
+  (onTableActionClick)="onTableActionClicked1($event)"
+  [expandedRowTemplate]="expandedRowTemplate"
+  (onRowExpand)="rowExpanded($event)"
 >
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.code'"
-      [forTextOnly]="true"
-      [required]="true"
+  <ng-template
+    #editActionTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <bod-table-actions
+      sectionActions
+      [actions]="editactions"
+      (onActionClick)="iconActionClicked($event, element)"
     >
-    <div *ngIf="isEdit">
-      {{ addNewBalanceTypeFormGroup.get('balanceTypeCode')?.value }}
-    </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="balanceTypeCode"
-          name="balanceTypeCode"
-        />
-        
-        <mat-error>
-         {{ getError('balanceTypeCode', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error> 
-        <mat-error *ngIf="addNewBalanceTypeFormGroup.get('balanceTypeCode').hasError('noSpecialCharacters')">
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-   
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="balanceTypeName"
-          name="balanceTypeName"
-        />
-        <mat-error>
-          {{ getError('balanceTypeName', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.systembalance'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="systembalance"
-        name="systembalance"
+    </bod-table-actions>
+  </ng-template>
+  <ng-template #expandedRowTemplate let-context="context">
+    <div fullwidth>
+      @if(context.element.name){
+
+      <!-- {{context |json}} -->
+      <h1>Balance Type</h1>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="balanceTypeService.getBalanceTypeData(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
       >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.balancesubtype'"
-      [forTextOnly]="true"
-      [required]="false"
-      
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="balancesubtype"
-        name="balancesubtype"
-      
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-  <div *ngIf="addNewBalanceTypeFormGroup.get('balancesubtype').value" >
-    <bod-input-layout col="1">
+      </bod-inquiry-layout>
+
       <bod-table
-        #balanceSubTypetable
-        [data]="balanceSubTypeData"
-        [tableActions]="balanceSubTypeTableActions"
-        (onTableActionClick)="onValidTableActionClicked($event)"
-        [inlineModal]="{
-          addNewInlineRowTitle: 'New Balance Sub Type' | translate,
-          formGroup: balanceSubtypeForm,
-          formTemplateName: balanceSubtypeTemplate
-        }"
-        (onInlineFormAddSubmit)="onAddBalSubType(balanceSubtypeForm.value)"
-        (onInlineFormEditSubmit)="onAddBalSubType(balanceSubtypeForm.value)"
-        (onInlineEditRowActionClick)="inlineEditRowActionClick($event, 0)"
-        (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-        [customColumnTemplates]="[
-          {
-            columnName: 'actions',
-            templateName: deleteBalSubTypeTemplate
-          }
-        ]"
+        [data]="balSubTypeTable"
         [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
       >
-        <ng-template
-          #deleteBalSubTypeTemplate
-          let-element="element"
-          let-column="column"
-          let-index="index"
+      </bod-table>
+      }
+
+      <h1>Product Type Relationshp</h1>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="
+          balanceTypeService.getBalanceTypePrdtReltnData(context.element)
+        "
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
+
+      <h1>Additional Relationshps</h1>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="balanceTypeService.getAddtnlReltns(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
+
+      <!-- <bod-table
+          [data]="addtnlRltnTable"
+          [alignContent]="'top'"
+          [innerTableContext]="context"
+          [expandedRowTemplate]="expandedRowTemplateTable"
         >
-          <bod-table-actions
-            [actions]="rowLevelActionsForBasicEdit"
-            (onActionClick)="handleRowLevelActionsforBalSubType($event.icon, index)"
+        </bod-table> -->
+      <bod-table
+        [data]="roleTypeTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      <bod-table
+        [data]="aggregateTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplate"
+      >
+        <ng-template #expandedRowTemplate let-context="context">
+          <bod-inquiry-layout
+            [columns]="2"
+            [groups]="balanceTypeService.getAggregateData(context.element)"
+            [softSeparator]="false"
+            [direction]="direction"
+            [information]="[]"
+            (linkClick)="commonDataService.inquiryLayoutClick($event)"
           >
-          </bod-table-actions>
+          </bod-inquiry-layout>
         </ng-template>
       </bod-table>
-      <form [formGroup]="balanceSubtypeForm">
-        <ng-template #balanceSubtypeTemplate>
-          <bod-input-layout col="2">
-            <bod-control-group
-              [truncate]="false"
-              [label]="translationKey + 'metadataconfig.code'"
-              [forTextOnly]="true"
-              [required]="true"
-            >
-              <mat-form-field appearance="outline" fisStyle>
-                <input
-                  type="text"
-                  matInput
-                  fisStyle
-                  formControlName="balancesubtypecode"
-                  name="balancesubtypecode"
-                />
-              </mat-form-field>
-            </bod-control-group>
-          
-            <bod-control-group
-              [truncate]="false"
-              [label]="translationKey + 'metadataconfig.name'"
-              [forTextOnly]="true"
-              [required]="true"
-            >
-              <mat-form-field appearance="outline" fisStyle>
-                <input
-                  type="text"
-                  matInput
-                  fisStyle
-                  formControlName="balancesubtypename"
-                  name="balancesubtypename"
-                />
-              </mat-form-field>
-            </bod-control-group>
-          </bod-input-layout>
-        </ng-template>
-      </form>
-    </bod-input-layout>
-  </div>
-
-
-  <bod-page-container title="Product Type Relationships"></bod-page-container>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.accountclassification'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="accountclassification"
-          name="accountclassification"
-        >
-          <mat-option
-            *ngFor="let accountclassification of accountclassifications"
-            [value]="accountclassification.value"
-          >
-            {{ accountclassification.label }}
-          </mat-option>
-        </mat-select>
-        
-        <mat-error>
-          {{ getError('accountclassification', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.datevalue'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="datevalue"
-          name="datevalue"
-        >
-          <mat-option *ngFor="let date of dateValues" [value]="date.value">
-            {{ date.label }}
-          </mat-option>
-        </mat-select>
-      
-        <mat-error>
-          {{ getError('datevalue', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.payer'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select panelClass="fis-style" formControlName="payer" name="payer">
-          <mat-option *ngFor="let payer of payers" [value]="payer.value">
-            {{ payer.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{ getError('payer', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.payee'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select panelClass="fis-style" formControlName="payee" name="payee">
-          <mat-option *ngFor="let payee of payees" [value]="payee.value">
-            {{ payee.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{ getError('payee', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.chargebase'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="chargebase"
-        name="chargebase"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.statementdisplay'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="statementdisplay"
-        name="statementdisplay"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.persisted'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="persisted"
-        name="persisted"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.calculated'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="calculated"
-        name="calculated"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.autocreation'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="autocreation"
-        name="autocreation"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-   
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.loghistory'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="loghistory"
-        name="loghistory"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.dailysnapshot'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="dailysnapshot"
-        name="dailysnapshot"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.summaryrequired'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="summaryrequired"
-        name="summaryrequired"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.inquiryrequired'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="inquiryrequired"
-        name="inquiryrequired"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.generatefinancialresults'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="generatefinancialresults"
-        name="generatefinancialresults"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.glmapping'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="glmapping"
-        name="glmapping"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-
-    <bod-page-container title="Additional Relationships"></bod-page-container>
-    <bod-input-layout [col]="1" >
-      <bod-control-group  label="{{ 'Balance Sub Type' | translate }}" [forTextOnly]="true" [required]="true">
-        <bod-auto-complete 
-        #nameElementRef  
-        formControlName="balsubtype"
-        name="balsubtype"
-          [data]="periodData1"
-          *ngIf="periodData1.options.length > 0"
-        >
-      </bod-auto-complete>
-      <mat-error *ngIf="balancesubtypeerr">
-        {{ getError('balsubtype',addNewBalanceTypeFormGroup) | translate }}
-      </mat-error>
-      </bod-control-group>
-    </bod-input-layout>
-    <bod-input-layout [col]="1">
-      <bod-control-group [truncate]="truncate" label="{{ 'Balance Period Type' | translate }}" [forTextOnly]="true" [required]="false">
-                    <bod-auto-complete 
-        #nameElementRef  
-        formControlName="balperiodtype"
-        name="balperiodtype"
-          name="autoCompleteFieldMultiConv1"
-          [data]="periodData"
-        ></bod-auto-complete>
-      </bod-control-group>
-    </bod-input-layout>
- 
- 
-   
-    <!-- This is related to multi select input dropdown
-    <bod-table
-      #additionalRelationships
-      [data]="additionalRelationData"
-      [modeOptions]="modeOptions"
-      [tableActions]="additionalRelationActions"
-      (onTableActionClick)="onRelationTableActionClicked($event)"
-      [primaryColumnName]="'id'"
-      [truncateAfterLine]="1"
-      (editTableEvent)="onEditTableAction($event)"
-      [customColumnTemplates]="[
-        {
-          columnName: 'id',
-          templateName: additionalRelationTemplate
-        },
-        {
-          columnName: 'value',
-          templateName: valueTemplate
-        },
-        {
-          columnName: 'actionBtns',
-          templateName: actionBtnsTemplate
-        }
-      ]"
-    > -->
-      <!-- <ng-template
-        #additionalRelationTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-        <form [formGroup]="additionalRelationIDForm">
-          <bod-input-layout col="1">
-            <mat-form-field appearance="outline" fisStyle>
-              <mat-select
-                panelClass="fis-style"
-                [formControl]="
-                  additionalRelationIDForm.controls[
-                    useExistingFormCtrlKeysId[index]
-                  ]
-                "
-                name="relationshipid"
-                (selectionChange)= "this.updateColumnData(
-                  'relationshipid',
-                  $event.value,
-                  index
-                )"
-               
-              >
-                <mat-option
-                  *ngFor="let item of additionalRelations"
-                  value="{{ item.value }}"
-                >
-                  {{ item.label }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </bod-input-layout>
-        </form>
-      </ng-template> -->
-
-      <!-- <ng-template
-        #valueTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      > -->
-     
-      <!-- <form [formGroup]="additionalRelationValueForm">
-        <bod-input-layout col="1">
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              [formControl]="
-                additionalRelationValueForm.controls[
-                  useExistingFormCtrlKeysValue[index]
-                ]
-              "
-              name="value"
-            >
-              <ng-container >
-                <mat-option
-                  *ngFor="let item of subBalancetypes2"
-                  [value]="item.value"
-                >
-                  {{ item.label }}
-                </mat-option>
-              </ng-container> 
-             </mat-select>
-          </mat-form-field>
-        </bod-input-layout>
-      </form> -->
-      <!-- </ng-template> -->
-      <!-- </form> -->
-      <!-- <form [formGroup]="additionalRelationValueForm" >
-        <bod-input-layout [col]="1">
-            <bod-auto-complete 
-            [formControl]="
-                additionalRelationValueForm.controls[
-                  useExistingFormCtrlKeysValue[index]
-                ]
-              "
-            #nameElementRef  
-              name="autoCompleteFieldMultiConv"
-              [data]="periodDataArr[index]"
-            ></bod-auto-complete>
-        </bod-input-layout>
-       
-      </form>   -->
-    <!-- </ng-template> -->
-
-      <!-- <ng-template
-        #actionBtnsTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-        <bod-table-actions
-          [actions]="rowLevelActionsForRelationshipedit"
-          (onActionClick)="deleteAddtnlRltnRow(index, element)"
-        >
-        </bod-table-actions>
-      </ng-template>
-    </bod-table> -->
-  <!-- </bod-input-layout> -->
-  <bod-message-container [messages]="errorMessages2"></bod-message-container>
-  <bod-table
-    #roletypetable
-    [data]="roleTypetabledata"
-    [tableActions]="roleTypetableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Role Type' | translate,
-      formGroup: roleTypeForm,
-      formTemplateName: roleTypeTemplate
-    }"
-    (onInlineFormAddSubmit)="onAdd(roleTypeForm.value)"
-    (onInlineFormEditSubmit)="onAdd(roleTypeForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
+    </div>
+  </ng-template>
+</bod-table>
+<ng-template #addNewBalaceTypeTemplate>
+  <bod-add-edit-balancetype
+    (apiResponse)="addBalanceTypeEvent($event)"
+    [editBalanceTypeRow]="editBalanceType"
+    [retainedCode]="retainedCode"
+    [retainedIdentifier]="retainedIdentifier"
+    [retainedName]="retainedName"
+    [retainedSystemBalance]="retainedSystemBalance"
+    [retainedAccountClassification]="retainedAccountClassification"
+    [retainedDateValue]="retainedDateValue"
+    [retainedPayer]="retainedPayer"
+    [retainedPayee]="retainedPayee"
+    [retainedStatementDisplay]="retainedStatementDisplay"
+    [retainedChargeBase]="retainedChargeBase"
+    [retainedPersisted]="retainedPersisted"
+    [retainedCalculated]="retainedCalculated"
+    [retainedAutoCreation]="retainedAutoCreation"
+    [retainedLogHistory]="retainedLogHistory"
+    [retainedDailySnapshot]="retainedDailySnapshot"
+    [retainedInquiryRequired]="retainedInquiryRequired"
+    [retainedGenerateFinancialResults]="retainedGenerateFinancialResults"
+    [retainedGLMapping]="retainedGLMapping"
+    [retainedSummaryRequired]="retainedSummaryRequired"
+    [retainedBalanceSubType]="retainedBalanceSubType"
+    [retainedBalancePeriodType]="retainedBalancePeriodType"
+    [retainedBalanceSubTypeData] = "retainedBalanceSubTypeData"
+    [retainedRoleTypeData]="retainedRoleTypeData"
+    [retainedAggregateDetailsData]="retainedAggregateDetailsData"
   >
-    <ng-template
-      #deleteActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforRoletype($event.icon, index)"
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="roleTypeForm">
-    <ng-template #roleTypeTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.roletype'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="roletype"
-              name="roletype"
-            >
-              <mat-option
-                *ngFor="let roletype of roletypes"
-                [value]="roletype.value"
-              >
-                {{ roletype.label }}
-              </mat-option>
-            </mat-select>
-        
-          </mat-form-field>
-        </bod-control-group>
+  </bod-add-edit-balancetype>
+</ng-template>
 
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.accountclassification'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="roleaccountclassification"
-              name="roleaccountclassification"
-            >
-              <mat-option
-                *ngFor="
-                  let roleaccountclassification of roleaccountclassifications
-                "
-                [value]="roleaccountclassification.value"
-              >
-                {{ roleaccountclassification.label }}
-              </mat-option>
-            </mat-select>
-       
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.obligator'"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="obligator"
-            name="obligator"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.beneficiary'"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="beneficiary"
-            name="beneficiary"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.isvisible'"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="isvisible"
-            name="isvisible"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-  <bod-table
-    #aggregateTable
-    [data]="aggregateTabledata"
-    [tableActions]="aggregateTableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [expandedRowTemplate]="expandedRowTemplate"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Aggregate Value' | translate,
-      formGroup: aggregateForm,
-      formTemplateName: aggregateTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddAggregate(aggregateForm.value)"
-    (onInlineFormEditSubmit)="onAddAggregate(aggregateForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteaggegateActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
+<ng-template #addExistingBalaceTypeTemplate>
+  <bod-existing-balance-type
+    (apiResponse)="addBalanceTypeEvent1($event)"
+    [editBalanceTypeRow]="editBalanceType"
+    [retainedCodeForExt]="retainedCodeForExt"
+    [retainedIdentifierForExt]="retainedIdentifierForExt"
+    [retainedAccountClassificationForExt]="retainedAccountClassificationForExt"
+    [retainedDateValueForExt]="retainedDateValueForExt"
+    [retainedPayerForExt]="retainedPayerForExt"
+    [retainedPayeeForExt]="retainedPayeeForExt"
+    [retainedStatementDisplayForExt]="retainedStatementDisplayForExt"
+    [retainedChargeBaseForExt]="retainedChargeBaseForExt"
+    [retainedPersistedForExt]="retainedPersistedForExt"
+    [retainedCalculatedForExt]="retainedCalculatedForExt"
+    [retainedAutoCreationForExt]="retainedAutoCreationForExt"
+    [retainedLogHistoryForExt]="retainedLogHistoryForExt"
+    [retainedDailySnapshotForExt]="retainedDailySnapshotForExt"
+    [retainedInquiryRequiredForExt]="retainedInquiryRequiredForExt"
+    [retainedGenerateFinancialResultsForExt]="retainedGenerateFinancialResultsForExt"
+    [retainedGLMappingForExt]="retainedGLMappingForExt"
+    [retainedSummaryRequiredForExt]="retainedSummaryRequiredForExt"
   >
-    <ng-template
-      #deleteaggegateActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforaggergate($event.icon, index)"
-      >
-      </bod-table-actions>
-    </ng-template>
-    <ng-template #expandedRowTemplate let-context="context">
-      <div fullwidth>
-        <bod-inquiry-layout
-          [columns]="2"
-          [groups]="
-            balanceTypeService.getExpandedaggregateData(context.element)
-          "
-          [softSeparator]="false"
-          [direction]="direction"
-          [information]="[]"
-          (linkClick)="commonDataService.inquiryLayoutClick($event)"
-        >
-        </bod-inquiry-layout>
-      </div>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="aggregateForm">
-    <ng-template #aggregateTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.aggregationname'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="aggregationname"
-              name="aggregationname"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.producttype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="producttype"
-              name="producttype"
-            >
-              <mat-option
-                *ngFor="let producttype of producttypes"
-                [value]="producttype.value"
-              >
-                {{ producttype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.balancetype'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="balancetype"
-              name="balancetype"
-            >
-              <mat-option
-                *ngFor="let balancetype of balancetypes"
-                [value]="balancetype.value"
-              >
-                {{ balancetype.label }}
-              </mat-option>
-            </mat-select>
-            <!-- <mat-error>
-        {{ getError('balancetype') | translate }}
-      </mat-error> -->
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.relationshiptype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-            panelClass="fis-style"
-            formControlName="relationshiptype"
-            name="relationshiptype"
-          >
-            <mat-option
-              *ngFor="
-                let relationshiptype of relationshiptypes
-              "
-              [value]="relationshiptype.value"
-            >
-              {{ relationshiptype.label }}
-            </mat-option>
-          </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.aggregationlevel'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="number"
-              matInput
-              fisStyle
-              formControlName="aggregationlevel"
-              name="aggregationlevel"
-            />
-            <mat-error *ngIf="aggregateForm.get('aggregationlevel').hasError('negativeValue')">
-              Aggregation level cannot be negative.
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.debittransactiontype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="debittransactiontype"
-              name="debittransactiontype"
-            >
-              <mat-option
-                *ngFor="let debittransactiontype of debittransactiontypes"
-                [value]="debittransactiontype.value"
-              >
-                {{ debittransactiontype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.credittransactiontype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="credittransactiontype"
-              name="credittransactiontype"
-            >
-              <mat-option
-                *ngFor="let credittransactiontype of credittransactiontypes"
-                [value]="credittransactiontype.value"
-              >
-                {{ credittransactiontype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.othercurrency'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="othercurrency"
-            name="othercurrency"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.reverse'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="reverse"
-            name="reverse"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-
-  <!-- <bod-table
-    #postingApplicationTable
-    [data]="postingApplicationTabledata"
-    [tableActions]="postingAppTableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Posting Application' | translate,
-      formGroup: postingApplicationForm,
-      formTemplateName: postingApplicationTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddPstgStd(postingApplicationForm.value)"
-    (onInlineFormEditSubmit)="onAddPstgStd(postingApplicationForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deletePstgStdActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deletePstgStdActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforPstgStd($event.icon, index)"
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="postingApplicationForm">
-    <ng-template #postingApplicationTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.postingapplicationmethod'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="postingapplicationmethod"
-              name="postingapplicationmethod"
-            >
-              <mat-option
-                *ngFor="
-                  let postingapplicationmethod of postingapplicationmethods
-                "
-                [value]="postingapplicationmethod.value"
-              >
-                {{ postingapplicationmethod.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="
-            translationKey + 'metadataconfig.postingapplicationapplytypevalue'
-          "
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="applicationtype"
-              name="applicationtype"
-            >
-              <mat-option
-                *ngFor="let applicationtype of applicationTypes"
-                [value]="applicationtype.value"
-              >
-                {{ applicationtype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.instructionorder'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="instructionorder"
-              name="instructionorder"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="
-            translationKey + 'metadataconfig.instructioncustomizationtypevalue'
-          "
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="customizationtype"
-              name="customizationtype"
-            >
-              <mat-option
-                *ngFor="let type of customizationTypes"
-                [value]="type.value"
-              >
-                {{ type.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form> -->
-</bod-form>
+  </bod-existing-balance-type>
+</ng-template>
