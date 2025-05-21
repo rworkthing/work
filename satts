@@ -1,5 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BodTableMetadata, RowLeftAction, SelectPageMode } from '@bod/common';
+import { CurrencyTableSingle } from '../add-edit-conditions/add-edit-conditions.model';
+import { ConditionDetailService } from '../condition-detail.service';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'bod-currency-condition',
@@ -8,4 +12,54 @@ import { CommonModule } from '@angular/common';
   templateUrl: './currency-condition.component.html',
   styleUrl: './currency-condition.component.scss'
 })
-export class CurrencyConditionComponent {}
+export class CurrencyConditionComponent implements OnInit {
+  @Input() currencyDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
+  @Output() rowSelected = new EventEmitter<CurrencyTableSingle[]>();
+  
+  public allowRowSelection = true;
+  showEdit = true;
+
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  
+  constructor(private conditionDetailService: ConditionDetailService) {}
+  
+  ngOnInit() { 
+    // Initialize the table if not provided by parent
+    if (!this.currencyDataSingleSelect) {
+      this.initializeTable();
+    }
+  }
+  
+  private initializeTable() {
+    this.currencyDataSingleSelect = {
+      title: 'Currency Condition',
+      columns: [...this.conditionDetailService.currency],
+      rowLeftAction: RowLeftAction.multipleRowSelection,
+      enablePagination: true,
+      datasource: new MatTableDataSource<CurrencyTableSingle>([]),
+      noRecordsMessage: 'No Currency defined'
+    };
+    
+    // Load data if needed
+    this.loadCurrencyData();
+  }
+  
+  private loadCurrencyData() {
+    this.conditionDetailService.getCurrency().subscribe((response) => {
+      const currencyData = response.map((item, index) => ({
+        index: index,
+        identifier: item.identifier,
+        code: item.code,
+        currencyISO4217Val: item.currencyISO4217Val,
+      }));
+      
+      this.currencyDataSingleSelect.datasource.data = currencyData;
+    });
+  }
+  
+  public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+  }
+}
