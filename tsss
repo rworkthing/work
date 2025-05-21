@@ -1,200 +1,435 @@
-  getAttribute(): void {
-    this.metadataService.retrieveAttribute().subscribe(response => {
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import {
+  BodKeyValuePairMetadata,
+  Column,
+  ColumnType,
+  InquiryLayoutInput,
+  MaxLengthStrategy,
+  UIContextService
+} from '@bod/common';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ConditionList } from './condition-detail.model';
+import { DataSharingService } from '../data-sharing-service.service';
+import { CurrencyTable, CurrencyTable1 } from './add-edit-conditions/add-edit-conditions.model';
 
-      console.log('Response from retrieveAttribute:', response);
-      if (response.status === 'SUCCESS' && response.data) {
-        this.attributeData = response.data.map((item: any) => {
-          const attributeData = item.Attribute || {};
-          const additionalDataType = attributeData.additionalDataType || {};
-          const productTypeAdditionalDataList =
-            attributeData.productTypeAdditionalDataList || [];
-          const productTypeAdditionalDataTypeRltnpList =
-            attributeData.productTypeAdditionalDataTypeRltnpList || [];
-          const additionalDataValidValueSetList =
-            attributeData.additionalDataValidValueSetList || [];
-          const additionalDataValidValuesRange =
-            attributeData.additionalDataValidValuesRange;
+@Injectable({
+  providedIn: 'root'
+})
+export class ConditionDetailService {
 
-          let additionalDataValidValueSetListMapped = null;
-          if (additionalDataValidValueSetList.length > 0) {
-            additionalDataValidValueSetListMapped =
-              additionalDataValidValueSetList.map((valueSet: any) => ({
-                identifier: valueSet.identifier,
-                attributeIdentifier: valueSet.attributeIdentifier,
-                name: valueSet.name,
-                description: valueSet.description,
-                value: valueSet.value,
-                isDefault: valueSet.isDefault,
-                isPrimary: valueSet.isPrimary,
-                percentage: valueSet.percentage,
-                sequenceNumber: valueSet.sequenceNumber,
-                overrideDefault: valueSet.overrideDefault,
-                multiLingualTextInfoList: valueSet.multiLingualTextInfoList
-              }));
-          }
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Y'
+      },
+      {
+        value: false,
+        label: 'N'
+      }
+    ]
+  };
 
-          let productTypeAdditionalDataTypeRltnpListMapped = null;
-          if (productTypeAdditionalDataTypeRltnpList.length > 0) {
-            productTypeAdditionalDataTypeRltnpListMapped =
-              productTypeAdditionalDataTypeRltnpList.map(
-                (relationship: any) => ({
-                  identifier: relationship.identifier,
-                  attributeCode: relationship.attributeCode,
-                  attributeIdentifier: relationship.attributeIdentifier,
-                  minimumRequired: relationship.minimumRequired,
-                  maximumAllowed: relationship.maximumAllowed,
-                  glCategarization: relationship.glCategarization
-                })
-              );
-          }
+  public curspcefic: Column[] = [
+    {
+      name: 'code',
+      title: 'Currency',
+      truncate: true,
+      noOverflow: true,
+      width: 5,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'currencyISO4217Val',
+      title: 'Code',
+      truncate: true,
+      noOverflow: true,
+      width: 5,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'inlineRowEditAction',
+      title: ' ',
+      disableSorting: true,
+      disableFiltering: true,
+      hasAction: true
+    }
+  ];
+  public currency: Column[] = [
+    {
+      name: 'code',
+      title: 'Currency',
+      truncate: true,
+      noOverflow: true,
+      width: 5,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'currencyISO4217Val',
+      title: 'Code',
+      truncate: true,
+      noOverflow: true,
+      width: 5,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'default',
+      title: 'Default',
+      inputModeOptions: {
+        type: ColumnType.slideToggle,
+        model: {
+          data: this.inputForSlideToggleValue
+        },
+        validators: {
+          required: true,
+          max: 20,
+          maxLengthStrategy: this.selectedStrategy
+        },
+        isNotEditable: false,
+        existingDataNotEditable: false
+      }
+    }
+  ];
+   
+  public currencyCol: Column[] = [
+    {
+      name: 'currencyName',
+      title: 'Currency',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'currencyCode',
+      title: 'Code',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
 
-          let productTypeAdditionalDataListMapped = null;
-          if (productTypeAdditionalDataList.length > 0) {
-            productTypeAdditionalDataListMapped =
-              productTypeAdditionalDataList.map((data: any) => ({
-                identifier: data.identifier,
-                attributeIdentifier: data.attributeIdentifier,
-                attributeValue: data.attributeValue,
-                attributeValueSource: data.attributeValueSource,
-                isDefault: data.isDefault,
-                isPrimary: data.isPrimary,
-                percentage: data.percentage,
-                sequenceNumber: data.sequenceNumber,
-                overrideDefault: data.overrideDefault
-              }));
-          }
+  public condColmn: Column[] = [
+    {
+      name: 'subjectCdarValue',
+      title: 'Condition Subject',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'conditionRltnpType',
+      title: 'Relationship',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+  public textCol: Column[] = [
+    {
+      name: 'validvalues',
+      title: 'Valid Values',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'default',
+      title: 'Default',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+  public textNumCol: Column[] = [
+    {
+      name: 'validvalues',
+      title: 'Text Condition Values',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'numbervalidvalues',
+      title: 'Number Condition Values',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'default',
+      title: 'Default',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+ 
+  public NumCol: Column[] = [
+    {
+      name: 'validvalues',
+      title: 'Number Condition Values',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'default',
+      title: 'Default',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
 
-          let additionalDataValidValuesRangeMapped = null;
-          if (additionalDataValidValuesRange) {
-            additionalDataValidValuesRangeMapped = {
-              identifier: additionalDataValidValuesRange.identifier,
-              attributeIdentifier:
-                additionalDataValidValuesRange.attributeIdentifier,
-              name: additionalDataValidValuesRange.name,
-              description: additionalDataValidValuesRange.description,
-              lowValue: additionalDataValidValuesRange.lowValue,
-              highValue: additionalDataValidValuesRange.highValue,
-              multiLingualTextInfoList:
-                additionalDataValidValuesRange.multiLingualTextInfoList
-            };
-          }
+  public columns: Column[] = [
+    {
+      name: 'cdarValue',
+      title: 'Code',
+      truncate: true,
+      noOverflow: true,
+      width: 7,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'name',
+      title: 'Name',
+      truncate: true,
+      noOverflow: true,
+      width: 7,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'conditionType',
+      title: 'Condition Type',
+      truncate: true,
+      noOverflow: true,
+      width: 7,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'classificationType',
+      title: 'Classification Type',
+      truncate: true,
+      noOverflow: true,
+      width: 7,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+  public textColumn: Column[] = [
+    {
+      name: 'values',
+      title: 'Values',
+      truncate: true,
+      noOverflow: true,
+      width: 12,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input
+      }
+    },
+    {
+      name: 'default',
+      title: 'Default',
+      truncate: true,
+      noOverflow: true,
+      width: 12,
+      widthUnit: 'rem'
+    },
+    { name: 'actionBtns', title: ' ', hasAction: true }
+  ];
+  private apiURL = '';
+  private currencyUrl = '';
+  private saveUrl = '';
+  private updateUrl = '';
+  private retrieveUrl = '';
+  private deleteUrl = '';
+  businessProductLine: any[] = [];
+  private reqDfnId = '';
+  private clientCode = '';
+  private countryCode = '';
+  private productLines: any[] = [];
+  private productTypes: any[] = [];
+  constructor(
+    private http: HttpClient,
+    private uiContextService: UIContextService,
+    private readonly dataSharingService: DataSharingService
+  ) {
+    let url =
+      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
+        .sdkServiceUrl.value;
 
-          const attribute: Attribute = {
-            //   additionalDataType: {
-            code: additionalDataType.code
-              ? additionalDataType.code
-              : productTypeAdditionalDataTypeRltnpList[0].attributeCode,
-            descriptions: [
-              {
-                id: 0,
-                label: 'Name',
-                value: additionalDataType.name
-              },
-              {
-                id: 1,
-                label: 'Identifier',
-                value: additionalDataType.identifier
-              },
-              {
-                id: 2,
-                label: 'ShortName',
-                value: additionalDataType.shortName
-              },
-              // {
-              //   id: 3,
-              //   label: 'Description',
-              //   value: additionalDataType.description
-              // },
-              {
-                id: 4,
-                label: 'Type',
-                value: this.type(additionalDataType.objectTypeIdentifier)
-              },
-              {
-                id: 5,
-                label: 'Data type',
-                value: this.formatdatatype(
-                  additionalDataType.formatTypeIdentifier
-                )
-              },
-              {
-                id: 6,
-                label: 'Calculate',
-                value: additionalDataType.calculated
-              },
-              {
-                id: 7,
-                label: 'Searchable',
-                value: additionalDataType.searchable
-              },
-              {
-                id: 8,
-                label: 'Multivalue Allowed',
-                value: additionalDataType.multiValueAllowed
-              },
-              {
-                id: 9,
-                label: 'Percentage Allowed',
-                value: additionalDataType.percentageAllowed
-              },
-              {
-                id: 10,
-                label: 'Classification Type',
-                value: additionalDataType.classificationType
-              }
-            ],
-
-            identifier: additionalDataType.identifier,
-            name: additionalDataType.name,
-            shortName: additionalDataType.shortName,
-            objectTypeIdentifier: additionalDataType.objectTypeIdentifier,
-            formatTypeIdentifier: additionalDataType.formatTypeIdentifier,
-            calculated: additionalDataType.calculated,
-            searchable: additionalDataType.searchable,
-            multiValueAllowed: additionalDataType.multiValueAllowed,
-            percentageAllowed: additionalDataType.percentageAllowed,
-            classificationType: additionalDataType.classificationType,
-            multiLingualTextInfoList:
-              additionalDataType.multiLingualTextInfoList,
-            //    },
-            additionalDataValidValuesRange:
-              additionalDataValidValuesRangeMapped,
-            additionalDataValidValueSetList:
-              additionalDataValidValueSetListMapped,
-            productTypeAdditionalDataTypeRltnpList:
-              productTypeAdditionalDataTypeRltnpListMapped,
-            prdrtpeReltinqMetaData: [
-              {
-                id: 0,
-                label: 'Maximum Allowed',
-                value: productTypeAdditionalDataTypeRltnpList[0].maximumAllowed
-              },
-              {
-                id: 1,
-                label: 'Identifier',
-                value: productTypeAdditionalDataTypeRltnpList[0].identifier
-              },
-              {
-                id: 1,
-                label: 'Minimum Required',
-                value: productTypeAdditionalDataTypeRltnpList[0].minimumRequired
-              },
-              {
-                id: 1,
-                label: 'GL Categorization',
-                value:
-                  productTypeAdditionalDataTypeRltnpList[0].glCategarization
-              }
-            ],
-            productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
-            MetdataStatus: item.MetdataStatus
-          };
-
-          // console.log(attribute);
-          return attribute;
-        });
-        // this.attributeData.sort((a, b) => b.identifier - a.identifier);
-        this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
+    this.dataSharingService.data$.subscribe(data => {
+      if (data) {
+        this.reqDfnId = data.reqDfnId;
+        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
+        this.countryCode = data.countryCode;
+        this.clientCode = data.countryCode;
+        this.productLines = [
+          ...new Set(this.businessProductLine.map(obj => obj.value))
+        ];
+        this.productTypes = [
+          ...new Set(this.businessProductLine.map(obj => obj.type))
+        ];
+        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
+        this.apiURL = url + '/basedata/condition';
+        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
+        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
+        this.currencyUrl = url + '/basedata/currency';
+        this.retrieveUrl =
+          url +
+          '/metadata/retrieve/' +
+          this.reqDfnId +
+          '?metadata-config-type=Condition';
       }
     });
   }
+  createHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'country-code': this.countryCode,
+      'client-code': this.clientCode,
+      'product-line': this.productLines,
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID(),
+      'requirement-id':this.reqDfnId
+    });
+  }
+  generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0,
+          v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  }
+  getConditions(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get(`${this.apiURL}`, { headers });
+  }
+  getCurrency(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get(`${this.currencyUrl}`, { headers });
+  }
+  saveCondition(request: any): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.post(this.saveUrl, request, { headers });
+  }
+
+  updateCondition(request: any): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.put(this.updateUrl, request, { headers });
+  }
+  retrieveCondition(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get<ConditionList[]>(this.retrieveUrl, { headers });
+  }
+  deleteCondition(
+    metadataConfigType: string,
+    metadataConfigIdfr: number
+  ): Observable<any> {
+    const headers = this.createHeaders();
+    const params = {
+      'metadata-config-type': metadataConfigType,
+      'metadata-config-idfr': metadataConfigIdfr
+    };
+
+    return this.http.delete(this.deleteUrl, { headers, params });
+  }
+
+  public getCondition(
+    element: ConditionList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.conditionInquiry.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.conditionInquiry[i].id,
+        label: element.conditionInquiry[i].label,
+        value: element.conditionInquiry[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+  public getCurrencyInquiry(
+    element: CurrencyTable
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.currencyInquiry.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.currencyInquiry[i].id,
+        label: element.currencyInquiry[i].label,
+        value: element.currencyInquiry[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+  public getAggregateData(
+    element: ConditionList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.currencyRange.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.currencyRange[i].id,
+        label: element.currencyRange[i].label,
+        value: element.currencyRange[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+  public getCurrencyInquiry1(
+    element: CurrencyTable1
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.currencyInquiry.length; i++) {
+      //setIsLink = !setIsLink;
+      groups.push({
+        id: element.currencyInquiry[i].id,
+        label: element.currencyInquiry[i].label,
+        value: element.currencyInquiry[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+
+    return $groups;
+  }
+}
