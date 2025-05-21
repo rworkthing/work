@@ -7,33 +7,33 @@ public onDefaultToggleChange(event: any, rowIndex: number) {
     
     // Update default status
     if (event.checked) {
-      // If this row is now default, unmark all others
+      // Unmark all others and mark this row as default
       data.forEach(item => {
         item.default = item.index === rowIndex;
       });
       
-      // Make sure this row is selected without affecting other selections
+      // Ensure this row is selected
       if (this.currencyTable && this.currencyTable.selection) {
-        // Check if this row is already selected
-        const isRowSelected = this.currencyTable.selection.isSelected(row);
+        // Clear previous selections and select this row
+        this.currencyTable.selection.clear();
+        this.currencyTable.selection.select(row);
         
-        // If not already selected, add it to the selection
-        if (!isRowSelected) {
-          this.currencyTable.selection.select(row);
-          
-          // Update selectedRowSingleSelect to include this row if not already included
-          if (!this.selectedRowSingleSelect.some(item => item.index === row.index)) {
-            this.selectedRowSingleSelect = [...this.selectedRowSingleSelect, row];
-            
-            // Emit the updated selection
-            this.rowSelected.emit(this.selectedRowSingleSelect);
-          }
-        }
+        // Update selectedRowSingleSelect to only include this row
+        this.selectedRowSingleSelect = [row];
+        
+        // Emit the updated selection
+        this.rowSelected.emit(this.selectedRowSingleSelect);
       }
     } else {
-      // If toggle is turned off, do NOT change selection
-      // Only update the default status back to false
+      // When toggle is turned off, reset its default status
       row.default = false;
+      
+      // Optional: You might want to handle what happens when default is turned off
+      // For example, you could clear selection or keep it as is
+      // Uncomment and modify as needed:
+      // this.currencyTable.selection.deselect(row);
+      // this.selectedRowSingleSelect = this.selectedRowSingleSelect.filter(r => r.index !== row.index);
+      // this.rowSelected.emit(this.selectedRowSingleSelect);
     }
     
     // Update the data source
