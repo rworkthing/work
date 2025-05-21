@@ -1,6 +1,14 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BodTableMetadata, RowLeftAction, SelectPageMode } from '@bod/common';
+import { 
+  BodTableModule, 
+  BodTableComponent, 
+  BodTableMetadata, 
+  BodPageContainerModule,
+  NotificationMessage,
+  RowLeftAction, 
+  SelectPageMode 
+} from '@bod/common';
 import { CurrencyTableSingle } from '../add-edit-conditions/add-edit-conditions.model';
 import { ConditionDetailService } from '../condition-detail.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -8,7 +16,11 @@ import { MatTableDataSource } from '@angular/material/table';
 @Component({
   selector: 'bod-currency-condition',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule
+  ],
   templateUrl: './currency-condition.component.html',
   styleUrl: './currency-condition.component.scss'
 })
