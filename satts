@@ -92,7 +92,7 @@ export class CurrencyConditionComponent implements OnInit {
   }
   
   public onDefaultToggleChange(event: any, rowIndex: number) {
-    // Get current data
+    // Get current data and the row being toggled
     const data = [...this.currencyDataSingleSelect.datasource.data];
     const row = data.find(r => r.index === rowIndex);
     
@@ -104,27 +104,8 @@ export class CurrencyConditionComponent implements OnInit {
       data.forEach(item => {
         item.default = item.index === rowIndex;
       });
-      
-      // Make sure this row is selected without affecting other selections
-      if (this.currencyTable && this.currencyTable.selection) {
-        // Check if this row is already selected
-        const isRowSelected = this.currencyTable.selection.isSelected(row);
-        
-        // If not already selected, add it to the selection
-        if (!isRowSelected) {
-          this.currencyTable.selection.select(row);
-          
-          // Update selectedRowSingleSelect to include this row if not already included
-          if (!this.selectedRowSingleSelect.some(item => item.index === row.index)) {
-            this.selectedRowSingleSelect = [...this.selectedRowSingleSelect, row];
-            
-            // Emit the updated selection
-            this.rowSelected.emit(this.selectedRowSingleSelect);
-          }
-        }
-      }
     } else {
-      // If toggle is turned off, just update this row's default status
+      // Just update this row's default status
       row.default = false;
     }
     
