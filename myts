@@ -116,6 +116,7 @@ import { roletypeaction } from '../../role-type/role-type-constants';
 import { Observable, tap } from 'rxjs';
 import { SecondoryFrequencyConditionComponent } from '../secondory-frquency/secondory-frequency-condition.component';
 import { PrimaryFrequencyConditionComponent } from '../primary-frequency/primary-frequency-condition.component';
+import { CurrencyConditionComponent } from '../currency-conditions/currency-condition.component';
 
 @Component({
   selector: 'bod-add-edit-conditions',
@@ -156,7 +157,7 @@ import { PrimaryFrequencyConditionComponent } from '../primary-frequency/primary
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
-
+    CurrencyConditionComponent,
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
@@ -175,8 +176,8 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
   @ViewChild('currencyConditions', { static: true })
   expandableTableRef: BodTableComponent;
   
-@ViewChild('currencyConditionsForCurr', { static: false })
-normalTableRef: BodTableComponent;
+@ViewChild(CurrencyConditionComponent)
+currencyConditionComponent: CurrencyConditionComponent;
 
   dateInput: Date;
   bodDateInput: any;
@@ -2197,19 +2198,24 @@ normalTableRef: BodTableComponent;
     console.log('row Data', this.selectedRow);
     this.addNewConditionFormGroup.markAsDirty();
   }
-  public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
-    if (element.length !== 0) {
-      let msg = ':';
-      element.forEach(ele => {
-        msg += ' ' + ele.currencyISO4217Val + ' ' + ele.code;
-      });
-      this.selectedRowSingleSelect = element; // this.updateMessage('mbpBod.demo.microsite.table.rowSelected', msg);
-    } else {
-      // this.updateMessage('mbpBod.demo.microsite.table.rowDeselected', '');
-      this.selectedRowSingleSelect = [];
-    }
-    // this.rowSelectionChange.emit(this.selectedRow);
-    console.log('row Data', this.selectedRow);
+  // public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
+  //   if (element.length !== 0) {
+  //     let msg = ':';
+  //     element.forEach(ele => {
+  //       msg += ' ' + ele.currencyISO4217Val + ' ' + ele.code;
+  //     });
+  //     this.selectedRowSingleSelect = element; // this.updateMessage('mbpBod.demo.microsite.table.rowSelected', msg);
+  //   } else {
+  //     // this.updateMessage('mbpBod.demo.microsite.table.rowDeselected', '');
+  //     this.selectedRowSingleSelect = [];
+  //   }
+  //   // this.rowSelectionChange.emit(this.selectedRow);
+  //   console.log('row Data', this.selectedRow);
+  //   this.addNewConditionFormGroup.markAsDirty();
+  // }
+
+  public handleCurrencySelection(selectedRows: CurrencyTableSingle[]) {
+    this.selectedRowSingleSelect = selectedRows;
     this.addNewConditionFormGroup.markAsDirty();
   }
   translate: any;
