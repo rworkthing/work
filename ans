@@ -1,47 +1,29 @@
 public onDefaultToggleChange(event: any, rowIndex: number) {
-    // Get current data
-    const data = [...this.currencyDataSingleSelect.datasource.data];
-    const row = data.find(r => r.index === rowIndex);
-    
-    if (!row) return;
-    
-    // Update default status
-    if (event.checked) {
-      // Unmark all others and mark this row as default
-      data.forEach(item => {
-        item.default = item.index === rowIndex;
-      });
-      
-      // Ensure this row is selected
-      if (this.currencyTable && this.currencyTable.selection) {
-        // Clear previous selections and select this row
-        this.currencyTable.selection.clear();
-        this.currencyTable.selection.select(row);
-        
-        // Update selectedRowSingleSelect to only include this row
-        this.selectedRowSingleSelect = [row];
-        
-        // Emit the updated selection
-        this.rowSelected.emit(this.selectedRowSingleSelect);
+  const data = [...this.currencyDataSingleSelect.datasource.data];
+  const row = data.find(r => r.index === rowIndex);
+  if (!row) return;
+
+  if (event.checked) {
+    // Uncheck default for all other rows
+    data.forEach(item => item.default = item.index === rowIndex);
+
+    // Ensure this row is selected
+    if (this.currencyTable?.selection) {
+      this.currencyTable.selection.select(row);
+
+      // Add to selectedRowSingleSelect if not already there
+      const isAlreadySelected = this.selectedRowSingleSelect.some(r => r.index === row.index);
+      if (!isAlreadySelected) {
+        this.selectedRowSingleSelect.push(row);
       }
-    } else {
-      // When toggle is turned off, reset its default status
-      row.default = false;
-      
-      // Optional: You might want to handle what happens when default is turned off
-      // For example, you could clear selection or keep it as is
-      // Uncomment and modify as needed:
-      // this.currencyTable.selection.deselect(row);
-      // this.selectedRowSingleSelect = this.selectedRowSingleSelect.filter(r => r.index !== row.index);
-      // this.rowSelected.emit(this.selectedRowSingleSelect);
+
+      this.rowSelected.emit(this.selectedRowSingleSelect);
     }
-    
-    // Update the data source
-    this.currencyDataSingleSelect.datasource.data = data;
-    
-    // Emit the change
-    this.defaultChanged.emit({
-      rowIndex: rowIndex,
-      isDefault: event.checked
-    });
+  } else {
+    // Just unset default for this row
+    row.default = false;
   }
+
+  this.currencyDataSingleSelect.datasource.data = data;
+  this.defaultChanged.emit({ rowIndex, isDefault: event.checked });
+}
