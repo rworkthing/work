@@ -2214,6 +2214,23 @@ currencyConditionComponent: CurrencyConditionComponent;
   //   this.addNewConditionFormGroup.markAsDirty();
   // }
 
+  public handleCurrencyDefaultChange(event: { rowIndex: number, isDefault: boolean }) {
+    // Update the currency data model
+    if (this.currencyData1 && this.currencyData1.length) {
+      this.currencyData1.forEach((item) => {
+        if (item.index === event.rowIndex) {
+          item.default = event.isDefault;
+        } else if (event.isDefault) {
+          // If another row is set as default, unset all others
+          item.default = false;
+        }
+      });
+    }
+    
+    // Mark the form as dirty so changes are tracked
+    this.addNewConditionFormGroup.markAsDirty();
+  }
+
   public handleCurrencySelection(selectedRows: CurrencyTableSingle[]) {
     this.selectedRowSingleSelect = selectedRows;
     this.addNewConditionFormGroup.markAsDirty();
