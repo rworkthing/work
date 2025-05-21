@@ -1341,7 +1341,7 @@
     </ng-template>
   </form>
 
-  <bod-table
+  <!-- <bod-table
   *ngIf="
     addNewConditionFormGroup.get('conditionType')?.value ===
     'CurrencyCondition'
@@ -1354,7 +1354,16 @@
   [alignContent]="'top'"
 >
   
-</bod-table>
+</bod-table> -->
+<bod-currency-condition
+  *ngIf="
+    addNewConditionFormGroup.get('conditionType')?.value ===
+    'CurrencyCondition'
+  "
+  [currencyDataSingleSelect]="currencyDataSingleSelect"
+  [selectedRowSingleSelect]="selectedRowSingleSelect"
+  (rowSelected)="handleCurrencySelection($event)"
+></bod-currency-condition>
 
   <bod-condition-relationship
     #simpleEditTableRef
