@@ -1,10 +1,4 @@
-<bod-page-container
-title="Locale"
-  [pageMode]="pageModeSimple"
-  (pageAction)="onPageAction($event)"
-  [messages]="messages"
-  *ngIf="showEdit"
->
+
 <bod-table
   #currencyConditionsForCurr
   [data]="currencyDataSingleSelect"
@@ -15,4 +9,3 @@ title="Locale"
 >
   
 </bod-table>
-</bod-page-container>
