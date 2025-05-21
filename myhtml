@@ -1363,6 +1363,7 @@
   [currencyDataSingleSelect]="currencyDataSingleSelect"
   [selectedRowSingleSelect]="selectedRowSingleSelect"
   (rowSelected)="handleCurrencySelection($event)"
+  (defaultChanged)="handleCurrencyDefaultChange($event)"
 ></bod-currency-condition>
 
   <bod-condition-relationship
