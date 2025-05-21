@@ -1,170 +1,18 @@
-<bod-message-container rufId [messages]="messages"></bod-message-container>
-{{ messages }}
-
-<bod-table
-  #customTable
-  [customColumnTemplates]="[
-    {
-      columnName: 'actions',
-      templateName: editActionTemplate
-    }
-  ]"
-  [data]="balanceTypeTableMetaData"
-  [tableActions]="balanceTypeTableActions"
-  (onTableActionClick)="onTableActionClicked1($event)"
-  [expandedRowTemplate]="expandedRowTemplate"
-  (onRowExpand)="rowExpanded($event)"
+<bod-page-container
+title="Locale"
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
 >
-  <ng-template
-    #editActionTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <bod-table-actions
-      sectionActions
-      [actions]="editactions"
-      (onActionClick)="iconActionClicked($event, element)"
-    >
-    </bod-table-actions>
-  </ng-template>
-  <ng-template #expandedRowTemplate let-context="context">
-    <div fullwidth>
-      @if(context.element.name){
-
-      <!-- {{context |json}} -->
-      <h1>Balance Type</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="balanceTypeService.getBalanceTypeData(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-
-      <bod-table
-        [data]="balSubTypeTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      }
-
-      <h1>Product Type Relationshp</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="
-          balanceTypeService.getBalanceTypePrdtReltnData(context.element)
-        "
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-
-      <h1>Additional Relationshps</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="balanceTypeService.getAddtnlReltns(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-
-      <!-- <bod-table
-          [data]="addtnlRltnTable"
-          [alignContent]="'top'"
-          [innerTableContext]="context"
-          [expandedRowTemplate]="expandedRowTemplateTable"
-        >
-        </bod-table> -->
-      <bod-table
-        [data]="roleTypeTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        [data]="aggregateTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplate"
-      >
-        <ng-template #expandedRowTemplate let-context="context">
-          <bod-inquiry-layout
-            [columns]="2"
-            [groups]="balanceTypeService.getAggregateData(context.element)"
-            [softSeparator]="false"
-            [direction]="direction"
-            [information]="[]"
-            (linkClick)="commonDataService.inquiryLayoutClick($event)"
-          >
-          </bod-inquiry-layout>
-        </ng-template>
-      </bod-table>
-    </div>
-  </ng-template>
+<bod-table
+  #currencyConditionsForCurr
+  [data]="currencyDataSingleSelect"
+  (onRowSelect)="rowSelectionSingleSelect($event)"
+  [rowSelectionStrategy]="rowSelectionStrategy"
+  [allowSelectAll]="allowRowSelection"
+  [alignContent]="'top'"
+>
+  
 </bod-table>
-<ng-template #addNewBalaceTypeTemplate>
-  <bod-add-edit-balancetype
-    (apiResponse)="addBalanceTypeEvent($event)"
-    [editBalanceTypeRow]="editBalanceType"
-    [retainedCode]="retainedCode"
-    [retainedIdentifier]="retainedIdentifier"
-    [retainedName]="retainedName"
-    [retainedSystemBalance]="retainedSystemBalance"
-    [retainedAccountClassification]="retainedAccountClassification"
-    [retainedDateValue]="retainedDateValue"
-    [retainedPayer]="retainedPayer"
-    [retainedPayee]="retainedPayee"
-    [retainedStatementDisplay]="retainedStatementDisplay"
-    [retainedChargeBase]="retainedChargeBase"
-    [retainedPersisted]="retainedPersisted"
-    [retainedCalculated]="retainedCalculated"
-    [retainedAutoCreation]="retainedAutoCreation"
-    [retainedLogHistory]="retainedLogHistory"
-    [retainedDailySnapshot]="retainedDailySnapshot"
-    [retainedInquiryRequired]="retainedInquiryRequired"
-    [retainedGenerateFinancialResults]="retainedGenerateFinancialResults"
-    [retainedGLMapping]="retainedGLMapping"
-    [retainedSummaryRequired]="retainedSummaryRequired"
-    [retainedBalanceSubType]="retainedBalanceSubType"
-    [retainedBalancePeriodType]="retainedBalancePeriodType"
-    [retainedBalanceSubTypeData] = "retainedBalanceSubTypeData"
-    [retainedRoleTypeData]="retainedRoleTypeData"
-    [retainedAggregateDetailsData]="retainedAggregateDetailsData"
-  >
-  </bod-add-edit-balancetype>
-</ng-template>
-
-<ng-template #addExistingBalaceTypeTemplate>
-  <bod-existing-balance-type
-    (apiResponse)="addBalanceTypeEvent1($event)"
-    [editBalanceTypeRow]="editBalanceType"
-    [retainedCodeForExt]="retainedCodeForExt"
-    [retainedIdentifierForExt]="retainedIdentifierForExt"
-    [retainedAccountClassificationForExt]="retainedAccountClassificationForExt"
-    [retainedDateValueForExt]="retainedDateValueForExt"
-    [retainedPayerForExt]="retainedPayerForExt"
-    [retainedPayeeForExt]="retainedPayeeForExt"
-    [retainedStatementDisplayForExt]="retainedStatementDisplayForExt"
-    [retainedChargeBaseForExt]="retainedChargeBaseForExt"
-    [retainedPersistedForExt]="retainedPersistedForExt"
-    [retainedCalculatedForExt]="retainedCalculatedForExt"
-    [retainedAutoCreationForExt]="retainedAutoCreationForExt"
-    [retainedLogHistoryForExt]="retainedLogHistoryForExt"
-    [retainedDailySnapshotForExt]="retainedDailySnapshotForExt"
-    [retainedInquiryRequiredForExt]="retainedInquiryRequiredForExt"
-    [retainedGenerateFinancialResultsForExt]="retainedGenerateFinancialResultsForExt"
-    [retainedGLMappingForExt]="retainedGLMappingForExt"
-    [retainedSummaryRequiredForExt]="retainedSummaryRequiredForExt"
-  >
-  </bod-existing-balance-type>
-</ng-template>
+</bod-page-container>
