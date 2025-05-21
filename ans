@@ -1,164 +1,63 @@
-import { AbstractControl, ValidatorFn } from '@angular/forms';
+// currency-condition.component.ts
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { BodTableComponent, BodTableMetadata, BodTableModule, MatTableDataSource, RowLeftAction, SelectPageMode } from '@bod/common';
+import { CurrencyTableSingle } from '../add-edit-conditions/add-edit-conditions.model';
+import { ConditionDetailService } from '../condition-detail.service';
 
-export function localeDuplicateValidator(getRows: () => any[], getCurrentRowId: () => number): ValidatorFn {
-  return (control: AbstractControl) => {
-    const currentValue = control.value;
-    if (!currentValue) return null;
-
-    const rows = getRows();
-    const currentId = getCurrentRowId();
-
-    const isDuplicate = rows.some(row =>
-      row.locale === currentValue && row.id !== currentId
-    );
-
-    return isDuplicate ? { duplicateLocale: 'This locale is already selected.' } : null;
-  };
-}
-{
-  name: 'locale',
-  title: 'Locale',
-  width: 2,
-  inputModeOptions: {
-    type: ColumnType.select,
-    model: this.localeCodes,  // already populated from service
-    validators: {
-      required: true,
-      max: 20,
-      maxLengthStrategy: this.selectedStrategy,
-      custom: localeDuplicateValidator(
-        () => this.tableWithSimpleEdit.datasource.data,
-        () => this.singleRowEdit.index
-      )
+@Component({
+  selector: 'bod-currency-condition',
+  standalone: true,
+  imports: [CommonModule, BodTableModule],
+  templateUrl: './currency-condition.component.html',
+  styleUrl: './currency-condition.component.scss'
+})
+export class CurrencyConditionComponent implements OnInit {
+  @Input() currencyDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
+  @Output() rowSelected = new EventEmitter<CurrencyTableSingle[]>();
+  
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  
+  constructor(private conditionDetailService: ConditionDetailService) {}
+  
+  ngOnInit() {
+    // Initialize the table if not provided by parent
+    if (!this.currencyDataSingleSelect) {
+      this.initializeTable();
     }
   }
+  
+  private initializeTable() {
+    this.currencyDataSingleSelect = {
+      title: 'Currency Condition',
+      columns: [...this.conditionDetailService.currency],
+      rowLeftAction: RowLeftAction.multipleRowSelection,
+      enablePagination: true,
+      datasource: new MatTableDataSource<CurrencyTableSingle>([]),
+      noRecordsMessage: 'No Currency defined'
+    };
+    
+    // Load data if needed
+    this.loadCurrencyData();
+  }
+  
+  private loadCurrencyData() {
+    this.conditionDetailService.getCurrency().subscribe((response) => {
+      const currencyData = response.map((item, index) => ({
+        index: index,
+        identifier: item.identifier,
+        code: item.code,
+        currencyISO4217Val: item.currencyISO4217Val,
+      }));
+      
+      this.currencyDataSingleSelect.datasource.data = currencyData;
+    });
+  }
+  
+  public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+  }
 }
-
-<mat-form-field appearance="outline">
-  <mat-select [formControl]="control">
-    <mat-option *ngFor="let locale of localeCodes" [value]="locale.value">
-      {{ locale.label }}
-    </mat-option>
-  </mat-select>
-  <mat-error *ngIf="control.hasError('duplicateLocale')">
-    {{ control.getError('duplicateLocale') }}
-  </mat-error>
-</mat-form-field>
-
-
-import { AbstractControl, ValidatorFn } from '@angular/forms';
-
-export function localeDuplicateValidator(getRows: () => any[], getCurrentRowId: () => number): ValidatorFn {
-  return (control: AbstractControl) => {
-    const currentValue = control.value;
-    if (!currentValue) return null;
-
-    const rows = getRows();
-    const currentId = getCurrentRowId();
-
-    const isDuplicate = rows.some(row =>
-      row.locale === currentValue && row.id !== currentId
-    );
-
-    if (isDuplicate) {
-      console.error(`❌ Duplicate locale selected: '${currentValue}' already exists in another row.`);
-      return { duplicateLocale: 'This locale is already selected.' };
-    }
-
-    return null;
-  };
-}
-
-
-
-<bod-page-container
-  title="Locale"
-  [pageMode]="pageModeSimple"
-  (pageAction)="onPageAction($event)"
-  [messages]="messages"
-  *ngIf="showEdit"
->
-  <bod-table
-    [data]="tableWithSimpleEdit"
-    [tableActions]="showActionsForSimple ? actionsForSimple : []"
-    [modeOptions]="modeOptionsSimple"
-    [singleRowEdit]="singleRowEdit"
-    [customColumnTemplates]="[
-      { columnName: 'actions', templateName: editActionsTemplate1 },
-      { columnName: 'locale', templateName: editLocaleTemplate }
-    ]"
-    (inputValidationStatus)="checkStatus($event)"
-    (editTableEvent)="onEditTableAction($event)"
-    (onTableActionClick)="addTableData()"
-    [primaryColumnName]="'id'"
-    #simpleEditTableRef
-  >
-
-    <!-- ✅ Custom Template for Locale -->
-    <ng-template #editLocaleTemplate let-control="control" let-index="index">
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select [formControl]="control">
-          <mat-option *ngFor="let locale of localeCodes" [value]="locale.value">
-            {{ locale.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="control.hasError('duplicateLocale')">
-          {{ control.getError('duplicateLocale') }}
-        </mat-error>
-      </mat-form-field>
-    </ng-template>
-
-    <!-- ✅ Actions Template (Existing) -->
-    <ng-template
-      #editActionsTemplate1
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <div
-        *ngIf="
-          !this.singleRowEdit.modeOptions?.input ||
-          (this.singleRowEdit?.modeOptions?.input &&
-            this.singleRowEdit?.index !== index)
-        "
-      >
-        <bod-table-actions
-          [actions]="rowLevelActionsForBasicEdit"
-          (onActionClick)="handleRowLevelActions($event.icon, index)"
-        >
-        </bod-table-actions>
-      </div>
-      <div
-        *ngIf="
-          this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === index
-        "
-      >
-        <button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
-          [matTooltipPosition]="'below'"
-          rufId
-          mat-mini-fab
-          color="primary"
-          fisStyle
-          (click)="handleRowLevelActions('save', index)"
-        >
-          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
-        </button>
-        <button
-          rufId
-          fisStyle
-          mat-icon-button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
-          [matTooltipPosition]="'below'"
-          class="ruf-ghost-button"
-          (click)="handleRowLevelActions('reset', index)"
-        >
-          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
-        </button>
-      </div>
-    </ng-template>
-
-  </bod-table>
-</bod-page-container>
-
