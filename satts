@@ -6,12 +6,15 @@ import {
   BodTableMetadata, 
   BodPageContainerModule,
   NotificationMessage,
-  RowLeftAction, 
+  RowLeftAction,
+  ColumnType,
   SelectPageMode 
 } from '@bod/common';
 import { CurrencyTableSingle } from '../add-edit-conditions/add-edit-conditions.model';
 import { ConditionDetailService } from '../condition-detail.service';
 import { MatTableDataSource } from '@angular/material/table';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'bod-currency-condition',
@@ -19,7 +22,10 @@ import { MatTableDataSource } from '@angular/material/table';
   imports: [
     CommonModule,
     BodTableModule,
-    BodPageContainerModule
+    BodPageContainerModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    FormsModule
   ],
   templateUrl: './currency-condition.component.html',
   styleUrl: './currency-condition.component.scss'
@@ -28,15 +34,24 @@ export class CurrencyConditionComponent implements OnInit {
   @Input() currencyDataSingleSelect: BodTableMetadata;
   @Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
   @Output() rowSelected = new EventEmitter<CurrencyTableSingle[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  
+  @ViewChild('currencyConditionsForCurr', { static: false })
+  currencyTable: BodTableComponent;
   
   public allowRowSelection = true;
-  showEdit = true;
-
   public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
   
-  constructor(private conditionDetailService: ConditionDetailService) {}
+  constructor(
+    private conditionDetailService: ConditionDetailService,
+    private fb: FormBuilder
+  ) {}
   
   ngOnInit() { 
+    this.defaultForm = this.fb.group({});
+    
     // Initialize the table if not provided by parent
     if (!this.currencyDataSingleSelect) {
       this.initializeTable();
@@ -58,12 +73,13 @@ export class CurrencyConditionComponent implements OnInit {
   }
   
   private loadCurrencyData() {
-    this.conditionDetailService.getCurrency().subscribe((response) => {
-      const currencyData = response.map((item, index) => ({
+    this.conditionDetailService.getCurrency().subscribe((response: any[]) => {
+      const currencyData = response.map((item: any, index: number) => ({
         index: index,
         identifier: item.identifier,
         code: item.code,
         currencyISO4217Val: item.currencyISO4217Val,
+        default: false // Add default property initialized to false
       }));
       
       this.currencyDataSingleSelect.datasource.data = currencyData;
@@ -73,5 +89,27 @@ export class CurrencyConditionComponent implements OnInit {
   public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
     this.selectedRowSingleSelect = element;
     this.rowSelected.emit(this.selectedRowSingleSelect);
+  }
+  
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    // If a row is marked as default, unmark all others
+    if (event.checked) {
+      const data = [...this.currencyDataSingleSelect.datasource.data];
+      data.forEach((row, index) => {
+        if (index !== rowIndex) {
+          row.default = false;
+        } else {
+          row.default = true;
+        }
+      });
+      
+      this.currencyDataSingleSelect.datasource.data = data;
+    }
+    
+    // Emit the change
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
+    });
   }
 }
