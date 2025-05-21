@@ -1,153 +1,30 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { 
-  BodTableModule, 
-  BodTableComponent, 
-  BodTableMetadata, 
-  BodPageContainerModule,
-  NotificationMessage,
-  RowLeftAction,
-  ColumnType,
-  SelectPageMode 
-} from '@bod/common';
-import { CurrencyTableSingle } from '../add-edit-conditions/add-edit-conditions.model';
-import { ConditionDetailService } from '../condition-detail.service';
-import { MatTableDataSource } from '@angular/material/table';
-import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-
-@Component({
-  selector: 'bod-currency-condition',
-  standalone: true,
-  imports: [
-    CommonModule,
-    BodTableModule,
-    BodPageContainerModule,
-    MatSlideToggleModule,
-    ReactiveFormsModule,
-    FormsModule
-  ],
-  templateUrl: './currency-condition.component.html',
-  styleUrl: './currency-condition.component.scss'
-})
-export class CurrencyConditionComponent implements OnInit {
-  @Input() currencyDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
-  @Output() rowSelected = new EventEmitter<CurrencyTableSingle[]>();
-  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+public onDefaultToggleChange(event: any, rowIndex: number) {
+  // Get current data and the row being toggled
+  const data = [...this.currencyDataSingleSelect.datasource.data];
+  const row = data.find(r => r.index === rowIndex);
   
-  @ViewChild('currencyConditionsForCurr', { static: false })
-  currencyTable: BodTableComponent;
+  if (!row) return;
   
-  public allowRowSelection = true;
-  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
-  public showEdit = true;
-  public defaultForm: FormGroup;
-  
-  constructor(
-    private conditionDetailService: ConditionDetailService,
-    private fb: FormBuilder
-  ) {}
-  
-  ngOnInit() { 
-    this.defaultForm = this.fb.group({});
-    
-    // Initialize the table if not provided by parent
-    if (!this.currencyDataSingleSelect) {
-      this.initializeTable();
-    }
-  }
-  
-  private initializeTable() {
-    this.currencyDataSingleSelect = {
-      title: 'Currency Condition',
-      columns: [...this.conditionDetailService.currency],
-      rowLeftAction: RowLeftAction.multipleRowSelection,
-      enablePagination: true,
-      datasource: new MatTableDataSource<CurrencyTableSingle>([]),
-      noRecordsMessage: 'No Currency defined'
-    };
-    
-    // Load data if needed
-    this.loadCurrencyData();
-  }
-  
-  private loadCurrencyData() {
-    this.conditionDetailService.getCurrency().subscribe((response: any[]) => {
-      const currencyData = response.map((item: any, index: number) => ({
-        index: index,
-        identifier: item.identifier,
-        code: item.code,
-        currencyISO4217Val: item.currencyISO4217Val,
-        default: false // Add default property initialized to false
-      }));
-      
-      this.currencyDataSingleSelect.datasource.data = currencyData;
+  // Update default status
+  if (event.checked) {
+    // If this row is now default, unmark all others
+    data.forEach(item => {
+      item.default = item.index === rowIndex;
     });
+  } else {
+    // Just update this row's default status
+    row.default = false;
   }
   
-  public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
-    this.selectedRowSingleSelect = element;
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-  }
+  // Update the data source
+  this.currencyDataSingleSelect.datasource.data = data;
   
-  public onDefaultToggleChange(event: any, rowIndex: number) {
-    // If a row is marked as default, unmark all others
-    if (event.checked) {
-      const data = [...this.currencyDataSingleSelect.datasource.data];
-      data.forEach((row, index) => {
-        if (index !== rowIndex) {
-          row.default = false;
-        } else {
-          row.default = true;
-        }
-      });
-      
-      this.currencyDataSingleSelect.datasource.data = data;
-    }
-    
-    // Emit the change
-    this.defaultChanged.emit({
-      rowIndex: rowIndex,
-      isDefault: event.checked
-    });
-  }
+  // Emit the change
+  this.defaultChanged.emit({
+    rowIndex: rowIndex,
+    isDefault: event.checked
+  });
 }
-
-
-
-<bod-table
-  #currencyConditionsForCurr
-  [data]="currencyDataSingleSelect"
-  (onRowSelect)="rowSelectionSingleSelect($event)"
-  [rowSelectionStrategy]="rowSelectionStrategy"
-  [allowSelectAll]="allowRowSelection"
-  [alignContent]="'top'"
-  [customColumnTemplates]="[
-    {
-      columnName: 'default',
-      templateName: defaultTemplate
-    }
-  ]"
->
-  <ng-template
-    #defaultTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <form [formGroup]="defaultForm">
-      <mat-slide-toggle 
-        fisStyle
-        color="primary"
-        [checked]="element.default"
-        (change)="onDefaultToggleChange($event, element.index)"
-      >
-      </mat-slide-toggle>
-    </form>
-  </ng-template>
-</bod-table>
-
 
 public handleCurrencyDefaultChange(event: { rowIndex: number, isDefault: boolean }) {
   // Update the currency data model
@@ -166,23 +43,10 @@ public handleCurrencyDefaultChange(event: { rowIndex: number, isDefault: boolean
   this.addNewConditionFormGroup.markAsDirty();
 }
 
-
-<bod-currency-condition
-  *ngIf="
-    addNewConditionFormGroup.get('conditionType')?.value ===
-    'CurrencyCondition'
-  "
-  [currencyDataSingleSelect]="currencyDataSingleSelect"
-  [selectedRowSingleSelect]="selectedRowSingleSelect"
-  (rowSelected)="handleCurrencySelection($event)"
-  (defaultChanged)="handleCurrencyDefaultChange($event)"
-></bod-currency-condition>
-
-
-export interface CurrencyTableSingle {
-  index: number;
-  identifier?: number;
-  currencyISO4217Val: string;
-  code: string;
-  default?: boolean;  // Add this property
-}
+<mat-slide-toggle 
+  fisStyle
+  color="primary"
+  [checked]="element.default"
+  (change)="onDefaultToggleChange($event, element.index)"
+>
+</mat-slide-toggle>
