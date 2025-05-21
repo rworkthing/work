@@ -1,5 +1,5 @@
 public onDefaultToggleChange(event: any, rowIndex: number) {
-  // Get current data and the row being toggled
+  // Get current data
   const data = [...this.currencyDataSingleSelect.datasource.data];
   const row = data.find(r => r.index === rowIndex);
   
@@ -11,8 +11,27 @@ public onDefaultToggleChange(event: any, rowIndex: number) {
     data.forEach(item => {
       item.default = item.index === rowIndex;
     });
+    
+    // Make sure this row is selected without affecting other selections
+    if (this.currencyTable && this.currencyTable.selection) {
+      // Check if this row is already selected
+      const isRowSelected = this.currencyTable.selection.isSelected(row);
+      
+      // If not already selected, add it to the selection
+      if (!isRowSelected) {
+        this.currencyTable.selection.select(row);
+        
+        // Update selectedRowSingleSelect to include this row if not already included
+        if (!this.selectedRowSingleSelect.some(item => item.index === row.index)) {
+          this.selectedRowSingleSelect = [...this.selectedRowSingleSelect, row];
+          
+          // Emit the updated selection
+          this.rowSelected.emit(this.selectedRowSingleSelect);
+        }
+      }
+    }
   } else {
-    // Just update this row's default status
+    // If toggle is turned off, just update this row's default status
     row.default = false;
   }
   
@@ -25,28 +44,3 @@ public onDefaultToggleChange(event: any, rowIndex: number) {
     isDefault: event.checked
   });
 }
-
-public handleCurrencyDefaultChange(event: { rowIndex: number, isDefault: boolean }) {
-  // Update the currency data model
-  if (this.currencyData1 && this.currencyData1.length) {
-    this.currencyData1.forEach((item) => {
-      if (item.index === event.rowIndex) {
-        item.default = event.isDefault;
-      } else if (event.isDefault) {
-        // If another row is set as default, unset all others
-        item.default = false;
-      }
-    });
-  }
-  
-  // Mark the form as dirty so changes are tracked
-  this.addNewConditionFormGroup.markAsDirty();
-}
-
-<mat-slide-toggle 
-  fisStyle
-  color="primary"
-  [checked]="element.default"
-  (change)="onDefaultToggleChange($event, element.index)"
->
-</mat-slide-toggle>
