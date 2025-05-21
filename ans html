@@ -1,17 +1,113 @@
-<ng-container *ngIf="!['Flag', 'YesNo'].includes(addNewAttributeFormGroup.get('datatype')?.value)">
-  <bod-control-group 
-    [truncate]="false"
-    [label]="translationKey + 'metadataconfig.validtype'"
-    [forTextOnly]="true"
-    [required]="false"
-  >
-    <mat-slide-toggle formControlName="validtype" name="validtype">
-    </mat-slide-toggle>
-  </bod-control-group>
-</ng-container>
+// In add-edit-conditions.component.ts
+
+// Add import for the CurrencyConditionComponent
+import { CurrencyConditionComponent } from '../currency-condition/currency-condition.component';
+
+@Component({
+  selector: 'bod-add-edit-conditions',
+  standalone: true,
+  imports: [
+    // Add CurrencyConditionComponent to imports
+    CurrencyConditionComponent,
+    // ...other imports remain the same
+  ],
+  templateUrl: './add-edit-conditions.component.html',
+  styleUrl: './add-edit-conditions.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class AddEditConditionsComponent implements OnInit, AfterViewInit {
+  // Remove the ViewChild reference to the table as we'll access it through the child component
+  // @ViewChild('currencyConditionsForCurr', { static: false })
+  // normalTableRef: BodTableComponent;
+  
+  // Add a ViewChild for the child component
+  @ViewChild(CurrencyConditionComponent)
+  currencyConditionComponent: CurrencyConditionComponent;
+  
+  // Other properties and methods remain the same...
+  
+  // Update the rowSelectionSingleSelect method to handle selection from child component
+  public handleCurrencySelection(selectedRows: CurrencyTableSingle[]) {
+    this.selectedRowSingleSelect = selectedRows;
+    this.addNewConditionFormGroup.markAsDirty();
+  }
+  
+  // Other methods remain the same...
+}
 
 
 
-this.addNewAttributeFormGroup.get('datatype')?.valueChanges.subscribe(() => {
-  this.changeDetectorRef.detectChanges();
-});
+<!-- In add-edit-conditions.component.html -->
+
+<!-- Replace this: -->
+<!--
+<bod-table
+  *ngIf="
+    addNewConditionFormGroup.get('conditionType')?.value ===
+    'CurrencyCondition'
+  "
+  #currencyConditionsForCurr
+  [data]="currencyDataSingleSelect"
+  (onRowSelect)="rowSelectionSingleSelect($event)"
+  [rowSelectionStrategy]="rowSelectionStrategy"
+  [allowSelectAll]="allowRowSelection"
+  [alignContent]="'top'"
+>
+</bod-table>
+-->
+
+<!-- With this: -->
+<bod-currency-condition
+  *ngIf="
+    addNewConditionFormGroup.get('conditionType')?.value ===
+    'CurrencyCondition'
+  "
+  [currencyDataSingleSelect]="currencyDataSingleSelect"
+  [selectedRowSingleSelect]="selectedRowSingleSelect"
+  (rowSelected)="handleCurrencySelection($event)"
+></bod-currency-condition>
+
+
+// Instead of:
+// this.normalTableRef.selection.clear();
+
+// You would do:
+this.currencyConditionComponent.currencyConditionsForCurr.selection.clear();
+
+loadMockCurrencyDataSingleSelect(): Observable<CurrencyTableSingle[]> {
+  return this.conditionDetailService.getCurrency().pipe(
+    tap((response: CurrencyTableSingle[]) => {
+      this.currencyData1 = response.map((item, index) => ({
+        index: index,
+        identifier: item.identifier,
+        code: item.code,
+        currencyISO4217Val: item.currencyISO4217Val,
+      }));
+      
+      this.currencyDataSingleSelect.datasource.data = this.currencyData1;
+      
+      // If the child component is already initialized, make sure it has the updated data
+      if (this.currencyConditionComponent) {
+        this.currencyConditionComponent.currencyDataSingleSelect = this.currencyDataSingleSelect;
+      }
+    })
+  );
+}
+
+
+// In currency-condition.component.ts
+@ViewChild('currencyConditionsForCurr', { static: false })
+currencyConditionsForCurr: BodTableComponent;
+
+private loadCurrencyData() {
+  this.conditionDetailService.getCurrency().subscribe((response: any[]) => {
+    const currencyData: CurrencyTableSingle[] = response.map((item: any, index: number) => ({
+      index: index,
+      identifier: item.identifier,
+      code: item.code,
+      currencyISO4217Val: item.currencyISO4217Val,
+    }));
+    
+    this.currencyDataSingleSelect.datasource.data = currencyData;
+  });
+}
