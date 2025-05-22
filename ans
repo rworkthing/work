@@ -1,112 +1,30 @@
-// In your component class, add a new property for inline form errors
-public inlineFormMessages: NotificationMessage[] = [];
-
-// Modify your onAdd method
 onAdd(formValues: any) {
   this.messages2 = [];
-  this.inlineFormMessages = []; // Clear previous inline form errors
-  
-  if (this.inputLayoutForm.invalid) {
-    return;
-  }
 
-  this.dataWithValidvalues = this.dataWithValidvalues || [];
+  if (this.inputLayoutForm.invalid) return;
 
-  let rawValue = formValues.additionaldatavalue;
-  let formattedValue = rawValue;
+  // ... formatting logic ...
 
-  // Normalize based on input type
-  switch (this.inputType) {
-    case 'date':
-      if (rawValue) {
-        const date = new Date(rawValue);
-        formattedValue = date.toLocaleDateString('en-US'); // MM/DD/YYYY
-      }
-      break;
-    case 'datetime-local':
-      if (rawValue) {
-        const dateTime = new Date(rawValue);
-        formattedValue = dateTime.toISOString(); // ISO format for consistency
-      }
-      break;
-    case 'time':
-      formattedValue = rawValue; // Already in HH:mm format
-      break;
-    case 'number':
-      formattedValue = rawValue?.toString(); // Convert number to string
-      break;
-    case 'text':
-    default:
-      formattedValue = rawValue?.toString().trim();
-      break;
-  }
+  const isDuplicate = this.dataWithValidvalues.some(...);
 
-  // Check for duplicates
-  let duplicateValue: string | undefined;
-
-  const isDuplicate = this.dataWithValidvalues.some(item => {
-    let existingValue = item.additionaldatavalue;
-  
-    // Normalize existing value for comparison
-    switch (this.inputType) {
-      case 'date':
-        existingValue = new Date(existingValue).toLocaleDateString('en-US');
-        break;
-      case 'datetime-local':
-        existingValue = new Date(existingValue).toISOString();
-        break;
-      case 'number':
-        existingValue = existingValue?.toString();
-        break;
-      case 'text':
-      default:
-        existingValue = existingValue?.toString().trim();
-        break;
-    }
-  
-    if (existingValue === formattedValue) {
-      duplicateValue = existingValue;
-      return true;
-    }
-  
-    return false;
-  });
-  
-  if (isDuplicate && duplicateValue !== undefined) {
+  if (isDuplicate) {
     const errorMsg = `The valid value ${duplicateValue} already exists.`;
     this.message = {
       code: 'DUPLICATE_VALIDVALUE',
       text: errorMsg,
       type: NotificationMessageType.ERROR
     };
-    
-    // Use the new inline form messages array instead of messages2
-    this.inlineFormMessages.push(this.message);
+    this.messages2.push(this.message);
     this.inputLayoutForm.markAsTouched();
-    
-    // Don't return here - let the form stay open
-    // Add a visual indicator or additional validation state
-    this.inputLayoutForm.get('additionaldatavalue')?.setErrors({ 'duplicate': true });
-    return;
+    return; // 🛑 prevent form reset and dialog collapse
   }
 
-  const newValidValue: BodSampleTable1 = {
-    additionaldatavalue: formattedValue || '',
-    defaultindicator: formValues.defaultindicator ? 'Y' : 'N',
-    primaryindicator: formValues.primaryindicator ? 'Y' : 'N',
-    overrideindicator: formValues.overrideindicator ? 'Y' : 'N',
-    percentagevalue: formValues.percentagevalue ?? null,
-    sequencenumber: formValues.sequencenumber ?? null
-  };
-
+  // ✅ Only here, proceed to add and reset form
+  const newValidValue: BodSampleTable1 = { ... };
   this.dataWithValidvalues.push(newValidValue);
-
-  if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
-    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
-  }
-
+  this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
   this.changeDetectorRef.detectChanges();
-  this.inputLayoutForm.reset();
-  this.inlineFormMessages = []; // Clear messages after successful add
+
+  this.inputLayoutForm.reset(); // ✅ safe to reset now
   this.addNewAttributeFormGroup.markAsDirty();
 }
