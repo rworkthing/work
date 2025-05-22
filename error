@@ -1,1 +1,54 @@
-[ { "id": 0, "locale": "en-US", "displayName": "csa", "description": "sas" }, { "id": 2, "locale": "en-US", "displayName": "sa", "description": "asc" } ]
+request SEND: {
+  "metadataType": "Attribute",
+  "attributeList": [
+    {
+      "additionalDataType": {
+        "identifier": 11104001273,
+        "code": "s",
+        "name": "s",
+        "shortName": "122",
+        "objectTypeIdentifier": 1000000000002,
+        "formatTypeIdentifier": 100000001010,
+        "calculated": "N",
+        "searchable": "Y",
+        "multiValueAllowed": "N",
+        "percentageAllowed": "N",
+        "classificationType": "System Defined",
+        "multiLingualTextInfoList": [
+          {
+            "localeCode": "en-US",
+            "localeText": "s",
+            "translationText": "d",
+            "identifier": 11104001273,
+            "objectType": 1000000000002,
+            "attributeType": 100000001010
+          }
+        ]
+      },
+      "productTypeAdditionalDataTypeRltnpList": [
+        {
+          "identifier": 1110101,
+          "attributeIdentifier": 11104001273,
+          "attributeCode": "s",
+          "minimumRequired": 3,
+          "maximumAllowed": 22,
+          "glCategarization": "N"
+        },
+        {
+          "identifier": 1110102,
+          "attributeIdentifier": 11104001273,
+          "attributeCode": "s",
+          "minimumRequired": 3,
+          "maximumAllowed": 22,
+          "glCategarization": "N"
+        }
+      ]
+    }
+  ],
+  "productTypeList": [
+    {
+      "identifier": 1110101,
+      "code": "Checking"
+    }
+  ]
+}
