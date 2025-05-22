@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectorRef,
   Component,
@@ -5,17 +6,69 @@ import {
   Inject,
   Input,
   NO_ERRORS_SCHEMA,
+  OnDestroy,
   OnInit,
   Output,
   TemplateRef,
-  ViewChild,
-  AfterViewInit
+  ViewChild
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { TranslateModule } from '@ngx-translate/core';
+
+import {
+  Amount,
+  BodFormModule,
+  BodPageContainerModule,
+  BodPipeName,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableDataSource,
+  BodTableFilterCriteria,
+  BodTableFilterUpdateButton,
+  BodTableMetadata,
+  BodTableModule,
+  Column,
+  ControlGroupModule,
+  BodCommonDialogModel,
+  Currency,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  MessageContainerModule,
+  NotificationMessage,
+  SearchFieldModule,
+  DirectivesModule,
+  BodDynamicFormModule,
+  SectionContainerModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BOD_DATE_RANGE,
+  BodCommonModule,
+  BodFormTypes,
+  BodTableActionType,
+  BodTableFilterType,
+  CommonDialogComponent,
+  BodCommonDialogService,
+  ColumnType,
+  BodSearchFieldData,
+  SingleRowEdit,
+  ModeOptions,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel,
+  NotificationMessageType,
+  RowLeftAction,
+  InquiryLayoutInput,
+  InquiryLayoutModule,
+  EditTableEventData,
+  BodKeyValuePairMetadata,
+  ListType,
+  BodAutoCompleteMetadata
+} from '@bod/common';
+import { MatTable, MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
 import {
   AbstractControl,
-  FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
@@ -27,110 +80,73 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { FormUtilityService } from '../../metadat-config/form-utility.service';
-import {
-  BOD_DATE_RANGE,
-  BodAutoCompleteModule,
-  BodCommonDialogModel,
-  BodCommonDialogService,
-  BodCommonModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BodDynamicFormModule,
-  BodFormModule,
-  BodFormStateService,
-  BodFormTypes,
-  BodPageContainerModule,
-  BodTableAction,
-  BodTableActionType,
-  BodTableActionsModule,
-  BodTableComponent,
-  BodTableMetadata,
-  BodTableModule,
-  CommonDialogComponent,
-  ControlGroupModule,
-  DirectivesModule,
-  EditTableAction,
-  InlineEditOutput,
-  InputLayoutModule,
-  InquiryLayoutModule,
-  MessageContainerModule,
-  ModeOptions,
-  NotificationMessage,
-  NotificationMessageType,
-  RowLeftAction,
-  SearchFieldModule,
-  SectionContainerModule,
-  SelectPageMode
-} from '@bod/common';
-import { MatIconModule } from '@angular/material/icon';
-import { RufIconModule } from '@ruf/shell/icon';
-import {
-  MatSlideToggle,
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { ConditionDetailService } from '../condition-detail.service';
-import { MatTableDataSource } from '@angular/material/table';
-import { AddtRelationTable } from '../../balance-type/add-edit-balancetype/balancetype.model';
 import {
-  editActions1,
-  editDeleteActions,
-  textCondDelete,
-  textconditionaction
-} from '../condition-details-constants';
-import { MatRadioModule } from '@angular/material/radio';
-import { ConditionRelationshipComponent } from '../condition-relationship/condition-relationship.component';
-import { MetadataService } from '../../metadat-config/metada-config.service';
-import { TextConditionComponent } from '../text-condition/text-condition.component';
-import { MatDialogRef } from '@angular/material/dialog';
+  metadataconfig,
+  TableLevelActions,
+  TranslationKey
+} from './codegen-config.constant';
 import {
   BodEditableSampleTable,
   BodInlineSampleTable,
+  BodLocaleRangeTable,
+  BodLocaleSetTable,
+  BodLocaleTable,
   BodSampleTable,
-  CondTable,
-  NumCond,
-  primaFreq,
-  secFreq,
-  TextCond,
-  textNumCond
-} from '../../bod-table-demo.model';
-import { TextNumberConditionComponent } from '../text-number-conditions/text-number-condition.component';
-import { ConditionList } from '../condition-detail.model';
-import { NumConditionComponent } from '../number-condition/num-condition.component';
+  BodSampleTable1,
+  BodSampleTableExisting,
+  SearchFieldInputData
+} from '../bod-table-demo.model';
+import { MatTabsModule } from '@angular/material/tabs';
 import {
-  CurrencyTable,
-  CurrencyTable1,
-  CurrencyTableSingle,
-  TabIndexTableMap
-} from './add-edit-conditions.model';
-import { roletypeaction } from '../../role-type/role-type-constants';
-import { Observable, tap } from 'rxjs';
-import { SecondoryFrequencyConditionComponent } from '../secondory-frquency/secondory-frequency-condition.component';
-import { PrimaryFrequencyConditionComponent } from '../primary-frequency/primary-frequency-condition.component';
-import { CurrencyConditionComponent } from '../currency-conditions/currency-condition.component';
-
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MetadataService } from './metada-config.service';
+import { template as dialogFilterTemplate } from './dialog-filter-template';
+import {
+  localeTableActions,
+  TableLevelActions2,
+  TableLevelActions3,
+  validValuesExisting
+} from '../codegen-config/codegen-config.constant';
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { getFormValidationErrors } from './inline-modal-validators';
+import { FormUtilityService } from './form-utility.service';
+import { Observable, Subscription } from 'rxjs';
+import { MatIcon, MatIconModule } from '@angular/material/icon';
+import { Attribute, MultiLingualTextInfo } from './attribute.model';
+import { RufIconModule } from '@ruf/shell/icon';
+import { RoleTypeComponent } from '../role-type/role-type.component';
+import { BalanceTypeComponent } from '../balance-type/balance-type.component';
+import { BalanceTypeService } from '../balance-type/balance-type-service';
+import { BalanceTypeTableLevelActions } from '../balance-type/balance-type-constants';
+import { SimpleEditTableComponent } from '../simple-edit-table/simple-edit-table.component';
+import { HttpClient } from '@angular/common/http';
+import { DemoTableDataService, SampleEC } from '../bod-table-demo.service';
+import { ConditionDetailComponent } from '../conditions/condition-detail.component';
+interface TableProps {
+  formGroup: UntypedFormGroup;
+  data: BodTableMetadata;
+  ref: BodTableComponent;
+  input: any;
+}
+interface TabIndexTableMap {
+  [k: number]: TableProps;
+}
 @Component({
-  selector: 'bod-add-edit-conditions',
+  selector: 'bod-metadata-config',
   standalone: true,
   imports: [
-    SecondoryFrequencyConditionComponent,
-    PrimaryFrequencyConditionComponent,
-    ConditionRelationshipComponent,
-    NumConditionComponent,
-    TextNumberConditionComponent,
-    TextConditionComponent,
-    MatRadioModule,
-    CommonModule,
-    BodAutoCompleteModule,
+    ConditionDetailComponent,
+    RoleTypeComponent,
+    BalanceTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
     MatIconModule,
@@ -157,1477 +173,1928 @@ import { CurrencyConditionComponent } from '../currency-conditions/currency-cond
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
-    CurrencyConditionComponent,
+    SimpleEditTableComponent,
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
+    MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './add-edit-conditions.component.html',
-  styleUrl: './add-edit-conditions.component.scss',
+  templateUrl: './metadata-config.component.html',
+  styleUrl: './metadata-config.component.scss',
+
   schemas: [NO_ERRORS_SCHEMA]
 })
-export class AddEditConditionsComponent implements OnInit, AfterViewInit {
-  isHidden = true;
-
-  toggleVisibility() {
-    this.isHidden = !this.isHidden;
-  }
-  @ViewChild('currencyConditions', { static: true })
-  expandableTableRef: BodTableComponent;
-  
-@ViewChild(CurrencyConditionComponent)
-currencyConditionComponent: CurrencyConditionComponent;
-
-  dateInput: Date;
-  bodDateInput: any;
-  // dateInput?: Date;
-  isEdit: boolean = false;
-  formArray: FormArray;
-  selectedOption: string;
-  formType: BodFormTypes = BodFormTypes.SUBMIT;
-  public textConditionActions: BodTableAction[] = textconditionaction;
+export class MetadataConfigComponent implements OnInit, OnDestroy {
+  attributeData: Attribute[] = [];
+  public addEditFormGroup: UntypedFormGroup | undefined;
+  public balanceHoldsTableActions: BodTableAction[] = TableLevelActions;
+  public balanceHoldsTableActions1: BodTableAction[] = localeTableActions;
+  public balanceHoldsTableActions3: BodTableAction[] = validValuesExisting;
+  public rowLevelActionsForBasicEdit: BodTableAction[] = TableLevelActions2;
+  public rowLevelActionsForlocaleEdit: BodTableAction[] = TableLevelActions2;
+  public editactions: BodTableAction[] = TableLevelActions3;
   public modeOptions: ModeOptions = { input: false, reset: false };
-  public conditions: any[] = [];
+  public pageMode = PageMode.INQUIRY;
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public searchFieldColumnForm: UntypedFormGroup;
+  // public useExistingColForm: UntypedFormGroup;
+  public overrideDefaultColumnForm: UntypedFormGroup;
+  public requiredColumnForm: UntypedFormGroup;
+  public searchFieldFormCtrlKeys: string[] = [];
+  public useExistingFormCtrlKeys: string[] = [];
+  public useExistingArr: string[] = ['Yes', 'No'];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
+  private dataForReset: BodEditableSampleTable[] = [];
+  public datatypes: any[] = [];
+  public productCode: any[] = [];
+  private dialogOutput$: Observable<boolean>;
+  feAttrName: string;
+  private _subscription: Subscription = new Subscription();
+  public response: Attribute;
+  public productTypeCode: any[] = [];
+  public tableRefArray: any[] = [];
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public modeOptionsSimple = this.modeOptions;
+  public pageModeSimple = this.pageMode;
+  public localeTableData: BodLocaleTable[] = [];
+  public retainedCode: string = '';
+  public retainedIdentifier: number = 0;
+  public retainedName: string = '';
+  public retainedShortName: string = '';
+  public retainedType: number = 0;
+  public retainedDataType: number = 0;
+  public retainedSearchable: boolean = false;
+  public retainedCalculate: boolean = false;
+  public retainedMultiValueAllowed: boolean = false;
+  public retainedPercentageAllowed: boolean = false;
+  public retainedMinimumRequired: number = 0;
+  public retainedMaximumAllowed: number = 0;
+  public retainedGlCategarization: boolean = false;
+  public retainedSequenceNumbers: number = 0;
+  private retainedValidType: boolean = false
+  private retainedValidValuesData: BodSampleTable1[] = [];
+  private retainedMultilingualValues: BodLocaleTable[] = [];
+
+
+  public retainedCodeForExt: string = '';
+  public retainedIdentifierForExt: number = 0;
+  public retainedMinimumRequiredForExt: number = 0;
+  public retainedMaximumAllowedForExt: number = 0;
+  public retainedGlCategarizationForExt: boolean = false;
+  public previousStatus: string | undefined
+
+  @Input() editAttributeRow: Attribute;
+  @Output() selectedRole: EventEmitter<BodLocaleTable[]> = new EventEmitter<
+    BodLocaleTable[]
+  >();
   @ViewChild('simpleEditTableRef')
-  simpleEditTableRef: ConditionRelationshipComponent;
-  @ViewChild('simpleEditTableText')
-  simpleEditTableRefText: TextConditionComponent;
-  @ViewChild('simpleEditTableNum')
-  simpleEditTableRefNum: NumConditionComponent;
-  @ViewChild('simpleEditTableTextNum')
-  simpleEditTableRefTextNum: TextNumberConditionComponent;
-  @ViewChild('simpleEditTablePrimFre')
-  simpleEditTablePrimFre: PrimaryFrequencyConditionComponent;
+  simpleEditTableRef: SimpleEditTableComponent;
 
-  @ViewChild('simpleEditTableSecFre')
-  simpleEditTableSecFre: SecondoryFrequencyConditionComponent;
+  @ViewChild(MatTable) localetable!: MatTable<any>;
+  @ViewChild('customTable', { static: true })
+  expandableTable1Ref: BodTableComponent;
+  @ViewChild('addNewAttributeTemplate')
+  public addAttributeTemp: TemplateRef<any>;
+  @ViewChild('addExistingAttributeTemplate')
+  public addExistingAttributeTemp: TemplateRef<any>;
+  @ViewChild('simpleEditTableRef')
+  public addLocaleTemp: BodTableComponent;
+  @ViewChild('localetableforrange')
+  public addRangeLocaleTemp: BodTableComponent;
+  @ViewChild('localetableforset')
+  public addSetLocaleTemp: BodTableComponent;
+  @ViewChild('adminTableRef')
+  private adminTableRef: BodTableComponent;
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
 
-  classificationTypes = [
-    { value: 'ChargeType', label: 'Charge Type' },
-    { value: 'FECondition', label: 'FE Condition' },
-    { value: 'ProductTemplate', label: 'Product Template' },
-    { value: 'ServiceElement', label: 'Service Element' },
-    { value: 'TransactionType', label: 'Transaction Type' }
-  ];
-  conditionTypes = [
-    { value: 'AmountCondition', label: 'Amount Condition' },
-    { value: 'DateCondition', label: 'Date Condition' },
-    { value: 'FlagCondition', label: 'Flag Condition' },
-    { value: 'FrequencyCondition', label: 'Frequency Condition' },
-    { value: 'NumberCondition', label: 'Number Condition' },
-    { value: 'PercentCondition', label: 'Percentage Condition' },
-    { value: 'TextAndNumberCondition', label: 'Text and Number Condition' },
-    { value: 'TextCondition', label: 'Text Condition' },
-    {
-      value: 'CurrencySpecificCondition',
-      label: 'Currency Specific Condition'
-    },
-    {
-      value: 'CurrencyCondition',
-      label: 'Currency Condition'
-    }
-  ];
-  optionalitys = [
-    { value: 'Mandatory', label: 'Mandatory' },
-    { value: 'Optional', label: 'Optional' },
-    { value: 'Proposed', label: 'Proposed' }
-  ];
-  applicableTos = [
-    { value: 'accountonly', label: 'Account Only' },
-    { value: 'productonly', label: 'Product Only' },
-    { value: 'product&account', label: 'Product & Account' }
-  ];
-  validValuesTypeNumbers = [
-    { value: 'none', label: 'None' },
-    { value: 'range', label: 'Range' },
-    { value: 'set', label: 'Set' }
-  ];
-  validValuesTypeAmounts = [
-    { value: 'none', label: 'None' },
-    { value: 'range', label: 'Range' }
-  ];
-  validValuesTypePercentages = [
-    { value: 'none', label: 'None' },
-    { value: 'range', label: 'Range' }
-  ];
-  processingDays = [
-    { value: 'NextBusinessDay', label: 'Next Business Day' },
-    { value: 'PreviousBusinessDay,', label: 'Previous Business Day' },
-    { value: 'sameday', label: 'Same Day' },
-    { value: 'CustomisedBusinessDay', label: 'Customised Business Day' }
-  ];
-  public currencies: any[] = [];
+  inputType: string = 'text';
+  isDisabled: boolean = false;
+
+  public tableActions: BodTableAction[] = [];
+  input = {
+    id: '',
+    name: '',
+    productLine: '',
+    owner: '',
+    relationship: '',
+    lastDebit: 0,
+    start: new Date(new Date())
+  };
+  inputLayoutForm: UntypedFormGroup;
+  inputExistingLayoutForm: UntypedFormGroup;
+  inputLocaleLayoutFormDisplayName: UntypedFormGroup = new UntypedFormGroup({});
+  inputLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
+  inputLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
+  inputRangeLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
+  inputRangeLocaleLayoutFormDisplayName: UntypedFormGroup =
+    new UntypedFormGroup({});
+  inputRangeLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
+  inputSetLocaleLayoutFormLocale: UntypedFormGroup = new UntypedFormGroup({});
+  inputSetLocaleLayoutFormDisplayName: UntypedFormGroup = new UntypedFormGroup(
+    {}
+  );
+  inputSetLocaleLayoutFormDesc: UntypedFormGroup = new UntypedFormGroup({});
+
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  public inputBasic = this.input;
+  isAdd: boolean = true;
+
   public translationKey = TranslationKey;
-  public rowLevelActionsForBasicEdit: BodTableAction[] = textCondDelete;
-  public currencyTableActions: BodTableAction[] = roletypeaction;
+  bookingDate = '';
+  amountIsRequired = true;
+  isRequired = true;
+  public defaultCurrency: Currency;
+  selectedHoldId: string;
+  effectiveDate: string;
+  holdAllValue: boolean;
+  isExpireValue: boolean;
 
-  public addNewConditionFormGroup: UntypedFormGroup;
-  public addNewConditionCurrencyForm: UntypedFormGroup;
+  referenceType: string;
 
-  handleRowLevelActionsforCurrency(action: string, index: number) { }
+  amountFieldValue: string | undefined;
+  actionModes = EditTableAction;
+  currentMode: EditTableAction = EditTableAction.ADD;
+  rowLevelAction: BodTableAction[];
+  editAttribute: Attribute;
+  public disableAmount = false;
+  public isHoldExpirationDateTime = false;
 
-  onAddForExistingRoleRelationship() { }
-  public inlineAddRowActionClick() { }
-  public inlineEditAction = true;
-  // public inlineEditRowActionClick(_event: InlineEditOutput) {}
-  public selectedRow: CurrencyTable[] = [];
-  public selectedRowSingleSelect: CurrencyTableSingle[] = [];
-  public currencyDataSingleSelect: BodTableMetadata = {
-    title: 'Currency Condition',
-    columns: [...this.conditionDetailService.currency],
-    rowLeftAction: RowLeftAction.multipleRowSelection,
-    enablePagination: true,
-    datasource: new MatTableDataSource<CurrencyTableSingle>(this.selectedRowSingleSelect),
-    noRecordsMessage: 'No Currency defined'
-  };
+  public timeControl: UntypedFormControl;
+  public addNewAttributeFormGroup: UntypedFormGroup;
+  public addExistingAttributeFormGroup: UntypedFormGroup;
+  public addLocaleFormGroup: UntypedFormGroup;
+  public useExistingFormCtrlKeysDisplayName: string[] = [];
+  public useExistingColForm: UntypedFormGroup = new UntypedFormGroup({});
+  useExistingFormCtrlKeysLocale: string[] = [];
+  useExistingFormCtrlKeysDesc: string[] = [];
+  useExistingFormCtrlKeysRangeLocale: string[] = [];
+  useExistingFormCtrlKeysRangeDisplayName: string[] = [];
+  useExistingFormCtrlKeysRangeDesc: string[] = [];
+  useExistingFormCtrlKeysSetLocale: string[] = [];
+  useExistingFormCtrlKeysSetDisplayName: string[] = [];
+  useExistingFormCtrlKeysSetDesc: string[] = [];
 
-  public currencySpecificData: BodTableMetadata = {
-    title: 'Currency Specific Condition',
-    columns: [...this.conditionDetailService.curspcefic],
-    rowLeftAction: RowLeftAction.expandableMultipleRowSelection,
-    enablePagination: true,
-    datasource: new MatTableDataSource<CurrencyTable>(this.selectedRow),
-    noRecordsMessage: 'No Currency defined'
-  };
+  private subscriptions: Subscription = new Subscription();
 
-  public currencyTableData: CurrencyTable[] = [];
-  public currencyData1: CurrencyTableSingle[] = [];
+  public messages: NotificationMessage[] = [];
+  public messages1: NotificationMessage[] = [];
+  public messages2: NotificationMessage[] = [];
+  public errorMessages: NotificationMessage[] = [];
 
-  loadMockCurrencyData(): Observable<CurrencyTable[]> {
-    return this.conditionDetailService.getCurrency().pipe(
-      tap((response: CurrencyTable[]) => {
-        this.currencyTableData = response.map((item, index) => ({
-          index: index,
-          identifier: item.identifier,
-          code: item.code,
-          currencyISO4217Val: item.currencyISO4217Val,
-          range: false,
-          defaultValue: 0,
-          default: 0,
-          minimum: 0,
-          maximum: 0,
-          currencyInquiry: []
-        }));
+  public reqDfnId: string = '';
 
-        this.currencySpecificData.datasource.data = this.currencyTableData;
-        this.checkUpdateData();
-      })
-    );
-  }
 
-  loadMockCurrencyDataSingleSelect(): Observable<CurrencyTableSingle[]> {
-    return this.conditionDetailService.getCurrency().pipe(
-      tap((response: CurrencyTableSingle[]) => {
-        this.currencyData1 = response.map((item, index) => ({
-          index: index,
-          identifier: item.identifier,
-          code: item.code,
-          currencyISO4217Val: item.currencyISO4217Val,
-
-        }));
-        console.log('Mapped currencyData1:', this.currencyData1);
-
-        this.currencyDataSingleSelect.datasource.data = this.currencyData1;
-        console.log('Datasource after assignment:', this.currencyDataSingleSelect.datasource.data);
-      })
-    );
-  }
-  tableRefArray: any;
-  ngAfterViewInit(): void {
-    this.tableRefArray = [this.expandableTableRef];
-  }
-
-  public updateTemplate(index, onInit = false) {
-    this.currencySpecificData.datasource.data.forEach((r, i) => {
-      if (i === 0 || i === 5) {
-        this.expandableTableRef.selection.select(r);
-      }
-    });
-    this.addNewConditionFormGroup.markAsDirty();
-  }
-
-  constructor(
-    private bodCommonDialogService: BodCommonDialogService,
-    private bodFormStateService: BodFormStateService,
-    private fb: FormBuilder,
-    public conditionDetailService: ConditionDetailService,
-    private metadataService: MetadataService,
-    private changeDetectorRef: ChangeDetectorRef,
-    @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange
-  ) { }
-
-  private checkUpdateData() {
-    this.expandableTableRef?.selection.selected?.forEach(row => {
-      console.log(row);
-      this.expandableTableRef.selection.select(row);
-    });
-  }
-  receivedTranslationDetails: any;
-  receiveTranslationDetailsValues(transDtlsVal: any) {
-    this.receivedTranslationDetails = transDtlsVal;
-
-    console.log(
-      'Received Translation Details:',
-      this.receivedTranslationDetails
-    );
-  }
-  receivedTranslationDetails1: any;
-  receiveTranslationDetailsValues1(transDtlsVal: any) {
-    this.receivedTranslationDetails1 = transDtlsVal;
-
-    console.log(
-      'Received Translation Details:',
-      this.receivedTranslationDetails1
-    );
-  }
-  ngOnInit() {
-    this.initForm();
-    this.setTabIndexTableData();
-    this.loadDropdownData();
-
-    this.loadMockCurrencyData().subscribe(() => {
-      if (this.editConditionRow) {
-        this.conditionForm(this.editConditionRow);
-      }
-    });
-
-    this.loadMockCurrencyDataSingleSelect().subscribe(() => {
-      console.log('Single select currency data loaded in ngAfterViewInit');
-    });
-
-    this.updateTemplate(0, true);
-
-    this.addNewConditionFormGroup
-      .get('conditionType')
-      .valueChanges.subscribe(value => {
-        if (value !== 'CurrencySpecificCondition') {
-          this.isHidden = true;
-        }
-      });
-
-    this.addNewConditionFormGroup
-      .get('conditionType')
-      ?.valueChanges.subscribe(value => {
-        this.resetFormControls(value);
-      });
-
-    this.addNewConditionFormGroup
-      .get('validValuesTypePercentage')
-      ?.valueChanges.subscribe(value => {
-        this.resetPercentageFormControls(value);
-      });
-    this.addNewConditionFormGroup
-      .get('validValuesTypeAmount')
-      ?.valueChanges.subscribe(value => {
-        this.resetAmountFormControls(value);
-      });
-
-    this.addNewConditionFormGroup
-      .get('validValuesTypeNumber')
-      ?.valueChanges.subscribe(value => {
-        this.resetNumberFormControls(value);
-      });
-
-    const validValueControl = this.addNewConditionFormGroup.get('validvalue');
-    if (validValueControl) {
-      validValueControl.valueChanges.subscribe(value => {
-        if (value) {
-          this.addNewConditionFormGroup.get('defaultValueText')?.reset();
-        }
-      });
-    }
-
-    const textNumberValidValueControl = this.addNewConditionFormGroup.get(
-      'textnumbervalidvalue'
-    );
-    if (textNumberValidValueControl) {
-      textNumberValidValueControl.valueChanges.subscribe(value => {
-        if (value) {
-          this.addNewConditionFormGroup.get('defaultText')?.reset();
-          this.addNewConditionFormGroup.get('defaultNumber')?.reset();
-        }
-      });
-    }
-  }
-  loadDropdownData(): void {
-    this.conditionDetailService.getConditions().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.cdarValue,
-        value: item.identifier
-      }));
-      this.conditions = mappedData;
-    });
-
-    this.conditionDetailService.getCurrency().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.currencies = mappedData;
-    });
-  }
-
-  resetFormControls(conditionType: string) {
-    if (conditionType !== 'NumberCondition') {
-      this.addNewConditionFormGroup.get('validValuesTypeNumber')?.reset('');
-      this.addNewConditionFormGroup.get('numberValue')?.reset('');
-      this.addNewConditionFormGroup.get('numberdefaultValue')?.reset('');
-      this.addNewConditionFormGroup.get('numberLow')?.reset('');
-      this.addNewConditionFormGroup.get('numberHigh')?.reset('');
-    }
-    if (conditionType !== 'PercentCondition') {
-      this.addNewConditionFormGroup.get('validValuesTypePercentage')?.reset('');
-      this.addNewConditionFormGroup.get('percentageValue')?.reset('');
-      this.addNewConditionFormGroup.get('percentageDefaultValue')?.reset('');
-      this.addNewConditionFormGroup.get('percentageLow')?.reset('');
-      this.addNewConditionFormGroup.get('percentageHigh')?.reset('');
-    }
-    if (conditionType !== 'AmountCondition') {
-      this.addNewConditionFormGroup.get('validValuesTypeAmount')?.reset('');
-      this.addNewConditionFormGroup.get('amountValue')?.reset('');
-      this.addNewConditionFormGroup.get('amountLow')?.reset('');
-      this.addNewConditionFormGroup.get('amountHigh')?.reset('');
-      this.addNewConditionFormGroup.get('amountDefaultValue')?.reset('');
-    }
-    if (conditionType !== 'FlagCondition') {
-      this.addNewConditionFormGroup.get('defaultflag')?.reset(false);
-    }
-    if (conditionType !== 'DateCondition') {
-      this.addNewConditionFormGroup.get('start')?.reset('');
-    }
-    if (conditionType !== 'TextCondition') {
-      this.addNewConditionFormGroup.get('validvalue')?.reset(false);
-      this.addNewConditionFormGroup.get('defaultValueText')?.reset('');
-    }
-    if (conditionType !== 'TextAndNumberCondition') {
-      this.addNewConditionFormGroup.get('textnumbervalidvalue')?.reset(false);
-      this.addNewConditionFormGroup.get('defaultText')?.reset('');
-      this.addNewConditionFormGroup.get('defaultNumber')?.reset('');
-    }
-    if (conditionType !== 'CurrencySpecificCondition') {
-      this.addNewConditionFormGroup.get('curspecificvalue')?.reset(false);
-      // this.addNewConditionFormGroup.get('defaultText')?.reset('');
-      // this.addNewConditionFormGroup.get('defaultNumber')?.reset('');
-    }
-  }
-
-  resetPercentageFormControls(validValuesType: string) {
-    if (validValuesType !== 'none') {
-      this.addNewConditionFormGroup.get('percentageValue')?.reset('');
-    }
-    if (validValuesType !== 'range') {
-      this.addNewConditionFormGroup.get('percentageLow')?.reset('');
-      this.addNewConditionFormGroup.get('percentageHigh')?.reset('');
-      this.addNewConditionFormGroup.get('percentageDefaultValue')?.reset('');
-    }
-  }
-  resetAmountFormControls(validValuesType: string) {
-    if (validValuesType !== 'none') {
-      this.addNewConditionFormGroup.get('amountValue')?.reset('');
-    }
-    if (validValuesType !== 'range') {
-      this.addNewConditionFormGroup.get('amountLow')?.reset('');
-      this.addNewConditionFormGroup.get('amountHigh')?.reset('');
-      this.addNewConditionFormGroup.get('amountDefaultValue')?.reset('');
-    }
-  }
-  resetNumberFormControls(validValuesType: string) {
-    if (validValuesType !== 'none') {
-      this.addNewConditionFormGroup.get('numberValue')?.reset('');
-    }
-    if (validValuesType !== 'range') {
-      this.addNewConditionFormGroup.get('numberLow')?.reset('');
-      this.addNewConditionFormGroup.get('numberHigh')?.reset('');
-      this.addNewConditionFormGroup.get('numberdefaultValue')?.reset('');
-    }
-  }
-
-  noSpecialCharactersValidator(): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
-      return forbidden
-        ? { noSpecialCharacters: { value: control.value } }
-        : null;
-    };
-  }
-  nonNegativeValidator(): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const value = control.value;
-      return value < 0 ? { negativeValue: { value: value } } : null;
-    };
-  }
-  nonZeroValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-      return value === 0 ? { zeroValue: true } : null;
-    };
-  }
-  defaultValueRangeValidator(
-    lowControlName: string,
-    highControlName: string
-  ): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const lowValue = control.parent?.get(lowControlName)?.value;
-      const highValue = control.parent?.get(highControlName)?.value;
-      const defaultValue = control.value;
-
-      if (defaultValue < lowValue || defaultValue > highValue) {
-        return { defaultValueOutOfRange: true };
-      }
-      return null;
-    };
-  }
-
-  private initForm(): void {
-    this.defaultValueForm = this.fb.group({
-      customizable1: new UntypedFormControl(false)
-    });
-    this.formArray = this.fb.array([]);
-
-    this.addNewConditionFormGroup = this.fb.group({
-      code: new UntypedFormControl('', [
-        Validators.required,
-        this.noSpecialCharactersValidator()
-      ]),
-      start: new UntypedFormControl('', [Validators.required]),
-      subtract: new UntypedFormControl('', [Validators.required]),
-      secondaryfre: new UntypedFormControl(),
-      processingday: new UntypedFormControl('', [Validators.required]),
-      name: new UntypedFormControl('', [Validators.required]),
-      conditionIdentifier: [{ value: '', disabled: true }],
-      classificationType: new UntypedFormControl('', [Validators.required]),
-      conditionType: new UntypedFormControl('', [Validators.required]),
-      optionality: new UntypedFormControl('', [Validators.required]),
-      applicableTo: new UntypedFormControl('', [Validators.required]),
-      customizable: new UntypedFormControl(),
-      conditionsRltnp: new UntypedFormControl(''),
-      validValuesTypeNumber: new UntypedFormControl('', [Validators.required]),
-      currency: new UntypedFormControl('', [Validators.required]),
-      validValuesTypeAmount: new UntypedFormControl('', [Validators.required]),
-      amountValue: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator()
-      ]),
-
-      validValuesTypePercentage: new UntypedFormControl('', [
-        Validators.required
-      ]),
-      numberValue: new UntypedFormControl('', [Validators.required]),
-      numberLow: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator()
-      ]),
-      defaultflag: new UntypedFormControl(false),
-      curspecificvalue: [false],
-      // seccondtype: [{ value: 'Amount', disabled: true }],
-      seccondtype: ['amount'],
-      textnumbervalidvalue: new UntypedFormControl(false),
-
-      dateInput: new UntypedFormControl(Date, [Validators.required]),
-
-      defaultDate: new UntypedFormControl([
-        Validators.required,
-        this.nonNegativeDateValidator()
-      ]),
-
-      // defaultDate: new UntypedFormControl('', Validators.required),
-      // numberLow:new UntypedFormControl('',[Validators.required]),
-      numberHigh: new UntypedFormControl('', [
-        Validators.required,
-        this.nonZeroValidator(),
-        this.nonNegativeValidator()
-      ]),
-      numberdefaultValue: new UntypedFormControl('', [
-        Validators.required,
-        this.defaultValueRangeValidator('numberLow', 'numberHigh')
-      ]),
-      defaultValueText: new UntypedFormControl('', [Validators.required]),
-      validvalue: new UntypedFormControl(false),
-      defaultText: new UntypedFormControl('', [Validators.required]),
-      defaultNumber: new UntypedFormControl('', [Validators.required]),
-
-      amountLow: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator()
-      ]),
-      amountHigh: new UntypedFormControl('', [
-        Validators.required,
-        this.nonZeroValidator(),
-        this.nonNegativeValidator()
-      ]),
-      amountDefaultValue: new UntypedFormControl('', [Validators.required]),
-
-      percentageValue: new UntypedFormControl('', [Validators.required]),
-      percentageLow: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator()
-      ]),
-      percentageHigh: new UntypedFormControl('', [
-        Validators.required,
-        this.nonZeroValidator(),
-        this.nonNegativeValidator()
-      ]),
-      percentageDefaultValue: new UntypedFormControl('', [
-        Validators.required,
-        this.defaultValueRangeValidator('percentageLow', 'percentageHigh')
-      ])
-    });
-    this.addNewConditionCurrencyForm = this.fb.group({
-      range: new UntypedFormControl(false),
-      defaultValue: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator()
-      ]),
-      defaultcspcf: new UntypedFormControl('', [
-        Validators.required,
-        this.defaultValueRangeValidator('minimumcspcf', 'maximumcspcf')
-      ]),
-      minimumcspcf: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator()
-      ]),
-      maximumcspcf: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator(),
-        this.nonZeroValidator()
-      ])
-    });
-    this.onRangeToggleChange();
-  }
-
-  nonNegativeDateValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-      const date = new Date(value);
-
-      if (!value || isNaN(date.getTime())) {
-        return { invalidDate: true };
-      } // Check if the year is less than 1 (i.e., negative or year 0)
-
-      if (date.getFullYear() < 1) {
-        return { negativeDate: true };
-      }
-
-      return null;
-    };
-  }
-
-  onRangeToggleChange(): void {
-    const rangeControl = this.addNewConditionCurrencyForm.get('range');
-    const defaultValueControl =
-      this.addNewConditionCurrencyForm.get('defaultValue');
-    const minimumcspcfControl =
-      this.addNewConditionCurrencyForm.get('minimumcspcf');
-    const maximumcspcfControl =
-      this.addNewConditionCurrencyForm.get('maximumcspcf');
-    const defaultcspcfControl =
-      this.addNewConditionCurrencyForm.get('defaultcspcf');
-
-    if (rangeControl && rangeControl.value) {
-      defaultValueControl?.clearValidators();
-      minimumcspcfControl?.setValidators([
-        Validators.required,
-        this.nonNegativeValidator()
-      ]);
-      maximumcspcfControl?.setValidators([
-        Validators.required,
-        this.nonNegativeValidator(),
-        this.nonZeroValidator()
-      ]);
-      defaultcspcfControl?.setValidators([Validators.required]);
-    } else {
-      defaultValueControl?.setValidators([
-        Validators.required,
-        this.nonNegativeValidator()
-      ]);
-      minimumcspcfControl?.clearValidators();
-      maximumcspcfControl?.clearValidators();
-      defaultcspcfControl?.clearValidators();
-    }
-
-    defaultValueControl?.updateValueAndValidity();
-    minimumcspcfControl?.updateValueAndValidity();
-    maximumcspcfControl?.updateValueAndValidity();
-    defaultcspcfControl?.updateValueAndValidity();
-  }
-
-  public getError(control: string, formGroup: UntypedFormGroup): string {
-    if (formGroup) {
-      const fc: AbstractControl = formGroup.get(control);
-      if (fc && fc.errors && fc.touched) {
-        return FormUtilityService.getCommonFCErrorMsg(fc);
-      }
-    }
-  }
-  public localeTableData: CondTable[] = [];
-  public localeTableData1: textNumCond[] = [];
-  public localeTableData2: NumCond[] = [];
-  public localeTableData3: TextCond[] = [];
-  public primFreqTableData: primaFreq[] = [];
-  public secFreqTableData: secFreq[] = [];
-
+  public message: NotificationMessage | undefined;
+  isRelateToProductTemplate = false;
+  isValidValueTypes = false;
+  public categorySearchVal: UntypedFormControl = new UntypedFormControl('');
   public onTableDirty(): void {
-    this.addNewConditionFormGroup.markAsDirty();
+    this.addNewAttributeFormGroup.markAsDirty();
   }
 
-  completeDeltaData: any;
-  handleCompleteDeltaChangetext(data: any) {
-    this.completeDeltaData = data;
-    console.log('Received CompleteDelta from child:', this.completeDeltaData);
-  }
-  completeDeltaFreqData: any;
-  handleCompleteDeltaChangeFreq(data: any) {
-    this.completeDeltaFreqData = data;
-    console.log(
-      'Received CompleteDelta from child:',
-      this.completeDeltaFreqData
-    );
-  }
-  completeDeltaSecFreqData: any;
-  handleCompleteDeltaChangeSecFreq(data: any) {
-    this.completeDeltaSecFreqData = data;
-    console.log(
-      'Received CompleteDelta from child:',
-      this.completeDeltaSecFreqData
-    );
-  }
-
-  completeDeltaData1: any;
-  handleCompleteDeltaChange1(data: any) {
-    this.completeDeltaData1 = data;
-    console.log('Received CompleteDelta from child:', this.completeDeltaData1);
-  }
-  completeDeltaDataCond: any;
-  handleCompleteDeltaChange(data: any) {
-    this.completeDeltaDataCond = data;
-    console.log(
-      'Received CompleteDelta from child:',
-      this.completeDeltaDataCond
-    );
-  }
-  numberData: any;
-  handleCompleteNumberData(data: any) {
-    this.numberData = data;
-    console.log('Received CompleteDelta from child:', this.numberData);
-  }
-  onReset(isAdd: boolean): void {
-    this.addNewConditionCurrencyForm.reset();
-
-    this.isHidden = true; // Optionally reset selection
-
-    this.loadMockCurrencyData().subscribe();
-
-    const tableRef = this.getTableRef(0);
-    if (tableRef?.selection) {
-      tableRef.selection.clear();
+  bodRelMgrSearchFieldData: BodSearchFieldData[] = [
+    {
+      label: '',
+      fieldName: 'code',
+      descFieldName: 'name',
+      required: true,
+      hideLabel: true,
+      hideFilterCriteria: false,
+      disableInput: true,
+      disableSearch: false,
+      defaultDescription: ' ',
+      hideDescription: true,
+      forTextOnly: true
     }
-
-    if (this.simpleEditTableRef) {
-      this.simpleEditTableRef.reset();
-    }
-
-    const isEditMode = this.isEdit;
-
-    if (isEditMode) {
-      // Restore 'code' value and keep it disabled
-      this.addNewConditionFormGroup.get('code')?.setValue(this.retainedCode);
-      this.addNewConditionFormGroup.get('code')?.disable();
-      this.addNewConditionFormGroup
-        .get('conditionIdentifier')
-        ?.setValue(this.retainedIdentifier);
-      this.addNewConditionFormGroup.get('conditionIdentifier')?.disable();
-    } else {
-      this.addNewConditionFormGroup.get('code')?.enable();
-      this.addNewConditionFormGroup.get('conditionIdentifier')?.enable();
-    }
-    this.changeDetectorRef.detectChanges();
-  }
-  public textConditionData: BodTableMetadata = {
-    title: 'Set',
-    columns: [...this.conditionDetailService.textColumn],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<AddtRelationTable>(),
-    noRecordsMessage: 'No text condition Defined'
-  };
-  public onTextConditionActionClicked(event: BodTableAction) {
-    console.log('Event  data is', event);
-    if (event.id === BodTableActionType.ADD) {
-      this.addRelationData();
-    }
-  }
-  private lastModifiedIndex = 0;
-
-  public rowLevelActionsForRelationshipedit: BodTableAction[] = textCondDelete;
-  @ViewChild('textConditionValues')
-  public addTextConditionValue: BodTableComponent;
-  public textConditionForm: UntypedFormGroup = new UntypedFormGroup({});
-  public defaultValueForm: UntypedFormGroup = new UntypedFormGroup({});
-
-  useExistingFormCtrlKeysValue: string[] = [];
-  useExistingFormCtrlKeysDefault: string[] = [];
-  private addRelationData() {
-    // this.defaultValueForm.get('customizable1').setValue(false)
-
-    const updatedData = {
-      id: this.lastModifiedIndex,
-      values: '',
-      action: EditTableAction.ADD,
-      default: ''
+  ];
+  isEdit: boolean = false;
+  value: string = '123';
+  validtype = false;
+  private addExistingAttribute() {
+    // this.editAttribute = null;
+    this.messages1 = [];
+    this.messages = [];
+    this.addExistingAttributeFormGroup.reset();
+    this.isAdd = true;
+    this.ExistingValidvalueArray.datasource.data = [];
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addExistingAttributeTemp,
+      title: 'Relate To Existing Attribute'
     };
-    this.addTextConditionValue.addRow(updatedData);
-    this.useExistingFormCtrlKeysValue = FormUtilityService.addFormControl(
-      this.textConditionForm,
-      'values',
+
+    this.openDialog(dialogModel);
+    this.dataWithExsistingValidvalues = [];
+  }
+  private addNewAttribute() {
+    this.messages1 = [];
+    this.messages = [];
+    this.tableWithSimpleEdit.datasource.data = [];
+    this.ValidvalueArray.datasource.data = [];
+    this.addNewAttributeFormGroup.reset();
+    this.inputLocaleLayoutFormLocale.reset();
+    this.inputLocaleLayoutFormDisplayName.reset();
+    this.inputLocaleLayoutFormDesc.reset();
+    this.inputLayoutForm.reset();
+    this.inputExistingLayoutForm.reset();
+    this.inputLayoutForm.addControl(
+      'additionaldatavalue',
+      new FormControl('', [Validators.required, this.nonNegativeValidator])
+    );
+
+    this.inputLayoutForm.addControl(
+      'percentagevalue',
+      new FormControl('', [this.nonNegativeValidator])
+    );
+
+    this.inputLayoutForm.addControl(
+      'sequencenumber',
+      new FormControl('', [this.nonNegativeValidator])
+    );
+
+
+    this.inputExistingLayoutForm.addControl(
+      'percentagevalue',
+      new FormControl('', [this.nonNegativeValidator])
+    );
+
+    this.inputExistingLayoutForm.addControl(
+      'sequencenumber',
+      new FormControl('', [this.nonNegativeValidator])
+    );
+    this.localeTableData = [];
+    if (this.simpleEditTableRef) {
+      this.simpleEditTableRef.resetTableForm();
+    }
+
+    this.isAdd = true;
+    // this.editAttribute = null;
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addAttributeTemp,
+      title: 'Add Attribute'
+    };
+    this.openDialog(dialogModel);
+    this.messages = [];
+    this.dataWithValidvalues = [];
+    this.addNewAttributeFormGroup.reset();
+  }
+
+  private editAttributes(element: Attribute) {
+    console.log('Element Data:', JSON.stringify(element, null, 2)); // Log the full element data
+    this.isAdd = false;
+    this.retainedIdentifier = element.identifier ?? 0;
+    this.retainedCode = element.code || '';
+    this.retainedName = element.name || '';
+    this.retainedShortName = element.shortName || '';
+    this.retainedType = element.objectTypeIdentifier ?? 0;
+    this.retainedDataType = element.formatTypeIdentifier ?? 0;
+    this.retainedSearchable = element.searchable === "Y";
+    this.retainedCalculate = element.calculated === "Y";
+    this.retainedMultiValueAllowed = element.multiValueAllowed === "Y";
+    this.retainedPercentageAllowed = element.percentageAllowed === "Y";
+    this.retainedMinimumRequired = element.productTypeAdditionalDataTypeRltnpList?.[0]?.minimumRequired ?? 0;
+    this.retainedMaximumAllowed = element.productTypeAdditionalDataTypeRltnpList?.[0]?.maximumAllowed ?? 0;
+    this.retainedGlCategarization = element.productTypeAdditionalDataTypeRltnpList?.[0]?.glCategarization === 'Y';
+    this.retainedSequenceNumbers = element.productTypeAdditionalDataList?.[0]?.sequenceNumber ?? 0;
+    this.retainedValidValuesData = element.productTypeAdditionalDataList?.map(element => {
+      let obj = {} as BodSampleTable1;
+      obj.additionaldatavalue = element.attributeValue;
+      obj.defaultindicator = element.isDefault;
+      obj.primaryindicator = element.isPrimary;
+      obj.overrideindicator = element.overrideDefault;
+      obj.percentagevalue = element.percentage;
+      obj.sequencenumber = element.sequenceNumber;
+      return obj;
+    }) || [];
+    this.retainedValidType = element?.productTypeAdditionalDataList?.length > 0 ? true : false;
+    this.retainedMultilingualValues = (element.multiLingualTextInfoList || []).map((item, i) => ({
+      id: i,
+      locale: item.localeCode,
+      displayName: item.localeText,
+      description: item.translationText
+    }));
+
+
+
+
+    this.addNewAttributeFormGroup.reset();
+
+    const additionalData = element.productTypeAdditionalDataTypeRltnpList?.[0];
+    this.retainedIdentifierForExt = additionalData?.attributeIdentifier ?? 0;
+    this.retainedCodeForExt = additionalData?.attributeCode || '';
+    this.retainedMinimumRequiredForExt = element.productTypeAdditionalDataTypeRltnpList?.[0]?.minimumRequired ?? 0;
+    this.retainedMaximumAllowedForExt = element.productTypeAdditionalDataTypeRltnpList?.[0]?.maximumAllowed ?? 0;
+    this.retainedGlCategarizationForExt = element.productTypeAdditionalDataTypeRltnpList?.[0]?.glCategarization === 'Y';
+
+    this.addExistingAttributeFormGroup.reset();
+    this.addNewAttributeFormGroup.removeControl('validtype');
+    this.addExistingAttributeFormGroup.removeControl('validtype');
+    const previousLocaleData = [...this.tableWithSimpleEdit.datasource.data];
+    console.log('formmmmmm:', JSON.stringify(this.addNewAttributeFormGroup.getRawValue, null, 2));
+    let selectedTemplate: TemplateRef<any>;
+    let dialogTitle: string;
+    this.validtype =
+      element?.productTypeAdditionalDataList?.length > 0 ? true : false;
+    if (element.shortName) {
+      selectedTemplate = this.addAttributeTemp;
+      dialogTitle = 'Edit Attribute';
+
+      this.addNewAttributeFormGroup.setValue({
+        code: element.code,
+        identifier: element.identifier,
+        name: element.name,
+        shortname: element.shortName,
+        type: element.objectTypeIdentifier,
+        datatype: element.formatTypeIdentifier,
+        calculate: element.calculated === 'Y',
+        searchable: element.searchable === 'Y',
+        multivalueallowed: element.multiValueAllowed === 'Y',
+        percentageallowed: element.percentageAllowed === 'Y',
+        classificationtype: element.classificationType,
+        relatetoproducttype:
+          element.productTypeAdditionalDataTypeRltnpList || [],
+        descriptions:
+          element.descriptions.find(desc => desc.label === 'Description')
+            ?.value || '',
+        validvaluestype: element.additionalDataValidValuesRange
+          ? 'rangevalues'
+          : element.additionalDataValidValueSetList
+            ? 'setvalues'
+            : '',
+        productTypeCode:
+          element.productTypeAdditionalDataTypeRltnpList?.[0]
+            ?.attributeCode || '',
+        min: element.productTypeAdditionalDataTypeRltnpList?.[0]?.minimumRequired !== undefined ? element.productTypeAdditionalDataTypeRltnpList?.[0]?.minimumRequired : 0,
+        max: element.productTypeAdditionalDataTypeRltnpList?.[0]?.maximumAllowed !== undefined ? element.productTypeAdditionalDataTypeRltnpList?.[0]?.maximumAllowed : 0,
+        GLcategorizationAllowed:
+          element.productTypeAdditionalDataTypeRltnpList?.[0]
+            ?.glCategarization === 'Y',
+        attributevalue:
+          element.productTypeAdditionalDataList?.[0]?.attributeValue || '',
+        isdefault:
+          element.productTypeAdditionalDataList?.[0]?.isDefault === 'Y',
+        isvalueoverridden:
+          element.productTypeAdditionalDataList?.[0]?.overrideDefault === 'Y',
+        isprimary:
+          element.productTypeAdditionalDataList?.[0]?.isPrimary === 'Y',
+        // sequencenumbers:
+        //   element.productTypeAdditionalDataList?.[0]?.sequenceNumber || '',
+        // percentagevalue:
+        //   element.productTypeAdditionalDataList?.[0]?.percentage || '',
+        valuesearch:
+          element.productTypeAdditionalDataList?.[0]?.attributeValueSource ||
+          '',
+        multiLingualTextInfoList:
+          element.multiLingualTextInfoList || [],
+        localeCode: '',
+        description: '',
+        displayName: '',
+        rangename: element.additionalDataValidValuesRange?.name || '',
+        rangedescriptions:
+          element.additionalDataValidValuesRange?.description || ''
+      });
+
+      this.addNewAttributeFormGroup.patchValue({
+        code: this.retainedCode,
+        identifier: this.retainedIdentifier,
+        name: this.retainedName,
+        shortName: this.retainedShortName,
+        type: this.retainedType,
+        datatype: this.retainedDataType,
+        calculate: this.retainedCalculate,
+        searchable: this.retainedSearchable,
+        multivalueallowed: this.retainedMultiValueAllowed,
+        percentageallowed: this.retainedPercentageAllowed,
+        min: this.retainedMinimumRequired,
+        max: this.retainedMaximumAllowed,
+        GLcategorizationAllowed: this.retainedGlCategarization,
+        sequencenumbers: this.retainedSequenceNumbers,
+        multiLingualTextInfoList: this.retainedMultilingualValues
+
+
+
+      });
+    } else {
+      selectedTemplate = this.addExistingAttributeTemp;
+      dialogTitle = 'Edit Existing Attribute';
+
+      const firstRelation = element.productTypeAdditionalDataTypeRltnpList?.[0];
+
+      this.addExistingAttributeFormGroup.setValue({
+        productCode: firstRelation?.attributeCode || '',
+        min: firstRelation?.minimumRequired || '',
+        max: firstRelation?.maximumAllowed || '',
+        GLcategorizationAllowed: firstRelation?.glCategarization === 'Y'
+      });
+      this.addExistingAttributeFormGroup.patchValue({
+        code: this.retainedCode,
+        identifier: this.retainedIdentifier,
+
+        min: this.retainedMinimumRequiredForExt,
+        max: this.retainedMaximumAllowedForExt,
+        GLcategorizationAllowed: this.retainedGlCategarizationForExt,
+
+
+      });
+    }
+
+    Object.keys(this.addNewAttributeFormGroup.controls).forEach(key => {
+      const control = this.addNewAttributeFormGroup.get(key);
+      if (control && control.invalid) {
+        console.warn(`❌ Control "${key}" is invalid. Errors:`, control.errors);
+      } else {
+        console.log(`✅ Control "${key}" is valid.`);
+      }
+    });
+
+    console.log('Form Valid:', this.addNewAttributeFormGroup.valid);
+
+    this.addNewAttributeFormGroup.addControl(
+      'validtype',
+      this.fb.control(this.validtype)
+    );
+    this.addExistingAttributeFormGroup.addControl(
+      'validtype',
+      this.fb.control(this.validtype)
+    );
+
+    console.log(this.addNewAttributeFormGroup);
+    this.ValidvalueArray.datasource.data = [];
+    this.ExistingValidvalueArray.datasource.data = [];
+    this.dataWithValidvalues = [];
+    this.dataWithExsistingValidvalues = [];
+    this.tableWithSimpleEdit.datasource.data = [];
+
+
+
+    const localeList: BodLocaleTable[] = (element.multiLingualTextInfoList || []).map((locale, i) => ({
+      id: i,
+      locale: locale.localeCode,
+      displayName: locale.translationText,
+      description: locale.localeText
+    }));
+
+    this.dataWithSimpleEdit = localeList; // optional if still used elsewhere
+    this.localeTableData = localeList;    // <-- new variable
+
+
+    element.productTypeAdditionalDataList?.forEach(element => {
+      let obj = {} as BodSampleTable1;
+      obj.additionaldatavalue = element.attributeValue;
+      obj.defaultindicator = element.isDefault;
+      obj.primaryindicator = element.isPrimary;
+      obj.overrideindicator = element.overrideDefault;
+      obj.percentagevalue = element.percentage;
+      obj.sequencenumber = element.sequenceNumber;
+      this.ValidvalueArray.datasource.data.push(obj);
+      this.ExistingValidvalueArray.datasource.data.push(obj);
+      this.dataWithValidvalues.push(obj);
+      this.dataWithExsistingValidvalues.push(obj);
+    });
+
+    this.tableWithSimpleEdit.datasource.data = [];
+    if (
+      element.multiLingualTextInfoList &&
+      element.multiLingualTextInfoList.length > 0
+    ) {
+      console.log(
+        'Processing multiLingualTextInfoList:',
+        element.multiLingualTextInfoList
+      );
+
+      element.multiLingualTextInfoList.forEach(item => {
+        this.editLocale(item.localeCode, item.translationText, item.localeText);
+
+        let obj = {
+          locale: item.localeCode,
+          displayName: item.translationText,
+          description: item.localeText
+        };
+
+        const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+          row => row.locale === obj.locale
+        );
+        if (!existingRow) {
+          this.tableWithSimpleEdit.datasource.data.push(obj);
+        }
+      });
+      this.tableWithSimpleEdit.datasource.data = [
+        ...this.tableWithSimpleEdit.datasource.data
+      ];
+      setTimeout(() => {
+        this.changeDetectorRef.detectChanges();
+      }, 100);
+
+      console.log(
+        'Updated multiLingualTextInfoList in table:',
+        this.tableWithSimpleEdit.datasource.data
+      );
+    }
+
+    console.log(this.inputLocaleLayoutFormLocale);
+
+    if (
+      !this.dialogRef$ ||
+      this.dialogRef$.getState() === MatDialogState.CLOSED
+    ) {
+      let dialogModel: BodCommonDialogModel = {
+        formTemplate: selectedTemplate,
+        title: dialogTitle
+      };
+      setTimeout(() => {
+        console.log(
+          'Final table data after 2s:',
+          this.tableWithSimpleEdit.datasource.data
+        );
+      }, 2000);
+      console.log(
+        'FinalData in table:',
+        this.tableWithSimpleEdit.datasource.data
+      );
+      this.openDialog(dialogModel);
+    }
+
+    this.isEdit = true;
+  }
+  isEditView() {
+    return this.editAttributeRow ? true : false;
+  }
+  private confirmDelete(element: Attribute) {
+    let confirmData = this.getConfirmationModel();
+    this.dialogOutput$ = this.confirmDialogService.confirm(confirmData);
+    this._subscription.add(
+      this.dialogOutput$.subscribe(status => {
+      })
+    );
+  }
+  public inlineEditRowActionClick(event: Attribute) {
+    console.log(event);
+    this.addNewAttributeFormGroup.setValue({
+      identifier: event.identifier
+    });
+  }
+  private getConfirmationModel(): BodConfirmDialogModel {
+    return {
+      title: 'mbpEc.feAttributeValue.details.delete.dialog.title',
+      message: 'mbpEc.feAttributeValue.details.delete.dialog.msg',
+      confirm: 'mbpEc.feAttributeValue.details.delete.dialog.buttonText.delete',
+      dismiss: 'mbpEc.feAttributeValue.details.delete.dialog.buttonText.cancel'
+    };
+  }
+
+  private addLocale() {
+    console.log('addlocale called');
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
+    };
+    this.addLocaleTemp.addRow(updatedData);
+
+    // Dynamically set the form controls based on column types
+    this.columns.forEach(column => {
+      if (column.name === 'locale') {
+        this.useExistingFormCtrlKeysLocale = FormUtilityService.addFormControl(
+          this.inputLocaleLayoutFormLocale,
+          column.name,
+          this.lastModifiedIndex,
+          true,
+          column.inputModeOptions.type === ColumnType.select ? '' : null
+        );
+      } else if (column.name === 'displayName') {
+        this.useExistingFormCtrlKeysDisplayName = FormUtilityService.addFormControl(
+          this.inputLocaleLayoutFormDisplayName,
+          column.name,
+          this.lastModifiedIndex,
+          true,
+          column.inputModeOptions.type === ColumnType.input ? '' : null
+        );
+      } else if (column.name === 'description') {
+        this.useExistingFormCtrlKeysDesc = FormUtilityService.addFormControl(
+          this.inputLocaleLayoutFormDesc,
+          column.name,
+          this.lastModifiedIndex,
+          true,
+          column.inputModeOptions.type === ColumnType.input ? '' : null
+        );
+      }
+    });
+
+    ++this.lastModifiedIndex;
+    this.addNewAttributeFormGroup.markAsDirty();
+  }
+
+
+  private editLocale(locale, name, desc) {
+    console.log('editLocale called with ', locale, name, desc);
+
+    // ✅ Find the existing row by matching the locale
+    const existingRow = this.tableWithSimpleEdit.datasource.data.find(
+      row => row.locale === locale
+    );
+
+    if (existingRow) {
+      // ✅ Modify the existing row directly
+      existingRow.displayName = name;
+      existingRow.description = desc;
+      console.log('editLocale: Row updated:', existingRow);
+    } else {
+      console.log('editLocale: Row not found, keeping existing logic.');
+
+      let updatedData = {
+        id: this.lastModifiedIndex,
+        locale: locale,
+        action: EditTableAction.ADD,
+        displayName: name,
+        description: desc
+      };
+
+      this.tableWithSimpleEdit.datasource.data.push(updatedData);
+      ++this.lastModifiedIndex;
+    }
+
+    // ✅ Ensure UI updates
+    setTimeout(() => {
+      this.changeDetectorRef.detectChanges();
+    }, 100);
+
+    console.log(
+      'Updated Table Data:',
+      this.tableWithSimpleEdit.datasource.data
+    );
+    // this.addNewAttributeFormGroup.markAsDirty();
+  }
+
+  private addRangeLocale() {
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
+    };
+    this.addRangeLocaleTemp.addRow(updatedData);
+    this.useExistingFormCtrlKeysRangeLocale = FormUtilityService.addFormControl(
+      this.inputRangeLocaleLayoutFormLocale,
+      'locale',
       this.lastModifiedIndex,
       true,
       ''
     );
-    this.useExistingFormCtrlKeysDefault = FormUtilityService.addFormControl(
-      this.defaultValueForm,
-      'default',
+    this.useExistingFormCtrlKeysRangeDisplayName =
+      FormUtilityService.addFormControl(
+        this.inputRangeLocaleLayoutFormDisplayName,
+        'displayName',
+        this.lastModifiedIndex,
+        true,
+        ''
+      );
+    this.useExistingFormCtrlKeysRangeDesc = FormUtilityService.addFormControl(
+      this.inputRangeLocaleLayoutFormDesc,
+      'description',
       this.lastModifiedIndex,
       true,
       ''
     );
 
     ++this.lastModifiedIndex;
-    //this.addNewAttributeFormGroup.markAsDirty();
+  }
+  private addSetLocale() {
+    let updatedData = {
+      id: this.lastModifiedIndex,
+      locale: '',
+      action: EditTableAction.ADD,
+      displayName: '',
+      description: ''
+    };
+    this.addSetLocaleTemp.addRow(updatedData);
+    this.useExistingFormCtrlKeysSetLocale = FormUtilityService.addFormControl(
+      this.inputSetLocaleLayoutFormLocale,
+      'locale',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeysSetDisplayName =
+      FormUtilityService.addFormControl(
+        this.inputSetLocaleLayoutFormDisplayName,
+        'displayName',
+        this.lastModifiedIndex,
+        true,
+        ''
+      );
+    this.useExistingFormCtrlKeysSetDesc = FormUtilityService.addFormControl(
+      this.inputSetLocaleLayoutFormDesc,
+      'description',
+      this.lastModifiedIndex,
+      true,
+      ''
+    );
+
+    ++this.lastModifiedIndex;
   }
 
-  submitForm(isAdd: boolean) {
-    this.addNewConditionFormGroup.get('conditionIdentifier').enable();
-    const formValues = this.addNewConditionFormGroup.value;
-    this.addNewConditionFormGroup.controls['conditionIdentifier'].enable();
+  deleteProfSrc1(index, element) {
 
-    const requiredFields = [
-      'name',
-      'classificationType',
-      'conditionType',
-      'optionality',
-      'applicableTo',
-      'code'
-    ];
 
-    let hasError = false;
+    this.addLocaleTemp.deleteRow(index);
+  }
 
-    requiredFields.forEach(field => {
-      const control = this.addNewConditionFormGroup.get(field);
-      if (control?.invalid) {
-        control.markAsTouched();
-        hasError = true;
-      }
-    });
+  onlocaleChange(obj, index: number) {
+    let updatedData = this.tableWithSimpleEdit.datasource.data;
 
-    if (hasError) {
-      return; // Stop submission if any required field is invalid
-    }
+    updatedData[index]['commPrefStatDflt'] = obj;
+    (this.tableWithSimpleEdit.datasource as MatTableDataSource<any>).data =
+      updatedData;
+    this.adminTableRef.updateDeltaForCustomColumn(EditTableAction.EDIT, index);
+  }
 
-    // const conditions = this.getConditionsFromFormValues(formValues);
 
-    let conditionDetail;
+  onToggleChange(event: MatSlideToggleChange) {
+    this.isRelateToProductTemplate = event.checked;
+  }
+  onValidValueTypesChange(event: MatSlideToggleChange) {
+    this.isValidValueTypes = event.checked;
+  }
 
-    if (formValues.conditionType === 'DateCondition') {
-      const formattedDate = new Date(formValues.start)
-        .toISOString()
-        .slice(0, 10);
-      conditionDetail = {
-        conditionType: formValues.conditionType,
-        value: formattedDate // Assuming 'defaultDate' is the form control name for the date input
-      };
-    } else if (formValues.conditionType === 'FlagCondition') {
-      conditionDetail = {
-        conditionType: formValues.conditionType,
-        value: formValues.defaultflag // Get the value from the slide toggle
-      };
-    } else if (formValues.conditionType === 'TextCondition') {
-      // const completeDeltaData = this.completeDeltaData || [];
-
-      if (formValues.validvalue === false) {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          value: formValues.defaultValueText
-        };
-      } else {
-        const localeTableData3 =
-          this.simpleEditTableRefText.getCurrentTableText?.() || [];
-
-        if (localeTableData3.length > 0) {
-          const aggregatedValidValues = localeTableData3.reduce((acc, row) => {
-            if (row && row.validvalues) {
-              acc.push(row.validvalues);
-            }
-            return acc;
-          }, []);
-
-          const defaultRow = localeTableData3.find(row => row && row.default);
-
-          if (!defaultRow) {
-            this.handleError1({
-              errorCode: 'DEFAULT_VALUE_REQUIRED',
-              status: 400
-            });
-          }
-
-          conditionDetail = {
-            conditionType: formValues.conditionType,
-            value: defaultRow ? defaultRow.validvalues : null,
-            textValidValues: aggregatedValidValues
-          };
-        }
-      }
-    } else if (formValues.conditionType === 'FrequencyCondition') {
-      const primFreqTableData =
-        this.simpleEditTablePrimFre.getCurrentTablePrimFreq?.() || [];
-      const secFreqTableData =
-        this.simpleEditTableSecFre.getCurrentTableSecFreq?.() || [];
-
-      const defaultRow = primFreqTableData.find(row => row && row.default);
-
-      if (!defaultRow) {
-        this.handleError1({
-          errorCode: 'DEFAULT_VALUE_REQUIRED',
-          status: 400
-        });
-      }
-
-      const primaryValidValues = primFreqTableData.reduce((acc, row) => {
-        if ((row && row.primaryfrequency) || row.value !== undefined) {
-          acc.push({
-            textValue: row.primaryfrequency,
-            numberValue: row.value
-          });
-        }
-        return acc;
-      }, []);
-
-      const secondaryValidValues = secFreqTableData.reduce((acc, row) => {
-        if (row && row.secondaryfrequency && row.value !== undefined) {
-          acc.push({
-            textValue: row.secondaryfrequency,
-            numberValue: Number(row.value)
-          });
-        }
-        return acc;
-      }, []);
-
-      const firstSecondaryRow = secondaryValidValues[0] || {};
-
-      conditionDetail = {
-        conditionType: 'FrequencyCondition',
-        frequencyDefinition: {
-          primaryFrequencyType: defaultRow?.primaryfrequency,
-          primaryUnits: defaultRow?.value,
-          secondaryFrequencyType: firstSecondaryRow.textValue || '',
-          secondaryUnits: firstSecondaryRow.numberValue ?? null,
-          startDate: formValues.startDate || null,
-          subtractSecondary: formValues.subtract,
-          maxiterations: formValues.maxiterations || null,
-          maxIterationDate: formValues.maxIterationDate || '',
-          dateAdjustType: formValues.dateAdjustType || '',
-          businessDayRule: formValues.processingday || ''
-        },
-        primaryFrequencyValidValues: primaryValidValues,
-        secondaryFrequencyValidValues: secondaryValidValues
-      };
-    } else if (formValues.conditionType === 'TextAndNumberCondition') {
-      if (formValues.textnumbervalidvalue === false) {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-
-          textNumberValue: {
-            textValue: formValues.defaultText || '',
-            numberValue: formValues.defaultNumber || 0
-          }
-        };
-      } else {
-        const localeData1 =
-          this.simpleEditTableRefTextNum.getCurrentTableTextNum?.() || [];
-        // const completeDeltaData1 = this.completeDeltaData1 || [];
-
-        const hasValidValues = localeData1.some(
-          row => row.validvalues && row.numbervalidvalues
-        );
-
-        if (!hasValidValues) {
-          this.handleError1({
-            errorCode: 'VALID_VALUE_REQUIRED',
-            status: 400
-          });
-        } else {
-          const aggregatedValidValues = localeData1.reduce((acc, row) => {
-            if (row && (row.validvalues || row.numbervalidvalues)) {
-              acc.push({
-                textNumberValue: {
-                  textValue: row.validvalues || '',
-                  numberValue: row.numbervalidvalues || 0
-                }
-              });
-            }
-            return acc;
-          }, []);
-
-          const defaultRow = localeData1.find(row => row && row.default);
-          if (!defaultRow) {
-            this.handleError1({
-              errorCode: 'DEFAULT_VALUE_REQUIRED',
-              status: 400
-            });
-          }
-
-          conditionDetail = {
-            conditionType: formValues.conditionType,
-            textNumberValue: defaultRow
-              ? {
-                textValue: defaultRow.validvalues || '',
-                numberValue: defaultRow.numbervalidvalues || 0
-              }
-              : null,
-            textAndNumberValidValues: aggregatedValidValues.reduce(
-              (acc, item) => {
-                acc.push(item.textNumberValue);
-                return acc;
-              },
-              []
-            )
-          };
-        }
-        // else {
-        //   this.handleError1({
-        //     errorCode: 'VALID_VALUE_REQUIRED',
-        //     status: 400
-        //   });
-      }
-    } else if (formValues.conditionType === 'PercentCondition') {
-      if (formValues.validValuesTypePercentage === 'none') {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          value: formValues.percentageValue
-        };
-      } else if (formValues.validValuesTypePercentage === 'range') {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          value: formValues.percentageDefaultValue,
-          minValue: formValues.percentageLow,
-          maxValue: formValues.percentageHigh
-        };
-      }
-    } else if (formValues.conditionType === 'AmountCondition') {
-      // const selectedCurrency = this.currencies.find(
-      //   c => c.label === formValues.currencyCode
-      // );
-      // const currencyIdfr = selectedCurrency ? selectedCurrency.value : null;
-
-      if (formValues.validValuesTypeAmount === 'none') {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          currencyIdfr: formValues.currency,
-          value: formValues.amountValue
-        };
-      } else if (formValues.validValuesTypeAmount === 'range') {
-        const min = formValues.amountLow;
-        const max = formValues.amountHigh;
-        const def = formValues.amountDefaultValue;
-
-        if (min >= max) {
-          this.handleErrorforMaxandMinAmt({
-            errorCode: 'MAX_LESS_THAN_MIN',
-            status: 400
-          });
-          return;
-        }
-
-        if (def < min || def > max) {
-          this.handleErrorforMaxandMinAmt({
-            errorCode: 'DEFAULT_OUT_OF_RANGE',
-            status: 400
-          });
-          return;
-        }
-
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          currencyIdfr: formValues.currency,
-          value: def,
-          minValue: min,
-          maxValue: max
-        };
-      }
-    }
-
-    // else if (formValues.conditionType === 'CurrencySpecificCondition') {
-    //   if (!formValues.curspecificvalue) {
-    //     return; // Exit early if the toggle is not true
-    //   }
-
-    //   if (!this.selectedRow || this.selectedRow.length === 0) {
-    //     this.handleErrorCurrency({
-    //       errorCode: 'NO_CURRENCY_SELECTED',
-    //       status: 400
-    //     });
-    //     return;
-    //   } // Second check: Some selected rows are missing currencyInquiry
-
-    //   const selectedRows = this.selectedRow as CurrencyTable[];
-
-    //   const filteredRows = Object.values(
-    //     selectedRows.reduce((acc, row) => {
-    //       const key = row.index;
-    //       if (
-    //         !acc[key] ||
-    //         (row.currencyInquiry && row.currencyInquiry.length > 0)
-    //       ) {
-    //         acc[key] = row;
-    //       }
-    //       return acc;
-    //     }, {} as { [key: number]: CurrencyTable })
-    //   ) as CurrencyTable[];
-
-    //   const hasMissingCurrencyInquiry = filteredRows.some(
-    //     row => !row.currencyInquiry || row.currencyInquiry.length === 0
-    //   );
-
-    //   if (hasMissingCurrencyInquiry) {
-    //     this.handleErrorCurrency({
-    //       errorCode: 'DEFAULT_VALUE_REQUIRED',
-    //       status: 400
-    //     });
-    //     return;
-    //   }
-
-    //   const currencySpecificConditionList = filteredRows.map(detail => {
-    //     const conditionInquiry = {
-    //       range:
-    //         detail.currencyInquiry.find(inquiry =>
-    //           inquiry.label.toLowerCase().includes('range')
-    //         )?.value || false,
-    //       minValue:
-    //         detail.currencyInquiry.find(inquiry =>
-    //           inquiry.label.toLowerCase().includes('minimum')
-    //         )?.value || null,
-    //       maxValue:
-    //         detail.currencyInquiry.find(inquiry =>
-    //           inquiry.label.toLowerCase().includes('maximum')
-    //         )?.value || null,
-    //       defaultValue:
-    //         detail.currencyInquiry.find(inquiry =>
-    //           inquiry.label.toLowerCase().includes('default')
-    //         )?.value || null
-    //     };
-
-    //     return {
-    //       conditionType: 'AmountCondition' || null,
-    //       currencyCode: detail.currencyISO4217Val || null,
-    //       currencyName: detail.code,
-    //       currencyIdfr: detail.identifier || null,
-    //       value: conditionInquiry.defaultValue,
-    //       minValue: conditionInquiry.minValue,
-    //       maxValue: conditionInquiry.maxValue
-    //     };
-    //   });
-
-    //   conditionDetail = {
-    //     conditionType: formValues.conditionType,
-    //     currencySpecificDetailsList: currencySpecificConditionList
-    //   };
-    // }
-    else if (formValues.conditionType === 'CurrencySpecificCondition') {
-      if (!formValues.curspecificvalue) {
-        // Only set conditionDetail and skip the rest
-        conditionDetail = {
-          conditionType: formValues.conditionType
-        };
-      } else {
-        // All of this only runs if curspecificvalue is true
-        if (!this.selectedRow || this.selectedRow.length === 0) {
-          this.handleErrorCurrency({
-            errorCode: 'NO_CURRENCY_SELECTED',
-            status: 400
-          });
-          return;
-        }
-
-        const selectedRows = this.selectedRow as CurrencyTable[];
-
-        const filteredRows = Object.values(
-          selectedRows.reduce((acc, row) => {
-            const key = row.index;
-            if (
-              !acc[key] ||
-              (row.currencyInquiry && row.currencyInquiry.length > 0)
-            ) {
-              acc[key] = row;
-            }
-            return acc;
-          }, {} as { [key: number]: CurrencyTable })
-        ) as CurrencyTable[];
-
-        const hasMissingCurrencyInquiry = filteredRows.some(
-          row => !row.currencyInquiry || row.currencyInquiry.length === 0
-        );
-
-        if (hasMissingCurrencyInquiry) {
-          this.handleErrorCurrency({
-            errorCode: 'DEFAULT_VALUE_REQUIRED',
-            status: 400
-          });
-          return;
-        }
-
-        const currencySpecificConditionList = filteredRows.map(detail => {
-          const conditionInquiry = {
-            range:
-              detail.currencyInquiry.find(inquiry =>
-                inquiry.label.toLowerCase().includes('range')
-              )?.value || false,
-            minValue:
-              detail.currencyInquiry.find(inquiry =>
-                inquiry.label.toLowerCase().includes('minimum')
-              )?.value || null,
-            maxValue:
-              detail.currencyInquiry.find(inquiry =>
-                inquiry.label.toLowerCase().includes('maximum')
-              )?.value || null,
-            defaultValue:
-              detail.currencyInquiry.find(inquiry =>
-                inquiry.label.toLowerCase().includes('default')
-              )?.value || null
-          };
-
-          return {
-            conditionType: 'AmountCondition',
-            currencyCode: detail.currencyISO4217Val || null,
-            currencyName: detail.code,
-            currencyIdfr: detail.identifier || null,
-            value: conditionInquiry.defaultValue,
-            minValue: conditionInquiry.minValue,
-            maxValue: conditionInquiry.maxValue
-          };
-        });
-
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          currencySpecificDetailsList: currencySpecificConditionList
-        };
-      }
-    } else if (formValues.conditionType === 'CurrencyCondition') {
-      const selectedRowSingleSelect = this.selectedRowSingleSelect as CurrencyTableSingle[];
-    } else {
-      if (formValues.validValuesTypeNumber === 'none') {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          value: formValues.numberValue
-        };
-      } else if (formValues.validValuesTypeNumber === 'range') {
-        conditionDetail = {
-          conditionType: formValues.conditionType,
-          value: formValues.numberdefaultValue,
-          minValue: formValues.numberLow,
-          maxValue: formValues.numberHigh
-        };
-      } else {
-        // const numberData = this.numberData || [];
-        const localeTableData2 =
-          this.simpleEditTableRefNum.getCurrentTableNumData?.() || [];
-        console.log('current data for number', localeTableData2);
-
-        if (localeTableData2.length > 0) {
-          const aggregatedValidValues = localeTableData2.reduce((acc, row) => {
-            if (row && row.validvalues) {
-              acc.push(row.validvalues);
-            }
-            return acc;
-          }, []);
-
-          const defaultRow = localeTableData2.find(row => row && row.default);
-          if (!defaultRow) {
-            this.handleError1({
-              errorCode: 'DEFAULT_VALUE_REQUIRED',
-              status: 400
-            });
-          }
-
-          conditionDetail = {
-            conditionType: formValues.conditionType,
-            value: defaultRow ? defaultRow.validvalues : null,
-            numberValidValues: aggregatedValidValues
-          };
-        }
-      }
-    }
-
-    const customizationLevel = this.getCustomizationLevel(
-      formValues.applicableTo,
-      formValues.customizable
+  public handleTableWithViewsEvent(
+    event,
+    systemMessageKey,
+    loggerMessage,
+    tabName = null
+  ) {
+    this.commonDataService.updateMessage(
+      systemMessageKey,
+      tabName
+        ? ': ' + tabName + ': ' + JSON.stringify(event)
+        : JSON.stringify(event)
     );
-    const localeTableData =
-      this.simpleEditTableRef.getCurrentTableData?.() || [];
+  }
+  // public inlineAddRowActionClick() {}
+  additionalValidValues: any[] = [];
+  public selectedFilters: BodTableFilterCriteria[] = [];
+  public onTableActionClicked(event: BodTableAction) {
+    this.isEdit = false;
+    this.messages = [];
+    if (event.id === 12) {
+      this.addNewAttribute();
+    } else if (event.id === 13) {
+      this.addExistingAttribute();
+    }
+  }
+  iconActionClicked(event: BodTableAction, element: Attribute) {
+    this.isEdit = true;
+    this.messages = [];
+    this.messages1 = [];
+    console.log(element);
+    if (event.id === BodTableActionType.EDIT) {
+      this.editAttributes(element);
+    } else if (event.id === 1) {
+      this.bodConfirmAlertDialogsService
+        .confirm(this.ConfirmData)
+        .subscribe(val => {
+          if (val) {
+            this.AttributeDelete(element);
+          }
+        });
+    }
+  }
 
-    const applicableLawMap = {
-      accountonly: 'ArrangementLaw',
-      productonly: 'ProductLaw',
-      'product&account': 'InternalLaw'
+  public onExistingValidTableActionClicked(event: BodTableAction): void { }
+  public onValidTableActionClicked(event: BodTableAction): void { }
+
+  public onLocaleTableActionClicked(event: BodTableAction) {
+    if (event.id === BodTableActionType.ADD) {
+      this.addLocale();
+    }
+
+  }
+  public onLocaleTablerangeActionClicked(event: BodTableAction) {
+    if (event.id === BodTableActionType.ADD) {
+      this.addRangeLocale();
+    }
+
+  }
+  public onLocaleTablesetActionClicked(event: BodTableAction) {
+    if (event.id === BodTableActionType.ADD) {
+      this.addSetLocale();
+    }
+
+  }
+
+  public columns: Column[] = [
+    {
+      name: 'locale',
+      title: 'Locale',
+      truncate: true,
+      noOverflow: true,
+      width: 12,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.select
+      }
+    },
+    {
+      name: 'displayName',
+      title: 'Display Name',
+      truncate: true,
+      noOverflow: true,
+      width: 6,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input
+      }
+    },
+    {
+      name: 'description',
+      title: 'Description',
+      truncate: true,
+      noOverflow: true,
+      width: 12,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input
+      }
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
+    }
+  ]
+
+  public columnSimpleEdit = this.columns;
+  public dataWithSimpleEdit: BodLocaleTable[] = [
+
+  ];
+
+  public onUpdateFilterClick(event: BodTableFilterUpdateButton): void { }
+  public balanceHoldsTableMetaData: BodTableMetadata;
+  public AttributeLocalTable: BodTableMetadata;
+  public productRelationTable: BodTableMetadata;
+  public ValidvalueArray: BodTableMetadata;
+  public ExistingValidvalueArray: BodTableMetadata;
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'mbpBod.demo.microsite.table.tableWithEdit',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<BodLocaleTable>(
+      this.dataWithSimpleEdit
+    ),
+    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+  };
+
+  public localetablerangedata: BodTableMetadata;
+  public localetablesetdata: BodTableMetadata;
+
+  public template: TemplateRef<any>;
+  public formData: BodCommonDialogModel = {
+    title: 'mbpBod.demo.microsite.table.filterTableWithDialogFilter',
+    formTemplate: undefined
+  };
+  public tabIndexTableMap: TabIndexTableMap = {};
+  public editRowElement: any;
+  public types: any[] = [];
+  public classificationtypes: any[] = [];
+  public statuses: any[] = [];
+
+  public datatype: any[] = [];
+  public productCodes: any[] = [];
+  public localeCodes: any[] = [];
+  public validvaluestypes: any[] = [];
+  private lastModifiedIndex: number = 0;
+
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+  private codeTranslationMap: { [key: string]: string } = {
+    'CHRG_CUST_PARAM': 'Charge Parameter',
+    'APD_AR': 'Arrangement',
+    'APD_AR_IP_RLTNP': 'Role Relationship',
+    'APD_AR_NOTE_DP': 'Arrangement Note'
+  };
+
+
+  constructor(
+    private bodCommonDialogService: BodCommonDialogService,
+    public commonDataService: BodTableDemoCommonDataService,
+    private confirmDialogService: BodConfirmAlertDialogsService,
+    private http: HttpClient,
+    private fb: FormBuilder,
+    private changeDetectorRef: ChangeDetectorRef,
+    private metadataService: MetadataService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+
+    @Inject(BOD_DATE_RANGE) public dateRange: BodDateRange // private bodAmountPipe: BodAmountPipe
+  ) {
+    this.addExistingAttributeFormGroup = this.fb.group({
+      productCode: [''],
+      min: [''],
+      max: [''],
+      GLcategorizationAllowed: [false],
+      validtype: [false]
+    });
+    this.ValidvalueArray = {
+      columns: [
+        {
+          name: 'additionaldatavalue',
+          title: 'Value',
+          truncate: true,
+          noOverflow: true,
+          width: 9,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'defaultindicator',
+          title: ' Default Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'primaryindicator',
+          title: 'Primary Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'overrideindicator',
+          title: 'Override Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'percentagevalue',
+          title: 'Percentage Value ',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'sequencenumber',
+          title: ' Sequence Number ',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+
+        {
+          name: 'actions',
+          title: ' ',
+          hasAction: true
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable1>(
+        this.dataWithValidvalues
+      ),
+      noRecordsMessage: 'No valid values defined'
+    };
+    this.ExistingValidvalueArray = {
+      columns: [
+        {
+          name: 'additionaldatavalue',
+          title: 'Value',
+          truncate: true,
+          noOverflow: true,
+          width: 9,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'defaultindicator',
+          title: ' Default Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'primaryindicator',
+          title: 'Primary Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'overrideindicator',
+          title: 'Override Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'percentagevalue',
+          title: 'Percentage Value ',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'sequencenumber',
+          title: ' Sequence Number ',
+          truncate: true,
+          noOverflow: true,
+          width: 10,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'actions',
+          title: ' ',
+          hasAction: true
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable1>(
+        this.dataWithExsistingValidvalues
+      ),
+      noRecordsMessage: 'No valid values defined'
+    };
+    this.tableWithSimpleEdit = {
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.select
+          }
+        },
+        {
+          name: 'displayName',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        { name: 'actionBtns', title: ' ', hasAction: true }
+      ],
+      datasource: new MatTableDataSource<BodLocaleTable>(this.dataWithlocale),
+      noRecordsMessage: 'No Data Defined'
+    };
+    this.localetablerangedata = {
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.select
+          }
+        },
+        {
+          name: 'displayName',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        { name: 'actionBtns', title: ' ', hasAction: true }
+      ],
+      datasource: new MatTableDataSource<BodLocaleRangeTable>(
+        this.dataWithlocalerange
+      ),
+      noRecordsMessage: 'No Data defined'
+    };
+    this.localetablesetdata = {
+      columns: [
+        {
+          name: 'locale',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.select
+          }
+        },
+        {
+          name: 'displayName',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        {
+          name: 'description',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem',
+          inputModeOptions: {
+            type: ColumnType.input
+          }
+        },
+        { name: 'actionBtns', title: ' ', hasAction: true }
+      ],
+      datasource: new MatTableDataSource<BodLocaleSetTable>(
+        this.dataWithlocaleset
+      ),
+      noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
     };
 
-    const conditionData = {
-      metadataType: 'Condition',
-      conditionList: [
+    this.balanceHoldsTableMetaData = {
+      title: 'Attribute Details',
+      columns: [
         {
-          conditionAttribute: {
-            identifier: formValues.conditionIdentifier,
-            cdarValue: formValues.code,
-            name: formValues.name,
-            applicableLevel: applicableLawMap[formValues.applicableTo],
-            customizationLevel: customizationLevel,
-            conditionType: formValues.conditionType,
-            classificationType: formValues.classificationType,
-            conditionOptionalityType: formValues.optionality
-          },
-          conditionDetail: conditionDetail,
+          name: 'code',
+          title: 'Attribute Code',
+          truncate: true,
+          noOverflow: true,
+          width: 30,
+          widthUnit: 'rem'
+        },
 
-          conditionsRltnp:
-            localeTableData.length > 0
-              ? localeTableData.map(data => ({
-                objectConditionIdentifier: formValues.conditionIdentifier,
-                objectCdarValue: formValues.code,
-                subjectConditionIdentifier: this.conditions.find(
-                  cond => cond.label === data.conditionSubject
-                )?.value,
-                subjectCdarValue: data.conditionSubject,
-                conditionRltnpType: data.relationship
-              }))
-              : undefined,
-
-          // feConditionRltnp: {
-          //   conditionIdentifier: formValues.conditionIdentifier,
-          //   cdarValue:formValues.code
-          // }
-
-          feConditionRltnp:
-            formValues.classificationType === 'FECondition'
-              ? {
-                conditionIdentifier: formValues.conditionIdentifier,
-                cdarValue: formValues.code
-              }
-              : undefined,
-
-          productTypeConditionRltnp:
-            formValues.classificationType === 'ProductTemplate'
-              ? {
-                pdTypeIdentifier: 1110101,
-                conditionIdentifier: formValues.conditionIdentifier,
-                cdarValue: formValues.code,
-                conditionOptionalityType: formValues.optionality,
-                applicableLevel: formValues.applicableTo
-              }
-              : undefined
+        {
+          name: 'actions',
+          title: ' ',
+          disableSorting: true,
+          disableFiltering: true,
+          hasAction: true,
+          cssClass: 'compact-columns'
         }
       ],
 
-      // productTypeList: ['CASA']
-      productTypeList: [
+      datasource: new MatTableDataSource<Attribute>(),
+      rowLeftAction: RowLeftAction.expandableRows,
+      enableSorting: false,
+      enablePagination: true,
+      paginationOptions: {
+        pageSize: 4,
+        length: 8,
+        pageSizeOptions: [2, 3, 4, 6],
+        showLastButton: true,
+        showPageSizeOptions: true
+      },
+    };
+    this.AttributeLocalTable = {
+      title: 'Locale Table',
+      columns: [
         {
-          identifier: 1110101,
-          code: 'Checking'
+          name: 'localeCode',
+          title: 'Locale',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'translationText',
+          title: 'Display Name',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'localeText',
+          title: 'Description',
+          truncate: true,
+          noOverflow: true,
+          width: 12,
+          widthUnit: 'rem'
         }
-      ]
+      ],
+      datasource: new MatTableDataSource<BodLocaleTable>([])
     };
-    console.log('conditionData SEND:', JSON.stringify(conditionData, null, 2));
-    const serviceCall = isAdd
-      ? this.conditionDetailService.saveCondition(conditionData)
-      : this.conditionDetailService.updateCondition(conditionData);
 
-    serviceCall.subscribe({
-      next: resp => this.successResponse(resp, conditionData, isAdd),
-      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    this.productRelationTable = {
+      title: 'Valid Values',
+      columns: [
+        {
+          name: 'attributeValue',
+          title: 'Additional Data Value',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'isDefault',
+          title: 'Default Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'isPrimary',
+          title: 'Primary Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'overrideDefault',
+          title: 'Override Indicator',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'percentage',
+          title: 'Percentage Value',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        },
+        {
+          name: 'sequenceNumber',
+          title: 'Sequence Number',
+          truncate: true,
+          noOverflow: true,
+          width: 6,
+          widthUnit: 'rem'
+        }
+      ],
+      datasource: new MatTableDataSource<BodSampleTable1>()
+    };
+
+    console.log(this.productRelationTable);
+
+
+    this.metadataService.dataSharingService.data$.subscribe(data => {
+      if (data) {
+        this.reqDfnId = data.reqDfnId;
+      }
     });
-    this.addNewConditionFormGroup.controls['conditionIdentifier'].disable();
 
-    // this.conditionDetailService.saveCondition(conditionData).subscribe(
-    //   response => {
-    //     console.log('Condition saved successfully:', response); // Handle successful save
-    //   },
-    //   error => {
-    //     console.error('Error saving condition:', error); // Handle error
-    //   }
-    // );
   }
-  public errorMessages2: NotificationMessage[] = [];
-  private handleError1(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'DEFAULT_VALUE_REQUIRED':
-        errorMsg = 'At least one valid value must be set as default.';
+
+  receivedTranslationDetails: any;
+
+  receiveTranslationDetailsValues(transDtlsVal: any) {
+    console.log('Data being passed to receiveTranslationDetailsValues:', transDtlsVal);
+    if (Array.isArray(transDtlsVal)) {
+      this.receivedTranslationDetails = transDtlsVal;
+    } else {
+      console.error('Received Translation Details is not an array:', transDtlsVal);
+      // Handle the case where transDtlsVal is not an array
+      this.receivedTranslationDetails = [];
+    }
+
+    console.log(
+      'Received Translation Details:',
+      this.receivedTranslationDetails
+    );
+  }
+
+
+  public commonDialogSize: string = 'Large';
+  public closeOnCloseIconClick: boolean = false;
+  private onCloseClick() {
+    this.systemMessage.message = 'Custom Function called on close';
+    this.systemMessage.show();
+    this.dialogRef$.close();
+  }
+
+  ngOnInit() {
+
+    this.metadataService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW'; // Set 'NEW' only if no data
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
+    });
+    this.tableActions = [...this.metadataService.tableActions];
+    this.loadDropdownData();
+    this.initForm();
+    this.getAttribute();
+    this.addNewAttributeFormGroup
+      .get('classificationtype')
+      ?.valueChanges.subscribe(value => {
+        this.updateRelateToProductTypeValidator(value);
+      });
+
+    this.addNewAttributeFormGroup.get('datatype')?.valueChanges.subscribe(value => {
+      this.updateAdditionalDataValueType(value);
+    });
+    this.addNewAttributeFormGroup.get('datatype')?.valueChanges.subscribe(() => {
+      this.changeDetectorRef.detectChanges();
+    });
+
+
+
+
+  }
+
+  private updateAdditionalDataValueType(datatype: string) {
+    const additionalDataValueControl = this.addNewAttributeFormGroup.get('additionaldatavalue');
+    if (additionalDataValueControl) {
+      if (datatype === 'Integer' || datatype === 'BigInteger') {
+        additionalDataValueControl.setValidators([
+          this.exceedLimitValidator(32),
+          Validators.required,
+          Validators.pattern('^[0-9]*$')
+        ]);
+      } else {
+        additionalDataValueControl.setValidators([Validators.required]);
+      }
+      additionalDataValueControl.updateValueAndValidity();
+    }
+  }
+  onSelectionChangeForStatus(event: MatSelectChange) {
+    const selectedValue = event.value;
+
+    this.bodConfirmAlertDialogsService.confirm(this.ConfirmData1).subscribe(val => {
+      if (val) {
+        this.handleStatusChange(selectedValue);
+        this.previousStatus = selectedValue; // Update only after confirmation
+      } else {
+        this.statusControl.setValue(this.previousStatus);
+      }
+    });
+  }
+
+  getStatusLabel(): string {
+    const selectedValue = this.statusControl.value;
+    if (selectedValue === 'NEW' || selectedValue === null) {
+      return 'New';
+    }
+    const match = this.statuses.find(status => status.value === selectedValue);
+    return match ? match.label : 'New';
+  }
+
+
+  handleStatusChange(newStatus: any) {
+    console.log('Status changed to:', newStatus);
+
+    const requestPayload = {
+      status: newStatus,
+      // Add other necessary fields here
+    };
+
+    this.metadataService.updateMetadataStatus(newStatus, requestPayload).subscribe({
+      next: (response) => {
+        console.log('Status update successful:', response);
+        this.getAttribute();
+      },
+      error: (error) => {
+        console.error('Error updating status:', error);
+      }
+    });
+
+  }
+  isStatusEditable(): boolean {
+    const value = this.statusControl.value;
+    return value !== 'READY' && value !== 'GENERATED';
+  }
+
+
+
+  onSelectionChange(event: MatSelectChange) {
+    const selectedValue = event.value;
+    const selectedLabel = this.datatypes.find(option => option.value === selectedValue)?.label;
+
+    switch (selectedLabel) {
+      case 'Count':
+      case 'Integer':
+      case 'BigInteger':
+      case 'Percentage':
+      case 'Rate':
+      case 'Money':
+        this.inputType = 'number';
+        this.isDisabled = false;
         break;
-      case 'VALID_VALUE_REQUIRED':
-        errorMsg = 'Valid value is required.';
+      case 'Time':
+        this.inputType = 'time';
+        this.isDisabled = false;
         break;
-      case 'MAX_LESS_THAN_MIN':
-        errorMsg = 'Minimum Value cannot be Greater or Equal to Maximum Value.';
+      case 'Date':
+        this.inputType = 'date';
+        this.isDisabled = false;
         break;
-      case 'DEFAULT_OUT_OF_RANGE':
-        errorMsg = 'Default Value must be between Minimum and Maximum Values.';
+      case 'Code':
+      case 'Text':
+      case 'ObjectReference':
+      case 'DPKeyAttributeList':
+        this.inputType = 'text';
+        this.isDisabled = false;
+        break;
+      case 'DAT':
+        this.inputType = 'datetime-local';
+        this.isDisabled = false;
+        break;
+      case 'YesNo':
+      case 'Flag':
+        this.inputType = 'disable';
+        this.isDisabled = true;
         break;
       default:
-        errorMsg = 'Unknown error occurred.';
+        this.inputType = 'text';
+        this.isDisabled = false;
+        break;
     }
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages2.push(this.message);
-    setTimeout(() => {
-      this.errorMessages2 = this.errorMessages2.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
+    console.log('Selected value:', selectedValue);
+    console.log('Selected label:', selectedLabel);
+    console.log('Input type:', this.inputType);
+    console.log('Is disabled:', this.isDisabled);
   }
-  public errorMessages3: NotificationMessage[] = [];
-  private handleErrorCurrency(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'NO_CURRENCY_SELECTED':
-        errorMsg = 'At least one currency must be selected.';
-        break;
-      case 'DEFAULT_VALUE_REQUIRED':
-        errorMsg = 'Please add the details for the currency';
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages3.push(this.message);
-    setTimeout(() => {
-      this.errorMessages3 = this.errorMessages3.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
-  }
-  public errorMessages4: NotificationMessage[] = [];
-  private handleErrorforMaxandMin(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'MAX_LESS_THAN_MIN':
-        errorMsg =
-          'Minimum Amount cannot be Greater or Equal to Maximum Amount.';
-        break;
-      case 'DEFAULT_OUT_OF_RANGE':
-        errorMsg = 'Default Amount must be between Minimum and Maximum Amount.';
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages4.push(this.message);
-    setTimeout(() => {
-      this.errorMessages4 = this.errorMessages4.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
-  }
-  public errorMessages5: NotificationMessage[] = [];
-  private handleErrorforMaxandMinAmt(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'MAX_LESS_THAN_MIN':
-        errorMsg =
-          'Minimum Amount cannot be Greater or Equal to Maximum Amount.';
-        break;
-      case 'DEFAULT_OUT_OF_RANGE':
-        errorMsg = 'Default Amount must be between Minimum and Maximum Amount.';
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages5.push(this.message);
-    setTimeout(() => {
-      this.errorMessages5 = this.errorMessages5.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
-  }
-  @Input() retainedCode = '';
-  @Input() retainedIdentifier = 0;
-  @Input() editConditionRow: ConditionList;
-  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
-    NotificationMessage[]
-  >();
-  public messages: NotificationMessage[] = [];
-  public messages1: NotificationMessage[] = [];
-  public message: NotificationMessage | undefined;
   private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-  public errorMessages: NotificationMessage[] = [];
-  private successResponse(resp, _conditionData, isAdd) {
-    const cdarValue =
-      _conditionData.conditionList[0].conditionAttribute.cdarValue;
+  private openDialog(dialogModel: any) {
+    let onClose = this.closeOnCloseIconClick
+      ? this.onCloseClick.bind(this)
+      : undefined;
+    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
+      dialogModel,
+      onClose,
+      this.commonDialogSize
 
-    const SuccessMsg = isAdd
-      ? `${cdarValue} Added successfully`
-      : `${cdarValue} Updated successfully`;
-    this.apiResponse.emit({ ..._conditionData, SuccessMsg });
+    );
   }
-  private handleError(error: any, isAdd: boolean) {
-    let errorMsg = '';
-    if (error.error.errorCode === 'MBP_SDK_BUS_ERR_005') {
-      errorMsg = 'Code already exists.';
-    }
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
 
-    if (errorMsg) {
-      this.errorMessages.push(this.message);
-    }
+  private type(identifier: any) {
+    this.value = '';
+    const item = this.types.find(item => item.value === identifier);
+    return item ? item.label : undefined;
+  }
+  private formatdatatype(identifier: any) {
+    this.value = '';
+    const item = this.datatypes.find(item => item.value === identifier);
+    return item ? item.label : undefined;
+  }
 
-    // if (isAdd) {
-    //   this.errorMessages.push(this.message);
-    // }
-    setTimeout(() => {
-      this.errorMessages = this.errorMessages.filter(
-        msg => msg.text !== errorMsg
+  public dataWithValidvalues: BodSampleTable1[] = [];
+  public dataWithExsistingValidvalues: BodSampleTable1[] = [];
+  public dataWithlocale: BodLocaleTable[] = [];
+  public dataWithlocalerange: BodLocaleRangeTable[] = [];
+  public dataWithlocaleset: BodLocaleSetTable[] = [];
+
+  public dialogFilterDataSource = new MatTableDataSource<BodInlineSampleTable>([
+    ...this.commonDataService.inlineModalData
+  ]);
+  public bodTableDataWithFormFilter: BodTableMetadata = {
+    title: 'mbpBod.demo.microsite.table.tableWithDialogFilter',
+    columns: [...this.commonDataService.inlineModalColumns],
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 8,
+      pageSizeOptions: [4, 8],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: this.dialogFilterDataSource,
+    noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg',
+    filterOptions: {
+      filterType: BodTableFilterType.MULTIPLE_FORM_DIALOG_BASED
+    }
+  };
+
+  getTableFormGroup(index: number): UntypedFormGroup {
+    return this.tabIndexTableMap[index].formGroup;
+  }
+  getTableRef(index: number): BodTableComponent {
+    return this.tabIndexTableMap[index].ref;
+  }
+  displayInlineFormErrorMessage(index) {
+    const errors = getFormValidationErrors(
+      this.getTableFormGroup(index).controls
+    ).shift();
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.inlineFormError',
+      JSON.stringify(errors)
+    );
+  }
+  inlineFormEditSubmit(formGroupValid: boolean, index) {
+    if (formGroupValid) {
+      const editedData: BodInlineSampleTable[] = [];
+      const formGroup = this.getTableFormGroup(index);
+      this.getTableRef(index).data.datasource.data.forEach(d => {
+        if (d.index === this.editRowElement.index) {
+          const editedRow: BodInlineSampleTable = {
+            index: d.index,
+            id: d.id,
+            name: d.name,
+            productLine: formGroup.value.productLine,
+            aware: formGroup.value.owner,
+            relationship: formGroup.value.relationship,
+            lastDebit:
+              formGroup.value.lastDebit === null
+                ? 0
+                : formGroup.value.lastDebit,
+            start: formGroup.controls['start'].value
+          };
+          if (index === 1 || index === 2) {
+            editedRow.description = [
+              {
+                id: d.description[0].id,
+                label: d.description[0].label,
+                value: formGroup.value.title
+              },
+              {
+                id: d.description[1].id,
+                label: d.description[1].label,
+                value: formGroup.value.firstName
+              },
+              {
+                id: d.description[2].id,
+                label: d.description[2].label,
+                value: formGroup.value.lastName
+              }
+            ];
+          }
+          editedData.push(editedRow);
+        } else {
+          editedData.push(d);
+        }
+      });
+      this.getTableRef(index).updateDatasource(
+        new MatTableDataSource<BodInlineSampleTable>([...editedData])
       );
-    }, 20000);
-  }
-
-  getCustomizationLevel(applicableTo: string, customizable: boolean): string {
-    switch (applicableTo) {
-      case 'accountonly':
-        return 'ArrangementValue';
-      case 'productonly':
-        return customizable ? 'ProductSuggestion' : 'ProductStandard';
-      case 'product&account':
-        return customizable ? 'SystemSuggestion' : 'SystemStandard';
-      default:
-        return 'SystemStandard';
+    } else {
+      this.displayInlineFormErrorMessage(index);
     }
   }
+  getTableData(index: number): BodTableMetadata {
+    return this.tabIndexTableMap[index].data;
+  }
+  getTableInput(index: number): any {
+    return this.tabIndexTableMap[index].input;
+  }
+  inlineFormAddSubmit(event: any, index: number) { }
+
+  // statuses = [
+  //   { value: 'Ready', label: 'Ready' },
+  //   { value: 'InProgress', label: 'In Progress' },
+  //   { value: 'Generated', label: 'Generated' }
+
+  // ];
+  statusControl = new FormControl(null);
+
+
+  public ConfirmData1: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.statusChange',
+    confirm: 'BOD.metadataconfig.yes',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+
+  loadDropdownData(): void {
+
+
+    this.metadataService.getTypes().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: this.codeTranslationMap[item.code] || item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.types = mappedData;
+    });
+
+
+
+    this.metadataService.getDataTypes().subscribe(
+      (data: any[]) => {
+        const mappedData = data.map(item => ({
+          label: item.code,
+          value: item.identifier
+        }));
+        mappedData.sort((a, b) => a.label.localeCompare(b.label));
+        this.datatypes = mappedData;
+      },
+      error => {
+        console.error('Error fetching data types', error);
+      }
+    );
+
+    this.metadataService.getProductCodes().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.productCodes = mappedData;
+
+    });
+
+
+    this.metadataService.getLocaleCodes().subscribe(
+      (data: any[]) => {
+        const mappedData = data.map(item => ({
+          label: item,
+          value: item
+        }));
+        mappedData.sort((a, b) => a.label.localeCompare(b.label));
+        this.localeCodes = mappedData;
+      },
+      error => {
+        console.error('Error fetching data types', error);
+      }
+    );
+    this.metadataService
+      .getStatus()
+      .subscribe(data => (this.statuses = data));
+
+    this.metadataService
+      .getClassificationTypes()
+      .subscribe(data => (this.classificationtypes = data));
+
+    this.metadataService
+      .getValidvalueTypes()
+      .subscribe(data => (this.validvaluestypes = data));
+  }
+
+  private updateRelateToProductTypeValidator(classificationType: string): void {
+    const relateToProductTypeControl = this.addNewAttributeFormGroup.get(
+      'relatetoproducttype'
+    );
+    if (classificationType === 'systemDefined') {
+      relateToProductTypeControl?.setValidators([Validators.required]);
+    } else {
+      relateToProductTypeControl?.clearValidators();
+    }
+    relateToProductTypeControl?.updateValueAndValidity();
+  }
+  public addFormControl(form, columnName, index, isRequired, defaultValue) {
+    isRequired
+      ? form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue, Validators.required)
+      )
+      : form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue)
+      );
+    return Object.keys(form.controls);
+  }
+
+
+  public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.commonDataService.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+    });
+
+    // logic to get index from last search field control key and create new search field control
+    if (this.tableWithSimpleEdit.datasource.data.length > 1) {
+      lastSearchFieldCtrl =
+        this.searchFieldFormCtrlKeys[
+        this.searchFieldFormCtrlKeys.length - 1
+        ];
+      index =
+        parseInt(lastSearchFieldCtrl[lastSearchFieldCtrl.length - 1]) + 1;
+    } else {
+      index = 0;
+    }
+
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'groupId',
+      index,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeys = this.addFormControl(
+      this.useExistingColForm,
+      'useExisting',
+      index,
+      false,
+      'No'
+    );
+
+    this.overrideDefaultColFormCtrKeys = this.addFormControl(
+      this.overrideDefaultColumnForm,
+      'overrideDefault',
+      index,
+      false,
+      'true'
+    );
+
+    this.requiredColFormCtrKeys = this.addFormControl(
+      this.requiredColumnForm,
+      'required',
+      index,
+      false,
+      'true'
+    );
+  }
+
+
+
+
+
+
+
+
+
+  onSubmit(event: Event) { }
+
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+    this.inputRangeLocaleLayoutFormLocale.reset();
+    this.inputRangeLocaleLayoutFormDisplayName.reset();
+    this.inputRangeLocaleLayoutFormDesc.reset();
+    this.dataWithSimpleEdit = [];
+    this.inputLayoutForm.reset();
+    this.inputExistingLayoutForm.reset();
+    this.dataWithValidvalues = [];
+    this.dataWithExsistingValidvalues = [];
+    this.tableWithSimpleEdit.datasource.data = [];
+    this.addNewAttributeFormGroup.reset();
+    this.addNewAttributeFormGroup.markAsPristine();
+
+
+    if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
+      this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    }
+    if (this.ExistingValidvalueArray && this.ExistingValidvalueArray.datasource) {
+      this.ExistingValidvalueArray.datasource.data = [...this.dataWithExsistingValidvalues];
+    }
+    if (this.tableWithSimpleEdit && this.tableWithSimpleEdit.datasource) {
+      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
+    }
+    if (this.simpleEditTableRef?.resetTableForm) {
+      this.simpleEditTableRef.resetTableForm();
+    }
+
+    if (isEditMode) {
+      this.addNewAttributeFormGroup.get('code')?.setValue(this.retainedCode);
+      this.addNewAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifier);
+      this.addNewAttributeFormGroup.get('identifier')?.disable();
+      this.addNewAttributeFormGroup.get('name')?.setValue(this.retainedName);
+      this.addNewAttributeFormGroup.get('shortname')?.setValue(this.retainedShortName);
+      this.addNewAttributeFormGroup.get('type')?.setValue(this.retainedType);
+      this.addNewAttributeFormGroup.get('datatype')?.setValue(this.retainedDataType);
+      this.addNewAttributeFormGroup.get('calculate')?.setValue(this.retainedCalculate);
+      this.addNewAttributeFormGroup.get('searchable')?.setValue(this.retainedSearchable);
+      this.addNewAttributeFormGroup.get('multivalueallowed')?.setValue(this.retainedMultiValueAllowed);
+      this.addNewAttributeFormGroup.get('percentageallowed')?.setValue(this.retainedPercentageAllowed);
+      this.addNewAttributeFormGroup.get('min')?.setValue(this.retainedMinimumRequired);
+      this.addNewAttributeFormGroup.get('max')?.setValue(this.retainedMaximumAllowed);
+      this.addNewAttributeFormGroup.get('GLcategorizationAllowed')?.setValue(this.retainedGlCategarization);
+      this.addNewAttributeFormGroup.get('sequencenumbers')?.setValue(this.retainedSequenceNumbers);
+      this.addNewAttributeFormGroup.get('validtype')?.setValue(this.retainedValidType);
+
+      this.ValidvalueArray.datasource.data = [...this.retainedValidValuesData];
+      this.ExistingValidvalueArray.datasource.data = [...this.retainedValidValuesData];
+      this.dataWithValidvalues = [...this.retainedValidValuesData];
+      this.dataWithExsistingValidvalues = [...this.retainedValidValuesData];
+      this.addNewAttributeFormGroup.get('validtype')?.setValue(this.retainedValidType);
+
+
+      this.dataWithSimpleEdit = [...this.retainedMultilingualValues];
+      this.localeTableData = [...this.retainedMultilingualValues];
+      this.tableWithSimpleEdit.datasource.data = [...this.retainedMultilingualValues];
+
+      this.retainedMultilingualValues.forEach(item => {
+        this.editLocale(item.locale, item.displayName, item.description);
+      });
+
+
+      this.addExistingAttributeFormGroup.get('productCode')?.setValue(this.retainedCodeForExt);
+      this.addExistingAttributeFormGroup.get('identifier')?.setValue(this.retainedIdentifierForExt);
+      this.addExistingAttributeFormGroup.get('identifier')?.disable();
+      this.addExistingAttributeFormGroup.get('min')?.setValue(this.retainedMinimumRequiredForExt);
+      this.addExistingAttributeFormGroup.get('max')?.setValue(this.retainedMaximumAllowedForExt);
+      this.addExistingAttributeFormGroup.get('GLcategorizationAllowed')?.setValue(this.retainedGlCategarizationForExt);
+      this.addExistingAttributeFormGroup.get('validtype')?.setValue(this.retainedValidType);
+    } else {
+      this.addNewAttributeFormGroup.get('code')?.enable();
+      this.addNewAttributeFormGroup.get('identifier')?.enable();
+      this.addExistingAttributeFormGroup.get('code')?.enable();
+      this.addExistingAttributeFormGroup.get('identifier')?.enable();
+    }
+    this.changeDetectorRef.detectChanges();
+  }
+  handleRowLevelActions(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRow(index);
+    }
+    this.addNewAttributeFormGroup.markAsDirty();
+  }
+  handleExistingRowLevelActions(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteExistingRow(index);
+    }
+    this.addExistingAttributeFormGroup.markAsDirty();
+  }
+
+
+  public deleteTableData(index) {
+    this.addLocaleTemp.deleteRow(index);
+  }
+
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+  }
+
+
+  handleRowLevelActionsforlocalerange(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteLocaleRowrange(index);
+    }
+  }
+  handleRowLevelActionsforlocaleset(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteLocaleRowset(index);
+    }
+  }
+
 
   identifierSearch(field: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.metadataService.idfrSearch().subscribe(
         (response: string) => {
-          if (field === 'conditionIdentifier') {
-            this.addNewConditionFormGroup.controls[
-              'conditionIdentifier'
+          if (field === 'identifier') {
+            this.addNewAttributeFormGroup.controls[
+              'identifier'
             ].setValue(response);
+            this.addNewAttributeFormGroup.controls[
+              'identifier'
+            ].disable();
           }
           resolve();
         },
@@ -1638,12 +2105,171 @@ currencyConditionComponent: CurrencyConditionComponent;
       );
     });
   }
-  isAdd = true;
-  curspecificvalue = false;
 
-  onAddNewCondition(isAdd: boolean) {
+
+  deleteLocaleRow(index: number, element: Partial<BodLocaleTable>) {
+    console.log(this.addLocaleTemp, index);
+    console.log('Before deleteRow:', this.addLocaleTemp);
+    console.log('Deleting row at index:', index);
+
+    if (index !== undefined && index >= 0) {
+      this.addLocaleTemp.deleteRow(index);
+      console.log('After deleteRow:', this.addLocaleTemp);
+    } else {
+      console.error('Invalid index:', index);
+    }
+    this.useExistingFormCtrlKeysLocale = FormUtilityService.removeFormControl(
+      this.inputLocaleLayoutFormLocale,
+      this.useExistingFormCtrlKeysLocale,
+      index
+    );
+    this.useExistingFormCtrlKeysDisplayName =
+      FormUtilityService.removeFormControl(
+        this.inputLocaleLayoutFormDisplayName,
+        this.useExistingFormCtrlKeysDisplayName,
+        index
+      );
+    this.useExistingFormCtrlKeysDesc = FormUtilityService.removeFormControl(
+      this.inputLocaleLayoutFormDesc,
+      this.useExistingFormCtrlKeysDesc,
+      index
+    );
+    this.addNewAttributeFormGroup.markAsDirty();
+  }
+
+  // Method to display SystemMessage with current event and EditTable delta log
+  public onEditTableAction(event) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
+  }
+
+  completeDeltaData: any;
+
+  handleCompleteDeltaChange(data: any) {
+    this.completeDeltaData = data;
+
+    // Check for duplicate locale values
+    const locales = new Set();
+    let hasDuplicateLocale = false;
+
+    for (const item of this.completeDeltaData) {
+      if (item.rowData && item.rowData.locale) {
+        if (locales.has(item.rowData.locale)) {
+          hasDuplicateLocale = true;
+          break;
+        }
+        locales.add(item.rowData.locale);
+      }
+    }
+
+    if (hasDuplicateLocale) {
+      // this.handleError({ errorCode: 'Duplicate', status: 800 }, true);
+      console.error('Duplicate locale value found in the array.');
+    } else {
+      console.log('Received CompleteDelta from child:', JSON.stringify(this.completeDeltaData, null, 2));
+    }
+  }
+
+
+
+
+  deleteLocaleRowrange(index: number) {
+    console.log('Before splice:', this.dataWithlocalerange);
+    this.dataWithlocalerange.splice(index, 1);
+    console.log('After splice:', this.dataWithlocalerange);
+    this.localetablerangedata.datasource.data = [...this.dataWithlocalerange];
+    console.log(
+      'Updated data source:',
+      this.localetablerangedata.datasource.data
+    );
+  }
+  deleteLocaleRowset(index: number) {
+    console.log('Before splice:', this.dataWithlocaleset);
+    this.dataWithlocaleset.splice(index, 1);
+    console.log('After splice:', this.dataWithlocaleset);
+    this.localetablesetdata.datasource.data = [...this.dataWithlocaleset];
+    console.log(
+      'Updated data source:',
+      this.localetablesetdata.datasource.data
+    );
+  }
+
+  deleteRow(index: number) {
+    this.dataWithValidvalues.splice(index, 1);
+    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+  }
+  deleteExistingRow(index: number) {
+    this.dataWithExsistingValidvalues.splice(index, 1);
+    this.ExistingValidvalueArray.datasource.data = [
+      ...this.dataWithExsistingValidvalues
+    ];
+  }
+
+  editRow(index: number) {
+    this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    this.ExistingValidvalueArray.datasource.data = [
+      ...this.dataWithExsistingValidvalues
+    ];
+  }
+
+  // keeping this commented  for reference for local table will remove this later 
+
+  // onLocaleAdd(formValues: any) {
+  //   if (this.inputLocaleLayoutForm.invalid) {
+  //     alert('Please fill all the required fields.');
+  //     return;
+  //   }
+  //   const newLocaleValues: BodLocaleTable = {
+  //     locale: formValues.locale ?? false,
+  //     displayName: formValues.displayName ?? false,
+  //     description: formValues.description ?? false
+  //   };
+
+  //   this.dataWithlocale.push(newLocaleValues);
+  //   this.tableWithSimpleEdit.datasource.data = this.dataWithlocale;
+  //   this.inputLocaleLayoutForm.reset();
+  //   alert('Valid values added successfully!');
+  // }
+  // onRangeLocaleAdd(formValuess: any) {
+  //   if (this.inputRangeLocaleLayoutForm.invalid) {
+  //     alert('Please fill all the required fields.');
+  //     return;
+  //   }
+  //   const newLocaleValues: BodLocaleTable = {
+  //     locale: formValuess.locale ?? false,
+  //     displayName: formValuess.displayName ?? false,
+  //     description: formValuess.description ?? false
+  //   };
+
+  //   this.dataWithlocalerange.push(newLocaleValues);
+  //   this.localetablerangedata.datasource.data = this.dataWithlocalerange;
+  //   this.inputRangeLocaleLayoutForm.reset();
+  //   alert('Valid values added successfully!');
+  // }
+  // onSetLocaleAdd(formValues: any) {
+  //   if (this.inputSetLocaleLayoutForm.invalid) {
+  //     alert('Please fill all the required fields.');
+  //     return;
+  //   }
+  //   const newLocaleValues: BodLocaleTable = {
+  //     locale: formValues.locale ?? false,
+  //     displayName: formValues.displayName ?? false,
+  //     description: formValues.description ?? false
+  //   };
+
+  //   this.dataWithlocaleset.push(newLocaleValues);
+  //   this.localetablesetdata.datasource.data = this.dataWithlocaleset;
+  //   this.inputSetLocaleLayoutForm.reset();
+  //   alert('Valid values added successfully!');
+  // }
+
+
+  onSave(isAdd: boolean) {
     if (isAdd) {
-      this.identifierSearch('conditionIdentifier').then(() => {
+      this.identifierSearch('identifier').then(() => {
         this.submitForm(isAdd);
       });
     } else {
@@ -1651,613 +2277,1309 @@ currencyConditionComponent: CurrencyConditionComponent;
     }
   }
 
-  onRadioChange(event: any) {
-    console.log('Event Radio: ', event);
-  }
-  public updateColumnData(columnName, value, index, checkboxRef) {
-    const updatedData = this.textConditionData.datasource.data;
-    updatedData[index][columnName] = checkboxRef ? !value.checked : value;
+  submitForm(isAdd: boolean) {
+    this.messages1 = [];
+    this.messages2 = [];
+    this.addNewAttributeFormGroup.get('classificationtype')?.setValue('System Defined');
+    const updatedData = this.addNewAttributeFormGroup.getRawValue();
+    this.addNewAttributeFormGroup.controls['identifier'].enable();
+    const formValue = this.addNewAttributeFormGroup.getRawValue();
+    const validvalue = this.inputLayoutForm.value;
+    delete formValue.validtype;
+    const selectedType = formValue.type;
+    const selectedFormatType = formValue.datatype;
+    if (formValue.max !== undefined && formValue.max !== null && formValue.max < formValue.min) {
+      this.handleError({ errorCode: 'MAX_LESS_THAN_MIN', status: 800 }, true);
+      return;
+    }
 
-    for (let item of updatedData) {
-      if (item.id !== index) {
-        // const dupVal=value;
-        const dupVal = Object.assign({}, value);
-        dupVal.checked = false;
-        updatedData[item.id][columnName] = dupVal;
+
+    formValue.name = formValue.name === "" ? null : formValue.name;
+    formValue.shortname = formValue.shortname === "" ? null : formValue.shortname;
+
+
+
+    const objectTypeIdentifier =
+      this.types.find(item => item.label === selectedType)?.value ||
+      selectedType;
+    const formatTypeIdentifier =
+      parseInt(
+        this.datatypes.find(item => item.label === selectedFormatType)?.value,
+        10
+      ) || parseInt(selectedFormatType, 10);
+
+    const localeTableData = this.simpleEditTableRef.getCurrentTableData?.() || [];
+
+    const multiLingualTextInfoList: MultiLingualTextInfo[] = localeTableData.map(item => ({
+      localeCode: item.locale,
+      localeText: item.description ? item.description : '',
+      translationText: item.displayName ? item.displayName : '',
+      identifier: formValue.identifier,
+      objectType: formValue.type,
+      attributeType: formValue.datatype
+    }));
+
+
+    const locales = new Set();
+    let hasDuplicateLocale = false;
+    let duplicateLocale = null;
+
+    for (const item of multiLingualTextInfoList) {
+      if (locales.has(item.localeCode)) {
+        hasDuplicateLocale = true;
+        duplicateLocale = item.localeCode;
+        break;
       }
-    }
-    (
-      this.textConditionData
-        .datasource as MatTableDataSource<BodEditableSampleTable>
-    ).data = updatedData;
-    console.log(updatedData);
-    this.addTextConditionValue.updateDeltaForCustomColumn(
-      EditTableAction.EDIT,
-      index
-    );
-    this.changeDetectorRef.detectChanges();
-
-    console.log('Final Data:', updatedData);
-  }
-  private conditionForm(element: ConditionList): void {
-    this.addNewConditionFormGroup.removeControl('curspecificvalue');
-
-    this.isAdd = false;
-
-    // Mapping logic for applicableLevel
-    let applicableToValue: string | null = null;
-    switch (element.applicableLevel) {
-      case 'ProductLaw':
-        applicableToValue = 'productonly';
-        break;
-      case 'ArrangementLaw':
-        applicableToValue = 'accountonly';
-        break;
-      case 'InternalLaw':
-        applicableToValue = 'product&account';
-        break;
-      default:
-        applicableToValue = null; // or handle unknown case
+      locales.add(item.localeCode);
     }
 
-    const customizable: boolean = [
-      'ProductSuggestion',
-      'SystemSuggestion'
-    ].includes(element.customizationLevel);
-    this.addNewConditionFormGroup.patchValue({
-      code: element.cdarValue,
-      conditionIdentifier: element.identifier,
-      name: element.name,
-      conditionType: element.conditionType,
-      classificationType: element.classificationType,
-      optionality: element.conditionOptionalityType,
-      applicableTo: applicableToValue,
-      customizable: customizable,
-      conditionsRltnp: element.conditionsRltnp || [],
-      conditionSubject: '',
-      relationship: ''
+    if (hasDuplicateLocale) {
+      this.handleError({ errorCode: 'DUPLICATE_LOCALE', status: 800, duplicateLocale }, true);
+      return;
+    }
+
+
+
+
+
+    const multiLingualTextInfoRangeList = Object.keys(
+      this.inputRangeLocaleLayoutFormLocale.controls
+    ).map((key, index) => {
+      return {
+        localeCode: this.inputRangeLocaleLayoutFormLocale.get(key)?.value,
+        localeText: this.inputRangeLocaleLayoutFormDisplayName.get(
+          this.useExistingFormCtrlKeysRangeDisplayName[index]
+        )?.value,
+        identifier: formValue.identifier,
+        objectType: formValue.type,
+        attributeType: formValue.datatype,
+        translationText: this.inputRangeLocaleLayoutFormDesc.get(
+          this.useExistingFormCtrlKeysRangeDesc[index]
+        )?.value
+      };
     });
-    const localeList: CondTable[] = (element.conditionsRltnp || []).map(
-      (locale, i) => ({
-        id: i,
-        conditionSubject: locale.subjectCdarValue,
-        relationship: locale.conditionRltnpType
-      })
-    );
-    this.localeTableData = localeList;
+    const multiLingualTextInfoSetList = Object.keys(
+      this.inputSetLocaleLayoutFormLocale.controls
+    ).map((key, index) => {
+      return {
+        localeCode: this.inputSetLocaleLayoutFormLocale.get(key)?.value,
+        localeText: this.inputSetLocaleLayoutFormDisplayName.get(
+          this.useExistingFormCtrlKeysSetDisplayName[index]
+        )?.value,
+        identifier: formValue.identifier,
+        objectType: formValue.type,
+        attributeType: formValue.datatype,
+        translationText: this.inputSetLocaleLayoutFormDesc.get(
+          this.useExistingFormCtrlKeysSetDesc[index]
+        )?.value
+      };
+    });
 
-    // const localeList: CondTable[] = element.conditionsRltnp
-    //   ? [
-    //       {
-    //         id: 0,
-    //         conditionSubject: element.conditionsRltnp.subjectCdarValue,
-    //         relationship: element.conditionsRltnp.conditionRltnpType
-    //       }
-    //     ]
-    //   : [];
-
-    // this.localeTableData = localeList;
-
-    if (element.conditionType === 'DateCondition') {
-      this.addNewConditionFormGroup.patchValue({
-        start: element.conditionDetail.value
-      });
-    } else if (element.conditionType === 'FlagCondition') {
-      this.addNewConditionFormGroup.patchValue({
-        defaultflag: element.conditionDetail.value
-      });
-    } else if (element.conditionType === 'TextCondition') {
-      if (
-        element.conditionDetail.textValidValues &&
-        element.conditionDetail.textValidValues.length > 0
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validvalue: true,
-          conditionDetail: element.conditionDetail || [],
-          validvalues: null,
-          default: null
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          defaultValueText: element.conditionDetail.value
-        });
+    const attribute: any = {
+      additionalDataType: {
+        identifier: formValue.identifier,
+        code: formValue.code,
+        name: formValue.name,
+        shortName: formValue.shortname,
+        objectTypeIdentifier: objectTypeIdentifier,
+        formatTypeIdentifier: formatTypeIdentifier,
+        calculated: formValue.calculate ? 'Y' : 'N',
+        searchable: formValue.searchable ? 'Y' : 'Y',
+        multiValueAllowed: formValue.multivalueallowed ? 'Y' : 'N',
+        percentageAllowed: formValue.percentageallowed ? 'Y' : 'N',
+        classificationType: formValue.classificationtype,
+        multiLingualTextInfoList: multiLingualTextInfoList
       }
-    } else if (element.conditionType === 'CurrencySpecificCondition') {
-      this.curspecificvalue =
-        element?.conditionDetail.currencySpecificDetailsList?.length > 0
-          ? true
-          : false;
-      this.addNewConditionFormGroup.addControl(
-        'curspecificvalue',
-        this.fb.control(this.curspecificvalue)
-      );
-      this.isHidden = !this.curspecificvalue;
 
-      const selectedCurrencies: CurrencyTable[] = [];
 
-      element.conditionDetail.currencySpecificDetailsList?.forEach(detail => {
-        const matchingCurrency = this.currencySpecificData.datasource.data.find(
-          item => item.currencyISO4217Val === detail.currencyCode
-        );
+    };
 
-        if (matchingCurrency) {
-          matchingCurrency.currencyInquiry = detail.currencyRange.map(cur => ({
-            id: cur.id,
-            label: cur.label,
-            value: cur.value
-          }));
-          selectedCurrencies.push(matchingCurrency);
+    if (formValue.validvaluestype === 'rangevalues') {
+      attribute.additionalDataValidValuesRange = {
+        identifier: 0,
+        attributeIdentifier: formValue.identifier,
+        name: formValue.rangename,
+        description: formValue.rangedescriptions,
+        lowValue: formValue.low,
+        highValue: formValue.high,
+        multiLingualTextInfoList: multiLingualTextInfoRangeList
+
+      };
+    }
+    if (formValue.validvaluestype === 'setvalues') {
+      attribute.additionalDataValidValueSetList = [
+        {
+          identifier: 0,
+          attributeIdentifier: formValue.identifier,
+          name: formValue.setname,
+          description: formValue.setdescription,
+          value: formValue.attributevalue,
+          isdefault: formValue.isdefault ? 'Y' : 'N',
+          isPrimary: formValue.isprimary ? 'Y' : 'N',
+          percentage: formValue.percentagevalue,
+          sequenceNumber: formValue.sequencenumbers,
+          overrideDefault: formValue.isvalueoverridden ? 'Y' : 'N',
+          multiLingualTextInfoList: multiLingualTextInfoSetList
+
         }
-      });
-
-      this.currencySpecificData.datasource.data.forEach(row => {
-        if (selectedCurrencies.includes(row)) {
-          this.expandableTableRef.selection.select(row);
-        }
-      });
-
-      this.selectedRow = selectedCurrencies;
-    } else if (element.conditionType === 'TextAndNumberCondition') {
-      if (
-        element.conditionDetail.textAndNumberValidValues &&
-        element.conditionDetail.textAndNumberValidValues.length > 0
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          textnumbervalidvalue: true,
-          conditionDetail: element.conditionDetail || [],
-          validvalues: '',
-          numbervalidvalues: null,
-          default: null
-        });
-      } else if (element.conditionDetail.textNumberValue) {
-        this.addNewConditionFormGroup.patchValue({
-          defaultText: element.conditionDetail.textNumberValue.textValue,
-          defaultNumber: element.conditionDetail.textNumberValue.numberValue
-        });
-      }
-    } else if (element.conditionType === 'PercentCondition') {
-      if (
-        element.conditionDetail.minValue !== null &&
-        element.conditionDetail.maxValue !== null
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypePercentage: 'range',
-          percentageDefaultValue: element.conditionDetail.value,
-          percentageLow: element.conditionDetail.minValue,
-          percentageHigh: element.conditionDetail.maxValue
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypePercentage: 'none',
-          percentageValue: element.conditionDetail.value
-        });
-      }
-    } else if (element.conditionType === 'AmountCondition') {
-      if (
-        element.conditionDetail.minValue !== null &&
-        element.conditionDetail.maxValue !== null
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeAmount: 'range',
-          currency: element.conditionDetail.currencyIdfr,
-          amountDefaultValue: element.conditionDetail.value,
-          amountLow: element.conditionDetail.minValue,
-          amountHigh: element.conditionDetail.maxValue
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeAmount: 'none',
-          currency: element.conditionDetail.currencyIdfr,
-          amountValue: element.conditionDetail.value
-        });
-      }
-    } else if (element.conditionType === 'NumberCondition') {
-      if (
-        element.conditionDetail.minValue !== null &&
-        element.conditionDetail.maxValue !== null
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeNumber: 'range',
-          numberdefaultValue: element.conditionDetail.value,
-          numberLow: element.conditionDetail.minValue,
-          numberHigh: element.conditionDetail.maxValue
-        });
-      } else if (
-        element.conditionDetail.numberValidValues &&
-        element.conditionDetail.numberValidValues.length > 0
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeNumber: 'set',
-          conditionDetail: element.conditionDetail || [],
-          validvalues: null,
-          default: null
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeNumber: 'none',
-          numberValue: element.conditionDetail.value
-        });
-      }
+      ];
     }
 
-    const localeList1: textNumCond[] = (
-      element.conditionDetail.textAndNumberValidValues || []
-    ).map((locale, i) => ({
-      id: i,
-      validvalues: locale.textValue,
-      numbervalidvalues: locale.numberValue,
+    
+ const productTypeIdentifiers = this.metadataService.getProductTypeIdentifiers();
 
-      default:
-        element.conditionDetail.textNumberValue &&
-          locale.textValue ===
-          element.conditionDetail.textNumberValue.textValue &&
-          locale.numberValue ===
-          element.conditionDetail.textNumberValue.numberValue
-          ? true
-          : false
-    }));
-    this.localeTableData1 = localeList1;
-
-    const localeList2: NumCond[] = (
-      element.conditionDetail.numberValidValues || []
-    ).map((value, i) => ({
-      id: i,
-      validvalues: Number(value),
-
-      default:
-        Number(value) === Number(element.conditionDetail.value) ? true : false
-    }));
-
-    this.localeTableData2 = localeList2;
-
-    const localeList3: TextCond[] = (
-      element.conditionDetail.textValidValues || []
-    ).map((value, i) => ({
-      id: i,
-      validvalues: value,
-
-      default: value === element.conditionDetail.value ? true : false
-    }));
-
-    this.localeTableData3 = localeList3;
-    this.isEdit = true;
-  }
-
-  //Currency Specific Conditions
-
-  public editIndex = -1;
-  inlineEditRowActionClick(
-    inlineEditOutput: InlineEditOutput,
-    index,
-    template?
-  ) {
-    const element = (this.editRowElement = inlineEditOutput.editRowElement);
-    if (element.default === 0 && element.defaultValue === 0) {
-      this.addNewConditionCurrencyForm.reset();
-    }
-
-    // const defaultEntry = element.currencyInquiry.find(
-    //   item => item.label === 'Default value'
-    // );
-
-    // if (defaultEntry && defaultEntry.value === 0) {
-    //   this.addNewConditionCurrencyForm.reset();
+    console.log("forml values data", formValue);
+    // Commenting the below if condition as we are not depending on the toggle to give the value for now  
+    // if (formValue.relatetoproducttype) {
+    attribute.productTypeAdditionalDataTypeRltnpList = [
+      {
+        identifier: 1110101,
+        attributeIdentifier: formValue.identifier,
+        attributeCode: formValue.code,
+        minimumRequired: formValue.min,
+        maximumAllowed: formValue.max,
+        glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+      }
+    ];
     // }
-
-    this.editIndex = inlineEditOutput.editRowIndex;
-
-    if (index === 0 || index === 1) {
-      this.getTableInput(index).range = element.currencyInquiry[0].value;
-      this.getTableInput(index).default = element.currencyInquiry[1].value;
-      this.getTableInput(index).minimumcspcf = element.currencyInquiry[2].value;
-      this.getTableInput(index).maximumcspcf = element.currencyInquiry[3].value;
-      this.getTableInput(index).defaultcspcf = element.currencyInquiry[4].value;
+    if (this.dataWithValidvalues.length > 0) {
+      console.log(this.dataWithValidvalues);
+      const productTypeAdditionalDataList = this.dataWithValidvalues.map(
+        (item, index) => ({
+          identifier: index,
+          attributeIdentifier: formValue.identifier,
+          attributeCode: formValue.code,
+          attributeValue: item.additionaldatavalue,
+          attributeValueSource: '',
+          isDefault: item.defaultindicator === 'Y' ? 'Y' : 'N',
+          isPrimary: item.primaryindicator === 'Y' ? 'Y' : 'N',
+          percentage: item.percentagevalue,
+          sequenceNumber: item.sequencenumber,
+          overrideDefault: item.overrideindicator === 'Y' ? 'Y' : 'N'
+        })
+      );
+      attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
     }
-  }
 
-  public editRowElement: any;
-  public tabIndexTableMap: TabIndexTableMap = {};
-  getTableFormGroup(index: number): UntypedFormGroup {
-    return this.tabIndexTableMap[index].formGroup;
-  }
-  getTableRef(index: number): BodTableComponent {
-    return this.tabIndexTableMap[index].ref;
-  }
-  getTableInput(index: number): any {
-    return this.tabIndexTableMap[index].input;
-  }
+    this.addNewAttributeFormGroup.markAllAsTouched();
+    this.addNewAttributeFormGroup.updateValueAndValidity();
 
-  public inputExpand = {
-    range: false,
-    defaultValue: 0,
-    defaultcspcf: 0,
-    minimumcspcf: 0,
-    maximumcspcf: 0
-  };
 
-  setTabIndexTableData() {
-    this.tabIndexTableMap = {
-      0: {
-        formGroup: this.addNewConditionCurrencyForm,
-        data: this.currencySpecificData,
-        ref: this.expandableTableRef,
-        input: this.inputExpand
+    const request = {
+      metadataType: 'Attribute',
+      attributeList: [attribute],
+
+      productTypeList: [
+        {
+          identifier: 1110101,
+          code: 'Checking'
+        }
+      ]
+    };
+
+    console.log('request SEND:', JSON.stringify(request, null, 2));
+
+    if (multiLingualTextInfoList.length === 0) {
+      this.handleError(
+        {
+          errorCode: 'LOCALE_EMPTY',
+          status: 409
+        },
+        isAdd
+      );
+      return;
+    }
+    if (this.addNewAttributeFormGroup.invalid) {
+      this.addNewAttributeFormGroup.markAllAsTouched();
+
+      const missingFields = this.getInvalidRequiredFields(this.addNewAttributeFormGroup);
+      console.warn('Missing required fields:', missingFields);
+
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        },
+        isAdd
+      );
+      return;
+    }
+
+
+    console.log("invalidform::", this.addNewAttributeFormGroup);
+    this.addNewAttributeFormGroup;
+    console.log('API REQUEST', request);
+    // console.log('request SEND:', JSON.stringify(request, null, 2));
+    const serviceCall = isAdd
+      ? this.metadataService.saveAttribute(request)
+      : this.metadataService.updateAttribute(request);
+
+    serviceCall.subscribe(
+      response => {
+        console.log('API Response from PUT:', response);
+
+        if (!response) {
+          console.warn(
+            'PUT response is null. Fetching updated data using GET...'
+          );
+
+          this.metadataService.retrieveAttribute().subscribe(getResponse => {
+            console.log(
+              'Full GET Response:',
+              JSON.stringify(getResponse, null, 2)
+            );
+
+            if (
+              getResponse &&
+              getResponse.data &&
+              getResponse.data.length > 0
+            ) {
+              const updatedData = getResponse.data.flatMap(attributeObj => {
+                const additionalDataType =
+                  attributeObj.Attribute?.additionalDataType;
+
+                if (
+                  !additionalDataType ||
+                  !additionalDataType.multiLingualTextInfoList
+                ) {
+                  console.warn(
+                    'Skipping attribute: No multiLingualTextInfoList found for',
+                    attributeObj
+                  );
+                  return [];
+                }
+
+                return additionalDataType.multiLingualTextInfoList.map(
+                  item => ({
+                    locale: item.localeCode,
+                    displayName: item.translationText,
+                    description: item.localeText
+                  })
+                );
+              });
+              console.log('DATAAAAA', this.tableWithSimpleEdit);
+
+              // this.tableWithSimpleEdit.datasource = new MatTableDataSource(updatedData);
+              this.tableWithSimpleEdit.datasource.data = updatedData;
+
+              setTimeout(() => {
+                this.changeDetectorRef.detectChanges();
+              }, 100);
+
+              console.log('Updated Table Data (After GET):', updatedData);
+            } else {
+              console.warn(
+                'GET response contains empty data. No data to display.'
+              );
+            }
+          });
+        } else {
+          const updatedData =
+            response.attributeList[0].multiLingualTextInfoList.map(item => ({
+              locale: item.localeCode,
+              displayName: item.translationText,
+              description: item.localeText
+            }));
+
+          this.tableWithSimpleEdit.datasource = new MatTableDataSource(
+            updatedData
+          );
+
+          setTimeout(() => {
+            this.changeDetectorRef.detectChanges();
+          }, 100);
+
+          console.log('Updated Table Data:', updatedData);
+        }
+
+        this.handleSuccess(isAdd, request);
+      },
+      error => {
+        console.error('API Call Failed:', error);
+
+
+        this.handleError(error, isAdd);
       }
+    );
+
+    this.dataWithValidvalues = [];
+    this.addNewAttributeFormGroup.controls['identifier'].disable();
+  }
+  handleSuccess(isAdd: boolean, request?: any) {
+    this.dialogRef$.close();
+    console.log('Attribute saved successfully:', request);
+    let attributeCode = 'Unknown Code';
+
+    if (request?.attributeList?.[0]?.additionalDataType?.code) {
+      attributeCode = request.attributeList[0].additionalDataType.code;
+    } else if (request?.attributeList[0].productTypeAdditionalDataTypeRltnpList?.[0]?.attributeCode) {
+      attributeCode = request.attributeList[0].productTypeAdditionalDataTypeRltnpList[0].attributeCode;
+    }
+    const successMsg = isAdd
+      ? `${attributeCode} added successfully`
+      : `${attributeCode} updated successfully`;
+
+    this.message = {
+      code: '204',
+      text: successMsg,
+      type: NotificationMessageType.SUCCESS
+    };
+
+    this.messages.push(this.message);
+    this.getAttribute();
+
+    this.metadataService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW';
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
+    });
+
+    this.resetForms();
+  }
+
+  private handleError(error: any, isAdd: boolean) {
+    let errorMsg = ' ';
+
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.errorCode === 'MAX_LESS_THAN_MIN') {
+      errorMsg = 'Min cannot be Greater than Max.';
+    } else if (error.errorCode === 'DUPLICATE_LOCALE') {
+      errorMsg = `Duplicate selection detected: The ${error.duplicateLocale} language has been selected multiple times in the Locale section. Please ensure each language is selected only once.`;
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Code already exists.';
+    } else if (error.errorCode === 'LOCALE_EMPTY') {
+      errorMsg = 'AtLeast One Locale is required.';
+    }
+    else {
+      errorMsg = 'Unknown error occurred.';
+    }
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+
+    this.messages1.push(this.message);
+
+    // setTimeout(() => {
+    //   this.messages1 = this.messages1.filter(
+    //     msg => msg.text !== errorMsg
+    //   );
+    // }, 20000);
+  }
+
+
+  private handleError1(error: any) {
+    let errorMsg = '';
+    switch (error.errorCode) {
+      case 'MAX_LESS_THAN_MIN':
+        errorMsg =
+          'Min cannot be Greater than Max.';
+        break;
+      default:
+        errorMsg = 'Unknown error occurred.';
+    }
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
     };
   }
 
-  // onAddCurrency(formGroupValid: boolean, index) {
-  //   if (formGroupValid) {
-  //     const editedData: CurrencyTable1[] = [];
-  //     const formGroup = this.getTableFormGroup(index);
-  //     const selectedProductLine: string = formGroup.value;
+  handleErrorforExisting(error: any, isAdd: boolean) {
+    let errorMsg = ' ';
 
-  //     this.getTableRef(index).data.datasource.data.forEach(d => {
-  //       if (d.index === this.editRowElement.index) {
-  //         const editedRow: CurrencyTable1 = {
-  //           index: d.index,
-  //           code: d.code,
-  //           currencyISO4217Val: d.currencyISO4217Val,
-  //           identifier: d.identifier
-  //         };
 
-  //         if (index === 0 || index === 1) {
-  //           const rangeValue = formGroup.value.range;
-
-  //           if (rangeValue) {
-  //             // Reset DefaultValue
-  //             formGroup.patchValue({ defaultValue: null });
-
-  //             editedRow.currencyInquiry = [
-  //               {
-  //                 id: 0,
-  //                 label: 'Range',
-  //                 value: formGroup.value.range
-  //               },
-  //               {
-  //                 id: 1,
-  //                 label: 'Minimum Value',
-  //                 value: formGroup.value.minimumcspcf
-  //               },
-  //               {
-  //                 id: 2,
-  //                 label: 'Maximum Value',
-  //                 value: formGroup.value.maximumcspcf
-  //               },
-  //               {
-  //                 id: 3,
-  //                 label: 'Default Value',
-  //                 value: formGroup.value.defaultcspcf
-  //               }
-  //             ];
-  //           } else {
-  //             // Reset maximum, minimum, and default
-  //             formGroup.patchValue({
-  //               minimumcspcf: null,
-  //               maximumcspcf: null,
-  //               defaultcspcf: null
-  //             });
-
-  //             editedRow.currencyInquiry = [
-  //               {
-  //                 id: 0,
-  //                 label: 'Range',
-  //                 value: false
-  //               },
-  //               {
-  //                 id: 1,
-  //                 label: 'Default Value',
-  //                 value: formGroup.value.defaultValue
-  //               }
-  //             ];
-  //           }
-  //         }
-
-  //         editedData.push(editedRow);
-  //       } else {
-  //         editedData.push(d);
-  //       }
-  //     });
-
-  //     this.editedData = editedData;
-
-  //     this.getTableRef(index).updateDatasource(
-  //       new MatTableDataSource<CurrencyTable1>([...editedData])
-  //     );
-  //   }
-  //   this.addNewConditionFormGroup.markAsDirty();
-  // }
-  private editedData: CurrencyTable1[] = [];
-  onAddCurrency(formGroupValid: boolean, index: number) {
-    if (!formGroupValid) return;
-
-    const formGroup = this.getTableFormGroup(index);
-    const rangeValue = formGroup.value.range; // ✅ Perform validation early
-
-    if ((index === 0 || index === 1) && rangeValue === true) {
-      const min = formGroup.value.minimumcspcf;
-      const max = formGroup.value.maximumcspcf;
-      const def = formGroup.value.defaultcspcf;
-
-      if (min >= max) {
-        this.handleErrorforMaxandMin({
-          errorCode: 'MAX_LESS_THAN_MIN',
-          status: 400
-        });
-        return;
-      }
-
-      if (def < min || def > max) {
-        this.handleErrorforMaxandMin({
-          errorCode: 'DEFAULT_OUT_OF_RANGE',
-          status: 400
-        });
-        return;
-      }
-    }
-
-    const editedData: CurrencyTable1[] = [];
-    const selectedIndexes = this.selectedRow.map(row => row.index);
-
-    this.getTableRef(index).data.datasource.data.forEach(d => {
-      if (d.index === this.editRowElement.index) {
-        const editedRow: CurrencyTable1 = {
-          index: d.index,
-          code: d.code,
-          currencyISO4217Val: d.currencyISO4217Val,
-          identifier: d.identifier
-        };
-
-        if (index === 0 || index === 1) {
-          if (rangeValue === true) {
-            formGroup.patchValue({ defaultValue: null });
-
-            editedRow.currencyInquiry = [
-              { id: 0, label: 'Range', value: 'Y' },
-              {
-                id: 1,
-                label: 'Minimum Value',
-                value: formGroup.value.minimumcspcf
-              },
-              {
-                id: 2,
-                label: 'Maximum Value',
-                value: formGroup.value.maximumcspcf
-              },
-              {
-                id: 3,
-                label: 'Default Value',
-                value: formGroup.value.defaultcspcf
-              }
-            ];
-          } else {
-            formGroup.patchValue({
-              minimumcspcf: null,
-              maximumcspcf: null,
-              defaultcspcf: null
-            });
-
-            editedRow.currencyInquiry = [
-              { id: 0, label: 'Range', value: 'N' },
-              {
-                id: 1,
-                label: 'Default Value',
-                value: formGroup.value.defaultValue
-              }
-            ];
-          }
-        }
-
-        editedData.push(editedRow);
-      } else {
-        editedData.push(d);
-      }
-    });
-
-    this.editedData = editedData;
-
-    const newDataSource = new MatTableDataSource<CurrencyTable1>([
-      ...editedData
-    ]);
-    this.getTableRef(index).updateDatasource(newDataSource);
-
-    const selectionModel = this.getTableRef(index).selection;
-    newDataSource.data.forEach(row => {
-      if (selectedIndexes.includes(row.index)) {
-        selectionModel.select(row);
-      }
-    });
-
-    this.selectedRow = selectionModel.selected;
-
-    console.log('Updated selectedRow:', this.selectedRow);
-
-    this.addNewConditionFormGroup.markAsDirty();
-  }
-
-  @Output() rowSelectionChange = new EventEmitter<CurrencyTable[]>();
-
-  isablePrimaryRowActionOnRowClick = false;
-  public allowRowSelection = true;
-  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
-
-  public isRowSelected: boolean = false;
-
-  public rowSelection(element: CurrencyTable[]) {
-    if (element.length !== 0) {
-      let msg = ':';
-      element.forEach(ele => {
-        msg += ' ' + ele.currencyISO4217Val + ' ' + ele.code;
-      });
-      this.selectedRow = element; // this.updateMessage('mbpBod.demo.microsite.table.rowSelected', msg);
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      errorMsg = 'Please fill the required fields.';
+    } else if (error.status === 400) {
+      errorMsg = 'Please fill the required fields.';
+    } else if (error.errorCode === 'MAX_LESS_THAN_MIN') {
+      errorMsg = 'Min cannot be Greater to Max.';
+    } else if (error.error.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
     } else {
-      // this.updateMessage('mbpBod.demo.microsite.table.rowDeselected', '');
-      this.selectedRow = [];
+      errorMsg = 'Unknown error occurred.';
     }
-    // this.rowSelectionChange.emit(this.selectedRow);
-    console.log('row Data', this.selectedRow);
-    this.addNewConditionFormGroup.markAsDirty();
+
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+
+    if (isAdd) {
+      this.messages1.push(this.message);
+    }
+    setTimeout(() => {
+      this.messages1 = this.messages1.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
   }
-  // public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
-  //   if (element.length !== 0) {
-  //     let msg = ':';
-  //     element.forEach(ele => {
-  //       msg += ' ' + ele.currencyISO4217Val + ' ' + ele.code;
-  //     });
-  //     this.selectedRowSingleSelect = element; // this.updateMessage('mbpBod.demo.microsite.table.rowSelected', msg);
-  //   } else {
-  //     // this.updateMessage('mbpBod.demo.microsite.table.rowDeselected', '');
-  //     this.selectedRowSingleSelect = [];
+  resetForms() {
+    this.addNewAttributeFormGroup.reset();
+    this.inputLayoutForm.reset();
+    this.inputExistingLayoutForm.reset();
+  }
+
+  //
+
+
+  // onAdd(formValues: any) {
+  //   if (this.inputLayoutForm.invalid) {
+  //     return;
   //   }
-  //   // this.rowSelectionChange.emit(this.selectedRow);
-  //   console.log('row Data', this.selectedRow);
-  //   this.addNewConditionFormGroup.markAsDirty();
+  
+  //   this.dataWithValidvalues = this.dataWithValidvalues || [];
+  
+  //   let formattedValue = formValues.additionaldatavalue;
+  
+  //   if (this.inputType === 'date' && formattedValue) {
+  //     const date = new Date(formattedValue);
+  //     formattedValue = date.toLocaleDateString('en-US'); // Outputs MM/DD/YYYY
+  //   }
+  
+  //   const newValidValue: BodSampleTable1 = {
+  //     additionaldatavalue: formattedValue || '',
+  //     defaultindicator: formValues.defaultindicator ? 'Y' : 'N',
+  //     primaryindicator: formValues.primaryindicator ? 'Y' : 'N',
+  //     overrideindicator: formValues.overrideindicator ? 'Y' : 'N',
+  //     percentagevalue: formValues.percentagevalue ?? null,
+  //     sequencenumber: formValues.sequencenumber ?? null
+  //   };
+  
+  //   this.dataWithValidvalues.push(newValidValue);
+  
+  //   if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
+  //     this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+  //   }
+  
+  //   this.changeDetectorRef.detectChanges();
+  //   this.inputLayoutForm.reset();
+  //   this.addNewAttributeFormGroup.markAsDirty();
   // }
 
-  public handleCurrencyDefaultChange(event: { rowIndex: number, isDefault: boolean }) {
-    // Update the currency data model
-    if (this.currencyData1 && this.currencyData1.length) {
-      this.currencyData1.forEach((item) => {
-        if (item.index === event.rowIndex) {
-          item.default = event.isDefault;
-        } else if (event.isDefault) {
-          // If another row is set as default, unset all others
-          item.default = false;
+  onAdd(formValues: any) {
+    this.messages2 = [];
+    if (this.inputLayoutForm.invalid) {
+      return;
+    }
+  
+    this.dataWithValidvalues = this.dataWithValidvalues || [];
+  
+    let rawValue = formValues.additionaldatavalue;
+    let formattedValue = rawValue;
+  
+    // Normalize based on input type
+    switch (this.inputType) {
+      case 'date':
+        if (rawValue) {
+          const date = new Date(rawValue);
+          formattedValue = date.toLocaleDateString('en-US'); // MM/DD/YYYY
         }
-      });
+        break;
+      case 'datetime-local':
+        if (rawValue) {
+          const dateTime = new Date(rawValue);
+          formattedValue = dateTime.toISOString(); // ISO format for consistency
+        }
+        break;
+      case 'time':
+        formattedValue = rawValue; // Already in HH:mm format
+        break;
+      case 'number':
+        formattedValue = rawValue?.toString(); // Convert number to string
+        break;
+      case 'text':
+      default:
+        formattedValue = rawValue?.toString().trim();
+        break;
+    }
+  
+    // Check for duplicates
+    let duplicateValue: string | undefined;
+
+    const isDuplicate = this.dataWithValidvalues.some(item => {
+      let existingValue = item.additionaldatavalue;
+    
+      // Normalize existing value for comparison
+      switch (this.inputType) {
+        case 'date':
+          existingValue = new Date(existingValue).toLocaleDateString('en-US');
+          break;
+        case 'datetime-local':
+          existingValue = new Date(existingValue).toISOString();
+          break;
+        case 'number':
+          existingValue = existingValue?.toString();
+          break;
+        case 'text':
+        default:
+          existingValue = existingValue?.toString().trim();
+          break;
+      }
+    
+      if (existingValue === formattedValue) {
+        duplicateValue = existingValue;
+        return true;
+      }
+    
+      return false;
+    });
+    
+    if (isDuplicate && duplicateValue !== undefined) {
+      const errorMsg = `The valid value ${duplicateValue} already exists.`;
+      this.message = {
+        code: 'DUPLICATE_VALIDVALUE',
+        text: errorMsg,
+        type: NotificationMessageType.ERROR
+      };
+      this.messages2.push(this.message);
+      this.inputLayoutForm.markAsTouched();
+      return;
     }
     
-    // Mark the form as dirty so changes are tracked
-    this.addNewConditionFormGroup.markAsDirty();
+  
+    const newValidValue: BodSampleTable1 = {
+      additionaldatavalue: formattedValue || '',
+      defaultindicator: formValues.defaultindicator ? 'Y' : 'N',
+      primaryindicator: formValues.primaryindicator ? 'Y' : 'N',
+      overrideindicator: formValues.overrideindicator ? 'Y' : 'N',
+      percentagevalue: formValues.percentagevalue ?? null,
+      sequencenumber: formValues.sequencenumber ?? null
+    };
+  
+    this.dataWithValidvalues.push(newValidValue);
+  
+    if (this.ValidvalueArray && this.ValidvalueArray.datasource) {
+      this.ValidvalueArray.datasource.data = [...this.dataWithValidvalues];
+    }
+  
+    this.changeDetectorRef.detectChanges();
+    this.inputLayoutForm.reset();
+    this.addNewAttributeFormGroup.markAsDirty();
+  }
+  
+  
+  
+  onExistingAdd(formValues: any) {
+    if (this.inputExistingLayoutForm.invalid) {
+      return;
+    }
+    this.dataWithExsistingValidvalues = this.dataWithExsistingValidvalues || [];
+    // this.dataWithExsistingValidvalues = [];
+    const newValidValue: BodSampleTable1 = {
+      additionaldatavalue: formValues.additionaldatavalue || '',
+      defaultindicator: formValues.defaultindicator ? 'Y' : 'N',
+      primaryindicator: formValues.primaryindicator ? 'Y' : 'N',
+      overrideindicator: formValues.overrideindicator ? 'Y' : 'N',
+      percentagevalue: formValues.percentagevalue ?? null,
+      sequencenumber: formValues.sequencenumber ?? null
+    };
+
+    console.log('BeforeAdding:', this.dataWithExsistingValidvalues);
+
+    this.dataWithExsistingValidvalues.push(newValidValue);
+
+    if (
+      this.ExistingValidvalueArray &&
+      this.ExistingValidvalueArray.datasource
+    ) {
+      this.ExistingValidvalueArray.datasource.data = [
+        ...this.dataWithExsistingValidvalues
+      ];
+    } else {
+      this.inputExistingLayoutForm.reset();
+    }
+    this.changeDetectorRef.detectChanges();
+    this.inputExistingLayoutForm.reset();
+    this.addExistingAttributeFormGroup.markAsDirty();
   }
 
-  public handleCurrencySelection(selectedRows: CurrencyTableSingle[]) {
-    this.selectedRowSingleSelect = selectedRows;
-    this.addNewConditionFormGroup.markAsDirty();
+  onAddforExistingAttribute(isAdd: boolean) {
+    if (isAdd) {
+      this.messages2 = [];
+    }
+    const formValue = this.addExistingAttributeFormGroup.value;
+    console.log('values beforer:', formValue);
+    delete formValue.validtype;
+    const selectedProductCode = formValue.productCode;
+    const selectedProduct = this.productCodes.find(
+      item =>
+        item.label === selectedProductCode || item.value === selectedProductCode
+    );
+    console.log(this.productCodes);
+    const productTypeIdentifier = selectedProduct?.value || selectedProductCode;
+    const productTypeLabel = selectedProduct?.label || selectedProductCode;
+    if (formValue.max !== undefined && formValue.max !== null && formValue.max < formValue.min) {
+      this.handleError({ errorCode: 'MAX_LESS_THAN_MIN', status: 800 }, true);
+      return;
+    }
+
+    const attribute: any = {};
+    attribute.productTypeAdditionalDataTypeRltnpList = [
+      {
+        identifier: 1110101,
+        attributeIdentifier: productTypeIdentifier,
+        attributeCode: productTypeLabel,
+        minimumRequired: formValue.min,
+        maximumAllowed: formValue.max,
+        glCategarization: formValue.GLcategorizationAllowed ? 'Y' : 'N'
+      }
+    ];
+    if (this.dataWithExsistingValidvalues.length > 0) {
+      const productTypeAdditionalDataList =
+        this.dataWithExsistingValidvalues.map((item, index) => ({
+          identifier: index,
+          attributeIdentifier: productTypeIdentifier,
+          attributeValue: item.additionaldatavalue,
+          attributeValueSource: '',
+          isDefault: item.defaultindicator === 'Y' ? 'Y' : 'N',
+          isPrimary: item.primaryindicator === 'Y' ? 'Y' : 'N',
+          percentage: item.percentagevalue,
+          sequenceNumber: item.sequencenumber,
+          overrideDefault: item.overrideindicator === 'Y' ? 'Y' : 'N'
+        }));
+      attribute.productTypeAdditionalDataList = productTypeAdditionalDataList;
+    }
+    const request = {
+      metadataType: 'Attribute',
+      attributeList: [attribute],
+      productTypeList: [
+        {
+          identifier: 1110101,
+          code: 'Checking'
+        }
+      ]
+    };
+
+    console.log('request SEND:', JSON.stringify(request, null, 2));
+    const serviceCall = isAdd
+      ? this.metadataService.saveAttribute(request)
+      : this.metadataService.updateAttribute(request);
+
+    console.log('request: ASDFG', JSON.stringify(request, null, 2));
+
+    serviceCall.subscribe(
+      response => {
+        this.handleSuccess(isAdd, request);
+        console.log('after:', request);
+      },
+      error => this.handleErrorforExisting(error, isAdd)
+    );
+    this.dataWithValidvalues = [];
+    this.dataWithExsistingValidvalues = [];
   }
-  translate: any;
-  systemMessage: any;
-  public updateMessage(key: string, text: string) {
-    const message = this.translate.instant(key) + text;
-    this.systemMessage.updateSystemMessage(message);
+  getAttribute(): void {
+    this.metadataService.retrieveAttribute().subscribe(response => {
+      if (response.status === 'SUCCESS' && response.data) {
+        this.addNewAttributeFormGroup;
+        this.attributeData = response.data.map((item: any) => {
+          const attributeData = item.Attribute || {};
+          const additionalDataType = attributeData.additionalDataType || {};
+          const productTypeAdditionalDataList =
+            attributeData.productTypeAdditionalDataList || [];
+          const productTypeAdditionalDataTypeRltnpList =
+            attributeData.productTypeAdditionalDataTypeRltnpList || [];
+          const additionalDataValidValueSetList =
+            attributeData.additionalDataValidValueSetList || [];
+          const additionalDataValidValuesRange =
+            attributeData.additionalDataValidValuesRange;
+
+          let additionalDataValidValueSetListMapped = null;
+          if (additionalDataValidValueSetList.length > 0) {
+            additionalDataValidValueSetListMapped =
+              additionalDataValidValueSetList.map((valueSet: any) => ({
+                identifier: valueSet.identifier,
+                attributeIdentifier: valueSet.attributeIdentifier,
+                name: valueSet.name,
+                description: valueSet.description,
+                value: valueSet.value,
+                isDefault: valueSet.isDefault,
+                isPrimary: valueSet.isPrimary,
+                percentage: valueSet.percentage,
+                sequenceNumber: valueSet.sequenceNumber,
+                overrideDefault: valueSet.overrideDefault,
+                multiLingualTextInfoList: valueSet.multiLingualTextInfoList
+              }));
+          }
+
+          let productTypeAdditionalDataTypeRltnpListMapped = null;
+          if (productTypeAdditionalDataTypeRltnpList.length > 0) {
+            productTypeAdditionalDataTypeRltnpListMapped =
+              productTypeAdditionalDataTypeRltnpList.map(
+                (relationship: any) => ({
+                  identifier: relationship.identifier,
+                  attributeCode: relationship.attributeCode,
+                  attributeIdentifier: relationship.attributeIdentifier,
+                  minimumRequired: relationship.minimumRequired,
+                  maximumAllowed: relationship.maximumAllowed,
+                  glCategarization: relationship.glCategarization
+                })
+              );
+          }
+
+          let productTypeAdditionalDataListMapped = null;
+          if (productTypeAdditionalDataList.length > 0) {
+            productTypeAdditionalDataListMapped =
+              productTypeAdditionalDataList.map((data: any) => ({
+                identifier: data.identifier,
+                attributeIdentifier: data.attributeIdentifier,
+                attributeCode: data.attributeCode,
+                attributeValue: data.attributeValue,
+                attributeValueSource: data.attributeValueSource,
+                isDefault: data.isDefault,
+                isPrimary: data.isPrimary,
+                percentage: data.percentage,
+                sequenceNumber: data.sequenceNumber,
+                overrideDefault: data.overrideDefault
+              }));
+          }
+
+          let additionalDataValidValuesRangeMapped = null;
+          if (additionalDataValidValuesRange) {
+            additionalDataValidValuesRangeMapped = {
+              identifier: additionalDataValidValuesRange.identifier,
+              attributeIdentifier:
+                additionalDataValidValuesRange.attributeIdentifier,
+              name: additionalDataValidValuesRange.name,
+              description: additionalDataValidValuesRange.description,
+              lowValue: additionalDataValidValuesRange.lowValue,
+              highValue: additionalDataValidValuesRange.highValue,
+              multiLingualTextInfoList:
+                additionalDataValidValuesRange.multiLingualTextInfoList
+            };
+          }
+
+          const code = additionalDataType.code
+            ? additionalDataType.code
+            : productTypeAdditionalDataTypeRltnpList[0].attributeCode;
+
+          const status = item.MetadataStatus
+
+
+
+          const translateStatus = (status: string): string => {
+
+
+            const translations: { [key: string]: string } = {
+              "INPROGRESS": "In Progress",
+              "READY": "Ready",
+              "GENERATED": "Generated",
+              "DELETED": "Deleted",
+              // Add more translations as needed
+            };
+
+            return translations[status] || status; // Return the translated value or the original if no translation is found
+          };
+
+
+
+          const attribute: Attribute = {
+            //   additionalDataType: {
+            code: code,
+            descriptions: [
+              {
+                id: 0,
+                label: 'Name',
+                value: additionalDataType.name
+              },
+
+              {
+                id: 2,
+                label: 'Short name',
+                value: additionalDataType.shortName
+              },
+
+              {
+                id: 4,
+                label: 'Type',
+                value: this.type(additionalDataType.objectTypeIdentifier)
+              },
+              {
+                id: 5,
+                label: 'Data type',
+                value: this.formatdatatype(
+                  additionalDataType.formatTypeIdentifier
+                )
+              },
+              {
+                id: 6,
+                label: 'Calculate',
+                value: additionalDataType.calculated
+              },
+              {
+                id: 7,
+                label: 'Searchable',
+                value: additionalDataType.searchable
+              },
+              {
+                id: 8,
+                label: 'Multivalue allowed',
+                value: additionalDataType.multiValueAllowed
+              },
+              {
+                id: 9,
+                label: 'Percentage allowed',
+                value: additionalDataType.percentageAllowed
+              },
+              {
+                id: 10,
+                label: 'Classification type',
+                value: additionalDataType.classificationType
+              }
+            ],
+
+            identifier: additionalDataType.identifier,
+            name: additionalDataType.name,
+            shortName: additionalDataType.shortName,
+            objectTypeIdentifier: additionalDataType.objectTypeIdentifier,
+            formatTypeIdentifier: additionalDataType.formatTypeIdentifier,
+            calculated: additionalDataType.calculated,
+            searchable: additionalDataType.searchable,
+            multiValueAllowed: additionalDataType.multiValueAllowed,
+            percentageAllowed: additionalDataType.percentageAllowed,
+            classificationType: additionalDataType.classificationType,
+            multiLingualTextInfoList:
+              additionalDataType.multiLingualTextInfoList,
+
+            additionalDataValidValuesRange:
+              additionalDataValidValuesRangeMapped,
+            additionalDataValidValueSetList:
+              additionalDataValidValueSetListMapped,
+            productTypeAdditionalDataTypeRltnpList:
+              productTypeAdditionalDataTypeRltnpListMapped,
+            prdrtpeReltinqMetaData: [
+              {
+                id: 0,
+                label: 'Maximum allowed',
+                value: productTypeAdditionalDataTypeRltnpList[0].maximumAllowed
+              },
+
+              {
+                id: 1,
+                label: 'Minimum required',
+                value: productTypeAdditionalDataTypeRltnpList[0].minimumRequired
+              },
+              {
+                id: 1,
+                label: 'GL categorization',
+                value:
+                  productTypeAdditionalDataTypeRltnpList[0].glCategarization
+              }
+            ],
+            productTypeAdditionalDataList: productTypeAdditionalDataListMapped,
+
+          };
+
+          return attribute;
+        });
+        this.balanceHoldsTableMetaData.datasource.data = this.attributeData;
+      }
+    });
+  }
+  private determineTemplate(element: Attribute): TemplateRef<any> {
+    return element.code ? this.addAttributeTemp : this.addExistingAttributeTemp;
   }
 
-  // public rowClick(element: CurrencyTable) {
-  //   this.updateMessage(
-  //     'mbpBod.demo.microsite.table.rowClicked',
-  //     ':' + element.currencyISO4217Val + ' ' + element.code
-  //   );
-  // }
+  AttributeDelete(element: Attribute): void {
+    if (
+      element.code ===
+      element.productTypeAdditionalDataTypeRltnpList[0].attributeCode
+    ) {
+      this.metadataService
+        .deleteAttribute(
+          'Attribute',
+          element.productTypeAdditionalDataTypeRltnpList[0].attributeIdentifier
+        )
+        .subscribe(response => {
+          const successMsg = 'Attribute deleted successfully';
+          this.message = {
+            code: '204',
+            text: successMsg,
+            type: NotificationMessageType.SUCCESS
+          };
+          this.messages.push(this.message);
 
-  // public allRowSelected(element: CurrencyTable[]) {
-  //   element.length
-  //     ? this.updateMessage(
-  //         'mbpBod.demo.microsite.table.allRowsSelected',
-  //         ':' + JSON.stringify(element)
-  //       )
-  //     : this.updateMessage(
-  //         'mbpBod.demo.microsite.table.allRowsDeselected',
-  //         ' '
-  //       );
-  // }
+          this.getAttribute();
+          this.metadataService.retrieveAll().subscribe((response: any) => {
+            const firstStatus = response?.data?.[0]?.MetadataStatus;
+            const statusToSet = firstStatus || 'NEW';
+            this.statusControl.setValue(statusToSet);
+            this.previousStatus = statusToSet;
+          });
+          console.log('State after getAttribute:', this.attributeData); // Log state
+          this.changeDetectorRef.detectChanges();
+        });
+    } else {
+      this.metadataService
+        .deleteAttribute('Attribute', element.identifier)
+        .subscribe(response => {
+          const successMsg = 'Attribute deleted successfully';
+          this.message = {
+            code: '204',
+            text: successMsg,
+            type: NotificationMessageType.SUCCESS
+          };
+          this.messages.push(this.message);
+          this.getAttribute();
+          this.metadataService.retrieveAll().subscribe((response: any) => {
+            const firstStatus = response?.data?.[0]?.MetadataStatus;
+            const statusToSet = firstStatus || 'NEW';
+            this.statusControl.setValue(statusToSet);
+            this.previousStatus = statusToSet;
+          });
+          this.changeDetectorRef.detectChanges();
+        });
+    }
+  }
+
+  public rowExpanded(element: Attribute) {
+    this.AttributeLocalTable.datasource.data =
+      element.multiLingualTextInfoList || [];
+    this.productRelationTable.datasource.data =
+      element.productTypeAdditionalDataList || [];
+  }
+  nonNegativeValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const value = control.value;
+      return value < 0 ? { negativeValue: { value: value } } : null;
+    };
+  }
+
+  requiredValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const value = control.value;
+      return value === null || value === undefined || value === '' ? { required: true } : null;
+    };
+  }
+
+  maxValueValidator(maxValue: number): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const value = control.value;
+      return value > maxValue ? { maxValueExceeded: { value: value } } : null;
+    };
+  }
+
+  exceedLimitValidator(maxDigits: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      // Check if it's a valid number and not in exponential format
+      if (!/^\d+$/.test(value)) {
+        return { exceedLimit: 'Invalid format or contains non-digit characters' };
+      }
+
+      // Check digit length
+      if (value.length > maxDigits) {
+        return { exceedLimit: 'Value exceeds allowed digit limit' };
+      }
+
+      return null;
+    };
+  }
+
+
+
+
+  nonZeroValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      // Allow null, undefined, or empty string (for optional fields)
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+
+      // Reject zero
+      return Number(value) === 0 ? { zeroValue: true } : null;
+    };
+  }
+
+  maxLengthValidator(maxLength: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+
+      const stringValue = value.toString();
+
+      // Reject scientific notation
+      // if (/[eE]/.test(stringValue)) {
+      //   return { maxLength: 'Scientific notation not allowed' };
+      // }
+
+      return stringValue.length > maxLength
+        ? { maxLength: 'Value exceeds allowed digit limit' }
+        : null;
+    };
+  }
+
+  integerValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (value === null) {
+        return null;
+      }
+      return Number.isInteger(value) ? null : { notInteger: true };
+    };
+  }
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+    const invalidFields: string[] = [];
+
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control && control.errors?.['required']) {
+        invalidFields.push(key);
+      }
+    });
+
+    return invalidFields;
+  }
+
+
+  /** Initialize Add Balance Hold Form  */
+  private initForm(): void {
+    this.addNewAttributeFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [Validators.required]),
+      // identifier: new UntypedFormControl('', [Validators.required]),
+      identifier: [{ value: '', disabled: true }],
+      name: new UntypedFormControl('', [Validators.required]),
+      shortname: new UntypedFormControl('', [Validators.required]),
+      type: new UntypedFormControl('', [Validators.required]),
+      datatype: new UntypedFormControl('', [Validators.required]),
+      calculate: new UntypedFormControl(''),
+      searchable: new UntypedFormControl(true),
+      multivalueallowed: new UntypedFormControl(''),
+      percentageallowed: new UntypedFormControl(''),
+      classificationtype: [{ value: 'systemDefined', disabled: true }],
+      // validvaluestype: new UntypedFormControl(''),
+      relatetoproducttype: new UntypedFormControl(true),
+      multiLingualTextInfoList: new UntypedFormControl(''),
+      attributevalue: new UntypedFormControl(''),
+      // setname: new UntypedFormControl(''),
+      // setdescription: new UntypedFormControl(''),
+      // sequencenumbers: new UntypedFormControl('',
+      //   [
+      //     this.nonNegativeValidator(),
+      //     this.nonZeroValidator(),
+      //     this.maxLengthValidator(6),
+      //     this.integerValidator()
+      //   ]
+      // ),
+      // percentagevalue: new UntypedFormControl('', [
+      //   this.nonNegativeValidator(),
+      //   this.nonZeroValidator(),
+      //   this.maxLengthValidator(6),
+      //   this.integerValidator()
+      // ]),
+      valuesearch: new UntypedFormControl(''),
+      isdefault: new UntypedFormControl(false),
+      isvalueoverridden: new UntypedFormControl(false),
+      isprimary: new UntypedFormControl(false),
+      descriptions: [''],
+      validvaluestype: [{ value: '', disabled: true }],
+      productTypeCode: [{ value: '', disabled: true }],
+      max: new UntypedFormControl('', [
+        Validators.required,
+        this.nonNegativeValidator(),
+        this.nonZeroValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator()
+      ]),
+      min: new UntypedFormControl('', [
+        Validators.required,
+        this.nonNegativeValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator()
+      ]),
+      GLcategorizationAllowed: [''],
+      validtype: [false],
+      rangename: new UntypedFormControl(''),
+      rangedescriptions: new UntypedFormControl(''),
+      displayName: new UntypedFormControl(''),
+      description: new UntypedFormControl(''),
+      localeCode: [{ value: '', disabled: true }]
+    });
+    this.addExistingAttributeFormGroup = this.fb.group({
+      productCode: new UntypedFormControl('', [Validators.required]),
+      max: new UntypedFormControl('', [
+        Validators.required,
+        this.nonNegativeValidator(),
+        this.nonZeroValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator()
+      ]),
+      min: new UntypedFormControl('', [
+        Validators.required,
+        this.nonNegativeValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator()
+      ]),
+      GLcategorizationAllowed: [''],
+      validtype: [false]
+    });
+    this.addNewAttributeFormGroup.get('code')?.valueChanges.subscribe(value => {
+      this.addNewAttributeFormGroup.get('productTypeCode')?.setValue(value);
+    });
+    this.inputLayoutForm = this.fb.group({
+      additionaldatavalue: new UntypedFormControl('', [
+        Validators.required,
+        this.requiredValidator(),
+        this.nonNegativeValidator()
+      ]),
+      ValidvalueArray: [],
+      percentagevalue: new UntypedFormControl('', [
+        this.nonNegativeValidator(),
+        this.nonZeroValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator(),
+        this.maxValueValidator(100)
+      ]),
+      sequencenumber: new UntypedFormControl('', [
+        this.nonNegativeValidator(),
+        this.nonZeroValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator()
+      ]),
+      defaultindicator: [false],
+      primaryindicator: [false],
+      overrideindicator: [false]
+    });
+
+    this.inputExistingLayoutForm = this.fb.group({
+      additionaldatavalue: new UntypedFormControl('', [
+        Validators.required,
+        this.requiredValidator(),
+        this.nonNegativeValidator(),
+      ]),
+      ExistingValidvalueArray: [],
+      percentagevalue: new UntypedFormControl('', [
+        this.nonNegativeValidator(),
+        this.nonZeroValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator(),
+        this.maxValueValidator(100)
+      ]),
+      sequencenumber: new UntypedFormControl('', [
+        this.nonNegativeValidator(),
+        this.nonZeroValidator(),
+        this.maxLengthValidator(6),
+        this.integerValidator()
+      ]),
+      defaultindicator: [false],
+      primaryindicator: [false],
+      overrideindicator: [false]
+    });
+    this.inputLocaleLayoutFormDisplayName = this.fb.group({});
+    this.inputLocaleLayoutFormLocale = this.fb.group({});
+    this.inputLocaleLayoutFormDesc = this.fb.group({});
+
+    this.inputRangeLocaleLayoutFormLocale = this.fb.group({});
+    this.inputRangeLocaleLayoutFormDisplayName = this.fb.group({});
+    this.inputRangeLocaleLayoutFormDesc = this.fb.group({});
+    this.inputSetLocaleLayoutFormLocale = this.fb.group({});
+    this.inputSetLocaleLayoutFormDisplayName = this.fb.group({});
+    this.inputSetLocaleLayoutFormDesc = this.fb.group({});
+
+    this.addNewAttributeFormGroup
+      .get('relatetoproducttype')
+      ?.valueChanges.subscribe(value => {
+        this.isRelateToProductTemplate = value;
+        if (!value) {
+          this.isValidValueTypes = false;
+          this.addNewAttributeFormGroup
+            .get('validtype')
+            ?.setValue(false, { emitEvent: false });
+        }
+      });
+
+    this.addNewAttributeFormGroup
+      .get('validtype')
+      ?.valueChanges.subscribe(value => {
+        if (this.isRelateToProductTemplate) {
+          this.isValidValueTypes = value;
+        } else {
+          this.isValidValueTypes = false;
+        }
+      });
+  }
+
+  getError(formControl: string, formValidatorKey?: string, customkey?: string) {
+    const fc: AbstractControl = this.addNewAttributeFormGroup.get(
+      `${formControl}`
+    );
+    if (fc.errors && fc.errors !== null) {
+      let error: string = '';
+      Object.keys(fc.errors).forEach(
+        key =>
+        (error = key
+          ? key == formValidatorKey
+            ? `BOD.error.${customkey}`
+            : key !== null
+              ? `BOD.error.${key}`
+              : ''
+          : ``)
+      );
+      return error;
+    }
+  }
+  getExistingError(
+    formControl: string,
+    formValidatorKey?: string,
+    customkey?: string
+  ) {
+    const fc: AbstractControl = this.addExistingAttributeFormGroup.get(
+      `${formControl}`
+    );
+    if (fc.errors && fc.errors !== null) {
+      let error: string = '';
+      Object.keys(fc.errors).forEach(
+        key =>
+        (error = key
+          ? key == formValidatorKey
+            ? `BOD.error.${customkey}`
+            : key !== null
+              ? `BOD.error.${key}`
+              : ''
+          : ``)
+      );
+      return error;
+    }
+  }
+
+  /** On click of Add Button*/
+  inlineAddRowActionClick(index) {
+    this.inputLayoutForm.reset();
+    this.inputExistingLayoutForm.reset();
+  }
+
+
+
+  public updateMessages(messages: NotificationMessage[]) {
+  }
+
+  private subscription = new Subscription();
+
+  ngOnDestroy() {
+    if (this.subscription) {
+      this.messages = [];
+      this.subscription.unsubscribe();
+    }
+  }
 }
