@@ -50,3 +50,22 @@ export interface CurrencyTable {
     ref: BodTableComponent;
     input: any;
   }
+Here’s a clear and professional justification you can use to explain the situation to your manager:
+
+
+---
+
+Sprint Risk Justification – Sprint XYZ
+
+During this sprint, I was assigned three stories: 1265, 1495 (8 SP), and 1496. Currently, there's a risk of spillover for 1495 due to a combination of the following factors:
+
+1. 1496 involved enhancements and defensive fixes for the Attribute module. I initially planned to complete this early, aligning it with the defect sheet provided. However, several new defects were raised during the sprint, which required immediate attention and extended the time I had to spend on 1496. This prevented me from starting 1495 on time.
+
+
+2. In 1495, there was a misunderstanding about the table structure, leading to a scope change. This was not accounted for in the original estimation and will now require additional time to complete.
+
+
+3. For 1265, we are dependent on the IBM team. Unfortunately, they have not yet delivered the required code, causing a blocker that’s delaying our progress.
+
+
+4. Additionally, a few unplanned leaves and underestimation of defect load contributed to the delays and impacted the overall sprint planning.
