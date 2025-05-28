@@ -420,6 +420,9 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
     });
 
     this.loadMockCurrencyDataSingleSelect().subscribe(() => {
+      if (this.editConditionRow) {
+        this.conditionForm(this.editConditionRow);
+      }
       console.log('Single select currency data loaded in ngAfterViewInit');
     });
 
@@ -1999,27 +2002,64 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
 
       this.selectedRow = selectedCurrencies;
     }
+    // else if (element.conditionType === 'CurrencyCondition') {
+    //   const selectedCurrencyId = element.conditionDetail.value;
+    //   const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+
+    //   // Build a list of currency options with selection status
+    //   const currencyList: CurrencyTableSingle[] = validCurrencyIds.map((identifier, i) => ({
+    //     index: i,
+    //     identifier: identifier,
+    //     currencyISO4217Val:'',
+    //     code: '',
+    //     default: identifier === selectedCurrencyId
+    //   }));
+
+    //   // Assign to your table or dropdown data source
+    //   this.currencyData1 = currencyList;
+    //   this.currencyDataSingleSelect.datasource.data = this.currencyData1;
+    //   this.selectedRowSingleSelect = this.currencyData1.filter(c => c.default);
+
+
+
+    //   // Patch the form with the selected currency
+    //   this.addNewConditionFormGroup.patchValue({
+    //     currencyValue: selectedCurrencyId
+    //   });
+    // }
     else if (element.conditionType === 'CurrencyCondition') {
       const selectedCurrencyId = element.conditionDetail.value;
       const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
 
-      // Build a list of currency options with selection status
-      const currencyList: CurrencyTableSingle[] = validCurrencyIds.map((identifier, i) => ({
-        index: i,
-        identifier: identifier,
-        currencyISO4217Val:'',
-        code: '',
-        default: identifier === selectedCurrencyId
+      console.log("allavaliavle currency", this.currencyData1)
+      
+
+      this.currencyData1 = this.currencyData1.map(currency => ({
+        ...currency,
+        default: validCurrencyIds.includes(currency.identifier) && currency.identifier === selectedCurrencyId
       }));
+      const selectedCurrenciessingle: CurrencyTableSingle[] = [];
+      // ✅ Update data source with ALL currencies
+      this.currencyDataSingleSelect.datasource.data = [...this.currencyData1];
+      console.log("selected currency", this.currencyDataSingleSelect.datasource.data)
 
-      // Assign to your table or dropdown data source
-      this.currencyData1 = currencyList;
+
+      // ✅ Select only those rows that are in validCurrencyIds
+      this.selectedRowSingleSelect = this.currencyData1.filter(currency =>
+        validCurrencyIds.includes(currency.identifier)
+      );
+      console.log("selected rowsss",  this.selectedRowSingleSelect)
 
 
-      // Patch the form with the selected currency
+      this.selectedRowSingleSelect.forEach(row => {
+        this.expandableTableRef.selection.select(row);
+      })
+
+      // ✅ Patch form with selected currency
       this.addNewConditionFormGroup.patchValue({
         currencyValue: selectedCurrencyId
       });
+      this.selectedRowSingleSelect = selectedCurrenciessingle
     }
     else if (element.conditionType === 'TextAndNumberCondition') {
       if (
