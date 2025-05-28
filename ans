@@ -1,25 +1,23 @@
-ngOnChanges(changes: SimpleChanges): void {
-  if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
-    console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-
-    // Wait for table to render rows
-    setTimeout(() => {
-      this.selectCurrencyRows();
-    }, 0);
-  }
+ngOnChanges(): void {
+  this.trySelectWhenReady();
 }
+  private trySelectWhenReady(): void {
+  const interval = setInterval(() => {
+    const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
+    const selection = this.currencyTable?.selection;
 
+    if (tableData.length > 0 && selection && this.selectedRowSingleSelect?.length > 0) {
+      console.log('✅ Ready for selection');
+      this.selectCurrencyRows();
+      clearInterval(interval); // Stop polling
+    } else {
+      console.log('⏳ Waiting... tableData:', tableData.length, ' selection:', !!selection, ' selectedRowSingleSelect:', this.selectedRowSingleSelect?.length);
+    }
+  }, 100); // check every 100ms
+}
 private selectCurrencyRows(): void {
   const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
   const selection = this.currencyTable?.selection;
-
-  if (!selection || tableData.length === 0) {
-    console.warn('⚠️ Table or selection model not ready');
-    return;
-  }
-
-  console.log('📌 Table data (for selection):', tableData);
-  console.log('📌 Incoming selected rows:', this.selectedRowSingleSelect);
 
   tableData.forEach(dataRow => {
     const match = this.selectedRowSingleSelect.find(
@@ -29,4 +27,6 @@ private selectCurrencyRows(): void {
       selection.select(dataRow);
     }
   });
+
+  console.log('✅ Finished selecting matching rows');
 }
