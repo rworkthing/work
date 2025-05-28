@@ -197,9 +197,9 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
   }
   @ViewChild('currencyConditions', { static: true })
   expandableTableRef: BodTableComponent;
-  
-@ViewChild(CurrencyConditionComponent)
-currencyConditionComponent: CurrencyConditionComponent;
+
+  @ViewChild(CurrencyConditionComponent)
+  currencyConditionComponent: CurrencyConditionComponent;
 
   dateInput: Date;
   bodDateInput: any;
@@ -295,6 +295,7 @@ currencyConditionComponent: CurrencyConditionComponent;
   // public inlineEditRowActionClick(_event: InlineEditOutput) {}
   public selectedRow: CurrencyTable[] = [];
   public selectedRowSingleSelect: CurrencyTableSingle[] = [];
+
   public currencyDataSingleSelect: BodTableMetadata = {
     title: 'Currency Condition',
     columns: [...this.conditionDetailService.currency],
@@ -1427,7 +1428,7 @@ currencyConditionComponent: CurrencyConditionComponent;
       }
     } else if (formValues.conditionType === 'CurrencyCondition') {
       const selectedCurrencies = this.selectedRowSingleSelect as CurrencyTableSingle[];
-    
+
       if (!selectedCurrencies || selectedCurrencies.length === 0) {
         this.handleError1({
           errorCode: 'CURRENCY_SELECTION_REQUIRED',
@@ -1435,7 +1436,7 @@ currencyConditionComponent: CurrencyConditionComponent;
         });
         return;
       }
-    
+
       const defaultCurrency = selectedCurrencies.find(c => c.default);
       if (!defaultCurrency) {
         this.handleError1({
@@ -1444,16 +1445,16 @@ currencyConditionComponent: CurrencyConditionComponent;
         });
         return;
       }
-    
+
       const currencyValidValues = selectedCurrencies.map(c => c.identifier);
-    
+
       conditionDetail = {
         conditionType: formValues.conditionType,
         value: defaultCurrency.identifier,
         currencyValidValues: currencyValidValues
       };
     }
-     else {
+    else {
       if (formValues.validValuesTypeNumber === 'none') {
         conditionDetail = {
           conditionType: formValues.conditionType,
@@ -1997,7 +1998,30 @@ currencyConditionComponent: CurrencyConditionComponent;
       });
 
       this.selectedRow = selectedCurrencies;
-    } else if (element.conditionType === 'TextAndNumberCondition') {
+    }
+    else if (element.conditionType === 'CurrencyCondition') {
+      const selectedCurrencyId = element.conditionDetail.value;
+      const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+
+      // Build a list of currency options with selection status
+      const currencyList: CurrencyTableSingle[] = validCurrencyIds.map((identifier, i) => ({
+        index: i,
+        identifier: identifier,
+        currencyISO4217Val:'',
+        code: '',
+        default: identifier === selectedCurrencyId
+      }));
+
+      // Assign to your table or dropdown data source
+      this.currencyData1 = currencyList;
+
+
+      // Patch the form with the selected currency
+      this.addNewConditionFormGroup.patchValue({
+        currencyValue: selectedCurrencyId
+      });
+    }
+    else if (element.conditionType === 'TextAndNumberCondition') {
       if (
         element.conditionDetail.textAndNumberValidValues &&
         element.conditionDetail.textAndNumberValidValues.length > 0
@@ -2450,7 +2474,7 @@ currencyConditionComponent: CurrencyConditionComponent;
         }
       });
     }
-    
+
     // Mark the form as dirty so changes are tracked
     this.addNewConditionFormGroup.markAsDirty();
   }
