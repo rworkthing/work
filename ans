@@ -1,15 +1,22 @@
-
-@ViewChild('currencyConditionsForCurr', { static: false })
-currencyTable: BodTableComponent;
-
-@Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
-
 ngAfterViewInit(): void {
+  this.selectCurrencyRows();
+}
+
+
+private selectCurrencyRows(): void {
   setTimeout(() => {
-    if (this.currencyTable && this.selectedRowSingleSelect.length > 0) {
-      this.selectedRowSingleSelect.forEach(row => {
-        this.currencyTable.selection.select(row);
-      });
-    }
-  });
+    const tableData = this.currencyTable?.datasource?.data || [];
+    console.log('📌 Table data:', tableData);
+    console.log('📌 Selected rows input:', this.selectedRowSingleSelect);
+
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.identifier === dataRow.identifier
+      );
+      if (match) {
+        console.log('✅ Selecting row:', dataRow);
+        this.currencyTable.selection.select(dataRow);
+      }
+    });
+  }, 0);
 }
