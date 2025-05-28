@@ -138,6 +138,14 @@ export class ConditionDetailComponent {
       }));
       mappedData.sort((a, b) => a.label.localeCompare(b.label));
       this.currencies = mappedData;
+
+      this.currencyData1 = data.map((item: any, index: number) => ({
+        index: index,
+        identifier: item.identifier,
+        code: item.code,
+        currencyISO4217Val: item.currencyISO4217Val,
+        default: false
+      }));
     });
   }
   public conditionTableActions: BodTableAction[] = ConditionDetailsTableActions;
@@ -340,10 +348,10 @@ export class ConditionDetailComponent {
       const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
       const defaultCurrencyId = element.conditionDetail.value;
 
-      const allCurrencies = this.currencyData1 || [];
+      const allCurrencies = [...this.currencyData1];
 
       this.currencyConditionTable.datasource.data = allCurrencies
-        .filter(currency => validCurrencyIds.includes(currency.index))
+        .filter(currency => validCurrencyIds.includes(currency.identifier))
         .map(currency => ({
           ...currency,
           default: currency.identifier === defaultCurrencyId ? 'Y' : 'N'
