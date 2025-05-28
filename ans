@@ -1,8 +1,32 @@
-const request = {
-  metadataType: 'Attribute',
-  attributeList: [attribute],
-  productTypeList: this.metadataService.productTypeKeys.map((code, index) => ({
-    identifier: this.metadataService.productTypeValues[index],
-    code: code
-  }))
-};
+// In your parent component (satts file), replace the CurrencyCondition logic with this:
+
+else if (element.conditionDetail.conditionType === 'CurrencyCondition') {
+  const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+  const defaultCurrencyId = element.conditionDetail.value;
+  const allCurrencies = [...this.currencyData1];
+
+  console.log('Debug Info:');
+  console.log('validCurrencyIds:', validCurrencyIds);
+  console.log('defaultCurrencyId:', defaultCurrencyId, 'Type:', typeof defaultCurrencyId);
+  console.log('allCurrencies sample:', allCurrencies[0]);
+
+  this.currencyConditionTable.datasource.data = allCurrencies
+    .filter(currency => {
+      // Convert both to string for comparison to handle type mismatches
+      const currencyIdStr = String(currency.identifier);
+      const validIds = validCurrencyIds.map(id => String(id));
+      return validIds.includes(currencyIdStr);
+    })
+    .map(currency => {
+      // Convert both to string for comparison to handle type mismatches
+      const isDefault = String(currency.identifier) === String(defaultCurrencyId);
+      console.log(`Currency ${currency.identifier} (${typeof currency.identifier}) vs Default ${defaultCurrencyId} (${typeof defaultCurrencyId}) = ${isDefault}`);
+      
+      return {
+        ...currency,
+        default: isDefault ? 'Y' : 'N'
+      };
+    });
+
+  console.log('Final currency table data:', this.currencyConditionTable.datasource.data);
+}
