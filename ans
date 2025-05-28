@@ -1,18 +1,26 @@
-// In your ConditionDetailComponent (satts file), 
-// Replace this section in the rowExpanded method:
-
-} else if (element.conditionDetail.conditionType === 'CurrencyCondition') {
+} else if (element.conditionType === 'CurrencyCondition') {
+  const selectedCurrencyId = element.conditionDetail.value;
   const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
-  const defaultCurrencyId = element.conditionDetail.value;
 
+  // Filter existing full currency list (currencyData1)
   const allCurrencies = [...this.currencyData1];
 
-  this.currencyConditionTable.datasource.data = allCurrencies
+  // Filter and mark default
+  const filteredCurrencies: CurrencyTableSingle[] = allCurrencies
     .filter(currency => validCurrencyIds.includes(currency.identifier))
     .map(currency => ({
       ...currency,
-      default: currency.identifier === defaultCurrencyId  // ← Changed from 'Y'/'N' to boolean
+      default: currency.identifier === selectedCurrencyId
     }));
-    
-  console.log('Final currency table data:', this.currencyConditionTable.datasource.data);
+
+  // ✅ Update the table's data source
+  this.currencyDataSingleSelect.datasource.data = filteredCurrencies;
+
+  // ✅ Update selected row list for selection model
+  this.selectedRowSingleSelect = filteredCurrencies.filter(c => c.default);
+
+  // ✅ Optional: patch form control if needed
+  this.addNewConditionFormGroup.patchValue({
+    currencyValue: selectedCurrencyId
+  });
 }
