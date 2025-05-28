@@ -1,3 +1,827 @@
+import { Component, Input, TemplateRef, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  BodCommonDialogModel,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatTableDataSource } from '@angular/material/table';
+import { BodSampleTable } from '../bod-table-demo.model';
+import { MatDialogRef } from '@angular/material/dialog';
+import { ConditionDetailService } from './condition-detail.service';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatInputModule } from '@angular/material/input';
+import {
+  ConditionDetailsTableActions,
+  editDeleteActions
+} from './condition-details-constants';
+import { AddEditConditionsComponent } from './add-edit-conditions/add-edit-conditions.component';
+import { ConditionList } from './condition-detail.model';
+import { CurrencyTableSingle } from './add-edit-conditions/add-edit-conditions.model';
+
+@Component({
+  selector: 'bod-condition-detail',
+  standalone: true,
+  imports: [
+    CommonModule,
+    AddEditConditionsComponent,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './condition-detail.component.html',
+  styleUrl: './condition-detail.component.scss'
+})
+export class ConditionDetailComponent {
+  public currencies: any[] = [];
+  public messages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+  public editactions: BodTableAction[] = editDeleteActions;
+  public currencyData1: CurrencyTableSingle[] = [];
+
+  public onValidTableActionClicked(event: BodTableAction): void { }
+
+  public retainedCode: string = '';
+  public retainedIdentifier: number = 0;
+  @ViewChild('addNewConditionTemplate')
+  public addNewConditionTemp: TemplateRef<any>;
+  @ViewChild('addExistingConditionTemplate')
+  public addExistingConditionTemp: TemplateRef<any>;
+  private adminTableRef: BodTableComponent | undefined;
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+  @Input() status: string = '';
+
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+  constructor(
+    private confirmDialogService: BodConfirmAlertDialogsService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    public conditionDetailService: ConditionDetailService,
+    private fb: FormBuilder,
+    private bodCommonDialogService: BodCommonDialogService
+  ) { }
+  ngOnInit() {
+    this.getNewCondition();
+    this.loadDropdownDatat();
+  }
+  loadDropdownDatat() {
+    this.conditionDetailService.getCurrency().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.currencies = mappedData;
+
+      this.currencyData1 = data.map((item: any, index: number) => ({
+        index: index,
+        identifier: item.identifier,
+        code: item.code,
+        currencyISO4217Val: item.currencyISO4217Val,
+        default: false
+      }));
+    });
+  }
+  public conditionTableActions: BodTableAction[] = ConditionDetailsTableActions;
+  public conditionTableMetaData: BodTableMetadata = {
+    title: 'Condition Details',
+    columns: [...this.conditionDetailService.columns],
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Condition Data Defined',
+    rowLeftAction: RowLeftAction.expandableRows,
+    enableSorting: true
+  };
+
+  public commonDialogSize: string = 'Large';
+  public closeOnCloseIconClick: boolean = false;
+  private onCloseClick() {
+    this.systemMessage.message = 'Custom Function called on close';
+    this.systemMessage.show();
+    this.dialogRef$.close();
+  }
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+  private openDialog(dialogModel: any) {
+    let onClose = this.closeOnCloseIconClick
+      ? this.onCloseClick.bind(this)
+      : undefined;
+    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
+      dialogModel,
+      onClose,
+      this.commonDialogSize
+    );
+  }
+  public msg: NotificationMessage | undefined;
+
+  isStatusEditable(): boolean {
+    return this.status !== 'READY' && this.status !== 'GENERATED';
+  }
+  addConditionTypeEvent(event: any) {
+    if (event) {
+      this.getNewCondition();
+      const SuccessMsg = event.SuccessMsg;
+      this.msg = {
+        code: '',
+        text: SuccessMsg,
+        type: NotificationMessageType.SUCCESS
+      };
+      this.messages.push(this.msg);
+      setTimeout(() => {
+        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
+      }, 4000);
+    }
+    this.dialogRef$.close();
+  }
+
+  public onTableActionClicked1(event: BodTableAction) {
+    this.isEdit = false;
+    this.messages = [];
+    if (event.id === 12) {
+      this.addNewCondition();
+    } else if (event.id === 13) {
+      this.addExistingCondition();
+    }
+  }
+  private addNewCondition() {
+    this.conditionType = undefined; // Clear the editBalanceType to reset the form
+    this.messages = [];
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addNewConditionTemp,
+      title: 'Add New Condition'
+    };
+    this.openDialog(dialogModel);
+  }
+  private addExistingCondition() {
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addExistingConditionTemp,
+      title: 'Relate Existing Condition'
+    };
+    this.openDialog(dialogModel);
+  }
+  public ConditionReltnTable: BodTableMetadata = {
+    title: 'Condition Relationship',
+    columns: [...this.conditionDetailService.condColmn],
+    enablePagination: false,
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Condition Relationship Defined'
+  };
+  public TextConditionTable: BodTableMetadata = {
+    title: 'Text Condition Valid Values',
+    columns: [...this.conditionDetailService.textCol],
+    enablePagination: false,
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Text condition Defined'
+  };
+  public TextNumberConditionTable: BodTableMetadata = {
+    title: 'Text and NumberCondition Valid Values',
+    columns: [...this.conditionDetailService.textNumCol],
+    enablePagination: false,
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Text and Number condition Defined'
+  };
+  public CurrencySpecificTable: BodTableMetadata = {
+    title: 'Currency',
+    columns: [...this.conditionDetailService.currencyCol],
+    rowLeftAction: RowLeftAction.expandableRows,
+    enablePagination: false,
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Currency Defined'
+  };
+  public NumberConditionTable: BodTableMetadata = {
+    title: 'Number Condition Valid Values',
+    columns: [...this.conditionDetailService.NumCol],
+    enablePagination: false,
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Number condition Defined'
+  };
+  public primFrequencyConditionTable: BodTableMetadata = {
+    title: 'Primary Frequency',
+    columns: [...this.conditionDetailService.PrimaFreq],
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Primary Frequency Defined'
+  };
+  public secFrequencyConditionTable: BodTableMetadata = {
+    title: 'Secondary Frequency',
+    columns: [...this.conditionDetailService.SecFreq],
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Secondary Frequency Defined'
+  };
+  public currencyConditionTable: BodTableMetadata = {
+    title: 'Currency Frequency',
+    columns: [...this.conditionDetailService.currency],
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Currency Defined'
+  };
+
+  public rowExpanded(element: ConditionList) {
+    this.messages = []; // Directly map textValidValues to the validvalues column
+
+    if (element.conditionDetail.conditionType === 'TextCondition') {
+      this.TextConditionTable.datasource.data =
+        element.conditionDetail.textValidValues?.map((value: string) => ({
+          validvalues: value,
+          default: value === element.conditionDetail.value ? 'Y' : 'N' // You can set the default value as needed
+        })) ?? [];
+    } else if (
+      element.conditionDetail.conditionType === 'TextAndNumberCondition'
+    ) {
+      this.TextNumberConditionTable.datasource.data =
+        element.conditionDetail.textAndNumberValidValues?.map(
+          (value: { textValue: string; numberValue: number }) => ({
+            validvalues: value.textValue,
+            numbervalidvalues: value.numberValue,
+
+            default:
+              element.conditionDetail.textNumberValue &&
+                value.textValue ===
+                element.conditionDetail.textNumberValue.textValue &&
+                value.numberValue ===
+                element.conditionDetail.textNumberValue.numberValue
+                ? 'Y'
+                : 'N' // Set default value
+          })
+        ) ?? [];
+    } else if (element.conditionDetail.conditionType === 'NumberCondition') {
+      this.NumberConditionTable.datasource.data =
+        element.conditionDetail.numberValidValues?.map((value: string) => ({
+          validvalues: value,
+          default: value === element.conditionDetail.value ? 'Y' : 'N'
+        })) ?? [];
+    } else if (element.conditionDetail.conditionType === 'FrequencyCondition') {
+      this.primFrequencyConditionTable.datasource.data =
+        element.conditionDetail.primaryFrequencyValidValues?.map(
+          (value: { textValue: string; numberValue: number | null }) => ({
+            primaryfrequency: value.textValue,
+            value: value.numberValue,
+            default:
+              value.textValue ===
+                element.conditionDetail.frequencyDefinition
+                  ?.primaryFrequencyType &&
+                value.numberValue ===
+                element.conditionDetail.frequencyDefinition?.primaryUnits
+                ? 'Y'
+                : 'N'
+          })
+        ) ?? [];
+
+      this.secFrequencyConditionTable.datasource.data =
+        element.conditionDetail.secondaryFrequencyValidValues?.map(
+          (value: { textValue: string; numberValue: number | null }) => ({
+            secondaryfrequency: value.textValue,
+            value: value.numberValue
+          })
+        ) ?? [];
+    } else if (element.conditionDetail.conditionType === 'CurrencyCondition') {
+      const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+      const defaultCurrencyId = element.conditionDetail.value;
+    
+      const allCurrencies = [...this.currencyData1];
+    
+      this.currencyConditionTable.datasource.data = allCurrencies
+        .filter(currency => validCurrencyIds.includes(currency.identifier))
+        .map(currency => ({
+          ...currency,
+          default: currency.identifier === defaultCurrencyId  // ← Changed from 'Y'/'N' to boolean
+        }));
+        
+      console.log('Final currency table data:', this.currencyConditionTable.datasource.data);
+    }
+
+
+
+    this.ConditionReltnTable.datasource.data = element.conditionsRltnp || [];
+    this.CurrencySpecificTable.datasource.data =
+      element.conditionDetail.currencySpecificDetailsList || [];
+  }
+  isEdit = false;
+  iconActionClicked(event: BodTableAction, element: ConditionList) {
+    this.isEdit = true;
+    this.messages = [];
+    if (event.id === BodTableActionType.EDIT) {
+      // this.editAttributes(element);
+
+      this.editCondition(element);
+    } else if (event.id === 1) {
+      this.bodConfirmAlertDialogsService
+        .confirm(this.ConfirmData)
+        .subscribe(val => {
+          if (val) {
+            this.conditionDelete(element);
+          }
+        });
+    }
+  }
+  conditionType: ConditionList | undefined;
+  private editCondition(element: ConditionList) {
+    this.conditionType = element;
+    this.retainedIdentifier = element.identifier ?? 0;
+    this.retainedCode = element.cdarValue || '';
+    let selectedTemplate: TemplateRef<any>;
+    let dialogTitle: string;
+    if (element.name) {
+      selectedTemplate = this.addNewConditionTemp;
+      dialogTitle = 'Edit Condition';
+    } else {
+      selectedTemplate = this.addExistingConditionTemp;
+      dialogTitle = 'Edit Existing Condition';
+    }
+    const dialogModel: BodCommonDialogModel = {
+      formTemplate: selectedTemplate,
+      title: dialogTitle
+    };
+    this.openDialog(dialogModel);
+  }
+  conditionDelete(element: ConditionList): void {
+    this.conditionDetailService
+      .deleteCondition('Condition', element.identifier)
+      .subscribe(response => {
+        const successMsg = `${element.cdarValue} Deleted Successfully`;
+        this.message = {
+          code: '204',
+          text: successMsg,
+          type: NotificationMessageType.SUCCESS
+        };
+        this.messages.push(this.message);
+        setTimeout(() => {
+          this.messages = this.messages.filter(msg => msg.text !== successMsg);
+        }, 4000);
+
+        this.getNewCondition();
+      });
+  }
+  conditionData: ConditionList[] = [];
+
+  getNewCondition(): void {
+    this.conditionDetailService.retrieveCondition().subscribe(response => {
+      if (response.status === 'SUCCESS' && response.data) {
+        this.conditionData = response.data.map((item: any) => {
+          const condition = item.Condition || {};
+          const conditionAttribute = condition.conditionAttribute || {};
+          const conditionDetail = condition.conditionDetail || {};
+
+          let mappedConditionDetail;
+
+          switch (conditionDetail.conditionType) {
+            case 'TextCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value,
+                textValidValues: conditionDetail.textValidValues || []
+              };
+              break;
+            case 'TextAndNumberCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                textNumberValue: {
+                  textValue: conditionDetail.textNumberValue.textValue || '',
+                  numberValue: conditionDetail.textNumberValue.numberValue || 0
+                },
+                textAndNumberValidValues:
+                  conditionDetail.textAndNumberValidValues || []
+              };
+              break;
+
+            case 'FrequencyCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                frequencyDefinition: {
+                  primaryFrequencyType:
+                    conditionDetail.frequencyDefinition?.primaryFrequencyType ||
+                    '',
+                  primaryUnits:
+                    conditionDetail.frequencyDefinition?.primaryUnits || 0,
+                  secondaryFrequencyType:
+                    conditionDetail.frequencyDefinition
+                      ?.secondaryFrequencyType || '',
+                  secondaryUnits:
+                    conditionDetail.frequencyDefinition?.secondaryUnits || 0,
+                  startDate:
+                    conditionDetail.frequencyDefinition?.startDate || null,
+                  subtractSecondary:
+                    conditionDetail.frequencyDefinition?.subtractSecondary ||
+                    null,
+                  maxiterations:
+                    conditionDetail.frequencyDefinition?.maxiterations || null,
+                  maxIterationDate:
+                    conditionDetail.frequencyDefinition?.maxIterationDate || '',
+                  dateAdjustType:
+                    conditionDetail.frequencyDefinition?.dateAdjustType || '',
+                  businessDayRule:
+                    conditionDetail.frequencyDefinition?.businessDayRule || ''
+                },
+                primaryFrequencyValidValues:
+                  conditionDetail.primaryFrequencyValidValues || [],
+                secondaryFrequencyValidValues:
+                  conditionDetail.secondaryFrequencyValidValues || []
+              };
+              break;
+
+            case 'DateCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value,
+                dateValidValues: conditionDetail.dateValidValues || null
+              };
+              break;
+            case 'FlagCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value
+              };
+              break;
+
+            case 'NumberCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value,
+                maxValue:
+                  conditionDetail.maxValue !== null
+                    ? conditionDetail.maxValue
+                    : null,
+                minValue:
+                  conditionDetail.minValue !== null
+                    ? conditionDetail.minValue
+                    : null,
+                numberValidValues: conditionDetail.numberValidValues || []
+              };
+              break;
+
+
+            case 'CurrencySpecificCondition': {
+              const currencySpecificDetailsListMapped = Array.isArray(
+                conditionDetail.currencySpecificDetailsList
+              )
+                ? conditionDetail.currencySpecificDetailsList.map(
+                  (detail: any) => {
+                    const hasMin =
+                      detail.minValue !== null &&
+                      detail.minValue !== undefined;
+                    const hasMax =
+                      detail.maxValue !== null &&
+                      detail.maxValue !== undefined;
+
+                    const currencyRange = [];
+
+                    if (hasMin && hasMax) {
+                      currencyRange.push(
+                        {
+                          id: 0,
+                          label: 'Default amount',
+                          value: detail.value
+                        },
+                        {
+                          id: 1,
+                          label: 'Maximum amount',
+                          value: detail.maxValue
+                        },
+                        {
+                          id: 2,
+                          label: 'Minimum amount',
+                          value: detail.minValue
+                        }
+                      );
+                    } else {
+                      currencyRange.push({
+                        id: 0,
+                        label: 'Default amount',
+                        value: detail.value
+                      });
+                    }
+
+                    return {
+                      conditionType: detail.conditionType,
+                      currencyCode: detail.currencyCode,
+                      currencyName: detail.currencyName,
+                      currencyIdfr: detail.currencyIdfr,
+                      value: detail.value,
+                      minValue: detail.minValue,
+                      maxValue: detail.maxValue,
+                      currencyRange: currencyRange
+                    };
+                  }
+                )
+                : [];
+
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                currencySpecificDetailsList: currencySpecificDetailsListMapped
+              };
+              break;
+            }
+
+            case 'AmountCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value,
+                minValue: conditionDetail.minValue,
+                maxValue: conditionDetail.maxValue,
+                currencyIdfr: conditionDetail.currencyIdfr
+              };
+              break;
+            case 'CurrencyCondition':
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value,
+                currencyValidValues: conditionDetail.currencyValidValues || []
+              };
+              break;
+
+            default:
+              mappedConditionDetail = {
+                conditionType: conditionDetail.conditionType,
+                value: conditionDetail.value,
+                maxValue: conditionDetail.maxValue,
+                minValue: conditionDetail.minValue
+              };
+              break;
+
+
+          }
+
+          const getApplicableToLabel = level => {
+            if (level === 'ArrangementLaw') return 'Account Only';
+            if (level === 'ProductLaw') return 'Product Only';
+            if (level === 'InternalLaw') return 'Product & Account';
+            return level; // fallback to original value if no match
+          };
+
+          const conditionInquiry = [
+            { id: 0, label: 'Name', value: conditionAttribute.name },
+            {
+              id: 1,
+              label: 'Classification type',
+              value: conditionAttribute.classificationType
+            },
+            {
+              id: 2,
+              label: 'Condition type',
+              value: conditionAttribute.conditionType
+            },
+            {
+              id: 3,
+              label: 'Optionality',
+              value: conditionAttribute.conditionOptionalityType
+            },
+            {
+              id: 4,
+              label: 'Applicable to',
+              value: getApplicableToLabel(conditionAttribute.applicableLevel)
+            },
+            {
+              id: 5,
+              label: 'Customizable',
+              value: conditionAttribute.customizationLevel
+            }
+          ];
+
+          if (conditionDetail.conditionType === 'FrequencyCondition') {
+            conditionInquiry.push({
+              id: 6,
+              label: 'Processing day',
+              value: conditionDetail.frequencyDefinition?.businessDayRule || ''
+            });
+          }
+
+          if (conditionDetail.conditionType === 'CurrencySpecificCondition') {
+            conditionInquiry.push({
+              id: 6,
+              label: 'Secondary condition type',
+              value: 'Amount'
+            });
+          }
+         
+
+
+          if (conditionDetail.conditionType === 'PercentCondition') {
+            const conditionInquiry = [
+              { id: 6, label: 'Default value', value: conditionDetail.value }
+            ];
+
+            if (
+              conditionDetail.maxValue !== undefined &&
+              conditionDetail.minValue !== undefined
+            ) {
+              conditionInquiry.push(
+                {
+                  id: 7,
+                  label: 'Maximum value',
+                  value: conditionDetail.maxValue
+                },
+                {
+                  id: 8,
+                  label: 'Minimum value',
+                  value: conditionDetail.minValue
+                }
+              );
+            }
+          }
+
+          if (conditionDetail.conditionType === 'PercentCondition') {
+            const hasMin =
+              conditionDetail.minValue !== null &&
+              conditionDetail.minValue !== undefined;
+            const hasMax =
+              conditionDetail.maxValue !== null &&
+              conditionDetail.maxValue !== undefined;
+
+            if (hasMin && hasMax) {
+              conditionInquiry.push(
+                {
+                  id: 8,
+                  label: 'Minimum value',
+                  value: `${conditionDetail.minValue}%`
+                },
+                {
+                  id: 6,
+                  label: 'Default value',
+                  value: `${conditionDetail.value}%`
+                },
+                {
+                  id: 7,
+                  label: 'Maximum value',
+                  value: `${conditionDetail.maxValue}%`
+                }
+              );
+            } else {
+              conditionInquiry.push({
+                id: 6,
+                label: 'Default value',
+                value: `${conditionDetail.value}%`
+              });
+            }
+          }
+
+          if (conditionDetail.conditionType === 'NumberCondition') {
+
+
+            if (
+              conditionDetail.minValue !== undefined &&
+              conditionDetail.minValue !== null
+            ) {
+              conditionInquiry.push({
+                id: 8,
+                label: 'Minimum value',
+                value: conditionDetail.minValue
+              });
+            }
+
+            if (
+              conditionDetail.maxValue !== undefined &&
+              conditionDetail.maxValue !== null
+            ) {
+              conditionInquiry.push({
+                id: 7,
+                label: 'Maximum value',
+                value: conditionDetail.maxValue
+              });
+            }
+            conditionInquiry.push({
+              id: 6,
+              label: 'Default value',
+              value: conditionDetail.value
+            });
+
+
+
+          }
+
+          if (
+            conditionDetail.conditionType === 'FlagCondition' ||
+            conditionDetail.conditionType === 'DateCondition'
+          ) {
+            conditionInquiry.push({
+              id: 6,
+              label: 'Default value',
+              value: conditionDetail.value
+            });
+          }
+          if (conditionDetail.conditionType === 'TextCondition') {
+            conditionInquiry.push({
+              id: 6,
+              label: 'Default value',
+              value: conditionDetail.value
+            });
+          }
+          if (conditionDetail.conditionType === 'TextAndNumberCondition') {
+            conditionInquiry.push(
+              {
+                id: 6,
+                label: 'Text value',
+                value: conditionDetail.textNumberValue.textValue
+              },
+              {
+                id: 6,
+                label: 'Number value',
+                value: conditionDetail.textNumberValue.numberValue
+              }
+            );
+          }
+
+          const conditionData: ConditionList = {
+            cdarValue: conditionAttribute.cdarValue,
+            conditionInquiry: conditionInquiry,
+
+            identifier: conditionAttribute.identifier,
+            name: conditionAttribute.name,
+            applicableLevel: conditionAttribute.applicableLevel,
+            customizationLevel: conditionAttribute.customizationLevel,
+            conditionType: conditionAttribute.conditionType,
+            classificationType: conditionAttribute.classificationType,
+            conditionOptionalityType:
+              conditionAttribute.conditionOptionalityType,
+            conditionDetail: mappedConditionDetail,
+            productTypeConditionRltnp: condition.productTypeConditionRltnp,
+            feConditionRltnp: condition.feConditionRltnp,
+            conditionsRltnp: condition.conditionsRltnp,
+            metadataStatus: item.MetadataStatus,
+            currencyRange: []
+          };
+
+          return conditionData;
+        });
+
+        this.conditionTableMetaData.datasource.data = this.conditionData;
+      }
+    });
+  }
+  private currencyidfrtoCde(identifier: any): string | undefined {
+    const item = this.currencies.find(item => item.value === identifier);
+    return item ? item.label : undefined;
+  }
+}
 import {
   ChangeDetectorRef,
   Component,
