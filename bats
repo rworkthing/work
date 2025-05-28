@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   BodTableModule, 
@@ -30,7 +30,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   templateUrl: './currency-condition.component.html',
   styleUrl: './currency-condition.component.scss'
 })
-export class CurrencyConditionComponent implements OnInit {
+export class CurrencyConditionComponent implements OnInit, OnChanges {
   @Input() currencyDataSingleSelect: BodTableMetadata;
   @Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
   @Output() rowSelected = new EventEmitter<CurrencyTableSingle[]>();
@@ -38,7 +38,45 @@ export class CurrencyConditionComponent implements OnInit {
   
   @ViewChild('currencyConditionsForCurr', { static: false })
   currencyTable: BodTableComponent;
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectCurrencyRows(),0);
+  }
   
+  
+  
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+  
+      // Wait for table to render rows
+      setTimeout(() => {
+        this.selectCurrencyRows();
+      }, 0);
+    }
+  }
+  
+  private selectCurrencyRows(): void {
+    const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
+    const selection = this.currencyTable?.selection;
+  
+    // if (!selection || tableData.length === 0) {
+    //   console.warn('⚠️ Table or selection model not ready');
+    //   return;
+    // }
+  
+    console.log('📌 Table data (for selection):', tableData);
+    console.log('📌 Incoming selected rows:', this.selectedRowSingleSelect);
+  
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.identifier === dataRow.identifier
+      );
+      if (match) {
+        selection.select(dataRow);
+      }
+    });
+  }
   public allowRowSelection = true;
   public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
   public showEdit = true;
