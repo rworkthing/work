@@ -1,31 +1,157 @@
+<bod-message-container rufId [messages]="messages"></bod-message-container>
 <bod-table
-  #currencyConditionsForCurr
-  [data]="currencyDataSingleSelect"
-  (onRowSelect)="rowSelectionSingleSelect($event)"
-  [rowSelectionStrategy]="rowSelectionStrategy"
-  [allowSelectAll]="allowRowSelection"
-  [alignContent]="'top'"
+  #customTable
   [customColumnTemplates]="[
     {
-      columnName: 'default',
-      templateName: defaultTemplate
+      columnName: 'actions',
+      templateName: editActionTemplate
     }
   ]"
+  [data]="conditionTableMetaData"
+  [tableActions]="isStatusEditable() ? conditionTableActions : []"
+  (onTableActionClick)="isStatusEditable() && onTableActionClicked1($event)"
+  [expandedRowTemplate]="expandedRowTemplate"
+  (onRowExpand)="rowExpanded($event)"
 >
   <ng-template
-    #defaultTemplate
+    #editActionTemplate
     let-element="element"
     let-column="column"
     let-index="index"
   >
-    <form [formGroup]="defaultForm">
-      <mat-slide-toggle 
-        fisStyle
-        color="primary"
-        [checked]="element.default"
-        (change)="onDefaultToggleChange($event, element.index)"
+    <bod-table-actions
+      sectionActions
+      [actions]="isStatusEditable() ? editactions : []"
+      (onActionClick)="isStatusEditable() && iconActionClicked($event, element)"
+    >
+    </bod-table-actions>
+  </ng-template>
+  <ng-template #expandedRowTemplate let-context="context">
+    <div fullwidth>
+      <!-- {{context |json}} -->
+      <h1>Conditions</h1>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="conditionDetailService.getCondition(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
       >
-      </mat-slide-toggle>
-    </form>
+      </bod-inquiry-layout>
+
+      <bod-table 
+        *ngIf="context.element.conditionType === 'TextCondition' &&
+        context.element.conditionDetail?.textValidValues?.length > 0"
+
+        [data]="TextConditionTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      <bod-table
+        *ngIf="context.element.conditionType === 'TextAndNumberCondition'&&
+        context.element.conditionDetail?.textAndNumberValidValues?.length > 0"
+        [data]="TextNumberConditionTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplate"
+      >
+      </bod-table>
+      <bod-table
+        *ngIf="
+          context.element.conditionType === 'CurrencySpecificCondition' &&
+          context.element.conditionDetail.currencySpecificDetailsList?.length >
+            0
+        "
+        [data]="CurrencySpecificTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplate"
+      >
+        <ng-template #expandedRowTemplate let-context="context">
+          <bod-inquiry-layout
+            [columns]="2"
+            [groups]="conditionDetailService.getAggregateData(context.element)"
+            [softSeparator]="false"
+            [direction]="direction"
+            [information]="[]"
+            (linkClick)="commonDataService.inquiryLayoutClick($event)"
+          >
+          </bod-inquiry-layout>
+        </ng-template>
+      </bod-table>
+      <bod-table
+        *ngIf="
+          context.element.conditionType === 'NumberCondition' &&
+          context.element.conditionDetail.maxValue === null &&
+          context.element.conditionDetail?.numberValidValues?.length > 0
+        "
+        [data]="NumberConditionTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      <bod-table
+        *ngIf="context.element.conditionType === 'FrequencyCondition'"
+        [data]="primFrequencyConditionTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      <bod-table
+        *ngIf="context.element.conditionType === 'FrequencyCondition'"
+        [data]="secFrequencyConditionTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      <bod-table
+        *ngIf="context.element?.conditionsRltnp?.length > 0"
+        [data]="ConditionReltnTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      <bod-table
+        *ngIf="context.element.conditionType === 'CurrencyCondition'"
+        [data]="currencyConditionTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      
+    </div>
   </ng-template>
 </bod-table>
+
+<ng-template #addNewConditionTemplate>
+  <bod-add-edit-conditions
+    (apiResponse)="addConditionTypeEvent($event)"
+    [editConditionRow]="conditionType"
+    [retainedCode]="retainedCode"
+    [retainedIdentifier]="retainedIdentifier"
+    [retainedName]="retainedName"
+    [retainedClassificationType]="retainedClassificationType"
+    [retainedConditionType]="retainedConditionType"
+    [retainedOptionality]="retainedOptionality"
+    [retainedApplicableTO]="retainedApplicableTO"
+    [retainedCustomizable]="retainedCustomizable"
+    [retainedDefaultFlag]="retainedDefaultFlag"
+    [retainedDefaultDate]="retainedDefaultDate"
+    [retainedValidValuesTypeNumber]="retainedValidValuesTypeNumber"
+    [retainednumberValue]="retainednumberValue"
+    [retainednumberLow]="retainednumberLow"
+    [retainednumberHigh]="retainednumberHigh"
+    [retainednumberdefaultValue]="retainednumberdefaultValue"
+  >
+  </bod-add-edit-conditions>
+</ng-template>
+
+<ng-template #addExistingConditionTemplate> </ng-template>
