@@ -1,24 +1,37 @@
-ngOnChanges(): void {
-  this.trySelectWhenReady();
+@Input() set selectedRowSingleSelect(rows: CurrencyTableSingle[]) {
+  this._selectedRowSingleSelect = rows || [];
+  if (this.currencyTable?.selection) {
+    this.selectCurrencyRows();
+  }
 }
-  private trySelectWhenReady(): void {
-  const interval = setInterval(() => {
-    const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
-    const selection = this.currencyTable?.selection;
+get selectedRowSingleSelect(): CurrencyTableSingle[] {
+  return this._selectedRowSingleSelect;
+}
+private _selectedRowSingleSelect: CurrencyTableSingle[] = [];
 
-    if (tableData.length > 0 && selection && this.selectedRowSingleSelect?.length > 0) {
-      console.log('✅ Ready for selection');
-      this.selectCurrencyRows();
-      clearInterval(interval); // Stop polling
-    } else {
-      console.log('⏳ Waiting... tableData:', tableData.length, ' selection:', !!selection, ' selectedRowSingleSelect:', this.selectedRowSingleSelect?.length);
-    }
-  }, 100); // check every 100ms
+ngOnChanges(changes: SimpleChanges): void {
+  if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+    console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+    setTimeout(() => this.selectCurrencyRows(), 0);
+  }
 }
+
 private selectCurrencyRows(): void {
   const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
   const selection = this.currencyTable?.selection;
+  
+  if (!selection || tableData.length === 0) {
+    console.warn('⚠️ Table or selection model not ready');
+    return;
+  }
 
+  console.log('📌 Table data (for selection):', tableData);
+  console.log('📌 Incoming selected rows:', this.selectedRowSingleSelect);
+
+  // Clear current selection first
+  selection.clear();
+
+  // Select the new rows
   tableData.forEach(dataRow => {
     const match = this.selectedRowSingleSelect.find(
       sel => sel.identifier === dataRow.identifier
@@ -27,6 +40,74 @@ private selectCurrencyRows(): void {
       selection.select(dataRow);
     }
   });
+}
 
-  console.log('✅ Finished selecting matching rows');
+
+
+
+
+loadMockCurrencyDataSingleSelect(): Observable<CurrencyTableSingle[]> {
+  return this.conditionDetailService.getCurrency().pipe(
+    tap((response: CurrencyTableSingle[]) => {
+      this.currencyData1 = response.map((item, index) => ({
+        index: index,
+        identifier: item.identifier,
+        code: item.code,
+        currencyISO4217Val: item.currencyISO4217Val,
+        default: false
+      }));
+
+      console.log('Mapped currencyData1:', this.currencyData1);
+
+      this.currencyDataSingleSelect.datasource.data = this.currencyData1;
+      console.log('Datasource after assignment:', this.currencyDataSingleSelect.datasource.data);
+
+      // If editing, select the previously selected currencies
+      if (this.editConditionRow) {
+        this.updateCurrencySelection();
+      }
+    })
+  );
+}
+
+private updateCurrencySelection() {
+  if (this.editConditionRow?.conditionDetail?.conditionType === 'CurrencyCondition') {
+    const validCurrencyIds = this.editConditionRow.conditionDetail.currencyValidValues || [];
+    const defaultCurrencyId = this.editConditionRow.conditionDetail.value;
+
+    this.selectedRowSingleSelect = this.currencyData1.filter(currency => 
+      validCurrencyIds.includes(currency.identifier)
+    ).map(currency => ({
+      ...currency,
+      default: currency.identifier === defaultCurrencyId
+    }));
+
+    console.log("Updated selected currencies:", this.selectedRowSingleSelect);
+  }
+}
+
+
+
+
+
+else if (element.conditionType === 'CurrencyCondition') {
+  const selectedCurrencyId = element.conditionDetail.value;
+  const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+
+  // Update the currency data with default flags
+  this.currencyData1 = this.currencyData1.map(currency => ({
+    ...currency,
+    default: validCurrencyIds.includes(currency.identifier) && 
+             currency.identifier === selectedCurrencyId
+  }));
+
+  // Update the datasource
+  this.currencyDataSingleSelect.datasource.data = [...this.currencyData1];
+  
+  // Set the selected rows
+  this.selectedRowSingleSelect = this.currencyData1.filter(
+    currency => validCurrencyIds.includes(currency.identifier)
+  );
+
+  console.log("Selected currencies for condition:", this.selectedRowSingleSelect);
 }
