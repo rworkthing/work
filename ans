@@ -1,22 +1,32 @@
-ngAfterViewInit(): void {
-  this.selectCurrencyRows();
+ngOnChanges(changes: SimpleChanges): void {
+  if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+    console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+
+    // Wait for table to render rows
+    setTimeout(() => {
+      this.selectCurrencyRows();
+    }, 0);
+  }
 }
 
-
 private selectCurrencyRows(): void {
-  setTimeout(() => {
-    const tableData = this.currencyTable?.datasource?.data || [];
-    console.log('📌 Table data:', tableData);
-    console.log('📌 Selected rows input:', this.selectedRowSingleSelect);
+  const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
+  const selection = this.currencyTable?.selection;
 
-    tableData.forEach(dataRow => {
-      const match = this.selectedRowSingleSelect.find(
-        sel => sel.identifier === dataRow.identifier
-      );
-      if (match) {
-        console.log('✅ Selecting row:', dataRow);
-        this.currencyTable.selection.select(dataRow);
-      }
-    });
-  }, 0);
+  if (!selection || tableData.length === 0) {
+    console.warn('⚠️ Table or selection model not ready');
+    return;
+  }
+
+  console.log('📌 Table data (for selection):', tableData);
+  console.log('📌 Incoming selected rows:', this.selectedRowSingleSelect);
+
+  tableData.forEach(dataRow => {
+    const match = this.selectedRowSingleSelect.find(
+      sel => sel.identifier === dataRow.identifier
+    );
+    if (match) {
+      selection.select(dataRow);
+    }
+  });
 }
