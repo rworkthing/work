@@ -1,41 +1,84 @@
 {
-            "MetadataStatus": "INPROGRESS",
-            "RoleType": {
-                "roleType": {
-                    "identifier": 11104001451,
-                    "code": "namma",
-                    "name": "Role1",
-                    "shortName": "Role12",
-                    "category": null,
-                    "classification": 1,
-                    "systemDefined": "Y",
-                    "calculated": "N"
+            "Condition": {
+                "conditionAttribute": {
+                    "identifier": 11104001405,
+                    "cdarValue": "pop",
+                    "name": "Attribute1",
+                    "applicableLevel": "ArrangementLaw",
+                    "customizationLevel": "ArrangementValue",
+                    "conditionType": "CurrencyCondition",
+                    "classificationType": "ChargeType",
+                    "conditionOptionalityType": "Mandatory"
                 },
-                "roleCategoryList": null,
-                "productTypeRoleTypeRelationshipList": [
+                "conditionDetail": {
+                    "conditionType": "CurrencyCondition",
+                    "value": 100000000029,
+                    "currencyValidValues": [
+                        100000000027,
+                        100000000028,
+                        100000000029,
+                        100000000031
+                    ]
+                },
+                "productTypeConditionRltnp": null,
+                "feConditionRltnp": null,
+                "conditionsRltnp": null
+            },
+            "MetadataStatus": "INPROGRESS"
+        },
+
+
+
+
+ {
+            "Condition": {
+                "conditionAttribute": {
+                    "identifier": 11104002299,
+                    "cdarValue": "CurrSpec1111",
+                    "name": "CurrSpec1111",
+                    "applicableLevel": "ArrangementLaw",
+                    "customizationLevel": "ArrangementValue",
+                    "conditionType": "CurrencySpecificCondition",
+                    "classificationType": "FECondition",
+                    "conditionOptionalityType": "Mandatory"
+                },
+                "conditionDetail": {
+                    "conditionType": "CurrencySpecificCondition",
+                    "currencySpecificDetailsList": [
+                        {
+                            "conditionType": "AmountCondition",
+                            "currencyCode": "AED",
+                            "currencyName": "UAE Dirham",
+                            "currencyIdfr": 100000000026,
+                            "value": 1212.0,
+                            "minValue": null,
+                            "maxValue": null
+                        },
+                        {
+                            "conditionType": "AmountCondition",
+                            "currencyCode": "AFN",
+                            "currencyName": "Afghani",
+                            "currencyIdfr": 100000000027,
+                            "value": 111.0,
+                            "minValue": 11.0,
+                            "maxValue": 1111.0
+                        }
+                    ]
+                },
+                "productTypeConditionRltnp": null,
+                "feConditionRltnp": {
+                    "conditionIdentifier": 11104002299,
+                    "cdarValue": "CurrSpec1111"
+                },
+                "conditionsRltnp": [
                     {
-                        "identifier": 1110101,
-                        "roleTypeIdentifier": 11104001451,
-                        "roleTypeCode": "namma",
-                        "customerType": "Individual",
-                        "percentageAllowed": "N",
-                        "isPrimary": "N",
-                        "minimumRequired": 2,
-                        "maximumAllowed": 4,
-                        "applicableOrder": "N",
-                        "maximumAccountAllowed": 5,
-                        "signatureRequired": "N",
-                        "ownerCategory": null,
-                        "onwerSubCategory": null,
-                        "additionalDetails": null
-                    }
-                ],
-                "productTypeRoleTypeCatRelationshipList": [
-                    {
-                        "productTypeIdentifier": 1110101,
-                        "roleTypeIdentifier": 11104001451,
-                        "categoryIdentifier": 100000000001
+                        "objectConditionIdentifier": 11104002299,
+                        "objectCdarValue": "CurrSpec1111",
+                        "subjectConditionIdentifier": 112000000071,
+                        "subjectCdarValue": "AllowWithdrawalOfAccruedInterest",
+                        "conditionRltnpType": "Exclude"
                     }
                 ]
-            }
+            },
+            "MetadataStatus": "INPROGRESS"
         },
