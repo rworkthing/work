@@ -1,1 +1,337 @@
+private conditionForm(element: ConditionList): void {
+    this.addNewConditionFormGroup.removeControl('curspecificvalue');
 
+    this.isAdd = false;
+    this.retainedIdentifier = element.identifier ?? 0;
+    this.retainedCode = element.cdarValue || '';
+
+    // Mapping logic for applicableLevel
+    let applicableToValue: string | null = null;
+    switch (element.applicableLevel) {
+      case 'ProductLaw':
+        applicableToValue = 'productonly';
+        break;
+      case 'ArrangementLaw':
+        applicableToValue = 'accountonly';
+        break;
+      case 'InternalLaw':
+        applicableToValue = 'product&account';
+        break;
+      default:
+        applicableToValue = null; // or handle unknown case
+    }
+
+    const customizable: boolean = [
+      'ProductSuggestion',
+      'SystemSuggestion'
+    ].includes(element.customizationLevel);
+    this.addNewConditionFormGroup.patchValue({
+      code: element.cdarValue,
+      conditionIdentifier: element.identifier,
+      name: element.name,
+      conditionType: element.conditionType,
+      classificationType: element.classificationType,
+      optionality: element.conditionOptionalityType,
+      applicableTo: applicableToValue,
+      customizable: customizable,
+      conditionsRltnp: element.conditionsRltnp || [],
+      conditionSubject: '',
+      relationship: ''
+    });
+    const localeList: CondTable[] = (element.conditionsRltnp || []).map(
+      (locale, i) => ({
+        id: i,
+        conditionSubject: locale.subjectCdarValue,
+        relationship: locale.conditionRltnpType
+      })
+    );
+    this.localeTableData = localeList;
+
+    if (element.conditionType === 'DateCondition') {
+      this.addNewConditionFormGroup.patchValue({
+        start: element.conditionDetail.value
+      });
+    } else if (element.conditionType === 'FlagCondition') {
+      this.addNewConditionFormGroup.patchValue({
+        defaultflag: element.conditionDetail.value
+      });
+    } else if (element.conditionType === 'FrequencyCondition') {
+      this.addNewConditionFormGroup.patchValue({
+        processingday:
+          element.conditionDetail.frequencyDefinition?.businessDayRule || ''
+      });
+    } else if (element.conditionType === 'TextCondition') {
+      if (
+        element.conditionDetail.textValidValues &&
+        element.conditionDetail.textValidValues.length > 0
+      ) {
+        this.addNewConditionFormGroup.patchValue({
+          validvalue: true,
+          conditionDetail: element.conditionDetail || [],
+          validvalues: null,
+          default: null
+        });
+      } else {
+        this.addNewConditionFormGroup.patchValue({
+          defaultValueText: element.conditionDetail.value
+        });
+      }
+    } else if (element.conditionType === 'CurrencySpecificCondition') {
+      this.curspecificvalue =
+        element?.conditionDetail.currencySpecificDetailsList?.length > 0
+          ? true
+          : false;
+      this.addNewConditionFormGroup.addControl(
+        'curspecificvalue',
+        this.fb.control(this.curspecificvalue)
+      );
+      this.isHidden = !this.curspecificvalue;
+
+      const selectedCurrencies: CurrencyTable[] = [];
+
+      element.conditionDetail.currencySpecificDetailsList?.forEach(detail => {
+        const matchingCurrency = this.currencySpecificData.datasource.data.find(
+          item => item.currencyISO4217Val === detail.currencyCode
+        );
+
+        if (matchingCurrency) {
+          matchingCurrency.currencyInquiry = detail.currencyRange.map(cur => ({
+            id: cur.id,
+            label: cur.label,
+            value: cur.value
+          }));
+          selectedCurrencies.push(matchingCurrency);
+        }
+      });
+
+      this.currencySpecificData.datasource.data.forEach(row => {
+        if (selectedCurrencies.includes(row)) {
+          this.expandableTableRef.selection.select(row);
+        }
+      });
+
+      this.selectedRow = selectedCurrencies;
+    }
+    else if (element.conditionType === 'CurrencyCondition') {
+      const selectedCurrencyId = element.conditionDetail.value;
+      const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+
+      // Build a list of currency options with selection status
+      const currencyList: CurrencyTableSingle[] = validCurrencyIds.map((identifier, i) => ({
+        id: i,
+        identifier: identifier,
+        default: identifier === selectedCurrencyId
+      }));
+
+      // Assign to your table or dropdown data source
+      this.currencyTableData = currencyList;
+
+      // Patch the form with the selected currency
+      this.addNewConditionFormGroup.patchValue({
+        currencyValue: selectedCurrencyId
+      });
+    }
+    else if (element.conditionType === 'TextAndNumberCondition') {
+      if (
+        element.conditionDetail.textAndNumberValidValues &&
+        element.conditionDetail.textAndNumberValidValues.length > 0
+      ) {
+        this.addNewConditionFormGroup.patchValue({
+          textnumbervalidvalue: true,
+          conditionDetail: element.conditionDetail || [],
+          validvalues: '',
+          numbervalidvalues: null,
+          default: null
+        });
+      } else if (element.conditionDetail.textNumberValue) {
+        this.addNewConditionFormGroup.patchValue({
+          defaultText: element.conditionDetail.textNumberValue.textValue,
+          defaultNumber: element.conditionDetail.textNumberValue.numberValue
+        });
+      }
+    } else if (element.conditionType === 'PercentCondition') {
+      if (
+        element.conditionDetail.minValue !== null &&
+        element.conditionDetail.maxValue !== null
+      ) {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypePercentage: 'range',
+          percentageDefaultValue: element.conditionDetail.value,
+          percentageLow: element.conditionDetail.minValue,
+          percentageHigh: element.conditionDetail.maxValue
+        });
+      } else {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypePercentage: 'none',
+          percentageValue: element.conditionDetail.value
+        });
+      }
+    } else if (element.conditionType === 'AmountCondition') {
+      if (
+        element.conditionDetail.minValue !== null &&
+        element.conditionDetail.maxValue !== null
+      ) {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypeAmount: 'range',
+          currency: element.conditionDetail.currencyIdfr,
+          amountDefaultValue: element.conditionDetail.value,
+          amountLow: element.conditionDetail.minValue,
+          amountHigh: element.conditionDetail.maxValue
+        });
+      } else {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypeAmount: 'none',
+          currency: element.conditionDetail.currencyIdfr,
+          amountValue: element.conditionDetail.value
+        });
+      }
+    } else if (element.conditionType === 'NumberCondition') {
+      if (
+        element.conditionDetail.minValue !== null &&
+        element.conditionDetail.maxValue !== null
+      ) {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypeNumber: 'range',
+          numberdefaultValue: element.conditionDetail.value,
+          numberLow: element.conditionDetail.minValue,
+          numberHigh: element.conditionDetail.maxValue
+        });
+      } else if (
+        element.conditionDetail.numberValidValues &&
+        element.conditionDetail.numberValidValues.length > 0
+      ) {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypeNumber: 'set',
+          conditionDetail: element.conditionDetail || [],
+          validvalues: null,
+          default: null
+        });
+      } else {
+        this.addNewConditionFormGroup.patchValue({
+          validValuesTypeNumber: 'none',
+          numberValue: element.conditionDetail.value
+        });
+      }
+    }
+
+    const localeList1: textNumCond[] = (
+      element.conditionDetail.textAndNumberValidValues || []
+    ).map((locale, i) => ({
+      id: i,
+      validvalues: locale.textValue,
+      numbervalidvalues: locale.numberValue,
+
+      default:
+        element.conditionDetail.textNumberValue &&
+          locale.textValue ===
+          element.conditionDetail.textNumberValue.textValue &&
+          locale.numberValue ===
+          element.conditionDetail.textNumberValue.numberValue
+          ? true
+          : false
+    }));
+    this.localeTableData1 = localeList1;
+
+    const localeList2: NumCond[] = (
+      element.conditionDetail.numberValidValues || []
+    ).map((value, i) => ({
+      id: i,
+      validvalues: Number(value),
+
+      default:
+        Number(value) === Number(element.conditionDetail.value) ? true : false
+    }));
+
+    this.localeTableData2 = localeList2;
+
+    const localeList3: TextCond[] = (
+      element.conditionDetail.textValidValues || []
+    ).map((value, i) => ({
+      id: i,
+      validvalues: value,
+
+      default: value === element.conditionDetail.value ? true : false
+    }));
+
+    this.localeTableData3 = localeList3;
+
+    const primFreqList: primaFreq[] = (
+      element.conditionDetail.primaryFrequencyValidValues || []
+    ).map((freq, i) => ({
+      id: i,
+      primaryfrequency: freq.textValue,
+      value: freq.numberValue ?? null,
+      default:
+        freq.numberValue ===
+        element.conditionDetail.frequencyDefinition?.primaryUnits
+    }));
+
+    this.primFreqTableData = primFreqList;
+
+    const secFreqList: secFreq[] = (
+      element.conditionDetail.secondaryFrequencyValidValues || []
+    ).map((freq, i) => ({
+      id: i,
+      secondaryfrequency: freq.textValue,
+      value: freq.numberValue ?? null
+    }));
+
+    this.secFreqTableData = secFreqList;
+
+    this.isEdit = true;
+  }
+
+
+import { UntypedFormGroup } from "@angular/forms";
+import { BodTableComponent, BodTableMetadata } from "@bod/common";
+
+export interface CurrencyTable {
+    identifier: number,
+    index?:number;
+    currencyISO4217Val: string,
+    code: string,
+    range?: boolean,
+    defaultValue?:number,
+    default?: number,
+    minimum?: number,
+    maximum?: number,
+    currencyName?:string,
+    currencyInquiry?:Currency[];
+
+    // currencyDecimalNumber: string,
+    // currencyNumericCode: string
+    
+  }
+  export interface CurrencyTableSingle {
+    index: number;
+    identifier: number,
+    currencyISO4217Val: string,
+    code: string,
+    default?: boolean
+  }
+
+  export interface CurrencyTable1 {
+    index: number;
+    identifier?: number,
+    currencyISO4217Val: string,
+    code: string,
+    // range: boolean,
+    // default: number,
+    // minimum: number,
+    // maximum: number,
+    currencyInquiry?:Currency[];
+  }
+  export interface Currency {
+    id: number;
+    label: string;
+    value: string;
+  }
+  export interface TabIndexTableMap {
+    [k: number]: TableProps;
+  }
+  export interface TableProps {
+    formGroup: UntypedFormGroup;
+    data: BodTableMetadata;
+    ref: BodTableComponent;
+    input: any;
+  }
