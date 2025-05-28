@@ -356,6 +356,8 @@ export class ConditionDetailComponent {
           ...currency,
           default: currency.identifier === defaultCurrencyId ? 'Y' : 'N'
         }));
+        console.log('Final currency table data:', this.currencyConditionTable.datasource.data);
+
     }
 
 
