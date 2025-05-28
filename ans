@@ -1,20 +1,15 @@
-const selectedCurrencyId = element.conditionDetail.value;
-const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
 
-this.currencyData1 = this.currencyData1.map(currency => ({
-  ...currency,
-  default: validCurrencyIds.includes(currency.identifier) && currency.identifier === selectedCurrencyId
-}));
+@ViewChild('currencyConditionsForCurr', { static: false })
+currencyTable: BodTableComponent;
 
-// ✅ Update data source with ALL currencies
-this.currencyDataSingleSelect.datasource.data = [...this.currencyData1];
+@Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
 
-// ✅ Select only those rows that are in validCurrencyIds
-this.selectedRowSingleSelect = this.currencyData1.filter(currency =>
-  validCurrencyIds.includes(currency.identifier)
-);
-
-// ✅ Patch form with selected currency
-this.addNewConditionFormGroup.patchValue({
-  currencyValue: selectedCurrencyId
-});
+ngAfterViewInit(): void {
+  setTimeout(() => {
+    if (this.currencyTable && this.selectedRowSingleSelect.length > 0) {
+      this.selectedRowSingleSelect.forEach(row => {
+        this.currencyTable.selection.select(row);
+      });
+    }
+  });
+}
