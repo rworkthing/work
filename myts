@@ -2045,9 +2045,11 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
 
 
       // ✅ Select only those rows that are in validCurrencyIds
-      this.selectedRowSingleSelect = this.currencyData1.filter(currency =>
+
+      const selectedCurrenciesForCond = this.currencyData1.filter(currency =>
         validCurrencyIds.includes(currency.identifier)
       );
+      this.selectedRowSingleSelect = [...selectedCurrenciesForCond]
       console.log("selected rowsss",  this.selectedRowSingleSelect)
 
 
