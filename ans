@@ -1,26 +1,20 @@
-} else if (element.conditionType === 'CurrencyCondition') {
-  const selectedCurrencyId = element.conditionDetail.value;
-  const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
+const selectedCurrencyId = element.conditionDetail.value;
+const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
 
-  // Filter existing full currency list (currencyData1)
-  const allCurrencies = [...this.currencyData1];
+this.currencyData1 = this.currencyData1.map(currency => ({
+  ...currency,
+  default: validCurrencyIds.includes(currency.identifier) && currency.identifier === selectedCurrencyId
+}));
 
-  // Filter and mark default
-  const filteredCurrencies: CurrencyTableSingle[] = allCurrencies
-    .filter(currency => validCurrencyIds.includes(currency.identifier))
-    .map(currency => ({
-      ...currency,
-      default: currency.identifier === selectedCurrencyId
-    }));
+// ✅ Update data source with ALL currencies
+this.currencyDataSingleSelect.datasource.data = [...this.currencyData1];
 
-  // ✅ Update the table's data source
-  this.currencyDataSingleSelect.datasource.data = filteredCurrencies;
+// ✅ Select only those rows that are in validCurrencyIds
+this.selectedRowSingleSelect = this.currencyData1.filter(currency =>
+  validCurrencyIds.includes(currency.identifier)
+);
 
-  // ✅ Update selected row list for selection model
-  this.selectedRowSingleSelect = filteredCurrencies.filter(c => c.default);
-
-  // ✅ Optional: patch form control if needed
-  this.addNewConditionFormGroup.patchValue({
-    currencyValue: selectedCurrencyId
-  });
-}
+// ✅ Patch form with selected currency
+this.addNewConditionFormGroup.patchValue({
+  currencyValue: selectedCurrencyId
+});
