@@ -1,1 +1,31 @@
-
+<bod-table
+  #currencyConditionsForCurr
+  [data]="currencyDataSingleSelect"
+  (onRowSelect)="rowSelectionSingleSelect($event)"
+  [rowSelectionStrategy]="rowSelectionStrategy"
+  [allowSelectAll]="allowRowSelection"
+  [alignContent]="'top'"
+  [customColumnTemplates]="[
+    {
+      columnName: 'default',
+      templateName: defaultTemplate
+    }
+  ]"
+>
+  <ng-template
+    #defaultTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <form [formGroup]="defaultForm">
+        <mat-slide-toggle 
+        fisStyle
+        color="primary"
+        [checked]="element.default"
+        (change)="onDefaultToggleChange($event, element.index)"
+      >
+      </mat-slide-toggle>
+    </form>
+  </ng-template>
+</bod-table>
