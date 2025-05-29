@@ -96,19 +96,12 @@ import {
   BodEditableSampleTable,
   BodLocaleTable,
   CondTable,
+  Duration,
   SearchFieldInputData,
   textNumCond
 } from '../../bod-table-demo.model';
 import { DemoTableDataService, SampleEC } from '../../bod-table-demo.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
-// Define the duration fixed data interface
-export interface DurationFixed {
-  id: number;
-  durationType: string;
-  unitValue: number | null;
-  default: boolean;
-}
 
 @Component({
   selector: 'bod-duration-condition-fixed',
@@ -163,11 +156,14 @@ export class DurationConditionFixedComponent
   };
   defaultValueForm: UntypedFormGroup = new UntypedFormGroup({});
 
-  public disabledDurationTypes: string[] = [];
+  public disabledDurations = [
+    'Permanent',
+    'UntilFurtherNotice'
+  ];
 
-  onDurationTypeChange(element: any): void {
-    if (this.disabledDurationTypes.includes(element.durationType)) {
-      element.unitValue = null;
+  onDurationChange123(element: any): void {
+    if (this.disabledDurations.includes(element.durationType)) {
+      element.unitValue = null; // or '' if you prefer empty string
     }
   }
 
@@ -209,6 +205,26 @@ export class DurationConditionFixedComponent
     dismiss: 'BOD.metadataconfig.cancel'
   };
 
+  public pageModeExpand = this.pageMode;
+  public modeOptionsExpand = this.modeOptions;
+  public actionsForExpand = [];
+
+  public pageModeSingle = this.pageMode;
+  public modeOptionsSingle = this.modeOptions;
+  public actionsForSingle = [];
+
+  public pageModeMulti = this.pageMode;
+  public modeOptionsMulti = this.modeOptions;
+  public actionsForMulti = [];
+
+  public pageModeExpandSingle = this.pageMode;
+  public modeOptionsExpandSingle = this.modeOptions;
+  public actionsForExpandSingle = [];
+
+  public pageModeExpandMulti = this.pageMode;
+  public modeOptionsExpandMulti = this.modeOptions;
+  public actionsForExpandMulti = [];
+
   maxLengthStrategy: MaxLengthStrategy[] = [
     MaxLengthStrategy.exceedWithError,
     MaxLengthStrategy.restrict
@@ -247,7 +263,24 @@ export class DurationConditionFixedComponent
     new Currency('JPY', 'Japanese Yen', 0, ''),
     new Currency('CNY', 'Chinese Yuan', 2, '')
   ];
-  
+  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
+    options: [
+      {
+        value: 'MX',
+        label: 'Mexico'
+      },
+      {
+        value: 'IN',
+        label: 'India'
+      },
+      {
+        value: 'US',
+        label: 'California United States of America USA '
+      }
+    ],
+    type: ListType.COUNTRY,
+    required: true
+  };
   public inputForSlideToggleValue: BodKeyValuePairMetadata = {
     options: [
       {
@@ -260,6 +293,27 @@ export class DurationConditionFixedComponent
       }
     ]
   };
+  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: '1',
+        label: 'Primary Shipping'
+      },
+      {
+        value: '2',
+        label: 'Primary Billing'
+      }
+    ]
+  };
+
+  public rowLevelEditActions: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
+    }
+  ];
 
   public rowLevelActionsForBasicEdit: BodTableAction[] = [
     {
@@ -270,20 +324,61 @@ export class DurationConditionFixedComponent
     }
   ];
 
-  // Duration type options - Updated from frequency options
-  durationTypeOptions = [
+  public inputForCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Active'
+      },
+      {
+        value: false,
+        label: 'Inactive'
+      }
+    ]
+  };
+
+  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Yes'
+      },
+      {
+        value: false,
+        label: 'No'
+      }
+    ]
+  };
+  public inputForSelectKeyValue1: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: '1',
+        label: 'Primary Shipping'
+      },
+      {
+        value: '2',
+        label: 'Primary Billing'
+      }
+    ]
+  };
+
+  durationOptions = [
     { value: 'Days', label: 'Days' },
     { value: 'Weeks', label: 'Weeks' },
     { value: 'Months', label: 'Months' },
-    { value: 'Years', label: 'Years' }
+    { value: 'Years', label: 'Years' },
+    { value: 'Hours', label: 'Hours' },
+    { value: 'Minutes', label: 'Minutes' },
+    { value: 'Permanent', label: 'Permanent' },
+    { value: 'UntilFurtherNotice', label: 'Until Further Notice' }
   ];
 
-  // Updated columns for duration condition
   public columns: Column[] = [
     {
       name: 'durationType',
       title: 'Duration Type'
     },
+
     {
       name: 'unitValue',
       title: 'Unit Value',
@@ -317,6 +412,7 @@ export class DurationConditionFixedComponent
         existingDataNotEditable: false
       }
     },
+
     {
       name: 'actions',
       title: ' ',
@@ -324,6 +420,12 @@ export class DurationConditionFixedComponent
       width: 7
     }
   ];
+
+  onDurationChange(element: any): void {
+    if (this.disabledDurations.includes(element.durationType)) {
+      element.unitValue = null; // or '' or 0 depending on your use case
+    }
+  }
 
   public columnSimpleEdit = this.columns;
 
@@ -336,12 +438,12 @@ export class DurationConditionFixedComponent
     this.columnSimpleEdit = [...this.columns];
   }
 
-  public dataWithSimpleEdit: DurationFixed[] = [];
+  public dataWithSimpleEdit: Duration[] = [];
   public tableWithSimpleEdit: BodTableMetadata = {
-    title: 'Duration Condition (Fixed)',
+    title: 'Duration(Mandatory)',
     columns: this.columnSimpleEdit,
-    datasource: new MatTableDataSource<DurationFixed>(this.dataWithSimpleEdit),
-    noRecordsMessage: 'No duration condition value defined'
+    datasource: new MatTableDataSource<Duration>(this.dataWithSimpleEdit),
+    noRecordsMessage: 'No duration value defined'
   };
 
   private dataForReset: BodEditableSampleTable[] = [];
@@ -392,6 +494,7 @@ export class DurationConditionFixedComponent
 
   ngOnInit(): void {
     this.onPageAction('');
+
     this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
     this.subscriptions.add(
       this.translate.onTranslationChange.subscribe(lang => {
@@ -414,6 +517,9 @@ export class DurationConditionFixedComponent
     this.tableRefArray = [this.simpleEditTableRef];
   }
 
+  /**
+   * Method to change pagemode of the table
+   */
   public showActionsForSimple: boolean = false;
   public onPageAction(event) {
     if (event === PageAction.EDIT) {
@@ -430,141 +536,9 @@ export class DurationConditionFixedComponent
     }
   }
 
-  public setSearchFieldsData(isReset) {
-    const useExistingFormCtrlObj = {};
-    const searchFieldFormCtrlObj = {};
-    this.searchFieldObjArr = [];
-    let data: any;
-
-    data = isReset
-      ? this.dataForReset
-      : this.tableWithSimpleEdit.datasource.data;
-
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
-          row.groupId,
-          Validators.required
-        );
-        useExistingFormCtrlObj['useExistingGroupId' + ind] =
-          new UntypedFormControl(row.useExistingGroupId);
-        this.searchFieldObjArr[ind] = {
-          searchFieldData: {
-            label: '',
-            fieldName: 'groupId',
-            descFieldName: 'groupName',
-            required: true,
-            hideLabel: true,
-            hideFilterCriteria: true,
-            disableInput: true,
-            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
-            hideDescription: false
-          },
-          searchTableData: {
-            columns: this.commonDataService.columnsForDemoService,
-            enablePagination: true,
-            paginationOptions: {
-              pageSize: 5,
-              length: 12
-            },
-            datasource: new BodTableDataSource<SampleEC>(
-              new DemoTableDataService(this.http)
-            ),
-            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-          }
-        };
-      }
-    });
-
-    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
-    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
-    this.searchFieldFormCtrlKeys = Object.keys(
-      this.searchFieldColumnForm.controls
-    );
-    this.useExistingFormCtrlKeys = Object.keys(
-      this.useExistingColForm.controls
-    );
-  }
-
-  public setOverrideDefaultFieldsData(isReset) {
-    const overrideDefaultCtrlObj = {};
-    let data: any;
-
-    data = isReset
-      ? this.dataForReset
-      : this.tableWithSimpleEdit.datasource.data;
-
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        overrideDefaultCtrlObj['overrideDefault' + ind] =
-          new UntypedFormControl(row.overrideDefault);
-      }
-    });
-
-    this.overrideDefaultColumnForm = this.formBuilder.group(
-      overrideDefaultCtrlObj
-    );
-    this.overrideDefaultColFormCtrKeys = Object.keys(
-      this.overrideDefaultColumnForm.controls
-    );
-  }
-
-  public setRequiredFieldsData(isReset) {
-    const requiredCtrlObj = {};
-    let data: any;
-
-    data = isReset
-      ? this.dataForReset
-      : this.tableWithSimpleEdit.datasource.data;
-
-    data.forEach((row, ind) => {
-      if (
-        this.modeOptionsSimple?.input ||
-        (this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === ind)
-      ) {
-        requiredCtrlObj['required' + ind] = new UntypedFormControl(
-          row.required
-        );
-      }
-    });
-
-    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
-    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
-
-    if (this.singleRowEdit?.modeOptions?.input) {
-      if (
-        !this.overrideDefaultColumnForm.controls[
-          'overrideDefault' + this.singleRowEdit?.index
-        ].value
-      ) {
-        this.requiredColumnForm.controls[
-          'required' + this.singleRowEdit?.index
-        ].disable({
-          emitEvent: true
-        });
-      }
-    } else {
-      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
-        (key, ind) => {
-          if (!this.overrideDefaultColumnForm.controls[key].value) {
-            this.requiredColumnForm.controls['required' + ind].disable({
-              emitEvent: true
-            });
-          }
-        }
-      );
-    }
-  }
-
+  /**
+   * This method is to update custom column data whenever it gets changed in edit mode
+   */
   public updateColumnData(columnName, value, index, checkboxRef?, tableName?) {
     if (tableName === 'simpleEditTable') {
       const updatedData = this.tableWithSimpleEdit.datasource.data;
@@ -582,99 +556,16 @@ export class DurationConditionFixedComponent
     }
   }
 
+  /**
+   * This method is to update search field column form when a new row added to the table
+   */
   public updateCustomColumnFormFields() {
-    let lastSearchFieldCtrl;
-    let index;
-    this.searchFieldObjArr.push({
-      searchFieldData: {
-        label: '',
-        fieldName: 'groupId',
-        descFieldName: 'groupName',
-        required: true,
-        hideLabel: true,
-        hideFilterCriteria: true,
-        disableInput: true,
-        hideDescription: false
-      },
-      searchTableData: {
-        columns: this.commonDataService.columnsForDemoService,
-        enablePagination: true,
-        paginationOptions: {
-          pageSize: 5,
-          length: 12
-        },
-        datasource: new BodTableDataSource<SampleEC>(
-          new DemoTableDataService(this.http)
-        ),
-        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
-      }
-    });
-
-    switch (this.selectedTabIndex) {
-      case 0: {
-        const dataLength =
-          this.tableWithSimpleEdit?.datasource?.data?.length || 0;
-
-        if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
-          const lastKey =
-            this.searchFieldFormCtrlKeys[
-              this.searchFieldFormCtrlKeys.length - 1
-            ];
-          const match = lastKey?.match(/\d+$/);
-          index = match ? parseInt(match[0], 10) + 1 : 0;
-        } else {
-          index = 0;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-
-    this.searchFieldFormCtrlKeys = this.addFormControl(
-      this.searchFieldColumnForm,
-      'groupId',
-      index,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeys = this.addFormControl(
-      this.useExistingColForm,
-      'useExisting',
-      index,
-      false,
-      'No'
-    );
-
-    this.overrideDefaultColFormCtrKeys = this.addFormControl(
-      this.overrideDefaultColumnForm,
-      'overrideDefault',
-      index,
-      false,
-      'true'
-    );
-
-    this.requiredColFormCtrKeys = this.addFormControl(
-      this.requiredColumnForm,
-      'required',
-      index,
-      false,
-      'true'
-    );
+    // Similar implementation as in primary frequency component
   }
 
-  public dependentColChange(event, idx) {
-    if (!event.checked) {
-      this.requiredColumnForm.controls['required' + idx].disable({
-        emitEvent: true
-      });
-    } else {
-      this.requiredColumnForm.controls['required' + idx].enable({
-        emitEvent: true
-      });
-    }
-  }
-
+  /**
+   * This method is to add control to form when new row is added to table
+   */
   public addFormControl(form, columnName, index, isRequired, defaultValue) {
     isRequired
       ? form.addControl(
@@ -688,6 +579,9 @@ export class DurationConditionFixedComponent
     return Object.keys(form.controls);
   }
 
+  /**
+   * This method is to remove form control from form and return formcontrol Keys array when a row is deleted
+   */
   public removeFormControl(form, formControlKeys, index) {
     form.removeControl(formControlKeys[index]);
     return Object.keys(form.controls);
@@ -697,13 +591,13 @@ export class DurationConditionFixedComponent
 
   @Output() tableDirty = new EventEmitter<boolean>();
   @Output() completeDeltaChangeDuration = new EventEmitter<any>();
-  @Input() set durationData(data: DurationFixed[]) {
+  @Input() set durationData(data: Duration[]) {
     this.dataWithSimpleEdit = data || [];
     this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
-    console.log('dataWithSimpleEdit (Duration): ', this.dataWithSimpleEdit);
+    console.log('dataWithSimpleEdit duration: ', this.dataWithSimpleEdit);
   }
 
-  public getCurrentTableDuration(): DurationFixed[] {
+  public getCurrentTableDuration(): Duration[] {
     return this.tableWithSimpleEdit?.datasource?.data || [];
   }
 
@@ -716,6 +610,7 @@ export class DurationConditionFixedComponent
 
     if (event.currentChanges) {
       const editedIndex = event.currentChanges.rowIndex;
+
       const currentRow = this.tableWithSimpleEdit.datasource.data[editedIndex];
 
       if (currentRow.default) {
@@ -731,31 +626,31 @@ export class DurationConditionFixedComponent
     this.tableDirty.emit(true);
   }
 
+  // Method to mark tableFormGroup of EditTable as touched
   public markTouched() {
     this.simpleEditTableRef.markTableFormAsTouched();
-    this.searchFieldColumnForm.markAllAsTouched();
-    this.markAllSearchFieldsAsTouched();
   }
 
-  public markAllSearchFieldsAsTouched() {
-    this.searchFieldComponent.forEach(element => {
-      element.getFormControl().markAsTouched();
-    });
-  }
-
+  /**
+   * Method to update formstatus
+   */
   public checkStatus(status) {
     this.formStatus = status;
   }
+
+  /**
+   * Method to add a new row
+   */
 
   public selectedConditionData: any[] = [];
   public addTableData() {
     this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
     console.log('valid Value Data', this.tableWithSimpleEdit.datasource);
 
-    const updatedData: DurationFixed = {
+    const updatedData = {
       id: ++this.lastModifiedIndex,
-      durationType: 'Days', // Default duration type
-      unitValue: null,
+      durationType: 'Days',
+      unitValue: 1,
       default: false
     };
 
@@ -768,37 +663,33 @@ export class DurationConditionFixedComponent
         modeOptions: { input: true, reset: false },
         index: this.tableWithSimpleEdit.datasource.data.length - 1
       };
-      this.setSearchFieldsData(false);
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
     }
   }
 
+  /**
+   * Method to change pagemode to enquiry on save of table data
+   */
   public saveTableData() {
     this.markTouched();
-    if (this.formStatus && this.searchFieldColumnForm.valid) {
-      switch (this.selectedTabIndex) {
-        case 0: {
-          this.modeOptionsSimple = { input: false, reset: false };
-          this.pageModeSimple = PageMode.INQUIRY;
-          this.rowLevelActionsForBasicEdit[0].disabled = false;
-          break;
-        }
-        default:
-          break;
-      }
+    if (this.formStatus) {
+      this.modeOptionsSimple = { input: false, reset: false };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
       this.updateMsgArr(this.successMsg);
     }
   }
 
+  /**
+   * Method to reset edit table data
+   */
   public reset() {
-    this.setSearchFieldsData(true);
-    this.setOverrideDefaultFieldsData(true);
-    this.setRequiredFieldsData(true);
-
     this.modeOptionsSimple = { input: true, reset: true };
     this.updateMsgArr(this.resetMsg);
   }
 
+  /**
+   * Method to update messages in page container
+   */
   public updateMsgArr(msg) {
     this.messages = [msg];
     setTimeout(() => {
@@ -806,6 +697,9 @@ export class DurationConditionFixedComponent
     }, 10000);
   }
 
+  /**
+   * Method to handle row level actions for basic edit table
+   */
   @Output() translationDetails1 = new EventEmitter<any>();
 
   handleRowLevelActions($event, index) {
@@ -846,19 +740,15 @@ export class DurationConditionFixedComponent
   }
 
   private updateFormStateAsPristine() {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef?.tableFormGroup.markAsPristine();
-        this.formStateService.formState$.next(
-          this.simpleEditTableRef.tableFormGroup.dirty
-        );
-        break;
-      }
-      default:
-        break;
-    }
+    this.simpleEditTableRef?.tableFormGroup.markAsPristine();
+    this.formStateService.formState$.next(
+      this.simpleEditTableRef.tableFormGroup.dirty
+    );
   }
 
+  /**
+   * Method to set data for single line edit mode
+   */
   setDataForSingleLineEditMode(editIndex: number) {
     this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
       ...obj
@@ -868,33 +758,22 @@ export class DurationConditionFixedComponent
       index: editIndex
     };
     this.pageModeSimple = PageMode.NONE;
-    this.setSearchFieldsData(false);
-    this.setOverrideDefaultFieldsData(false);
-    this.setRequiredFieldsData(false);
   }
 
+  /**
+   * Method to delete row of a table
+   */
   public deleteTableData(index) {
     this.simpleEditTableRef.deleteRow(index);
-
-    if (this.searchFieldColumnForm) {
-      this.searchFieldFormCtrlKeys = this.removeFormControl(
-        this.searchFieldColumnForm,
-        this.searchFieldFormCtrlKeys,
-        index
-      );
-      this.searchFieldObjArr.splice(index, 1);
-      this.useExistingFormCtrlKeys = this.removeFormControl(
-        this.useExistingColForm,
-        this.useExistingFormCtrlKeys,
-        index
-      );
-    }
   }
 
   ngOnDestroy() {
     this.subscriptions.unsubscribe();
   }
 
+  /**
+   * Method to update message in system message service
+   */
   public updateMessage(key, text) {
     const message = this.translate.instant(key) + text;
     this.systemMessage.updateSystemMessage(message);
@@ -941,20 +820,6 @@ export class DurationConditionFixedComponent
     this.checkStatus(false);
     this.pageModeSimple = this.pageMode;
     this.modeOptionsSimple = this.modeOptions;
-
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.showEdit = true;
-        this.showExpandEdit = false;
-        this.showSingleSelect = false;
-        this.showMultiSelect = false;
-        this.showExpandSingleSelect = false;
-        this.showExpandMultiSelect = false;
-        break;
-      }
-      default:
-        break;
-    }
   }
 
   toggleEditableInput(event) {
