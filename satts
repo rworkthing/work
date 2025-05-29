@@ -280,7 +280,7 @@ export class ConditionDetailComponent {
     noRecordsMessage: 'No Secondary Frequency Defined'
   };
   public currencyConditionTable: BodTableMetadata = {
-    title: 'Currency Frequency',
+    title: 'Currency Condition',
     columns: [...this.conditionDetailService.currency],
     datasource: new MatTableDataSource<BodSampleTable>(),
     noRecordsMessage: 'No Currency Defined'
@@ -359,6 +359,7 @@ export class ConditionDetailComponent {
         
       console.log('Final currency table data:', this.currencyConditionTable.datasource.data);
     }
+    
 
 
 
@@ -722,6 +723,40 @@ export class ConditionDetailComponent {
                 value: `${conditionDetail.value}%`
               });
             }
+          }
+
+          if (conditionDetail.conditionType === 'AmountCondition') {
+
+
+            if (
+              conditionDetail.minValue !== undefined &&
+              conditionDetail.minValue !== null
+            ) {
+              conditionInquiry.push({
+                id: 8,
+                label: 'Minimum Amount',
+                value: conditionDetail.minValue
+              });
+            }
+           
+            if (
+              conditionDetail.maxValue !== undefined &&
+              conditionDetail.maxValue !== null
+            ) {
+              conditionInquiry.push({
+                id: 7,
+                label: 'Maximum Amount',
+                value: conditionDetail.maxValue
+              });
+            }
+            conditionInquiry.push({
+              id: 6,
+              label: 'Default Amount',
+              value: conditionDetail.value
+            });
+
+
+           
           }
 
           if (conditionDetail.conditionType === 'NumberCondition') {
