@@ -1,4 +1,4 @@
- <div
+<div
   *ngIf="
     addNewConditionFormGroup.get('conditionType').value ===
     'DurationCondition'
@@ -32,11 +32,5 @@
       </mat-form-field>
     </bod-control-group>
   </bod-input-layout>
-  <bod-duration-condition-fixed
-    #simpleEditTableDurationFix
-    (completeDeltaChangefrequency)="handleCompleteDeltaChangeFreq($event)"
-    [primFreData]="primFreqTableData"
-    (tableDirty)="onTableDirty()"
-  >
-  </bod-duration-condition-fixed>
+  
 </div>
