@@ -1,3 +1,31 @@
+// Add these imports to add-edit-conditions.component.ts
+
+import { DurationConditionFixedComponent } from '../duration-condition-fixed/duration-condition-fixed.component';
+
+// Add this import to the existing imports array in the component decorator
+// In the imports array, add:
+DurationConditionFixedComponent,
+
+// Add this ViewChild (it's already referenced in the code)
+@ViewChild('simpleEditTableDurationFix')
+simpleEditTableDurationFix: DurationConditionFixedComponent;
+
+// Add these properties (some are already referenced but need to be defined)
+public durationTableData: Duration[] = [];
+
+// Add this method (it's already referenced in the HTML)
+completeDeltaDurationData: any;
+handleCompleteDeltaChangeDuration(data: any) {
+  this.completeDeltaDurationData = data;
+  console.log('Received CompleteDelta from duration child:', this.completeDeltaDurationData);
+}
+
+// In the resetFormControls method, add this condition:
+if (conditionType !== 'DurationCondition') {
+  this.addNewConditionFormGroup.get('processingday')?.reset('');
+}
+
+// In the submitForm method, add this case for DurationCondition:
 else if (formValues.conditionType === 'DurationCondition') {
   const durationTableData =
     this.simpleEditTableDurationFix.getCurrentTableDuration?.() || [];
@@ -32,3 +60,36 @@ else if (formValues.conditionType === 'DurationCondition') {
     durationValidValues: durationValidValues
   };
 }
+
+// In the conditionForm method (for editing), add this case:
+else if (element.conditionType === 'DurationCondition') {
+  this.addNewConditionFormGroup.patchValue({
+    processingday:
+      element.conditionDetail.durationDefinition?.businessDayRule || ''
+  });
+}
+
+// Add this property for retained data (similar to other condition types)
+@Input() retainedDurationValidValues: Duration[] = [];
+
+// In the onReset method, add this for edit mode:
+//Duration Condition
+this.localeTableData4 = [...this.retainedDurationValidValues];
+
+// Add this property for locale table data
+public localeTableData4: Duration[] = [];
+
+// In the conditionForm method, add this to populate duration data for editing:
+const durationList: Duration[] = (
+  element.conditionDetail.durationValidValues || []
+).map((duration, i) => ({
+  id: i,
+  durationType: duration.textValue,
+  unitValue: duration.numberValue,
+  default:
+    duration.textValue ===
+    element.conditionDetail.durationDefinition?.durationType &&
+    duration.numberValue ===
+    element.conditionDetail.durationDefinition?.unitValue
+}));
+this.localeTableData4 = durationList;
