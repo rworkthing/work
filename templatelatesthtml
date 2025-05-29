@@ -1,5 +1,4 @@
 <bod-page-container
-  title="Locale"
   [pageMode]="pageModeSimple"
   (pageAction)="onPageAction($event)"
   [messages]="messages"
@@ -11,7 +10,12 @@
     [modeOptions]="modeOptionsSimple"
     [singleRowEdit]="singleRowEdit"
     [customColumnTemplates]="[
-      { columnName: 'actions', templateName: editActionsTemplate1 }
+      {
+        columnName: 'durationType',
+        templateName: durationTypeTemplate
+      },
+      { columnName: 'actions', templateName: editActionsTemplate1 },
+      { columnName: 'unitValue', templateName: unitValueColumnTemplate }
     ]"
     (inputValidationStatus)="checkStatus($event)"
     (editTableEvent)="onEditTableAction($event)"
@@ -53,7 +57,7 @@
           fisStyle
           (click)="handleRowLevelActions('save', index)"
         >
-          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
+          <mat-icon fisStyle rufIconStyle="sm" fisIcon="check"></mat-icon>
         </button>
         <button
           rufId
@@ -68,54 +72,34 @@
         </button>
       </div>
     </ng-template>
-    <!-- <bod-control-group
-[truncate]="false"
-[label]="translationKey + 'metadataconfig.locale'"
-[forTextOnly]="true"
-[required]="true"
->
-<mat-form-field appearance="outline" fisStyle>
-  <mat-select
-    panelClass="fis-style"
-    formControlName="localeCode"
-    name="localeCode"
-  >
-    <mat-option
-      *ngFor="let localeCode of localeCodes"
-      [value]="localeCode.value"
-    >
-      {{ localeCode.label }}
-    </mat-option>
-  </mat-select>
-</mat-form-field>
-</bod-control-group> -->
   </bod-table>
-  <!-- <form [formGroup]="localeForm">
-    <ng-template #localeTemplate>
-        <h1>harshit {{locales}}</h1>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.locale'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="locale"
-              name="locale"
-            >
-              <mat-option
-                *ngFor="let locale of locales"
-                [value]="locale.value"
-              >
-                {{ locale.label | json }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form> -->
+
+  <ng-template
+    #durationTypeTemplate
+    let-element="element"
+    let-column="column"
+  >
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select 
+      panelClass="fis-style"
+      [(ngModel)]="element.durationType"
+      (selectionChange)="onDurationChange123(element)">
+        <mat-option *ngFor="let val of durationOptions" [value]="val.value">
+           {{ val.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-template>
+
+  <ng-template #unitValueColumnTemplate let-element="element">
+    <mat-form-field appearance="outline" fisStyle>
+      <input
+        matInput
+        fisStyle
+        type="number"
+        [(ngModel)]="element.unitValue"
+        [disabled]="disabledDurations.includes(element.durationType)"
+      />
+    </mat-form-field>
+  </ng-template>
 </bod-page-container>
