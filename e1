@@ -33,4 +33,12 @@
     </bod-control-group>
   </bod-input-layout>
   
+  <!-- ADD THIS PART FOR THE DURATION TABLE -->
+  <bod-duration-condition-fixed
+    #simpleEditTableDurationFix
+    (completeDeltaChangeDuration)="handleCompleteDeltaChangeDuration($event)"
+    [durationData]="durationTableData"
+    (tableDirty)="onTableDirty()"
+  >
+  </bod-duration-condition-fixed>
 </div>
