@@ -1,121 +1,1602 @@
-<bod-page-container
-  [pageMode]="pageModeSimple"
-  (pageAction)="onPageAction($event)"
-  [messages]="messages"
-  *ngIf="showEdit"
+<bod-message-container [messages]="errorMessages"></bod-message-container>
+<bod-message-container [messages]="errorMessages2"></bod-message-container>
+<bod-message-container [messages]="errorMessages3"></bod-message-container>
+<bod-message-container [messages]="errorMessages5"></bod-message-container>
+
+<bod-form
+  [formGroup]="addNewConditionFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onAddNewCondition(isAdd)"
+  (onReset)="onReset(isAdd)"
+  fisStyle
 >
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <div *ngIf="isEdit">
+        {{ addNewConditionFormGroup.get('code')?.value }}
+      </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="code"
+          name="code"
+        />
+
+        <mat-error>
+          {{ getError('code', addNewConditionFormGroup) | translate }}
+        </mat-error>
+        <mat-error
+          *ngIf="
+            addNewConditionFormGroup.get('code').hasError('noSpecialCharacters')
+          "
+        >
+        </mat-error>
+        <mat-error
+          *ngIf="addNewConditionFormGroup.get('code').hasError('maxLength')"
+        >
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.name'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="name"
+          name="name"
+        />
+        <mat-error>
+          {{ getError('name', addNewConditionFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.conditiontype'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="conditionType"
+          name="conditionType"
+        >
+          <mat-option
+            *ngFor="let conditionType of conditionTypes"
+            [value]="conditionType.value"
+          >
+            {{ conditionType.label }}
+          </mat-option>
+        </mat-select>
+
+        <mat-error>
+          {{ getError('conditionType', addNewConditionFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.classificationtype'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="classificationType"
+          name="classificationType"
+        >
+          <mat-option
+            *ngFor="let classificationType of classificationTypes"
+            [value]="classificationType.value"
+          >
+            {{ classificationType.label }}
+          </mat-option>
+        </mat-select>
+
+        <mat-error>
+          {{
+            getError('classificationType', addNewConditionFormGroup) | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.optionality'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="optionality"
+          name="optionality"
+        >
+          <mat-option
+            *ngFor="let optionality of optionalitys"
+            [value]="optionality.value"
+          >
+            {{ optionality.label }}
+          </mat-option>
+        </mat-select>
+
+        <mat-error>
+          {{ getError('optionality', addNewConditionFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.applicableto'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="applicableTo"
+          name="applicableTo"
+        >
+          <mat-option
+            *ngFor="let applicableTo of applicableTos"
+            [value]="applicableTo.value"
+          >
+            {{ applicableTo.label }}
+          </mat-option>
+        </mat-select>
+
+        <mat-error>
+          {{ getError('applicableTo', addNewConditionFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.customizable'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="customizable"
+        name="customizable"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+  </bod-input-layout>
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value === 'NumberCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.validvaluestype'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="validValuesTypeNumber"
+            name="validValuesTypeNumber"
+          >
+            <mat-option
+              *ngFor="let validValuesTypeNumber of validValuesTypeNumbers"
+              [value]="validValuesTypeNumber.value"
+            >
+              {{ validValuesTypeNumber.label }}
+            </mat-option>
+          </mat-select>
+
+          <mat-error>
+            {{
+              getError('validValuesTypeNumber', addNewConditionFormGroup)
+                | translate
+            }}
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+      <div
+        *ngIf="
+          addNewConditionFormGroup.get('validValuesTypeNumber').value === 'none'
+        "
+      >
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="numberValue"
+              name="numberValue"
+            />
+
+            <mat-error>
+              {{
+                getError('numberValue', addNewConditionFormGroup) | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('numberValue')
+                  .hasError('maxLength')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+      </div>
+    </bod-input-layout>
+    <div
+      *ngIf="
+        addNewConditionFormGroup.get('validValuesTypeNumber').value === 'range'
+      "
+    >
+      <bod-input-layout col="1">
+        <bod-page-container title="Range"></bod-page-container>
+      </bod-input-layout>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.minimumvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="numberLow"
+              name="numberLow"
+            />
+
+            <mat-error>
+              {{ getError('numberLow', addNewConditionFormGroup) | translate }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('numberLow')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup.get('numberLow').hasError('maxLength')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.maximumvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="numberHigh"
+              name="numberHigh"
+            />
+
+            <mat-error>
+              {{ getError('numberHigh', addNewConditionFormGroup) | translate }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup.get('numberHigh').hasError('zeroValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('numberHigh')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup.get('numberHigh').hasError('maxLength')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="numberdefaultValue"
+              name="numberdefaultValue"
+            />
+
+            <mat-error>
+              {{
+                getError('numberdefaultValue', addNewConditionFormGroup)
+                  | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('numberdefaultValue')
+                  .hasError('maxLength')
+              "
+            >
+            </mat-error>
+            <!-- <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('numberdefaultValue')
+                  .hasError('defaultValueOutOfRange')
+              "
+            >
+            </mat-error> -->
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </div>
+    <bod-num-condition
+      *ngIf="
+        addNewConditionFormGroup.get('validValuesTypeNumber').value === 'set'
+      "
+      #simpleEditTableNum
+      [localeData2]="localeTableData2"
+      (tableDirty)="onTableDirty()"
+      (completeNumberData)="handleCompleteNumberData($event)"
+      [retainedSetNumberCondition] ="retainedSetNumberCondition"
+
+    >
+    </bod-num-condition>
+  </div>
+
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value === 'AmountCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.currency'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="currency"
+            name="currency"
+          >
+            <mat-option
+              *ngFor="let currency of currencies"
+              [value]="currency.value"
+            >
+              {{ currency.label }}
+            </mat-option>
+          </mat-select>
+
+          <mat-error>
+            {{ getError('currency', addNewConditionFormGroup) | translate }}
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.validvaluestype'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="validValuesTypeAmount"
+            name="validValuesTypeAmount"
+          >
+            <mat-option
+              *ngFor="let validValuesTypeAmount of validValuesTypeAmounts"
+              [value]="validValuesTypeAmount.value"
+            >
+              {{ validValuesTypeAmount.label }}
+            </mat-option>
+          </mat-select>
+
+          <mat-error>
+            {{
+              getError('validValuesTypeAmount', addNewConditionFormGroup)
+                | translate
+            }}
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+      <div
+        *ngIf="
+          addNewConditionFormGroup.get('validValuesTypeAmount').value === 'none'
+        "
+      >
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultamount'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="amountValue"
+              name="amountValue"
+            />
+
+            <mat-error>
+              {{
+                getError('amountValue', addNewConditionFormGroup) | translate
+              }}
+              <mat-error
+                *ngIf="
+                  addNewConditionFormGroup
+                    .get('amountValue')
+                    .hasError('negativeValue')
+                "
+              >
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionFormGroup
+                    .get('amountValue')
+                    .hasError('maxLength')
+                "
+              >
+              </mat-error>
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+      </div>
+    </bod-input-layout>
+    <div
+      *ngIf="
+        addNewConditionFormGroup.get('validValuesTypeAmount').value === 'range'
+      "
+    >
+      <bod-input-layout col="1">
+        <bod-page-container title="Range"></bod-page-container>
+      </bod-input-layout>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.minimumamount'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="amountLow"
+              name="amountLow"
+            />
+
+            <mat-error>
+              {{ getError('amountLow', addNewConditionFormGroup) | translate }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('amountLow')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup.get('amountLow').hasError('maxLength')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.maximumamount'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="amountHigh"
+              name="amountHigh"
+            />
+
+            <mat-error>
+              {{ getError('amountHigh', addNewConditionFormGroup) | translate }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup.get('amountHigh').hasError('zeroValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('amountHigh')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup.get('amountHigh').hasError('maxLength')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultamount'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="amountDefaultValue"
+              name="amountDefaultValue"
+            />
+
+            <mat-error>
+              {{
+                getError('amountDefaultValue', addNewConditionFormGroup)
+                  | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('amountDefaultValue')
+                  .hasError('maxLength')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('amountDefaultValue')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </div>
+  </div>
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value === 'FlagCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.defaultvalue'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="defaultflag"
+          name="defaultflag"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+    </bod-input-layout>
+  </div>
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value === 'DateCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        label="{{ translationKey + 'metadataconfig.defaultvalue' }}"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle bod-date>
+          <input
+            matInput
+            formControlName="start"
+            [matDatepicker]="datePicker"
+            [matDatepickerFilter]="dateRange.filter"
+            placeholder="mm/dd/yyyy"
+          />
+          <mat-datepicker-toggle
+            fisStyle
+            matSuffix
+            [for]="datePicker"
+          ></mat-datepicker-toggle>
+          <mat-datepicker #datePicker [xPosition]="'end'"></mat-datepicker>
+
+          <mat-error>
+            {{ getError('start', addNewConditionFormGroup) | translate }}
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+  </div>
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value === 'PercentCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.validvaluestype'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="validValuesTypePercentage"
+            name="validValuesTypePercentage"
+          >
+            <mat-option
+              *ngFor="
+                let validValuesTypePercentage of validValuesTypePercentages
+              "
+              [value]="validValuesTypePercentage.value"
+            >
+              {{ validValuesTypePercentage.label }}
+            </mat-option>
+          </mat-select>
+
+          <mat-error>
+            {{
+              getError('validValuesTypePercentage', addNewConditionFormGroup)
+                | translate
+            }}
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+      <div
+        *ngIf="
+          addNewConditionFormGroup.get('validValuesTypePercentage').value ===
+          'none'
+        "
+      >
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <span matSuffix>%</span>
+            <input
+              type="text"
+              matInput
+              fisStyle
+              formControlName="percentageValue"
+              name="percentageValue"
+            />
+
+            <mat-error>
+              {{
+                getError('percentageValue', addNewConditionFormGroup)
+                  | translate
+              }}
+            </mat-error>
+           
+          </mat-form-field>
+        </bod-control-group>
+      </div>
+    </bod-input-layout>
+    <div
+      *ngIf="
+        addNewConditionFormGroup.get('validValuesTypePercentage').value ===
+        'range'
+      "
+    >
+      <bod-input-layout col="1">
+        <bod-page-container title="Range"></bod-page-container>
+      </bod-input-layout>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.minimumvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <span matSuffix>%</span>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="percentageLow"
+              name="percentageLow"
+            />
+
+            <mat-error>
+              {{
+                getError('percentageLow', addNewConditionFormGroup) | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('percentageLow')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+           
+          </mat-form-field>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.maximumvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <span matSuffix>%</span>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="percentageHigh"
+              name="percentageHigh"
+            />
+
+            <mat-error>
+              {{
+                getError('percentageHigh', addNewConditionFormGroup) | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('percentageHigh')
+                  .hasError('zeroValue')
+              "
+            >
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('percentageHigh')
+                  .hasError('negativeValue')
+              "
+            >
+            </mat-error>
+           
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('percentageHigh')
+                  .hasError('maxValueExceeded')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultvalue'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <span matSuffix>%</span>
+            <input
+              type="number"
+              matInput
+              fisStyle
+              formControlName="percentageDefaultValue"
+              name="percentageDefaultValue"
+            />
+
+            <mat-error>
+              {{
+                getError('percentageDefaultValue', addNewConditionFormGroup)
+                  | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionFormGroup
+                  .get('percentageDefaultValue')
+                  .hasError('maxValueExceeded')
+              "
+            >
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </div>
+  </div>
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value === 'TextCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.validvalues'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="validvalue"
+          name="validvalue"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group
+        *ngIf="!addNewConditionFormGroup.get('validvalue').value"
+        [truncate]="false"
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.defaultvalue'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <input
+            type="text"
+            matInput
+            fisStyle
+            formControlName="defaultValueText"
+            name="defaultValueText"
+          />
+          <mat-error>
+            {{
+              getError('defaultValueText', addNewConditionFormGroup) | translate
+            }}
+          </mat-error>
+          <mat-error
+            *ngIf="
+              addNewConditionFormGroup
+                .get('defaultValueText')
+                .hasError('maxLength')
+            "
+          >
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+    <bod-text-condition
+      *ngIf="addNewConditionFormGroup.get('validvalue').value"
+      #simpleEditTableText
+      (completeDeltaChange)="handleCompleteDeltaChangetext($event)"
+      [localeData3]="localeTableData3"
+      (tableDirty)="onTableDirty()"
+    >
+    </bod-text-condition>
+
+    <!-- <bod-table
+      *ngIf="addNewConditionFormGroup.get('validvalue').value"
+      #textConditionValues
+      [data]="textConditionData"
+      [modeOptions]="modeOptions"
+      [tableActions]="textConditionActions"
+      (onTableActionClick)="onTextConditionActionClicked($event)"
+      [primaryColumnName]="'id'"
+      [truncateAfterLine]="1"
+      [customColumnTemplates]="[
+        {
+          columnName: 'values',
+          templateName: validValueTemplate
+        },
+        {
+          columnName: 'default',
+          templateName: DefaultTemplate
+        },
+        {
+          columnName: 'actionBtns',
+          templateName: actionBtnsTemplate
+        }
+      ]"
+    >
+      <ng-template
+        #validValueTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+        <ng-container>
+          <form [formGroup]="textConditionForm">
+            <mat-form-field appearance="outline" fisStyle>
+              <input
+                type="text"
+                matInput
+                fisStyle
+                [formControl]="
+                  textConditionForm.controls[
+                    useExistingFormCtrlKeysValue[index]
+                  ]
+                "
+                name="values"
+              />
+            </mat-form-field>
+          </form>
+        </ng-container>
+      </ng-template>
+
+      <ng-template
+        #DefaultTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+       
+
+         <form [formGroup]="defaultValueForm">
+            
+              <mat-slide-toggle (change)="this.updateColumnData(
+                'default',
+                $event,
+                index,
+                null,
+                'simpleEditTable'
+              )"
+              fisStyle
+              color="primary"
+            
+              [formControl]="
+              defaultValueForm.controls[
+              useExistingFormCtrlKeysDefault[index]
+              ]
+            "
+              name="default"
+            >
+            </mat-slide-toggle>
+         </form>
+
+        
+      </ng-template>
+
+      <ng-template
+        #actionBtnsTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForRelationshipedit"
+          (onActionClick)="deleteLocaleRow(index, element)"
+        >
+        </bod-table-actions>
+      </ng-template>
+    </bod-table> -->
+  </div>
+  <!-- {{textConditionData.datasource.data | json}} -->
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value ===
+      'TextAndNumberCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.validvalues'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="textnumbervalidvalue"
+          name="textnumbervalidvalue"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group
+        *ngIf="!addNewConditionFormGroup.get('textnumbervalidvalue').value"
+        [truncate]="false"
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.textvalue'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <input
+            type="text"
+            matInput
+            fisStyle
+            formControlName="defaultText"
+            name="defaultText"
+          />
+          <mat-error>
+            {{ getError('defaultText', addNewConditionFormGroup) | translate }}
+          </mat-error>
+          <mat-error
+            *ngIf="
+              addNewConditionFormGroup.get('defaultText').hasError('maxLength')
+            "
+          >
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        *ngIf="!addNewConditionFormGroup.get('textnumbervalidvalue').value"
+        [truncate]="false"
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.numbervalue'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <input
+            type="number"
+            matInput
+            fisStyle
+            formControlName="defaultNumber"
+            name="defaultNumber"
+          />
+          <mat-error>
+            {{
+              getError('defaultNumber', addNewConditionFormGroup) | translate
+            }}
+          </mat-error>
+          <mat-error
+            *ngIf="
+              addNewConditionFormGroup
+                .get('defaultNumber')
+                .hasError('negativeValue')
+            "
+          >
+          </mat-error>
+          <mat-error
+            *ngIf="
+              addNewConditionFormGroup
+                .get('defaultNumber')
+                .hasError('maxLength')
+            "
+          >
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+    <bod-text-number-condition
+      *ngIf="addNewConditionFormGroup.get('textnumbervalidvalue').value"
+      #simpleEditTableTextNum
+      [localeData1]="localeTableData1"
+      (tableDirty)="onTableDirty()"
+      (completeDeltaChange1)="handleCompleteDeltaChange1($event)"
+    >
+    </bod-text-number-condition>
+  </div>
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value ===
+      'FrequencyCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.processingday'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="processingday"
+            name="processingday"
+          >
+            <mat-option
+              *ngFor="let processingday of processingDays"
+              [value]="processingday.value"
+            >
+              {{ processingday.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error>
+            {{
+              getError('processingday', addNewConditionFormGroup) | translate
+            }}
+          </mat-error>
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+    <bod-primary-frequency-condition
+      #simpleEditTablePrimFre
+      (completeDeltaChangefrequency)="handleCompleteDeltaChangeFreq($event)"
+      [primFreData]="primFreqTableData"
+      (tableDirty)="onTableDirty()"
+    >
+    </bod-primary-frequency-condition>
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.secondaryfrequency'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="secondaryfre"
+          name="secondaryfre"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+    </bod-input-layout>
+
+    <bod-secondory-frequency-condition
+      *ngIf="addNewConditionFormGroup.get('secondaryfre').value"
+      #simpleEditTableSecFre
+      (completeDeltaChangeSecondaryfrequency)="
+        handleCompleteDeltaChangeSecFreq($event)
+      "
+      [secFreData]="secFreqTableData"
+      (tableDirty)="onTableDirty()"
+    >
+    </bod-secondory-frequency-condition>
+    <bod-input-layout col="2">
+      <bod-control-group
+        *ngIf="addNewConditionFormGroup.get('secondaryfre').value"
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.subtract'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="subtract"
+          name="subtract"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+    </bod-input-layout>
+  </div>
+
+  <div
+  *ngIf="
+    addNewConditionFormGroup.get('conditionType').value ===
+    'DurationCondition'
+  "
+>
+  <bod-input-layout col="2">
+    <bod-control-group
+    [truncate]="false"
+    [label]="translationKey + 'metadataconfig.classification'"
+    [forTextOnly]="true"
+    [required]="true"
+  >
+    <mat-form-field appearance="outline" fisStyle>
+      <mat-select
+        panelClass="fis-style"
+        formControlName="classification"
+        name="classification"
+      >
+        <mat-option
+          *ngFor="let classification of classifications"
+          [value]="classification.value"
+        >
+          {{ classification.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error>
+        {{
+          getError('classification', addNewConditionFormGroup) | translate
+        }}
+      </mat-error>
+    </mat-form-field>
+  </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.processingday'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="processingday"
+          name="processingday"
+        >
+          <mat-option
+            *ngFor="let processingday of processingDays"
+            [value]="processingday.value"
+          >
+            {{ processingday.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{
+            getError('processingday', addNewConditionFormGroup) | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+    [truncate]="false"
+    [label]="translationKey + 'metadataconfig.multivalueallowed'"
+    [forTextOnly]="true"
+    [required]="false"
+  >
+    <mat-slide-toggle
+      fisStyle
+      color="primary"
+      formControlName="multivalueallowed"
+      name="multivalueallowed"
+    >
+    </mat-slide-toggle>
+  </bod-control-group>
+  </bod-input-layout>
+
+  <bod-duration-condition-fixed
+    #simpleEditTableDurationFix
+    (completeDeltaChangeDuration)="handleCompleteDeltaChangeDuration($event)"
+    [durationData]="durationTableData"
+    (tableDirty)="onTableDirty()"
+  >
+  </bod-duration-condition-fixed>
+</div>
+
+  <div
+    *ngIf="
+      addNewConditionFormGroup.get('conditionType').value ===
+      'CurrencySpecificCondition'
+    "
+  >
+    <bod-input-layout col="2">
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.validvalues'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="curspecificvalue"
+          name="curspecificvalue"
+          (change)="toggleVisibility()"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.secondoryconditiontype'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="seccondtype"
+            name="seccondtype"
+            [disabled]="true"
+            placeholder="Amount"
+          >
+          </mat-select>
+        </mat-form-field>
+      </bod-control-group>
+    </bod-input-layout>
+  </div>
+  <bod-message-container [messages]="errorMessages4"></bod-message-container>
   <bod-table
-    [data]="tableWithSimpleEdit"
-    [tableActions]="showActionsForSimple ? actionsForSimple : []"
-    [modeOptions]="modeOptionsSimple"
-    [singleRowEdit]="singleRowEdit"
+    [hidden]="isHidden"
+    #currencyConditions
+    [data]="currencySpecificData"
+    [tableActions]="tableActionsWithFilter"
+    (onTableActionClick)="onTableActionsWithFilterClicked($event, template)"
+    (onRowSelect)="rowSelection($event)"
+    [rowSelectionStrategy]="rowSelectionStrategy"
+    [allowSelectAll]="allowRowSelection"
+    [inlineModal]="{
+      formGroup: addNewConditionCurrencyForm,
+      formTemplateName: addNewCurrencyTemplate
+    }"
+    (onInlineFormEditSubmit)="onAddCurrency($event, 0)"
+    (onInlineEditRowActionClick)="inlineEditRowActionClick($event, 0)"
+    [expandedRowTemplate]="expandedRowTemplate"
     [customColumnTemplates]="[
       {
-        columnName: 'primaryfrequency',
-        templateName: primaryFrequencyTemplate
-      },
-      { columnName: 'actions', templateName: editActionsTemplate1 },
-      { columnName: 'value', templateName: valueColumnTemplate }
+        columnName: 'actions',
+        templateName: editActionTemplate
+      }
     ]"
-    (inputValidationStatus)="checkStatus($event)"
-    (editTableEvent)="onEditTableAction($event)"
-    (onTableActionClick)="addTableData()"
-    [primaryColumnName]="'id'"
-    #simpleEditTableRef
+    [alignContent]="'top'"
   >
     <ng-template
-      #editActionsTemplate1
+      #editActionTemplate
       let-element="element"
       let-column="column"
       let-index="index"
     >
-      <div
-        *ngIf="
-          !this.singleRowEdit.modeOptions?.input ||
-          (this.singleRowEdit?.modeOptions?.input &&
-            this.singleRowEdit?.index !== index)
-        "
+      <bod-table-actions
+        [actions]="rowLevelActionsForBasicEdit"
+        (onActionClick)="handleRowLevelActionsforCurrency($event.icon, index)"
       >
-        <bod-table-actions
-          [actions]="rowLevelActionsForBasicEdit"
-          (onActionClick)="handleRowLevelActions($event.icon, index)"
+      </bod-table-actions>
+    </ng-template>
+
+    <ng-template #expandedRowTemplate let-context="context">
+      <div fullwidth>
+        <bod-inquiry-layout
+          [columns]="2"
+          [groups]="conditionDetailService.getCurrencyInquiry(context.element)"
+          [softSeparator]="false"
+          [direction]="direction"
+          [information]="[]"
+          (linkClick)="commonDataService.inquiryLayoutClick($event)"
         >
-        </bod-table-actions>
-      </div>
-      <div
-        *ngIf="
-          this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === index
-        "
-      >
-        <button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
-          [matTooltipPosition]="'below'"
-          rufId
-          mat-mini-fab
-          color="primary"
-          fisStyle
-          (click)="handleRowLevelActions('save', index)"
-        >
-          <mat-icon fisStyle rufIconStyle="sm" fisIcon="check"></mat-icon>
-        </button>
-        <button
-          rufId
-          fisStyle
-          mat-icon-button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
-          [matTooltipPosition]="'below'"
-          class="ruf-ghost-button"
-          (click)="handleRowLevelActions('reset', index)"
-        >
-          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
-        </button>
+        </bod-inquiry-layout>
       </div>
     </ng-template>
   </bod-table>
 
-  <ng-template
-    #primaryFrequencyTemplate
-    let-element="element"
-    let-column="column"
-  >
-    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
-      <mat-select 
-      panelClass="fis-style"
-      [(ngModel)]="element.primaryfrequency"
-      (selectionChange)="onFrequencyChange123(element)">
-        <mat-option *ngFor="let val of frequencyOptions" [value]="val.value">
-           {{ val.label }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </ng-template>
-
-  <ng-template #valueColumnTemplate let-element="element">
-    <mat-form-field appearance="outline" fisStyle>
-      <input
-        matInput
-        fisStyle
-        type="number"
-        [(ngModel)]="element.value"
-        [disabled]="disabledFrequencies.includes(element.primaryfrequency)"
-      />
-    </mat-form-field>
-  </ng-template>
-
-  <!-- <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
-            <button
-              mat-raised-button
+  <form [formGroup]="addNewConditionCurrencyForm">
+    <ng-template #addNewCurrencyTemplate>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.range'"
+          [forTextOnly]="true"
+          [required]="false"
+        >
+          <mat-slide-toggle
+            fisStyle
+            color="primary"
+            formControlName="range"
+            name="range"
+            (change)="onRangeToggleChange()"
+          >
+          </mat-slide-toggle>
+        </bod-control-group>
+        <bod-control-group
+          *ngIf="!addNewConditionCurrencyForm.get('range').value"
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.defaultamount'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="number"
+              matInput
               fisStyle
-              type="button"
-              color="primary"
-              (click)="saveTableData()"
-              [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+              formControlName="defaultValue"
+              name="defaultValue"
+            />
+
+            <mat-error>
+              {{
+                getError('defaultValue', addNewConditionCurrencyForm)
+                  | translate
+              }}
+            </mat-error>
+            <mat-error
+              *ngIf="
+                addNewConditionCurrencyForm
+                  .get('defaultValue')
+                  .hasError('negativeValue')
+              "
             >
-              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
-            </button>
-            <button mat-stroked-button fisStyle type="button" (click)="reset()">
-              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
-            </button>
-          </div> -->
-</bod-page-container>
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+
+        <bod-input-layout col="1">
+          <bod-control-group
+            *ngIf="addNewConditionCurrencyForm.get('range').value"
+            [truncate]="false"
+            [label]="translationKey + 'metadataconfig.minimumamount'"
+            [forTextOnly]="true"
+            [required]="true"
+          >
+            <mat-form-field appearance="outline" fisStyle>
+              <input
+                type="number"
+                matInput
+                fisStyle
+                formControlName="minimumcspcf"
+                name="minimumcspcf"
+              />
+
+              <mat-error>
+                {{
+                  getError('minimumcspcf', addNewConditionCurrencyForm)
+                    | translate
+                }}
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionCurrencyForm
+                    .get('maximumcspcf')
+                    .hasError('maxLength')
+                "
+              >
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionCurrencyForm
+                    .get('minimumcspcf')
+                    .hasError('negativeValue')
+                "
+              >
+              </mat-error>
+            </mat-form-field>
+          </bod-control-group>
+        </bod-input-layout>
+        <bod-input-layou col="1">
+          <bod-control-group
+            *ngIf="addNewConditionCurrencyForm.get('range').value"
+            [truncate]="false"
+            [label]="translationKey + 'metadataconfig.maximumamount'"
+            [forTextOnly]="true"
+            [required]="true"
+          >
+            <mat-form-field appearance="outline" fisStyle>
+              <input
+                type="number"
+                matInput
+                fisStyle
+                formControlName="maximumcspcf"
+                name="maximumcspcf"
+              />
+
+              <mat-error>
+                {{
+                  getError('maximumcspcf', addNewConditionCurrencyForm)
+                    | translate
+                }}
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionCurrencyForm
+                    .get('maximumcspcf')
+                    .hasError('maxLength')
+                "
+              >
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionCurrencyForm
+                    .get('maximumcspcf')
+                    .hasError('zeroValue')
+                "
+              >
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionCurrencyForm
+                    .get('maximumcspcf')
+                    .hasError('negativeValue')
+                "
+              >
+              </mat-error>
+            </mat-form-field>
+          </bod-control-group>
+        </bod-input-layou>
+        <bod-input-layout>
+          <bod-control-group
+            *ngIf="addNewConditionCurrencyForm.get('range').value"
+            [truncate]="false"
+            [label]="translationKey + 'metadataconfig.defaultamount'"
+            [forTextOnly]="true"
+            [required]="true"
+          >
+            <mat-form-field appearance="outline" fisStyle>
+              <input
+                type="number"
+                matInput
+                fisStyle
+                formControlName="defaultcspcf"
+                name="defaultcspcf"
+              />
+
+              <mat-error>
+                {{
+                  getError('defaultcspcf', addNewConditionCurrencyForm)
+                    | translate
+                }}
+
+                <!-- <mat-error
+                  *ngIf="
+                    addNewConditionCurrencyForm
+                      .get('defaultcspcf')
+                      .hasError('defaultValueOutOfRange')
+                  "
+                >
+                </mat-error> -->
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  addNewConditionCurrencyForm
+                    .get('defaultcspcf')
+                    .hasError('maxLength')
+                "
+              >
+              </mat-error>
+            </mat-form-field>
+          </bod-control-group>
+        </bod-input-layout>
+      </bod-input-layout>
+    </ng-template>
+  </form>
+
+  
+<bod-currency-condition
+  *ngIf="
+    addNewConditionFormGroup.get('conditionType')?.value ===
+    'CurrencyCondition'
+  "
+  [currencyDataSingleSelect]="currencyDataSingleSelect"
+  [selectedRowSingleSelect]="selectedRowSingleSelect"
+  [currencyData1]="currencyData1"
+  (rowSelected)="handleCurrencySelection($event)"
+  (defaultChanged)="handleCurrencyDefaultChange($event)"
+></bod-currency-condition>
+
+  <bod-condition-relationship
+    #simpleEditTableRef
+    [localeData]="localeTableData"
+    (completeDeltaChange)="handleCompleteDeltaChange($event)"
+    (tableDirty)="onTableDirty()"
+  ></bod-condition-relationship>
+</bod-form>
