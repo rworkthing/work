@@ -111,14 +111,6 @@
       >
       </bod-table>
       <bod-table
-        *ngIf="context.element?.conditionsRltnp?.length > 0"
-        [data]="ConditionReltnTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
         *ngIf="context.element.conditionType === 'CurrencyCondition'"
         [data]="currencyConditionTable"
         [alignContent]="'top'"
@@ -126,6 +118,15 @@
         [expandedRowTemplate]="expandedRowTemplateTable"
       >
       </bod-table>
+      <bod-table
+        *ngIf="context.element?.conditionsRltnp?.length > 0"
+        [data]="ConditionReltnTable"
+        [alignContent]="'top'"
+        [innerTableContext]="context"
+        [expandedRowTemplate]="expandedRowTemplateTable"
+      >
+      </bod-table>
+      
       
     </div>
   </ng-template>
@@ -137,19 +138,7 @@
     [editConditionRow]="conditionType"
     [retainedCode]="retainedCode"
     [retainedIdentifier]="retainedIdentifier"
-    [retainedName]="retainedName"
-    [retainedClassificationType]="retainedClassificationType"
-    [retainedConditionType]="retainedConditionType"
-    [retainedOptionality]="retainedOptionality"
-    [retainedApplicableTO]="retainedApplicableTO"
-    [retainedCustomizable]="retainedCustomizable"
-    [retainedDefaultFlag]="retainedDefaultFlag"
-    [retainedDefaultDate]="retainedDefaultDate"
-    [retainedValidValuesTypeNumber]="retainedValidValuesTypeNumber"
-    [retainednumberValue]="retainednumberValue"
-    [retainednumberLow]="retainednumberLow"
-    [retainednumberHigh]="retainednumberHigh"
-    [retainednumberdefaultValue]="retainednumberdefaultValue"
+   
   >
   </bod-add-edit-conditions>
 </ng-template>
