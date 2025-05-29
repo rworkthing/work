@@ -587,6 +587,7 @@ export class DurationConditionFixedComponent
 
   @Output() tableDirty = new EventEmitter<boolean>();
   @Output() completeDeltaChangeDuration = new EventEmitter<any>();
+  @Input() multivalueallowed: boolean = true;
   @Input() set durationData(data: Duration[]) {
     this.dataWithSimpleEdit = data || [];
     this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
@@ -610,9 +611,14 @@ export class DurationConditionFixedComponent
       const currentRow = this.tableWithSimpleEdit.datasource.data[editedIndex];
 
       if (currentRow.default) {
-        this.tableWithSimpleEdit.datasource.data.forEach((r, i) => {
-          r.default = i === editedIndex;
-        });
+        if (!this.multivalueallowed) {
+          // Single default mode - unset all other defaults
+          this.tableWithSimpleEdit.datasource.data.forEach((r, i) => {
+            r.default = i === editedIndex;
+          });
+        }
+        // If multivalueAllowed is true, we don't need to unset other defaults
+        // The user can have multiple rows with default = true
       }
       this.completeDeltaChangeDuration.emit(
         this.tableWithSimpleEdit.datasource.data
