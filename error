@@ -1,9 +1,42 @@
-📌 Table data: []length: 0[[Prototype]]: Array(0)
-currency-condition.component.ts:51 📌 Selected rows input: []length: 0[[Prototype]]: Array(0)
-add-edit-conditions.component.ts:355 Mapped currencyData1: (154) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, …]
-add-edit-conditions.component.ts:358 Datasource after assignment: (154) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, …]
-add-edit-conditions.component.ts:2034 allavaliavle currency (154) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, …]
-add-edit-conditions.component.ts:2044 selected currency (154) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, …]
-add-edit-conditions.component.ts:2051 selected rowsss (4) [{…}, {…}, {…}, {…}]0: {index: 1, identifier: 100000000027, code: 'Afghani', currencyISO4217Val: 'AFN', default: false}1: {index: 2, identifier: 100000000028, code: 'Lek', currencyISO4217Val: 'ALL', default: false}2: {index: 3, identifier: 100000000029, code: 'Armenian Dram', currencyISO4217Val: 'AMD', default: true}3: {index: 5, identifier: 100000000031, code: 'Argentine Peso', currencyISO4217Val: 'ARS', default: false}length: 4[[Prototype]]: Array(0)
-add-edit-conditions.component.ts:426 Single select currency data loaded in ngAfterViewInit
-condition-relationship.component.ts:110 dataWithSimpleEdit:  []
+<div
+  *ngIf="
+    addNewConditionFormGroup.get('conditionType').value ===
+    'DurationCondition'
+  "
+>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.processingday'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="processingday"
+          name="processingday"
+        >
+          <mat-option
+            *ngFor="let processingday of processingDays"
+            [value]="processingday.value"
+          >
+            {{ processingday.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{
+            getError('processingday', addNewConditionFormGroup) | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+  <bod-duration-condition-fixed
+    #simpleEditTableDurationFix
+    (completeDeltaChangeDuration)="handleCompleteDeltaChangeDuration($event)"
+    [durationData]="durationTableData"
+    (tableDirty)="onTableDirty()"
+  >
+  </bod-duration-condition-fixed>
+</div>
