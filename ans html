@@ -83,8 +83,8 @@
       <mat-select 
       panelClass="fis-style"
       [(ngModel)]="element.durationType"
-      (selectionChange)="onDurationTypeChange(element)">
-        <mat-option *ngFor="let val of durationTypeOptions" [value]="val.value">
+      (selectionChange)="onDurationChange123(element)">
+        <mat-option *ngFor="let val of durationOptions" [value]="val.value">
            {{ val.label }}
         </mat-option>
       </mat-select>
@@ -98,7 +98,7 @@
         fisStyle
         type="number"
         [(ngModel)]="element.unitValue"
-        [disabled]="disabledDurationTypes.includes(element.durationType)"
+        [disabled]="disabledDurations.includes(element.durationType)"
       />
     </mat-form-field>
   </ng-template>
