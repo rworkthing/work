@@ -99,7 +99,6 @@
           fisStyle
           type="number"
           [(ngModel)]="element.unitValue"
-          [disabled]="disabledDurations.includes(element.durationType)"
         />
       </mat-form-field>
     </ng-template>
