@@ -1,42 +1,18 @@
-<div
-  *ngIf="
-    addNewConditionFormGroup.get('conditionType').value ===
-    'DurationCondition'
-  "
->
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.processingday'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="processingday"
-          name="processingday"
-        >
-          <mat-option
-            *ngFor="let processingday of processingDays"
-            [value]="processingday.value"
-          >
-            {{ processingday.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{
-            getError('processingday', addNewConditionFormGroup) | translate
-          }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-  </bod-input-layout>
-  <bod-duration-condition-fixed
-    #simpleEditTableDurationFix
-    (completeDeltaChangeDuration)="handleCompleteDeltaChangeDuration($event)"
-    [durationData]="durationTableData"
-    (tableDirty)="onTableDirty()"
-  >
-  </bod-duration-condition-fixed>
-</div>
+<ng-template #unitValueColumnTemplate let-element="element">
+  <mat-form-field appearance="outline" fisStyle>
+    <input
+      matInput
+      fisStyle
+      type="number"
+      [(ngModel)]="element.unitValue"
+      [disabled]="!isDefaultToggleEnabled || disabledDurations.includes(element.durationType)"
+    />
+  </mat-form-field>
+</ng-template>
+
+<mat-slide-toggle [(ngModel)]="isDefaultToggleEnabled">
+  Enable Unit Value
+</mat-slide-toggle>
+
+
+isDefaultToggleEnabled: boolean = false; // Default to disabled
