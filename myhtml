@@ -1303,6 +1303,21 @@
     (tableDirty)="onTableDirty()"
   >
   </bod-duration-condition-fixed>
+  <bod-range-duration-condition
+    #simpleEditTableRangeDuration
+    (completeDeltaChangeRangeDuration)="handleCompleteDeltaChangeRangeDuration($event)"
+    [rangeDurationData]="rangeDurationTableData"
+    [multivalueallowed]="toggleValue"
+    (tableDirty)="onTableDirty()"
+  >
+  </bod-range-duration-condition>
+  <bod-multiple-range-duration-condition
+    #simpleEditTableMultipleRangeDuration
+    (completeDeltaChangeMultipleRangeDuration)="handleCompleteDeltaChangeMultipleRangeDuration($event)"
+    [multipleRangeDurationData]="multipleRangeDurationTableData"
+    (tableDirty)="onTableDirty()"
+  >
+  </bod-multiple-range-duration-condition>
 </div>
 
   <div
