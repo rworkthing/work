@@ -112,6 +112,7 @@ import {
   CurrencyTable1,
   CurrencyTableSingle,
   Duration,
+  MultipleRangeDuration,
   RangeDuration,
   TabIndexTableMap
 } from './add-edit-conditions.model';
@@ -123,12 +124,14 @@ import { BodTableDemoCommonDataService } from '../../bod-table-demo-common-data.
 import { CurrencyConditionComponent } from '../currency-conditions/currency-condition.component';
 import { DurationConditionFixedComponent } from '../duration-condition-fixed/duration-condition-fixed.component';
 import { RangeDurationConditionComponent } from '../range-duration-condition/range-duration-condition.component';
+import { MultipleRangeDurationConditionComponent } from '../multiple-range-duration-condition/multiple-range-duration-condition.component';
 
 
 @Component({
   selector: 'bod-add-edit-conditions',
   standalone: true,
   imports: [
+    MultipleRangeDurationConditionComponent,
     RangeDurationConditionComponent,
     DurationConditionFixedComponent,
     SecondoryFrequencyConditionComponent,
@@ -239,6 +242,10 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
 
   @ViewChild('simpleEditTableRangeDuration')
   simpleEditTableRangeDuration: RangeDurationConditionComponent;
+  @ViewChild('simpleEditTableMultipleRangeDuration')
+  simpleEditTableMultipleRangeDuration: MultipleRangeDurationConditionComponent;
+
+  
 
   classificationTypes = [
     { value: 'ChargeType', label: 'Charge Type' },
@@ -308,6 +315,7 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
   public currencyTableActions: BodTableAction[] = roletypeaction;
   public durationTableData: Duration[] = [];
   public rangeDurationTableData: RangeDuration[] = [];
+  public multipleRangeDurationTableData: MultipleRangeDuration[] = [];
   public addNewConditionFormGroup: UntypedFormGroup;
   public addNewConditionCurrencyForm: UntypedFormGroup;
 
@@ -925,6 +933,11 @@ handleCompleteDeltaChangeRangeDuration(data: any) {
   this.completeDeltaRangeDurationData = data;
   console.log('Received CompleteDelta from range duration child:', this.completeDeltaRangeDurationData);
 }
+completeDeltaMultipleRangeDurationData: any;
+  handleCompleteDeltaChangeMultipleRangeDuration(data: any) {
+    this.completeDeltaMultipleRangeDurationData = data;
+    console.log('Received CompleteDelta from multiple range duration child:', this.completeDeltaMultipleRangeDurationData);
+  }
   completeDeltaDurationData: any;
   handleCompleteDeltaChangeDuration(data: any) {
     this.completeDeltaDurationData = data;
