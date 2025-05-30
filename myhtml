@@ -71,8 +71,10 @@
       [label]="translationKey + 'metadataconfig.conditiontype'"
       [forTextOnly]="true"
       [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
+    > <div *ngIf="isEdit">
+      {{ addNewConditionFormGroup.get('conditionType')?.value }}
+    </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
         <mat-select
           panelClass="fis-style"
           formControlName="conditionType"
@@ -97,7 +99,10 @@
       [forTextOnly]="true"
       [required]="true"
     >
-      <mat-form-field appearance="outline" fisStyle>
+    <div *ngIf="isEdit">
+      {{ addNewConditionFormGroup.get('classificationType')?.value }}
+    </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
         <mat-select
           panelClass="fis-style"
           formControlName="classificationType"
@@ -235,6 +240,7 @@
               fisStyle
               formControlName="numberValue"
               name="numberValue"
+              required
             />
 
             <mat-error>
@@ -1282,6 +1288,8 @@
       color="primary"
       formControlName="multivalueallowed"
       name="multivalueallowed"
+      [checked]="toggleValue"
+      (change)="onToggleChange($event)"
     >
     </mat-slide-toggle>
   </bod-control-group>
@@ -1291,6 +1299,7 @@
     #simpleEditTableDurationFix
     (completeDeltaChangeDuration)="handleCompleteDeltaChangeDuration($event)"
     [durationData]="durationTableData"
+    [multivalueallowed] = "toggleValue"
     (tableDirty)="onTableDirty()"
   >
   </bod-duration-condition-fixed>
