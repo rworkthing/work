@@ -1,413 +1,666 @@
-// Dynamic columns based on multivalueallowed
-private getColumns(): Column[] {
-  const baseColumns: Column[] = [
+import { CommonModule } from '@angular/common';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Inject,
+  Input,
+  NO_ERRORS_SCHEMA,
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
+import {
+  Amount,
+  BodFormModule,
+  BodPageContainerModule,
+  BodPipeName,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableDataSource,
+  BodTableFilterCriteria,
+  BodTableFilterUpdateButton,
+  BodTableMetadata,
+  BodTableModule,
+  Column,
+  ControlGroupModule,
+  BodCommonDialogModel,
+  Currency,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  MessageContainerModule,
+  NotificationMessage,
+  SearchFieldModule,
+  DirectivesModule,
+  BodDynamicFormModule,
+  SectionContainerModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BOD_DATE_RANGE,
+  BodCommonModule,
+  ColumnType,
+  SingleRowEdit,
+  ModeOptions,
+  BodKeyValuePairMetadata,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  ListType,
+  BodAutoCompleteMetadata,
+  BodConfirmDialogModel,
+  MaxLengthStrategy,
+  RowLeftAction,
+  InquiryLayoutInput,
+  NotificationMessageType,
+  SearchFieldComponent,
+  PageAction,
+  BodAutoCompleteOption,
+  BodFormStateService
+} from '@bod/common';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  FormBuilder,
+  FormControl,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import moment from 'moment';
+import { HttpClient } from '@angular/common/http';
+
+import { BehaviorSubject, Subscription, take } from 'rxjs';
+import { RufDropdownType } from '@ruf/shell/dropdown-panel';
+import { ConditionDetailService } from '../condition-detail.service';
+import { SystemMessageService } from '../../system-message.service';
+import { BodTableDemoCommonDataService } from '../../bod-table-demo-common-data.service';
+import {
+  BodEditableSampleTable,
+  BodLocaleTable,
+  CondTable,
+  SearchFieldInputData,
+  textNumCond
+} from '../../bod-table-demo.model';
+import { DemoTableDataService, SampleEC } from '../../bod-table-demo.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+// Updated interface without default property
+export interface MultipleRangeDuration {
+  id: number;
+  durationType: string;
+  unitValue: number | null;
+  minimum: number | null;
+  maximum: number | null;
+}
+
+@Component({
+  selector: 'bod-multiple-range-duration-condition',
+  standalone: true,
+  imports: [
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    BodFormModule,
+    BodTableActionsModule,
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    TranslateModule,
+    BodFormModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    SearchFieldModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './multiple-range-duration-condition.component.html',
+  styleUrl: './multiple-range-duration-condition.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
+})
+export class MultipleRangeDurationConditionComponent
+  implements OnInit, OnDestroy, AfterViewInit
+{
+  private subscriptions: Subscription = new Subscription();
+  public messages: NotificationMessage[] = [];
+  public panel = {
+    type: RufDropdownType.PopoverMenu
+  };
+  defaultValueForm: UntypedFormGroup = new UntypedFormGroup({});
+
+  public disabledDurations = [
+    'Permanent',
+    'UntilFurtherNotice'
+  ];
+
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public searchFieldColumnForm: UntypedFormGroup;
+  public useExistingColForm: UntypedFormGroup;
+  public overrideDefaultColumnForm: UntypedFormGroup;
+  public requiredColumnForm: UntypedFormGroup;
+  public searchFieldFormCtrlKeys: string[] = [];
+  public useExistingFormCtrlKeys: string[] = [];
+  public useExistingArr: string[] = ['Yes', 'No'];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
+  public lastModifiedIndex: number;
+  public pageMode = PageMode.INQUIRY;
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public tableRefArray: any[] = [];
+  disableEditForInput = false;
+  existingDataNotEditable = false;
+
+  public pageModeSimple = this.pageMode;
+  public modeOptionsSimple = this.modeOptions;
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public actionsForSimple: BodTableAction[] = [
     {
-      name: 'durationType',
-      title: 'Duration Type'
-    },
+      id: 1,
+      icon: 'add',
+      label: 'add',
+      mostCommon: false
+    }
+  ];
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+  maxLengthStrategy: MaxLengthStrategy[] = [
+    MaxLengthStrategy.exceedWithError,
+    MaxLengthStrategy.restrict
+  ];
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public maxLength = 5;
+  public minAmount = 2;
+  public maxAmount = 9999;
+  public minNumber = 1;
+  public maxNumber = 1000;
+  public formStatus = false;
+  public precision = 0;
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+  public resetMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
     {
-      name: 'minimum',
-      title: 'Minimum',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem',
-      inputModeOptions: {
-        type: ColumnType.input,
-        model: null,
-        validators: {
-          required: true,
-          max: 20,
-          maxLengthStrategy: this.selectedStrategy
-        }
-      }
-    },
-    {
-      name: 'maximum',
-      title: 'Maximum',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem',
-      inputModeOptions: {
-        type: ColumnType.input,
-        model: null,
-        validators: {
-          required: true,
-          max: 20,
-          maxLengthStrategy: this.selectedStrategy
-        }
-      }
-    },
-    {
-      name: 'unitValue',
-      title: 'Unit Value',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem',
-      inputModeOptions: {
-        type: ColumnType.input,
-        model: null,
-        validators: {
-          required: true,
-          max: 20,
-          maxLengthStrategy: this.selectedStrategy
-        }
-      }
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
     }
   ];
 
-  // Only add default column if multivalueallowed is false
-  if (!this.multivalueallowed) {
-    baseColumns.push({
-      name: 'default',
-      title: 'Default',
-      inputModeOptions: {
-        type: ColumnType.slideToggle,
-        model: {
-          data: this.inputForSlideToggleValue
-        },
-        validators: {
-          max: 20,
-          maxLengthStrategy: this.selectedStrategy
-        },
-        isNotEditable: false,
-        existingDataNotEditable: false
-      }
-    });
-  }
-
-  // Always add actions column at the end
-  baseColumns.push({
-    name: 'actions',
-    title: ' ',
-    hasAction: true,
-    width: 7
-  });
-
-  return baseColumns;
-}
-
-
-
-
-<bod-page-container
-  [pageMode]="pageModeSimple"
-  (pageAction)="onPageAction($event)"
-  [messages]="messages"
-  *ngIf="showEdit"
->
-  <bod-table
-    [data]="tableWithSimpleEdit"
-    [tableActions]="showActionsForSimple ? actionsForSimple : []"
-    [modeOptions]="modeOptionsSimple"
-    [singleRowEdit]="singleRowEdit"
-    [customColumnTemplates]="getCustomColumnTemplates()"
-    (inputValidationStatus)="checkStatus($event)"
-    (editTableEvent)="onEditTableAction($event)"
-    (onTableActionClick)="addTableData()"
-    [primaryColumnName]="'id'"
-    #simpleEditTableRef
-  >
-    <ng-template
-      #editActionsTemplate1
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <!-- Your existing edit actions template content -->
-      <div
-        *ngIf="
-          !this.singleRowEdit.modeOptions?.input ||
-          (this.singleRowEdit?.modeOptions?.input &&
-            this.singleRowEdit?.index !== index)
-        "
-      >
-        <bod-table-actions
-          [actions]="rowLevelActionsForBasicEdit"
-          (onActionClick)="handleRowLevelActions($event.icon, index)"
-        >
-        </bod-table-actions>
-      </div>
-      <div
-        *ngIf="
-          this.singleRowEdit?.modeOptions?.input &&
-          this.singleRowEdit?.index === index
-        "
-      >
-        <button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
-          [matTooltipPosition]="'below'"
-          rufId
-          mat-mini-fab
-          color="primary"
-          fisStyle
-          (click)="handleRowLevelActions('save', index)"
-        >
-          <mat-icon fisStyle rufIconStyle="sm" fisIcon="check"></mat-icon>
-        </button>
-        <button
-          rufId
-          fisStyle
-          mat-icon-button
-          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
-          [matTooltipPosition]="'below'"
-          class="ruf-ghost-button"
-          (click)="handleRowLevelActions('reset', index)"
-        >
-          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
-        </button>
-      </div>
-    </ng-template>
-
-    <ng-template
-      #durationTypeTemplate
-      let-element="element"
-      let-column="column"
-    >
-      <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
-        <mat-select 
-        panelClass="fis-style"
-        [(ngModel)]="element.durationType"
-        (selectionChange)="onDurationChange(element)">
-          <mat-option *ngFor="let val of durationOptions" [value]="val.value">
-             {{ val.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </ng-template>
-
-    <ng-template #unitValueColumnTemplate let-element="element">
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          matInput
-          fisStyle
-          type="number"
-          [(ngModel)]="element.unitValue"
-          [disabled]="!element.default"
-        />
-      </mat-form-field>
-    </ng-template>
-
-    <ng-template #minimumColumnTemplate let-element="element">
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          matInput
-          fisStyle
-          type="number"
-          [(ngModel)]="element.minimum"
-          [disabled]="disabledDurations.includes(element.durationType)"
-          (blur)="validateMinMax(element)"
-        />
-      </mat-form-field>
-    </ng-template>
-
-    <ng-template #maximumColumnTemplate let-element="element">
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          matInput
-          fisStyle
-          type="number"
-          [(ngModel)]="element.maximum"
-          [disabled]="disabledDurations.includes(element.durationType)"
-          (blur)="validateMinMax(element)"
-        />
-      </mat-form-field>
-    </ng-template>
-
-    <!-- Default column template - only used when multivalueallowed is false -->
-    <ng-template #defaultColumnTemplate let-element="element">
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        [(ngModel)]="element.default"
-        (change)="onDefaultChange(element)"
-      >
-      </mat-slide-toggle>
-    </ng-template>
-  </bod-table>
-</bod-page-container>
-
-
-
-
-
-
-// Method to get custom column templates dynamically
-getCustomColumnTemplates() {
-  const templates = [
-    {
-      columnName: 'durationType',
-      templateName: 'durationTypeTemplate'
-    },
-    { columnName: 'actions', templateName: 'editActionsTemplate1' },
-    { columnName: 'unitValue', templateName: 'unitValueColumnTemplate' },
-    { columnName: 'minimum', templateName: 'minimumColumnTemplate' },
-    { columnName: 'maximum', templateName: 'maximumColumnTemplate' }
+  durationOptions = [
+    { value: 'Days', label: 'Days' },
+    { value: 'Weeks', label: 'Weeks' },
+    { value: 'Months', label: 'Months' },
+    { value: 'Years', label: 'Years' }
   ];
 
-  // Only add default column template if multivalueallowed is false
-  if (!this.multivalueallowed) {
-    templates.push({
-      columnName: 'default',
-      templateName: 'defaultColumnTemplate'
-    });
+  // Dynamic columns - removed default column
+  private getColumns(): Column[] {
+    const baseColumns: Column[] = [
+      {
+        name: 'durationType',
+        title: 'Duration Type'
+      },
+      {
+        name: 'minimum',
+        title: 'Minimum',
+        truncate: true,
+        noOverflow: true,
+        width: 10,
+        widthUnit: 'rem',
+        inputModeOptions: {
+          type: ColumnType.input,
+          model: null,
+          validators: {
+            required: true,
+            max: 20,
+            maxLengthStrategy: this.selectedStrategy
+          }
+        }
+      },
+      {
+        name: 'maximum',
+        title: 'Maximum',
+        truncate: true,
+        noOverflow: true,
+        width: 10,
+        widthUnit: 'rem',
+        inputModeOptions: {
+          type: ColumnType.input,
+          model: null,
+          validators: {
+            required: true,
+            max: 20,
+            maxLengthStrategy: this.selectedStrategy
+          }
+        }
+      },
+      {
+        name: 'unitValue',
+        title: 'Unit Value',
+        truncate: true,
+        noOverflow: true,
+        width: 10,
+        widthUnit: 'rem',
+        inputModeOptions: {
+          type: ColumnType.input,
+          model: null,
+          validators: {
+            required: true,
+            max: 20,
+            maxLengthStrategy: this.selectedStrategy
+          }
+        }
+      },
+      {
+        name: 'actions',
+        title: ' ',
+        hasAction: true,
+        width: 7
+      }
+    ];
+  
+    return baseColumns;
+  }
+  
+  public get columns(): Column[] {
+    return this.getColumns();
   }
 
-  return templates;
-}
+  public columnSimpleEdit = this.columns;
 
-// Handle default toggle changes
-onDefaultChange(element: RangeDuration): void {
-  if (!this.multivalueallowed && element.default) {
-    // Single default mode - unset all other defaults
-    this.tableWithSimpleEdit.datasource.data.forEach((row, index) => {
-      if (row.id !== element.id) {
-        row.default = false;
-      }
-    });
+  onDurationChange(element: MultipleRangeDuration): void {
+    if (this.disabledDurations.includes(element.durationType)) {
+      element.unitValue = null;
+      element.minimum = null;
+      element.maximum = null;
+    }
   }
 
-  // Emit the change
-  this.completeDeltaChangeRangeDuration.emit(
-    this.tableWithSimpleEdit.datasource.data
-  );
-  this.tableDirty.emit(true);
-}
-
-// Update the onEditTableAction method to handle default toggle logic
-public onEditTableAction(event) {
-  this.commonDataService.updateMessage(
-    'mbpBod.demo.microsite.table.editTableEvent',
-    JSON.stringify(event.currentChanges)
-  );
-  console.log('CompleteDelta::', event.completeDelta);
-
-  if (event.currentChanges) {
-    const editedIndex = event.currentChanges.rowIndex;
-    const currentRow = this.tableWithSimpleEdit.datasource.data[editedIndex];
-
-    // Validate min/max values
-    if (currentRow.minimum !== null && currentRow.maximum !== null) {
-      if (currentRow.minimum > currentRow.maximum) {
-        console.error('Minimum cannot be greater than maximum');
-        return;
+  validateMinMax(element: MultipleRangeDuration): void {
+    if (element.minimum !== null && element.maximum !== null) {
+      if (element.minimum > element.maximum) {
+        // You might want to emit an error or show a validation message
+        console.error('Minimum value cannot be greater than maximum value');
+        // Reset to valid state or show error
       }
     }
+  }
 
-    // Handle default toggle logic only if multivalueallowed is false
-    if (currentRow.default && !this.multivalueallowed) {
-      // Single default mode - unset all other defaults
-      this.tableWithSimpleEdit.datasource.data.forEach((r, i) => {
-        r.default = i === editedIndex;
-      });
-    }
-    
-    this.completeDeltaChangeRangeDuration.emit(
-      this.tableWithSimpleEdit.datasource.data
+  maxLengthHandler(event) {
+    this.columns.map(col => {
+      if (col?.inputModeOptions?.type === ColumnType.input) {
+        col.inputModeOptions.validators.max = this.maxLength;
+      }
+    });
+    this.columnSimpleEdit = [...this.columns];
+  }
+
+  public dataWithSimpleEdit: MultipleRangeDuration[] = [];
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'Multiple Range Duration',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<MultipleRangeDuration>(this.dataWithSimpleEdit),
+    noRecordsMessage: 'No range duration value defined'
+  };
+
+  private dataForReset: MultipleRangeDuration[] = [];
+
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+  @ViewChildren(SearchFieldComponent)
+  searchFieldComponent: QueryList<SearchFieldComponent>;
+
+  selectedTabIndex = 0;
+  showEdit = true;
+
+  constructor(
+    private snackBar: MatSnackBar,
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient,
+    private formBuilder: UntypedFormBuilder,
+    private translate: TranslateService,
+    private systemMessage: SystemMessageService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    private conditionService: ConditionDetailService,
+    private formStateService: BodFormStateService,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.selectedConditionData = [];
+  }
+
+  ngOnInit(): void {
+    this.onPageAction('');
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
+          'mbpBod.demo.microsite.table.messages.reset'
+        ];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+            this.resetMsg.text = value[keys[1]];
+          });
+      })
     );
   }
 
-  this.tableDirty.emit(true);
-}
-
-
-
-
-/**
- * Method to add a new row
- */
-public addTableData() {
-  this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-  console.log('valid Value Data', this.tableWithSimpleEdit.datasource);
-
-  const updatedData: RangeDuration = {
-    id: ++this.lastModifiedIndex,
-    durationType: '',
-    unitValue: null,
-    minimum: null,
-    maximum: null,
-    // Set default to false, or true if it's the first row and multivalueallowed is false
-    default: !this.multivalueallowed && this.tableWithSimpleEdit.datasource.data.length === 0
-  };
-
-  this.simpleEditTableRef.addRow(updatedData);
-
-  if (this.modeOptionsSimple?.input) {
-    this.updateCustomColumnFormFields();
-  } else {
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: this.tableWithSimpleEdit.datasource.data.length - 1
-    };
+  ngAfterViewInit() {
+    this.tableRefArray = [this.simpleEditTableRef];
   }
-}
 
+  /**
+   * Method to change pagemode of the table
+   */
+  public showActionsForSimple: boolean = false;
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+      this.showActionsForSimple = true;
+    } else {
+      this.checkStatus(false);
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.showActionsForSimple = false;
+    }
+  }
 
+  @Output() tableDirty = new EventEmitter<boolean>();
+  @Output() completeDeltaChangeMultipleRangeDuration = new EventEmitter<any>();
+  
+  @Input() set multipleRangeDurationData(data: MultipleRangeDuration[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log('dataWithSimpleEdit multiple range duration: ', this.dataWithSimpleEdit);
+  }
 
+  private updateColumns(): void {
+    this.columnSimpleEdit = this.getColumns();
+    this.tableWithSimpleEdit.columns = this.columnSimpleEdit;
+    this.cdr.detectChanges();
+  }
 
+  public getCurrentTableMultipleRangeDuration(): MultipleRangeDuration[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
 
+  public onEditTableAction(event) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
 
-// Update the DurationCondition validation logic in submitForm method
-else if (formValues.conditionType === 'DurationCondition') {
-  const durationTableData =
-    this.simpleEditTableDurationFix.getCurrentTableDuration?.() || [];
+    if (event.currentChanges) {
+      const editedIndex = event.currentChanges.rowIndex;
+      const currentRow = this.tableWithSimpleEdit.datasource.data[editedIndex];
 
-  // Only check for default if multivalueallowed is false
-  if (!this.toggleValue) { // toggleValue represents multivalueallowed
-    const defaultRow = durationTableData.find(row => row && row.default);
-
-    if (!defaultRow) {
-      this.handleError1({
-        errorCode: 'DEFAULT_VALUE_REQUIRED',
-        status: 400
-      });
-      return;
+      // Validate min/max values
+      if (currentRow.minimum !== null && currentRow.maximum !== null) {
+        if (currentRow.minimum > currentRow.maximum) {
+          // Handle validation error
+          console.error('Minimum cannot be greater than maximum');
+          return;
+        }
+      }
+      
+      this.completeDeltaChangeMultipleRangeDuration.emit(
+        this.tableWithSimpleEdit.datasource.data
+      );
     }
 
-    const durationValidValues = durationTableData.reduce((acc, row) => {
-      if ((row && row.durationType) || row.unitValue !== undefined) {
-        acc.push({
-          textValue: row.durationType,
-          numberValue: row.unitValue
-        });
-      }
-      return acc;
-    }, []);
+    this.tableDirty.emit(true);
+  }
 
-    conditionDetail = {
-      conditionType: 'DurationCondition',
-      durationDefinition: {
-        durationType: defaultRow?.durationType,
-        unitValue: defaultRow?.unitValue,
-        businessDayRule: formValues.processingday || ''
-      },
-      durationValidValues: durationValidValues
+  // Method to mark tableFormGroup of EditTable as touched
+  public markTouched() {
+    this.simpleEditTableRef.markTableFormAsTouched();
+  }
+
+  /**
+   * Method to update formstatus
+   */
+  public checkStatus(status) {
+    this.formStatus = status;
+  }
+
+  /**
+   * Method to add a new row
+   */
+  public selectedConditionData: any[] = [];
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    console.log('valid Value Data', this.tableWithSimpleEdit.datasource);
+
+    const updatedData: MultipleRangeDuration = {
+      id: ++this.lastModifiedIndex,
+      durationType: '',
+      unitValue: null,
+      minimum: null,
+      maximum: null
     };
-  } else {
-    // When multivalueallowed is true, no default is required
-    const durationValidValues = durationTableData.reduce((acc, row) => {
-      if ((row && row.durationType) || row.unitValue !== undefined) {
-        acc.push({
-          textValue: row.durationType,
-          numberValue: row.unitValue
-        });
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input) {
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+    }
+  }
+
+  /**
+   * This method is to update custom column data whenever it gets changed in edit mode
+   */
+  public updateColumnData(columnName, value, index, checkboxRef?, tableName?) {
+    if (tableName === 'simpleEditTable') {
+      const updatedData = this.tableWithSimpleEdit.datasource.data;
+      updatedData[index][columnName] = checkboxRef
+        ? !checkboxRef.checked
+        : value;
+      (
+        this.tableWithSimpleEdit
+          .datasource as MatTableDataSource<MultipleRangeDuration>
+      ).data = updatedData;
+      this.simpleEditTableRef.updateDeltaForCustomColumn(
+        EditTableAction.EDIT,
+        index
+      );
+    }
+  }
+
+  /**
+   * This method is to update search field column form when a new row added to the table
+   */
+  public updateCustomColumnFormFields() {
+    // Similar implementation as in primary frequency component
+  }
+
+  /**
+   * Method to change pagemode to enquiry on save of table data
+   */
+  public saveTableData() {
+    this.markTouched();
+    if (this.formStatus) {
+      this.modeOptionsSimple = { input: false, reset: false };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.updateMsgArr(this.successMsg);
+    }
+  }
+
+  /**
+   * Method to reset edit table data
+   */
+  public reset() {
+    this.modeOptionsSimple = { input: true, reset: true };
+    this.updateMsgArr(this.resetMsg);
+  }
+
+  /**
+   * Method to update messages in page container
+   */
+  public updateMsgArr(msg) {
+    this.messages = [msg];
+    setTimeout(() => {
+      this.messages = [];
+    }, 10000);
+  }
+
+  /**
+   * Method to handle row level actions for basic edit table
+   */
+  @Output() translationDetails1 = new EventEmitter<any>();
+
+  handleRowLevelActions($event, index) {
+    if ($event === 'edit') {
+      this.setDataForSingleLineEditMode(index);
+    } else if ($event === 'trash') {
+      if (this.modeOptionsSimple?.input) {
+        this.deleteTableData(index);
+      } else {
+        this.subscriptions.add(
+          this.bodConfirmAlertDialogsService
+            .confirm(this.ConfirmData)
+            .subscribe(val => {
+              if (val) {
+                this.deleteTableData(index);
+              }
+            })
+        );
       }
-      return acc;
-    }, []);
+    } else if ($event === 'save') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.updateFormStateAsPristine();
+    } else if ($event === 'reset') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: true },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+    }
+  }
 
-    // Use the first row as reference for durationDefinition if available
-    const firstRow = durationTableData[0];
+  private updateFormStateAsPristine() {
+    this.simpleEditTableRef?.tableFormGroup.markAsPristine();
+    this.formStateService.formState$.next(
+      this.simpleEditTableRef.tableFormGroup.dirty
+    );
+  }
 
-    conditionDetail = {
-      conditionType: 'DurationCondition',
-      durationDefinition: {
-        durationType: firstRow?.durationType || '',
-        unitValue: firstRow?.unitValue || null,
-        businessDayRule: formValues.processingday || ''
-      },
-      durationValidValues: durationValidValues
+  /**
+   * Method to set data for single line edit mode
+   */
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
     };
+    this.pageModeSimple = PageMode.NONE;
+  }
+
+  /**
+   * Method to delete row of a table
+   */
+  public deleteTableData(index) {
+    this.simpleEditTableRef.deleteRow(index);
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  /**
+   * Method to update message in system message service
+   */
+  public updateMessage(key, text) {
+    const message = this.translate.instant(key) + text;
+    this.systemMessage.updateSystemMessage(message);
+  }
+
+  updateTemplate(index) {
+    this.disableEditForInput = false;
+    this.existingDataNotEditable = false;
+    this.selectedTabIndex = index;
+    this.checkStatus(false);
+    this.pageModeSimple = this.pageMode;
+    this.modeOptionsSimple = this.modeOptions;
   }
 }
