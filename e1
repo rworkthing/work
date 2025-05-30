@@ -1,15 +1,65 @@
+// In your parent component (add-edit-conditions.component.ts)
+// Add these imports and properties:
+
+import { RangeDurationConditionComponent, RangeDuration } from '../range-duration-condition/range-duration-condition.component';
+
+// Add to your component class:
+@ViewChild('simpleEditTableRangeDuration')
+simpleEditTableRangeDuration: RangeDurationConditionComponent;
+
+public rangeDurationTableData: RangeDuration[] = [];
+public retainedRangeDurationCondition: RangeDuration[] = [];
+
+// Add this method to handle range duration data changes
+completeDeltaRangeDurationData: any;
+handleCompleteDeltaChangeRangeDuration(data: any) {
+  this.completeDeltaRangeDurationData = data;
+  console.log('Received CompleteDelta from range duration child:', this.completeDeltaRangeDurationData);
+}
+
+// In your HTML template (add-edit-conditions.component.html)
+// Add this section where you want the range duration component:
+
+/*
 <div
   *ngIf="
     addNewConditionFormGroup.get('conditionType').value ===
-    'DurationCondition'
+    'RangeDurationCondition'
   "
 >
   <bod-input-layout col="2">
     <bod-control-group
       [truncate]="false"
-      [label]="translationKey + 'metadataconfig.processingday'"
+      [label]="translationKey + 'metadataconfig.classification'"
       [forTextOnly]="true"
       [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="classification"
+          name="classification"
+        >
+          <mat-option
+            *ngFor="let classification of classifications"
+            [value]="classification.value"
+          >
+            {{ classification.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{
+            getError('classification', addNewConditionFormGroup) | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.processingday'"
+      [forTextOnly]="true"
+      [required]="false"
     >
       <mat-form-field appearance="outline" fisStyle>
         <mat-select
@@ -31,14 +81,111 @@
         </mat-error>
       </mat-form-field>
     </bod-control-group>
+    
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.multivalueallowed'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="multivalueallowed"
+        name="multivalueallowed"
+        [checked]="toggleValue"
+        (change)="onToggleChange($event)"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
   </bod-input-layout>
-  
-  <!-- ADD THIS PART FOR THE DURATION TABLE -->
-  <bod-duration-condition-fixed
-    #simpleEditTableDurationFix
-    (completeDeltaChangeDuration)="handleCompleteDeltaChangeDuration($event)"
-    [durationData]="durationTableData"
+
+  <bod-range-duration-condition
+    #simpleEditTableRangeDuration
+    (completeDeltaChangeRangeDuration)="handleCompleteDeltaChangeRangeDuration($event)"
+    [rangeDurationData]="rangeDurationTableData"
+    [multivalueallowed]="toggleValue"
     (tableDirty)="onTableDirty()"
   >
-  </bod-duration-condition-fixed>
+  </bod-range-duration-condition>
 </div>
+*/
+
+// In your condition types array, add:
+conditionTypes = [
+  // ... existing types
+  {
+    value: 'RangeDurationCondition',
+    label: 'Range Duration Condition'
+  }
+];
+
+// In your resetFormControls method, add:
+resetFormControls(conditionType: string) {
+  // ... existing resets
+  if (conditionType !== 'RangeDurationCondition') {
+    this.addNewConditionFormGroup.get('classification')?.reset('');
+    this.addNewConditionFormGroup.get('processingday')?.reset('');
+    this.addNewConditionFormGroup.get('multivalueallowed')?.reset(false);
+  }
+}
+
+// In your submitForm method, add handling for RangeDurationCondition:
+else if (formValues.conditionType === 'RangeDurationCondition') {
+  const rangeDurationData =
+    this.simpleEditTableRangeDuration.getCurrentTableRangeDuration?.() || [];
+
+  const defaultRow = rangeDurationData.find(row => row && row.default);
+
+  if (!this.multivalueallowed && !defaultRow) {
+    this.handleError1({
+      errorCode: 'DEFAULT_VALUE_REQUIRED',
+      status: 400
+    });
+    return;
+  }
+
+  const rangeDurationValidValues = rangeDurationData.reduce((acc, row) => {
+    if (row && row.durationType) {
+      acc.push({
+        durationType: row.durationType,
+        unitValue: row.unitValue,
+        minimum: row.minimum,
+        maximum: row.maximum
+      });
+    }
+    return acc;
+  }, []);
+
+  conditionDetail = {
+    conditionType: 'RangeDurationCondition',
+    rangeDurationDefinition: {
+      durationType: defaultRow?.durationType || rangeDurationData[0]?.durationType,
+      unitValue: defaultRow?.unitValue || rangeDurationData[0]?.unitValue,
+      minimum: defaultRow?.minimum || rangeDurationData[0]?.minimum,
+      maximum: defaultRow?.maximum || rangeDurationData[0]?.maximum,
+      businessDayRule: formValues.processingday || '',
+      multivalueAllowed: formValues.multivalueallowed || false
+    },
+    rangeDurationValidValues: rangeDurationValidValues
+  };
+}
+
+// In your onReset method, add:
+onReset(isAdd: boolean): void {
+  // ... existing reset logic
+  
+  if (this.simpleEditTableRangeDuration) {
+    this.simpleEditTableRangeDuration.reset();
+  }
+  
+  // ... rest of reset logic
+  
+  this.rangeDurationTableData = [...this.retainedRangeDurationCondition];
+}
+
+// Don't forget to import the component in your module/standalone component:
+imports: [
+  // ... existing imports
+  RangeDurationConditionComponent
+]
