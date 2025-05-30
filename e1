@@ -1,32 +1,40 @@
-// In your parent component (add-edit-conditions.component.ts)
-// Add these imports and properties:
+# Multiple Range Duration Condition Component Integration
 
-import { RangeDurationConditionComponent, RangeDuration } from '../range-duration-condition/range-duration-condition.component';
+## Overview
+The `MultipleRangeDurationConditionComponent` is a new child component based on the existing `RangeDurationConditionComponent`, but without the default column functionality. This component allows multiple range duration entries without requiring a default selection.
 
-// Add to your component class:
-@ViewChild('simpleEditTableRangeDuration')
-simpleEditTableRangeDuration: RangeDurationConditionComponent;
+## Key Differences from Original Component
 
-public rangeDurationTableData: RangeDuration[] = [];
-public retainedRangeDurationCondition: RangeDuration[] = [];
+1. **Removed Default Column**: No default toggle column in the table
+2. **Simplified Interface**: `MultipleRangeDuration` interface without `default` property
+3. **No Multivalue Logic**: Removed `multivalueallowed` input since it's not needed
+4. **Cleaner Data Model**: Focuses purely on range duration data without default handling
 
-// Add this method to handle range duration data changes
-completeDeltaRangeDurationData: any;
-handleCompleteDeltaChangeRangeDuration(data: any) {
-  this.completeDeltaRangeDurationData = data;
-  console.log('Received CompleteDelta from range duration child:', this.completeDeltaRangeDurationData);
-}
+## Integration Steps
 
-// In your HTML template (add-edit-conditions.component.html)
-// Add this section where you want the range duration component:
+### 1. Import the Component in Parent Component
 
-/*
-<div
-  *ngIf="
-    addNewConditionFormGroup.get('conditionType').value ===
-    'RangeDurationCondition'
-  "
->
+Add to your parent component imports:
+
+```typescript
+import { MultipleRangeDurationConditionComponent } from '../multiple-range-duration-condition/multiple-range-duration-condition.component';
+
+@Component({
+  // ... other properties
+  imports: [
+    // ... other imports
+    MultipleRangeDurationConditionComponent,
+    // ... other imports
+  ],
+})
+```
+
+### 2. Add to Parent Component Template
+
+Add this to your parent component HTML where you want the multiple range duration condition:
+
+```html
+<div *ngIf="addNewConditionFormGroup.get('conditionType').value === 'MultipleDurationCondition'">
   <bod-input-layout col="2">
     <bod-control-group
       [truncate]="false"
@@ -48,13 +56,10 @@ handleCompleteDeltaChangeRangeDuration(data: any) {
           </mat-option>
         </mat-select>
         <mat-error>
-          {{
-            getError('classification', addNewConditionFormGroup) | translate
-          }}
+          {{ getError('classification', addNewConditionFormGroup) | translate }}
         </mat-error>
       </mat-form-field>
     </bod-control-group>
-    
     <bod-control-group
       [truncate]="false"
       [label]="translationKey + 'metadataconfig.processingday'"
@@ -75,117 +80,145 @@ handleCompleteDeltaChangeRangeDuration(data: any) {
           </mat-option>
         </mat-select>
         <mat-error>
-          {{
-            getError('processingday', addNewConditionFormGroup) | translate
-          }}
+          {{ getError('processingday', addNewConditionFormGroup) | translate }}
         </mat-error>
       </mat-form-field>
     </bod-control-group>
-    
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.multivalueallowed'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="multivalueallowed"
-        name="multivalueallowed"
-        [checked]="toggleValue"
-        (change)="onToggleChange($event)"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
   </bod-input-layout>
 
-  <bod-range-duration-condition
-    #simpleEditTableRangeDuration
-    (completeDeltaChangeRangeDuration)="handleCompleteDeltaChangeRangeDuration($event)"
-    [rangeDurationData]="rangeDurationTableData"
-    [multivalueallowed]="toggleValue"
+  <bod-multiple-range-duration-condition
+    #simpleEditTableMultipleRangeDuration
+    (completeDeltaChangeMultipleRangeDuration)="handleCompleteDeltaChangeMultipleRangeDuration($event)"
+    [multipleRangeDurationData]="multipleRangeDurationTableData"
     (tableDirty)="onTableDirty()"
   >
-  </bod-range-duration-condition>
+  </bod-multiple-range-duration-condition>
 </div>
-*/
+```
 
-// In your condition types array, add:
-conditionTypes = [
-  // ... existing types
-  {
-    value: 'RangeDurationCondition',
-    label: 'Range Duration Condition'
-  }
-];
+### 3. Add to Parent Component TypeScript
 
-// In your resetFormControls method, add:
-resetFormControls(conditionType: string) {
-  // ... existing resets
-  if (conditionType !== 'RangeDurationCondition') {
-    this.addNewConditionFormGroup.get('classification')?.reset('');
-    this.addNewConditionFormGroup.get('processingday')?.reset('');
-    this.addNewConditionFormGroup.get('multivalueallowed')?.reset(false);
-  }
-}
+Add these properties and methods to your parent component:
 
-// In your submitForm method, add handling for RangeDurationCondition:
-else if (formValues.conditionType === 'RangeDurationCondition') {
-  const rangeDurationData =
-    this.simpleEditTableRangeDuration.getCurrentTableRangeDuration?.() || [];
+```typescript
+export class AddEditConditionsComponent implements OnInit, AfterViewInit {
+  // ... existing properties
 
-  const defaultRow = rangeDurationData.find(row => row && row.default);
+  @ViewChild('simpleEditTableMultipleRangeDuration')
+  simpleEditTableMultipleRangeDuration: MultipleRangeDurationConditionComponent;
 
-  if (!this.multivalueallowed && !defaultRow) {
-    this.handleError1({
-      errorCode: 'DEFAULT_VALUE_REQUIRED',
-      status: 400
-    });
-    return;
+  public multipleRangeDurationTableData: MultipleRangeDuration[] = [];
+
+  // ... existing methods
+
+  completeDeltaMultipleRangeDurationData: any;
+  handleCompleteDeltaChangeMultipleRangeDuration(data: any) {
+    this.completeDeltaMultipleRangeDurationData = data;
+    console.log('Received CompleteDelta from multiple range duration child:', this.completeDeltaMultipleRangeDurationData);
   }
 
-  const rangeDurationValidValues = rangeDurationData.reduce((acc, row) => {
-    if (row && row.durationType) {
-      acc.push({
-        durationType: row.durationType,
-        unitValue: row.unitValue,
-        minimum: row.minimum,
-        maximum: row.maximum
-      });
+  // Add to your condition types array
+  conditionTypes = [
+    // ... existing condition types
+    {
+      value: 'MultipleDurationCondition',
+      label: 'Multiple Duration Condition'
     }
-    return acc;
-  }, []);
+    // ... other condition types
+  ];
 
-  conditionDetail = {
-    conditionType: 'RangeDurationCondition',
-    rangeDurationDefinition: {
-      durationType: defaultRow?.durationType || rangeDurationData[0]?.durationType,
-      unitValue: defaultRow?.unitValue || rangeDurationData[0]?.unitValue,
-      minimum: defaultRow?.minimum || rangeDurationData[0]?.minimum,
-      maximum: defaultRow?.maximum || rangeDurationData[0]?.maximum,
-      businessDayRule: formValues.processingday || '',
-      multivalueAllowed: formValues.multivalueallowed || false
-    },
-    rangeDurationValidValues: rangeDurationValidValues
-  };
-}
+  // In your submitForm method, add handling for MultipleDurationCondition
+  submitForm(isAdd: boolean) {
+    // ... existing code
 
-// In your onReset method, add:
-onReset(isAdd: boolean): void {
-  // ... existing reset logic
-  
-  if (this.simpleEditTableRangeDuration) {
-    this.simpleEditTableRangeDuration.reset();
+    if (formValues.conditionType === 'MultipleDurationCondition') {
+      const multipleRangeDurationTableData =
+        this.simpleEditTableMultipleRangeDuration.getCurrentTableMultipleRangeDuration?.() || [];
+
+      if (multipleRangeDurationTableData.length === 0) {
+        this.handleError1({
+          errorCode: 'MULTIPLE_RANGE_DURATION_REQUIRED',
+          status: 400
+        });
+        return;
+      }
+
+      const durationValidValues = multipleRangeDurationTableData.reduce((acc, row) => {
+        if (row && row.durationType && row.unitValue !== undefined) {
+          acc.push({
+            durationType: row.durationType,
+            unitValue: row.unitValue,
+            minimum: row.minimum,
+            maximum: row.maximum
+          });
+        }
+        return acc;
+      }, []);
+
+      conditionDetail = {
+        conditionType: 'MultipleDurationCondition',
+        durationDefinition: {
+          businessDayRule: formValues.processingday || ''
+        },
+        multipleDurationValidValues: durationValidValues
+      };
+    }
+
+    // ... rest of existing submitForm logic
   }
-  
-  // ... rest of reset logic
-  
-  this.rangeDurationTableData = [...this.retainedRangeDurationCondition];
-}
 
-// Don't forget to import the component in your module/standalone component:
-imports: [
-  // ... existing imports
-  RangeDurationConditionComponent
-]
+  // In your resetFormControls method, add reset logic
+  resetFormControls(conditionType: string) {
+    // ... existing reset logic
+
+    if (conditionType !== 'MultipleDurationCondition') {
+      this.addNewConditionFormGroup.get('classification')?.reset('');
+      this.addNewConditionFormGroup.get('processingday')?.reset('');
+    }
+  }
+}
+```
+
+### 4. Interface Definition
+
+Make sure you have the interface defined (already included in the component file):
+
+```typescript
+export interface MultipleRangeDuration {
+  id: number;
+  durationType: string;
+  unitValue: number | null;
+  minimum: number | null;
+  maximum: number | null;
+}
+```
+
+## Component Features
+
+### Input Properties
+- `multipleRangeDurationData`: Array of `MultipleRangeDuration` objects to populate the table
+
+### Output Events
+- `tableDirty`: Emitted when table data changes
+- `completeDeltaChangeMultipleRangeDuration`: Emitted with complete table data when changes occur
+
+### Public Methods
+- `getCurrentTableMultipleRangeDuration()`: Returns current table data
+- `markTouched()`: Marks the table form as touched for validation
+- `reset()`: Resets the table to initial state
+
+## Validation
+
+The component includes:
+- Min/max value validation (minimum cannot be greater than maximum)
+- Required field validation for duration type, unit value, minimum, and maximum
+- Automatic clearing of values when disabled duration types are selected
+
+## Usage Notes
+
+1. The component automatically disables minimum/maximum/unit value fields when 'Permanent' or 'UntilFurtherNotice' duration types are selected
+2. The table supports inline editing with save/cancel functionality
+3. Row-level delete actions are available with confirmation dialogs
+4. The component integrates with the BOD framework's form validation and dirty state tracking
+
+This component provides a clean, simplified interface for managing multiple range duration conditions without the complexity of default value selection.
