@@ -15,7 +15,9 @@
         templateName: durationTypeTemplate
       },
       { columnName: 'actions', templateName: editActionsTemplate1 },
-      { columnName: 'unitValue', templateName: unitValueColumnTemplate }
+      { columnName: 'unitValue', templateName: unitValueColumnTemplate },
+      { columnName: 'minimum', templateName: minimumColumnTemplate },
+      { columnName: 'maximum', templateName: maximumColumnTemplate }
     ]"
     (inputValidationStatus)="checkStatus($event)"
     (editTableEvent)="onEditTableAction($event)"
@@ -72,34 +74,60 @@
         </button>
       </div>
     </ng-template>
+
+    <ng-template
+      #durationTypeTemplate
+      let-element="element"
+      let-column="column"
+    >
+      <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+        <mat-select 
+        panelClass="fis-style"
+        [(ngModel)]="element.durationType"
+        (selectionChange)="onDurationChange(element)">
+          <mat-option *ngFor="let val of durationOptions" [value]="val.value">
+             {{ val.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-template>
+
+    <ng-template #unitValueColumnTemplate let-element="element">
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          matInput
+          fisStyle
+          type="number"
+          [(ngModel)]="element.unitValue"
+          [disabled]="disabledDurations.includes(element.durationType)"
+        />
+      </mat-form-field>
+    </ng-template>
+
+    <ng-template #minimumColumnTemplate let-element="element">
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          matInput
+          fisStyle
+          type="number"
+          [(ngModel)]="element.minimum"
+          [disabled]="disabledDurations.includes(element.durationType)"
+          (blur)="validateMinMax(element)"
+        />
+      </mat-form-field>
+    </ng-template>
+
+    <ng-template #maximumColumnTemplate let-element="element">
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          matInput
+          fisStyle
+          type="number"
+          [(ngModel)]="element.maximum"
+          [disabled]="disabledDurations.includes(element.durationType)"
+          (blur)="validateMinMax(element)"
+        />
+      </mat-form-field>
+    </ng-template>
   </bod-table>
-
-  <ng-template
-    #durationTypeTemplate
-    let-element="element"
-    let-column="column"
-  >
-    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
-      <mat-select 
-      panelClass="fis-style"
-      [(ngModel)]="element.durationType"
-      (selectionChange)="onDurationChange123(element)">
-        <mat-option *ngFor="let val of durationOptions" [value]="val.value">
-           {{ val.label }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </ng-template>
-
-  <ng-template #unitValueColumnTemplate let-element="element">
-    <mat-form-field appearance="outline" fisStyle>
-      <input
-        matInput
-        fisStyle
-        type="number"
-        [(ngModel)]="element.unitValue"
-        [disabled]="disabledDurations.includes(element.durationType)"
-      />
-    </mat-form-field>
-  </ng-template>
 </bod-page-container>
