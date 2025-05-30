@@ -112,6 +112,7 @@ import {
   CurrencyTable1,
   CurrencyTableSingle,
   Duration,
+  RangeDuration,
   TabIndexTableMap
 } from './add-edit-conditions.model';
 import { roletypeaction } from '../../role-type/role-type-constants';
@@ -121,12 +122,14 @@ import { PrimaryFrequencyConditionComponent } from '../primary-frequency/primary
 import { BodTableDemoCommonDataService } from '../../bod-table-demo-common-data.service';
 import { CurrencyConditionComponent } from '../currency-conditions/currency-condition.component';
 import { DurationConditionFixedComponent } from '../duration-condition-fixed/duration-condition-fixed.component';
+import { RangeDurationConditionComponent } from '../range-duration-condition/range-duration-condition.component';
 
 
 @Component({
   selector: 'bod-add-edit-conditions',
   standalone: true,
   imports: [
+    RangeDurationConditionComponent,
     DurationConditionFixedComponent,
     SecondoryFrequencyConditionComponent,
     PrimaryFrequencyConditionComponent,
@@ -234,6 +237,9 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
   @ViewChild('simpleEditTableDurationFix')
   simpleEditTableDurationFix: DurationConditionFixedComponent;
 
+  @ViewChild('simpleEditTableRangeDuration')
+  simpleEditTableRangeDuration: RangeDurationConditionComponent;
+
   classificationTypes = [
     { value: 'ChargeType', label: 'Charge Type' },
     { value: 'FECondition', label: 'FE Condition' },
@@ -301,7 +307,7 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
   public rowLevelActionsForBasicEdit: BodTableAction[] = textCondDelete;
   public currencyTableActions: BodTableAction[] = roletypeaction;
   public durationTableData: Duration[] = [];
-
+  public rangeDurationTableData: RangeDuration[] = [];
   public addNewConditionFormGroup: UntypedFormGroup;
   public addNewConditionCurrencyForm: UntypedFormGroup;
 
@@ -913,6 +919,12 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
   public onTableDirty(): void {
     this.addNewConditionFormGroup.markAsDirty();
   }
+
+  completeDeltaRangeDurationData: any;
+handleCompleteDeltaChangeRangeDuration(data: any) {
+  this.completeDeltaRangeDurationData = data;
+  console.log('Received CompleteDelta from range duration child:', this.completeDeltaRangeDurationData);
+}
   completeDeltaDurationData: any;
   handleCompleteDeltaChangeDuration(data: any) {
     this.completeDeltaDurationData = data;
@@ -1981,7 +1993,7 @@ export class AddEditConditionsComponent implements OnInit, AfterViewInit {
         errorMsg = 'Atleast one default currency must be selected';
         break;
       case 'DEFAULT_NOT_IN_SELECTED':
-        errorMsg = 'The selected default currency must be one of the selected rows. Please ensure the default currency is included in your selection.';
+        errorMsg = 'Atleast one default currency must be set as default.';
         break;
       case 'DUPLICATE_TEXT_VALID_VALUE':
         errorMsg = 'Duplicate text valid values found.';
