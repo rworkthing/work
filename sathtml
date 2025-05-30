@@ -1,146 +1,105 @@
-<bod-message-container rufId [messages]="messages"></bod-message-container>
-<bod-table
-  #customTable
-  [customColumnTemplates]="[
-    {
-      columnName: 'actions',
-      templateName: editActionTemplate
-    }
-  ]"
-  [data]="conditionTableMetaData"
-  [tableActions]="isStatusEditable() ? conditionTableActions : []"
-  (onTableActionClick)="isStatusEditable() && onTableActionClicked1($event)"
-  [expandedRowTemplate]="expandedRowTemplate"
-  (onRowExpand)="rowExpanded($event)"
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
 >
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      {
+        columnName: 'durationType',
+        templateName: durationTypeTemplate
+      },
+      { columnName: 'actions', templateName: editActionsTemplate1 },
+      { columnName: 'unitValue', templateName: unitValueColumnTemplate }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="sm" fisIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+  </bod-table>
+
   <ng-template
-    #editActionTemplate
+    #durationTypeTemplate
     let-element="element"
     let-column="column"
-    let-index="index"
   >
-    <bod-table-actions
-      sectionActions
-      [actions]="isStatusEditable() ? editactions : []"
-      (onActionClick)="isStatusEditable() && iconActionClicked($event, element)"
-    >
-    </bod-table-actions>
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select 
+      panelClass="fis-style"
+      [(ngModel)]="element.durationType"
+      (selectionChange)="onDurationChange123(element)">
+        <mat-option *ngFor="let val of durationOptions" [value]="val.value">
+           {{ val.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </ng-template>
-  <ng-template #expandedRowTemplate let-context="context">
-    <div fullwidth>
-      <!-- {{context |json}} -->
-      <h1>Conditions</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="conditionDetailService.getCondition(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
 
-      <bod-table 
-        *ngIf="context.element.conditionType === 'TextCondition' &&
-        context.element.conditionDetail?.textValidValues?.length > 0"
-
-        [data]="TextConditionTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        *ngIf="context.element.conditionType === 'TextAndNumberCondition'&&
-        context.element.conditionDetail?.textAndNumberValidValues?.length > 0"
-        [data]="TextNumberConditionTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplate"
-      >
-      </bod-table>
-      <bod-table
-        *ngIf="
-          context.element.conditionType === 'CurrencySpecificCondition' &&
-          context.element.conditionDetail.currencySpecificDetailsList?.length >
-            0
-        "
-        [data]="CurrencySpecificTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplate"
-      >
-        <ng-template #expandedRowTemplate let-context="context">
-          <bod-inquiry-layout
-            [columns]="2"
-            [groups]="conditionDetailService.getAggregateData(context.element)"
-            [softSeparator]="false"
-            [direction]="direction"
-            [information]="[]"
-            (linkClick)="commonDataService.inquiryLayoutClick($event)"
-          >
-          </bod-inquiry-layout>
-        </ng-template>
-      </bod-table>
-      <bod-table
-        *ngIf="
-          context.element.conditionType === 'NumberCondition' &&
-          context.element.conditionDetail.maxValue === null &&
-          context.element.conditionDetail?.numberValidValues?.length > 0
-        "
-        [data]="NumberConditionTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        *ngIf="context.element.conditionType === 'FrequencyCondition'"
-        [data]="primFrequencyConditionTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        *ngIf="context.element.conditionType === 'FrequencyCondition'"
-        [data]="secFrequencyConditionTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        *ngIf="context.element.conditionType === 'CurrencyCondition'"
-        [data]="currencyConditionTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        *ngIf="context.element?.conditionsRltnp?.length > 0"
-        [data]="ConditionReltnTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      
-      
-    </div>
+  <ng-template #unitValueColumnTemplate let-element="element">
+    <mat-form-field appearance="outline" fisStyle>
+      <input
+        matInput
+        fisStyle
+        type="number"
+        [(ngModel)]="element.unitValue"
+        [disabled]="disabledDurations.includes(element.durationType)"
+      />
+    </mat-form-field>
   </ng-template>
-</bod-table>
-
-<ng-template #addNewConditionTemplate>
-  <bod-add-edit-conditions
-    (apiResponse)="addConditionTypeEvent($event)"
-    [editConditionRow]="conditionType"
-    [retainedCode]="retainedCode"
-    [retainedIdentifier]="retainedIdentifier"
-   
-  >
-  </bod-add-edit-conditions>
-</ng-template>
-
-<ng-template #addExistingConditionTemplate> </ng-template>
+</bod-page-container>
