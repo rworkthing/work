@@ -1,337 +1,866 @@
-private conditionForm(element: ConditionList): void {
-    this.addNewConditionFormGroup.removeControl('curspecificvalue');
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { Amount, BodAutoCompleteMetadata, BodCommonModule, BodConfirmAlertDialogsService, BodConfirmDialogModel, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormStateService, BodKeyValuePairMetadata, BodPageContainerModule, BodPipeName, BodTableAction, BodTableActionsModule, BodTableComponent, BodTableDataSource, BodTableMetadata, BodTableModule, Column, ColumnType, ControlGroupModule, Currency, DirectivesModule, InputLayoutModule, InquiryLayoutModule, ListType, MaxLengthStrategy, MessageContainerModule, ModeOptions, NotificationMessage, NotificationMessageType, PageAction, PageMode, SearchFieldModule, SectionContainerModule, SingleRowEdit } from '@bod/common';
+import moment from 'moment';
 
-    this.isAdd = false;
-    this.retainedIdentifier = element.identifier ?? 0;
-    this.retainedCode = element.cdarValue || '';
+import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { RufIconModule } from '@ruf/shell/icon';
+import { Subscription, take } from 'rxjs';
+import { BodEditableSampleTable, BodLocaleTable, CondTable, SearchFieldInputData } from '../../bod-table-demo.model';
+import { DemoTableDataService, SampleEC } from '../../bod-table-demo.service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import { SystemMessageService } from '../../system-message.service';
+import { BodTableDemoCommonDataService } from '../../bod-table-demo-common-data.service';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { ConditionDetailService } from '../condition-detail.service';
 
-    // Mapping logic for applicableLevel
-    let applicableToValue: string | null = null;
-    switch (element.applicableLevel) {
-      case 'ProductLaw':
-        applicableToValue = 'productonly';
-        break;
-      case 'ArrangementLaw':
-        applicableToValue = 'accountonly';
-        break;
-      case 'InternalLaw':
-        applicableToValue = 'product&account';
-        break;
-      default:
-        applicableToValue = null; // or handle unknown case
+
+@Component({
+  selector: 'bod-condition-relationship',
+  standalone: true,
+  imports: [
+    BodTableModule,
+    TranslateModule,
+    MatTableModule,
+    MatTabsModule,
+    BodTableActionsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    CommonModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    ControlGroupModule,
+    ReactiveFormsModule,
+    MessageContainerModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    BodPageContainerModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './condition-relationship.component.html',
+  styleUrl: './condition-relationship.component.scss'
+})
+export class ConditionRelationshipComponent implements OnInit, OnDestroy, AfterViewInit {
+
+  private subscriptions: Subscription = new Subscription();
+  public messages: NotificationMessage[] = [];
+  translationObject = {};
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+  selectedTabIndex = 0;
+  public localeForm: UntypedFormGroup;
+  showEdit = true;
+  public lastModifiedIndex: number;
+  public requiredColumnForm: UntypedFormGroup;
+  public overrideDefaultColumnForm: UntypedFormGroup;
+  public useExistingColForm: UntypedFormGroup;
+  public useExistingFormCtrlKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
+  public searchFieldFormCtrlKeys: string[] = [];
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public tableRefArray: any[] = [];
+  public searchFieldColumnForm: UntypedFormGroup;
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+  private dataForReset: BodEditableSampleTable[] = [];
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public maxLength = 5;
+  public minAmount = 2;
+  public maxAmount = 9999;
+  public minNumber = 1;
+  public maxNumber = 1000;
+  public formStatus = false;
+  public precision = 0;
+  public translationKey = TranslationKey;
+  public showActionsForSimple: boolean = false;
+
+  @Output() tableDirty = new EventEmitter<boolean>();
+  @Output() completeDeltaChange = new EventEmitter<any>();
+  @Output() translationDetails = new EventEmitter<any>();
+  @Input() set localeData(data: CondTable[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log("dataWithSimpleEdit: ", this.dataWithSimpleEdit );
+  }
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+      // this.rowLevelActionsForBasicEdit[0].disabled = true;
+      this.showActionsForSimple = true;
+      // this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      //   ...obj
+      // }));
+      // this.setSearchFieldsData(false);
+      // this.setOverrideDefaultFieldsData(false);
+      // this.setRequiredFieldsData(false);
+    } else {
+      this.checkStatus(false);
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.showActionsForSimple = false
     }
+  }
 
-    const customizable: boolean = [
-      'ProductSuggestion',
-      'SystemSuggestion'
-    ].includes(element.customizationLevel);
-    this.addNewConditionFormGroup.patchValue({
-      code: element.cdarValue,
-      conditionIdentifier: element.identifier,
-      name: element.name,
-      conditionType: element.conditionType,
-      classificationType: element.classificationType,
-      optionality: element.conditionOptionalityType,
-      applicableTo: applicableToValue,
-      customizable: customizable,
-      conditionsRltnp: element.conditionsRltnp || [],
-      conditionSubject: '',
-      relationship: ''
-    });
-    const localeList: CondTable[] = (element.conditionsRltnp || []).map(
-      (locale, i) => ({
-        id: i,
-        conditionSubject: locale.subjectCdarValue,
-        relationship: locale.conditionRltnpType
+
+  public currencies: Currency[] = [
+    new Currency('USD', 'United States Dollar', 2, ''),
+    new Currency('EUR', 'EURO', 2, ''),
+    new Currency('CRC', 'Costa Rican Colón', 2, ''),
+    new Currency('GBP', 'Pound Sterling', 2, ''),
+    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
+    new Currency('JPY', 'Japanese Yen', 0, ''),
+    new Currency('CNY', 'Chinese Yuan', 2, '')
+  ];
+
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
+    
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
+    }
+  ];
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'Add',
+      mostCommon: false
+    }
+  ];
+
+  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Yes'
+      },
+      {
+        value: false,
+        label: 'No'
+      }
+    ]
+  };
+
+  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
+    options: [
+      {
+        value: 'MX',
+        label: 'Mexico'
+      },
+      {
+        value: 'IN',
+        label: 'India'
+      },
+      {
+        value: 'US',
+        label: 'California United States of America USA '
+      }
+    ],
+    type: ListType.COUNTRY,
+    required: true
+  };
+
+  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Yes'
+      },
+      {
+        value: false,
+        label: 'No'
+      }
+    ]
+  };
+
+  public inputForCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Active'
+      },
+      {
+        value: false,
+        label: 'Inactive'
+      }
+    ]
+  };
+
+  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: '1',
+        label: 'Primary Shipping'
+      },
+      {
+        value: '2',
+        label: 'Primary Billing'
+      }
+    ]
+  };
+
+  public columns: Column[] = [
+    {
+      name: 'conditionSubject',
+      title: 'Condition Subject',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: [],
+        validators: {
+          required: true,
+          max: 50,
+          maxLengthStrategy: this.selectedStrategy
+        },
+
+      }
+    },
+    {
+      name: 'relationship',
+      title: 'Relationship',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: ['Exclude', 'Follows', 'Include'],
+        validators: {
+          required: true,
+          max: 20,
+          maxLengthStrategy: this.selectedStrategy
+        }
+      }
+    },
+   
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
+    }
+  ];
+  public columnSimpleEdit = this.columns;
+
+  public localeCodes: { label: string, value: string }[] = [];
+
+  public getCurrentTableData(): CondTable[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
+
+
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+  public resetMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+
+  constructor(
+    public commonDataService: BodTableDemoCommonDataService,
+    private conditionService: ConditionDetailService,
+    private http: HttpClient,
+    private formBuilder: UntypedFormBuilder,
+    private translate: TranslateService,
+    private systemMessage: SystemMessageService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    private formStateService: BodFormStateService,
+    private metadataService: MetadataService,
+  ) {
+    this.selectedLocaleData = [];
+  }
+
+  ngOnInit(): void {
+    this.loadDropdownData();
+    this.onPageAction("")
+
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
+          'mbpBod.demo.microsite.table.messages.reset'
+        ];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+            this.resetMsg.text = value[keys[1]];
+          });
       })
     );
-    this.localeTableData = localeList;
-
-    if (element.conditionType === 'DateCondition') {
-      this.addNewConditionFormGroup.patchValue({
-        start: element.conditionDetail.value
-      });
-    } else if (element.conditionType === 'FlagCondition') {
-      this.addNewConditionFormGroup.patchValue({
-        defaultflag: element.conditionDetail.value
-      });
-    } else if (element.conditionType === 'FrequencyCondition') {
-      this.addNewConditionFormGroup.patchValue({
-        processingday:
-          element.conditionDetail.frequencyDefinition?.businessDayRule || ''
-      });
-    } else if (element.conditionType === 'TextCondition') {
-      if (
-        element.conditionDetail.textValidValues &&
-        element.conditionDetail.textValidValues.length > 0
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validvalue: true,
-          conditionDetail: element.conditionDetail || [],
-          validvalues: null,
-          default: null
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          defaultValueText: element.conditionDetail.value
-        });
-      }
-    } else if (element.conditionType === 'CurrencySpecificCondition') {
-      this.curspecificvalue =
-        element?.conditionDetail.currencySpecificDetailsList?.length > 0
-          ? true
-          : false;
-      this.addNewConditionFormGroup.addControl(
-        'curspecificvalue',
-        this.fb.control(this.curspecificvalue)
-      );
-      this.isHidden = !this.curspecificvalue;
-
-      const selectedCurrencies: CurrencyTable[] = [];
-
-      element.conditionDetail.currencySpecificDetailsList?.forEach(detail => {
-        const matchingCurrency = this.currencySpecificData.datasource.data.find(
-          item => item.currencyISO4217Val === detail.currencyCode
-        );
-
-        if (matchingCurrency) {
-          matchingCurrency.currencyInquiry = detail.currencyRange.map(cur => ({
-            id: cur.id,
-            label: cur.label,
-            value: cur.value
-          }));
-          selectedCurrencies.push(matchingCurrency);
-        }
-      });
-
-      this.currencySpecificData.datasource.data.forEach(row => {
-        if (selectedCurrencies.includes(row)) {
-          this.expandableTableRef.selection.select(row);
-        }
-      });
-
-      this.selectedRow = selectedCurrencies;
-    }
-    else if (element.conditionType === 'CurrencyCondition') {
-      const selectedCurrencyId = element.conditionDetail.value;
-      const validCurrencyIds = element.conditionDetail.currencyValidValues || [];
-
-      // Build a list of currency options with selection status
-      const currencyList: CurrencyTableSingle[] = validCurrencyIds.map((identifier, i) => ({
-        id: i,
-        identifier: identifier,
-        default: identifier === selectedCurrencyId
-      }));
-
-      // Assign to your table or dropdown data source
-      this.currencyTableData = currencyList;
-
-      // Patch the form with the selected currency
-      this.addNewConditionFormGroup.patchValue({
-        currencyValue: selectedCurrencyId
-      });
-    }
-    else if (element.conditionType === 'TextAndNumberCondition') {
-      if (
-        element.conditionDetail.textAndNumberValidValues &&
-        element.conditionDetail.textAndNumberValidValues.length > 0
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          textnumbervalidvalue: true,
-          conditionDetail: element.conditionDetail || [],
-          validvalues: '',
-          numbervalidvalues: null,
-          default: null
-        });
-      } else if (element.conditionDetail.textNumberValue) {
-        this.addNewConditionFormGroup.patchValue({
-          defaultText: element.conditionDetail.textNumberValue.textValue,
-          defaultNumber: element.conditionDetail.textNumberValue.numberValue
-        });
-      }
-    } else if (element.conditionType === 'PercentCondition') {
-      if (
-        element.conditionDetail.minValue !== null &&
-        element.conditionDetail.maxValue !== null
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypePercentage: 'range',
-          percentageDefaultValue: element.conditionDetail.value,
-          percentageLow: element.conditionDetail.minValue,
-          percentageHigh: element.conditionDetail.maxValue
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypePercentage: 'none',
-          percentageValue: element.conditionDetail.value
-        });
-      }
-    } else if (element.conditionType === 'AmountCondition') {
-      if (
-        element.conditionDetail.minValue !== null &&
-        element.conditionDetail.maxValue !== null
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeAmount: 'range',
-          currency: element.conditionDetail.currencyIdfr,
-          amountDefaultValue: element.conditionDetail.value,
-          amountLow: element.conditionDetail.minValue,
-          amountHigh: element.conditionDetail.maxValue
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeAmount: 'none',
-          currency: element.conditionDetail.currencyIdfr,
-          amountValue: element.conditionDetail.value
-        });
-      }
-    } else if (element.conditionType === 'NumberCondition') {
-      if (
-        element.conditionDetail.minValue !== null &&
-        element.conditionDetail.maxValue !== null
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeNumber: 'range',
-          numberdefaultValue: element.conditionDetail.value,
-          numberLow: element.conditionDetail.minValue,
-          numberHigh: element.conditionDetail.maxValue
-        });
-      } else if (
-        element.conditionDetail.numberValidValues &&
-        element.conditionDetail.numberValidValues.length > 0
-      ) {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeNumber: 'set',
-          conditionDetail: element.conditionDetail || [],
-          validvalues: null,
-          default: null
-        });
-      } else {
-        this.addNewConditionFormGroup.patchValue({
-          validValuesTypeNumber: 'none',
-          numberValue: element.conditionDetail.value
-        });
-      }
-    }
-
-    const localeList1: textNumCond[] = (
-      element.conditionDetail.textAndNumberValidValues || []
-    ).map((locale, i) => ({
-      id: i,
-      validvalues: locale.textValue,
-      numbervalidvalues: locale.numberValue,
-
-      default:
-        element.conditionDetail.textNumberValue &&
-          locale.textValue ===
-          element.conditionDetail.textNumberValue.textValue &&
-          locale.numberValue ===
-          element.conditionDetail.textNumberValue.numberValue
-          ? true
-          : false
-    }));
-    this.localeTableData1 = localeList1;
-
-    const localeList2: NumCond[] = (
-      element.conditionDetail.numberValidValues || []
-    ).map((value, i) => ({
-      id: i,
-      validvalues: Number(value),
-
-      default:
-        Number(value) === Number(element.conditionDetail.value) ? true : false
-    }));
-
-    this.localeTableData2 = localeList2;
-
-    const localeList3: TextCond[] = (
-      element.conditionDetail.textValidValues || []
-    ).map((value, i) => ({
-      id: i,
-      validvalues: value,
-
-      default: value === element.conditionDetail.value ? true : false
-    }));
-
-    this.localeTableData3 = localeList3;
-
-    const primFreqList: primaFreq[] = (
-      element.conditionDetail.primaryFrequencyValidValues || []
-    ).map((freq, i) => ({
-      id: i,
-      primaryfrequency: freq.textValue,
-      value: freq.numberValue ?? null,
-      default:
-        freq.numberValue ===
-        element.conditionDetail.frequencyDefinition?.primaryUnits
-    }));
-
-    this.primFreqTableData = primFreqList;
-
-    const secFreqList: secFreq[] = (
-      element.conditionDetail.secondaryFrequencyValidValues || []
-    ).map((freq, i) => ({
-      id: i,
-      secondaryfrequency: freq.textValue,
-      value: freq.numberValue ?? null
-    }));
-
-    this.secFreqTableData = secFreqList;
-
-    this.isEdit = true;
   }
-
-
-import { UntypedFormGroup } from "@angular/forms";
-import { BodTableComponent, BodTableMetadata } from "@bod/common";
-
-export interface CurrencyTable {
-    identifier: number,
-    index?:number;
-    currencyISO4217Val: string,
-    code: string,
-    range?: boolean,
-    defaultValue?:number,
-    default?: number,
-    minimum?: number,
-    maximum?: number,
-    currencyName?:string,
-    currencyInquiry?:Currency[];
-
-    // currencyDecimalNumber: string,
-    // currencyNumericCode: string
+  loadDropdownData(): void {
     
+    this.conditionService.getConditions().subscribe((conditions: any[]) => {
+      const conditionValues = conditions.map(condition => condition.cdarValue);
+      this.columns[0].inputModeOptions.model = conditionValues;
+    });
+
   }
-  export interface CurrencyTableSingle {
-    index: number;
-    identifier: number,
-    currencyISO4217Val: string,
-    code: string,
-    default?: boolean
+  ngAfterViewInit() {
+    this.tableRefArray = [this.simpleEditTableRef];
+  }
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
   }
 
-  export interface CurrencyTable1 {
-    index: number;
-    identifier?: number,
-    currencyISO4217Val: string,
-    code: string,
-    // range: boolean,
-    // default: number,
-    // minimum: number,
-    // maximum: number,
-    currencyInquiry?:Currency[];
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+
+
+
+  public columnsForDemoService: Column[] = [
+    { name: 'groupId', title: 'mbpBod.demo.microsite.table.labels.groupID' },
+    {
+      name: 'groupName',
+      title: 'mbpBod.demo.microsite.table.labels.groupName',
+      disableSorting: true
+    },
+    {
+      name: 'startDate',
+      title: 'mbpBod.demo.microsite.table.labels.startDate',
+      pipe: { name: BodPipeName.BodDate },
+      disableSorting: true
+    },
+    {
+      name: 'relationship',
+      title: 'mbpBod.demo.microsite.table.labels.relationship',
+      disableSorting: true
+    }
+  ];
+
+
+
+
+
+  public dataWithSimpleEdit: CondTable[] = [
+
+  ];
+
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'Condition Relationship',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<CondTable>(
+      this.dataWithSimpleEdit
+    ),
+    noRecordsMessage: 'No Condition Relationship Defined'
+  };
+  public reset() {
+    this.setSearchFieldsData(true);
+    this.setOverrideDefaultFieldsData(true);
+    this.setRequiredFieldsData(true);
+
+    this.modeOptionsSimple = { input: true, reset: true };
+
+    this.updateMsgArr(this.resetMsg);
   }
-  export interface Currency {
-    id: number;
-    label: string;
-    value: string;
+  updateMsgArr(resetMsg: NotificationMessage) {
+    throw new Error('Method not implemented.');
   }
-  export interface TabIndexTableMap {
-    [k: number]: TableProps;
+
+
+  public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+    });
+    // logic to get index from last search field control key and create new search field control
+    switch (this.selectedTabIndex) {
+      case 0: {
+        const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+
+        if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
+          const lastKey = this.searchFieldFormCtrlKeys[this.searchFieldFormCtrlKeys.length - 1];
+          const match = lastKey?.match(/\d+$/); // Extract the number at the end of the key (e.g., groupId_3)
+          index = match ? parseInt(match[0], 10) + 1 : 0;
+        } else {
+          index = 0;
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'groupId',
+      index,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeys = this.addFormControl(
+      this.useExistingColForm,
+      'useExisting',
+      index,
+      false,
+      'No'
+    );
+
+    this.overrideDefaultColFormCtrKeys = this.addFormControl(
+      this.overrideDefaultColumnForm,
+      'overrideDefault',
+      index,
+      false,
+      'true'
+    );
+
+    this.requiredColFormCtrKeys = this.addFormControl(
+      this.requiredColumnForm,
+      'required',
+      index,
+      false,
+      'true'
+    );
   }
-  export interface TableProps {
-    formGroup: UntypedFormGroup;
-    data: BodTableMetadata;
-    ref: BodTableComponent;
-    input: any;
+
+  public setOverrideDefaultFieldsData(isReset: any) {
+    const overrideDefaultCtrlObj = {};
+    let data: any;
+    switch (this.selectedTabIndex) {
+      case 0: {
+        data = isReset
+          ? this.dataForReset
+          : this.tableWithSimpleEdit.datasource.data;
+        break;
+      }
+
+      default:
+        break;
+    }
+    data.forEach((row, ind) => {
+      if (
+        !this.singleRowEdit?.modeOptions?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        overrideDefaultCtrlObj['overrideDefault' + ind] =
+          new UntypedFormControl(row.overrideDefault);
+      }
+    });
+    this.overrideDefaultColumnForm = this.formBuilder.group(
+      overrideDefaultCtrlObj
+    );
+    this.overrideDefaultColFormCtrKeys = Object.keys(
+      this.overrideDefaultColumnForm.controls
+    );
   }
+
+  public setSearchFieldsData(isReset) {
+    const useExistingFormCtrlObj = {};
+    const searchFieldFormCtrlObj = {};
+    this.searchFieldObjArr = [];
+    let data: any;
+    switch (this.selectedTabIndex) {
+      case 0: {
+        data = isReset
+          ? this.dataForReset
+          : this.tableWithSimpleEdit.datasource.data;
+        break;
+      }
+      default:
+        break;
+    }
+    data.forEach((row, ind) => {
+      if (
+        !this.singleRowEdit?.modeOptions?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
+          row.groupId,
+          Validators.required
+        );
+        useExistingFormCtrlObj['useExistingGroupId' + ind] =
+          new UntypedFormControl(row.useExistingGroupId);
+        this.searchFieldObjArr[ind] = {
+          searchFieldData: {
+            label: '',
+            fieldName: 'groupId',
+            descFieldName: 'groupName',
+            required: true,
+            hideLabel: true,
+            hideFilterCriteria: true,
+            disableInput: true,
+            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
+            hideDescription: false
+          },
+          searchTableData: {
+            columns: this.columnsForDemoService,
+            enablePagination: true,
+            paginationOptions: {
+              pageSize: 5,
+              length: 12
+            },
+            datasource: new BodTableDataSource<SampleEC>(
+              new DemoTableDataService(this.http)
+            ),
+            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+          }
+        };
+      }
+    });
+    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
+    this.searchFieldFormCtrlKeys = Object.keys(
+      this.searchFieldColumnForm.controls
+    );
+    this.useExistingFormCtrlKeys = Object.keys(
+      this.useExistingColForm.controls
+    );
+  }
+
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+    // this.setSearchFieldsData(false);
+    // this.setOverrideDefaultFieldsData(false);
+    // this.setRequiredFieldsData(false);
+  }
+
+  public setRequiredFieldsData(isReset) {
+    const requiredCtrlObj = {};
+    let data: any;
+    switch (this.selectedTabIndex) {
+      case 0: {
+        data = isReset
+          ? this.dataForReset
+          : this.tableWithSimpleEdit.datasource.data;
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    data.forEach((row, ind) => {
+      if (
+        !this.singleRowEdit?.modeOptions?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        requiredCtrlObj['required' + ind] = new UntypedFormControl(
+          row.required
+        );
+      }
+    });
+    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
+    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
+
+    // disable child (required) control based on the parent (overrideDefault) control value
+    if (this.singleRowEdit?.modeOptions?.input) {
+      if (
+        !this.overrideDefaultColumnForm.controls[
+          'overrideDefault' + this.singleRowEdit?.index
+        ].value
+      ) {
+        this.requiredColumnForm.controls[
+          'required' + this.singleRowEdit?.index
+        ].disable({
+          emitEvent: true
+        });
+      }
+    } else {
+      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
+        (key, ind) => {
+          if (!this.overrideDefaultColumnForm.controls[key].value) {
+            this.requiredColumnForm.controls['required' + ind].disable({
+              emitEvent: true
+            });
+          }
+        }
+      );
+    }
+  }
+  public selectedLocaleData: any[] = [];
+
+  generateUniqueId(array: { id: number }[]): number {
+    const existingIds = array.map(item => item.id);
+    let newId = 2;
+ 
+    while (existingIds.includes(newId)) {
+      newId++;
+    }
+ 
+    return newId;
+  }
+
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length < 1 ? this.tableWithSimpleEdit.datasource.data.length : this.generateUniqueId(this.tableWithSimpleEdit.datasource.data);
+
+    const updatedData = {
+      id: this.lastModifiedIndex,
+    };
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input) {
+      // this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      // this.setSearchFieldsData(false);
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+
+  public addFormControl(form, columnName, index, isRequired, defaultValue) {
+    isRequired
+      ? form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue, Validators.required)
+      )
+      : form.addControl(
+        columnName + index,
+        new UntypedFormControl(defaultValue)
+      );
+    return Object.keys(form.controls);
+  }
+
+  /**
+   * Method to update formstatus
+   */
+  public checkStatus(status: any) {
+    this.formStatus = status;
+  }
+
+  // Method to display SystemMessage with current event and EditTable delta log
+
+
+
+  public onEditTableAction(event) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    this.translationObject = {};
+    console.log('CompleteDelta::', event.completeDelta);
+    this.completeDeltaChange.emit(event.completeDelta);
+    if (event.currentChanges.rowData.locale != undefined) {
+      Object.assign(this.translationObject, { "locale": event.currentChanges.rowData.locale });
+      // console.log('locale::', event.currentChanges.rowData.locale);
+      console.log("translationObject1 = ", this.translationObject);
+    }
+    if (event.currentChanges.rowData.displayName != undefined) {
+      Object.assign(this.translationObject, { "displayName": event.currentChanges.rowData.displayName });
+      // console.log('CurrentChanges::', event.currentChanges.rowData.displayName);
+      console.log("translationObject2 = ", this.translationObject);
+    }
+    if (event.currentChanges.rowData.description != undefined) {
+      Object.assign(this.translationObject, { "description": event.currentChanges.rowData.description });
+      // console.log('CurrentChanges::', event.currentChanges.rowData.description);
+      console.log("translationObject2 = ", this.translationObject);
+    }
+
+    this.tableDirty.emit(true);
+  }
+
+
+  public resetTableForm() {
+    this.translationObject = {};
+    this.translationObjectsArray = [];
+    this.dataWithSimpleEdit = [];
+    this.tableWithSimpleEdit.datasource.data = [];
+  
+    setTimeout(() => {
+      this.simpleEditTableRef?.tableFormGroup.reset();
+      this.formStateService.formState$.next(false);
+    });
+    console.log("resetting locale table")
+  }
+
+  /**
+   * Method to handle row level actions for basic edit table
+   */
+
+  translationObjectsArray: any[] = [];
+
+
+  handleRowLevelActions($event: any, index: any) {
+    if ($event === 'edit') {
+      this.setDataForSingleLineEditMode(index);
+    } else if ($event === 'trash') {
+      if (this.modeOptionsSimple?.input) {
+        this.deleteTableData(index);
+      } else {
+        this.subscriptions.add(
+          this.bodConfirmAlertDialogsService
+            .confirm(this.ConfirmData)
+            .subscribe(val => {
+              if (val) {
+                this.deleteTableData(index);
+              }
+            })
+        );
+      }
+    } else if ($event === 'save') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+    
+      // 💡 Type cast and check values
+      const updatedRow = this.translationObject as CondTable;
+      const allRows = this.tableWithSimpleEdit.datasource.data as CondTable[];
+    
+      console.log('%c📝 DEBUG: translationObject:', 'color: cyan', updatedRow);
+      console.log('%c📋 DEBUG: All Rows Before Update:', 'color: orange', [...allRows]);
+    
+      // 🛠 Match and update row
+      const existingIndex = allRows.findIndex(row => row.id === updatedRow.id);
+    
+      if (existingIndex !== -1) {
+        console.log(`🔄 Updating row at index ${existingIndex}`);
+        allRows[existingIndex] = { ...updatedRow };
+      } else {
+        console.warn('⚠️ Row not found, pushing new one:', updatedRow);
+        allRows.push(updatedRow);
+      }
+    
+      this.translationObjectsArray = [...allRows];
+    
+      console.log('%c✅ DEBUG: Final translationObjectsArray to emit:', 'color: green', this.translationObjectsArray);
+    
+      this.translationDetails.emit(this.translationObjectsArray);
+    
+      this.updateFormStateAsPristine();
+    }
+  }
+
+
+  private updateFormStateAsPristine() {
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.simpleEditTableRef?.tableFormGroup.markAsPristine();
+        this.formStateService.formState$.next(
+          this.simpleEditTableRef.tableFormGroup.dirty
+        );
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Method to delete row of a table
+   */
+ public deleteTableData(index) {
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.simpleEditTableRef.deleteRow(index);
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    if (this.searchFieldColumnForm) {
+      this.searchFieldFormCtrlKeys = this.removeFormControl(
+        this.searchFieldColumnForm,
+        this.searchFieldFormCtrlKeys,
+        index
+      );
+      this.searchFieldObjArr.splice(index, 1);
+      this.useExistingFormCtrlKeys = this.removeFormControl(
+        this.useExistingColForm,
+        this.useExistingFormCtrlKeys,
+        index
+      );
+    }
+  }
+
+  /**
+   * This method is to remove form control from form and return formcontrol Keys array when a row is deleted
+   */
+  public removeFormControl(form: any, formControlKeys: any, index: any) {
+    form.removeControl(formControlKeys[index]);
+    return Object.keys(form.controls);
+  }
+
+}
