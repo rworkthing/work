@@ -1,466 +1,278 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { 
-  BodAutoCompleteModule, 
-  BodCommonModule, 
-  BodConfirmAlertDialogsService, 
-  BodConfirmDialogModel, 
-  BodCurrencyControlModule, 
-  BodDynamicFormModule, 
-  BodFormModule, 
-  BodFormStateService, 
-  BodPageContainerModule, 
-  BodTableAction, 
-  BodTableActionsModule, 
-  BodTableComponent, 
-  BodTableMetadata, 
-  BodTableModule, 
-  Column, 
-  ColumnType, 
-  ControlGroupModule, 
-  DirectivesModule, 
-  InputLayoutModule, 
-  InquiryLayoutModule, 
-  MaxLengthStrategy, 
-  MessageContainerModule, 
-  ModeOptions, 
-  NotificationMessage, 
-  NotificationMessageType, 
-  PageAction, 
-  PageMode, 
-  SearchFieldModule, 
-  SectionContainerModule, 
-  SingleRowEdit 
-} from '@bod/common';
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatIconModule } from '@angular/material/icon';
+import { BodPageContainerModule, BodTableComponent, BodTableMetadata, BodTableModule, RowLeftAction, SelectPageMode } from '@bod/common';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { RufIconModule } from '@ruf/shell/icon';
-import { Subscription, take } from 'rxjs';
-import { TranslationKey } from '../../metadat-config/codegen-config.constant';
-import { TransactionTypeService } from '../transaction-type.service';
-
-// Interface for Channel Table data
-export interface ChannelTable {
-  id: number;
-  channel: string;
-  option: string;
-}
+import { MatSelectModule } from '@angular/material/select'; // Add this import
+import { MatFormFieldModule } from '@angular/material/form-field'; // Add this import
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
+import { CurrencyTableSingle } from '../../../conditions/add-edit-conditions/add-edit-conditions.model';
+import { ConditionDetailService } from '../../../conditions/condition-detail.service';
+import { MatTableDataSource } from '@angular/material/table';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Channels } from '../../transaction-type.model';
 
 @Component({
-  selector: 'bod-channels-main-table',
+  selector: 'bod-channels-multiselect-table',
   standalone: true,
   imports: [
-    BodTableModule,
-    TranslateModule,
-    MatTableModule,
-    MatTabsModule,
-    BodTableActionsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
     CommonModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    ControlGroupModule,
-    ReactiveFormsModule,
-    MessageContainerModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
+    BodTableModule,
     BodPageContainerModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    MatDatepickerModule,
-    BodCommonModule
+    MatSlideToggleModule,
+    MatSelectModule, // Add this
+    MatFormFieldModule, // Add this
+    ReactiveFormsModule,
+    FormsModule
   ],
-  templateUrl: './channels-main-table.component.html',
-  styleUrl: './channels-main-table.component.scss'
+  templateUrl: './channels-multiselect-table.component.html',
+  styleUrl: './channels-multiselect-table.component.scss'
 })
-export class ChannelsMainTableComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
 
-  private subscriptions: Subscription = new Subscription();
-  public messages: NotificationMessage[] = [];
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
-  selectedTabIndex = 0;
-  showEdit = true;
-  public lastModifiedIndex: number;
-  public tableRefArray: any[] = [];
+  @Input() currencyDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Channels[] = [];
+  @Output() rowSelected = new EventEmitter<Channels[]>();
+  @Output() optionChanged = new EventEmitter<{ element: any, newValue: string }>(); // Add this output
 
-  @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef: BodTableComponent;
+  @ViewChild('channelsMultiselectTable', { static: false }) // Update ref name to match template
+  currencyTable: BodTableComponent;
 
-  public pageMode = PageMode.INQUIRY;
-  public pageModeSimple = this.pageMode;
-  private dataForReset: ChannelTable[] = [];
-  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
-  public translationKey = TranslationKey;
-  public showActionsForSimple: boolean = false;
+  public addChannlesFormGroup: UntypedFormGroup | undefined;
 
-  @Output() tableDirty = new EventEmitter<boolean>();
-  @Output() completeDeltaChange = new EventEmitter<any>();
-  @Output() channelDetails = new EventEmitter<any>();
+  options = [
+    { label: 'Proposed', value: 'Proposed' },
+    { label: 'Mandatory', value: 'Mandatory' }
+  ];
 
-  @Input() set channelData(data: ChannelTable[]) {
-    this.dataWithSimpleEdit = data || [];
-    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
-    console.log("dataWithSimpleEdit: ", this.dataWithSimpleEdit);
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectCurrencyRows(), 0);
   }
 
-  public onPageAction(event) {
-    if (event === PageAction.EDIT) {
-      this.messages = [];
-      this.modeOptionsSimple = { input: true, reset: false };
-      this.pageModeSimple = PageMode.INPUT;
-      this.showActionsForSimple = true;
-    } else {
-      this.checkStatus(false);
-      this.modeOptionsSimple = { input: false, reset: true };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-      this.showActionsForSimple = false;
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+      setTimeout(() => this.selectCurrencyRows(), 0);
     }
   }
 
-  public ConfirmData: BodConfirmDialogModel = {
-    title: 'BOD.metadataconfig.title',
-    message: 'BOD.metadataconfig.message',
-    confirm: 'BOD.metadataconfig.delete',
-    dismiss: 'BOD.metadataconfig.cancel'
-  };
+  private selectCurrencyRows(): void {
+    const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
+    const selection = this.currencyTable?.selection;
 
-  public rowLevelActionsForBasicEdit: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'trash',
-      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
-      mostCommon: false
+    if (!selection || tableData.length === 0) {
+      return;
     }
-  ];
 
-  public actionsForSimple: BodTableAction[] = [
-    {
-      id: 1,
-      icon: 'add',
-      label: 'Add',
-      mostCommon: false
-    }
-  ];
+    // Clear current selection first
+    selection.clear();
 
-  public channels: any[] = [];
-  public options: any[] = [
-    { value: 'Required', label: 'Required' },
-    { value: 'Optional', label: 'Optional' },
-    { value: 'NotApplicable', label: 'Not Applicable' }
-  ];
-
-  public columns: Column[] = [
-    {
-      name: 'channel',
-      title: 'Channel',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [],
-        validators: {
-          required: true,
-          max: 50,
-          maxLengthStrategy: this.selectedStrategy
-        }
+    // Select the new rows
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.id === dataRow.id
+      );
+      if (match) {
+        selection.select(dataRow);
       }
-    },
-    {
-      name: 'option',
-      title: 'Option',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: ['Required', 'Optional', 'NotApplicable'],
-        validators: {
-          required: true,
-          max: 20,
-          maxLengthStrategy: this.selectedStrategy
-        }
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true,
-      width: 7
-    }
-  ];
-
-  public columnSimpleEdit = this.columns;
-
-  public getCurrentTableData(): ChannelTable[] {
-    return this.tableWithSimpleEdit?.datasource?.data || [];
+    });
   }
 
-  public successMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant(
-      'mbpBod.demo.microsite.table.messages.success'
-    ),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
-
-  public resetMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
 
   constructor(
-    private transactionTypeService: TransactionTypeService,
-    private http: HttpClient,
-    private formBuilder: UntypedFormBuilder,
-    private translate: TranslateService,
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    private formStateService: BodFormStateService,
+    private fb: FormBuilder,
+    private transactionTypeService: TransactionTypeService
+  ) {}
+
+  ngOnInit() {
+    this.defaultForm = this.fb.group({});
+    
+    // Initialize option property for all table data if not present
+    if (this.currencyDataSingleSelect?.datasource?.data) {
+      this.currencyDataSingleSelect.datasource.data.forEach(item => {
+        if (!item.option) {
+          item.option = 'Proposed'; // Set default value
+        }
+      });
+    }
+  }
+
+  // Add this method to handle option changes
+  public onOptionChange(element: any, newValue: string): void {
+    console.log('Option changed for element:', element, 'New value:', newValue);
+    
+    // Update the element's option value
+    element.option = newValue;
+    
+    // Update the datasource to reflect the change
+    const data = [...this.currencyDataSingleSelect.datasource.data];
+    const index = data.findIndex(item => item.id === element.id);
+    if (index !== -1) {
+      data[index].option = newValue;
+      this.currencyDataSingleSelect.datasource.data = data;
+    }
+    
+    // Emit the change event
+    this.optionChanged.emit({ element, newValue });
+  }
+
+  public resetSelection() {
+    if (this.currencyTable?.selection) {
+      this.currencyTable.selection.clear();
+    }
+    this.selectedRowSingleSelect = [];
+  }
+
+  public rowSelectionSingleSelect(element: Channels[]) {
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+  }
+}
+
+
+
+
+
+
+<bod-table
+  #channelsMultiselectTable
+  [data]="currencyDataSingleSelect"
+  [modeOptions]="{ input: true }"
+  (onRowSelect)="rowSelectionSingleSelect($event)"
+  [rowSelectionStrategy]="rowSelectionStrategy"
+  [allowSelectAll]="allowRowSelection"
+  [alignContent]="'top'"
+  [customColumnTemplates]="[
+    { columnName: 'option', templateName: optionTemplate }
+  ]"
+>
+
+<ng-template
+  #optionTemplate
+  let-element="element"
+  let-column="column"
+  let-index="index"
+>
+  <mat-form-field appearance="outline" style="width: 120px;">
+    <mat-select
+      [value]="element.option || 'Proposed'"
+      (selectionChange)="onOptionChange(element, $event.value)"
+      [disableRipple]="false"
+    >
+      <mat-option *ngFor="let option of options" [value]="option.value">
+        {{ option.label }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</ng-template>
+
+</bod-table>
+
+
+
+
+
+
+import { Component, Inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ChannelsMultiselectTableComponent } from './channels-multiselect-table/channels-multiselect-table.component';
+
+@Component({
+  selector: 'bod-channels-multiselect-dialog',
+  standalone: true,
+  imports: [ChannelsMultiselectTableComponent],
+  template: `
+    <div mat-dialog-content>
+      <h2 mat-dialog-title>Select Channels</h2>
+      <bod-channels-multiselect-table
+        [currencyDataSingleSelect]="data.currencyDataSingleSelect"
+        [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+        (rowSelected)="onRowSelected($event)"
+        (optionChanged)="onOptionChanged($event)"
+      ></bod-channels-multiselect-table>
+    </div>
+    <div mat-dialog-actions>
+      <button mat-button (click)="onCancel()">Cancel</button>
+      <button mat-button color="primary" (click)="onConfirm()">OK</button>
+    </div>
+  `
+})
+export class ChannelsMultiselectDialogComponent {
+  selectedRows: any[] = [];
+
+  constructor(
+    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
   ) {
-    this.selectedChannelData = [];
+    console.log('[Dialog] Received data for table:', data.currencyDataSingleSelect);
+    this.selectedRows = data.selectedRowSingleSelect || [];
   }
 
-  ngOnInit(): void {
-    this.loadDropdownData();
-    this.onPageAction("");
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-    
-    this.subscriptions.add(
-      this.translate.onTranslationChange.subscribe(lang => {
-        const keys = [
-          'mbpBod.demo.microsite.table.messages.success',
-          'mbpBod.demo.microsite.table.messages.reset'
-        ];
-        this.translate
-          .get(keys)
-          .pipe(take(1))
-          .subscribe(value => {
-            this.successMsg.text = value[keys[0]];
-            this.resetMsg.text = value[keys[1]];
+  onRowSelected(selectedRows: any[]) {
+    this.selectedRows = selectedRows;
+    console.log('Selected rows updated:', this.selectedRows);
+  }
+
+  onOptionChanged(event: { element: any, newValue: string }) {
+    console.log('Option changed in dialog:', event);
+    // Handle option change if needed
+  }
+
+  onCancel() {
+    this.dialogRef.close(null);
+  }
+
+  onConfirm() {
+    this.dialogRef.close(this.selectedRows);
+  }
+}
+
+
+
+
+
+
+
+public addTableData() {
+  // Ensure the data has the correct structure with option property
+  const dialogData = {
+    ...this.currencyDataSingleSelect,
+    datasource: {
+      ...this.currencyDataSingleSelect.datasource,
+      data: this.currencyDataSingleSelect.datasource.data.map(item => ({
+        ...item,
+        option: item.option || 'Proposed' // Ensure option property exists
+      }))
+    }
+  };
+
+  // Open the dialog
+  const dialogRef = this.dialog.open(ChannelsMultiselectDialogComponent, {
+    width: '900px',
+    data: {
+      currencyDataSingleSelect: dialogData,
+      selectedRowSingleSelect: this.selectedRowSingleSelect || []
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result) {
+      console.log('Dialog closed with result:', result);
+      // Handle selected rows from multiselect table
+      result.forEach(selectedRow => {
+        const exists = this.dataWithSimpleEdit.some(row => row.id === selectedRow.id);
+        if (!exists) {
+          this.dataWithSimpleEdit.push({
+            id: this.generateUniqueId(this.dataWithSimpleEdit),
+            channel: selectedRow.code || selectedRow.channel,
+            option: selectedRow.option || 'Proposed'
           });
-      })
-    );
-  }
-
-  loadDropdownData(): void {
-    this.transactionTypeService.getDeliveryChannel().subscribe((channels: any[]) => {
-      const channelValues = channels.map(channel => channel.code);
-      this.columns[0].inputModeOptions.model = channelValues;
-      this.channels = channels.map(channel => ({
-        label: channel.code,
-        value: channel.identifier
-      }));
-    });
-  }
-
-  ngAfterViewInit() {
-    this.tableRefArray = [this.simpleEditTableRef];
-  }
-
-  ngOnDestroy() {
-    this.subscriptions.unsubscribe();
-  }
-
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
-  };
-
-  public dataWithSimpleEdit: ChannelTable[] = [];
-
-  public tableWithSimpleEdit: BodTableMetadata = {
-    title: 'Channel Configuration',
-    columns: this.columnSimpleEdit,
-    datasource: new MatTableDataSource<ChannelTable>(
-      this.dataWithSimpleEdit
-    ),
-    noRecordsMessage: 'No Channel Configuration Defined'
-  };
-
-  public reset() {
-    this.modeOptionsSimple = { input: true, reset: true };
-    this.updateMsgArr(this.resetMsg);
-  }
-
-  updateMsgArr(resetMsg: NotificationMessage) {
-    // Implementation for updating message array
-  }
-
-  public selectedChannelData: any[] = [];
-
-  generateUniqueId(array: { id: number }[]): number {
-    const existingIds = array.map(item => item.id);
-    let newId = 1;
-    while (existingIds.includes(newId)) {
-      newId++;
+        }
+      });
+      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
     }
-    return newId;
-  }
-
-  public addTableData() {
-    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length < 1 
-      ? this.tableWithSimpleEdit.datasource.data.length 
-      : this.generateUniqueId(this.tableWithSimpleEdit.datasource.data);
-
-    const updatedData = {
-      id: this.lastModifiedIndex,
-    };
-
-    this.simpleEditTableRef.addRow(updatedData);
-
-    if (this.modeOptionsSimple?.input) {
-      // Handle mode options if needed
-    } else {
-      this.singleRowEdit = {
-        modeOptions: { input: true, reset: false },
-        index: this.tableWithSimpleEdit.datasource.data.length - 1
-      };
-      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
-    }
-  }
-
-  setDataForSingleLineEditMode(editIndex: number) {
-    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-      ...obj
-    }));
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: editIndex
-    };
-    this.pageModeSimple = PageMode.NONE;
-  }
-
-  public checkStatus(status: any) {
-    // Implementation for form status checking
-  }
-
-  public onEditTableAction(event) {
-    console.log('CompleteDelta::', event.completeDelta);
-    this.completeDeltaChange.emit(event.completeDelta);
-    
-    if (event.currentChanges.rowData.channel !== undefined) {
-      Object.assign(this.channelObject, { "channel": event.currentChanges.rowData.channel });
-    }
-    if (event.currentChanges.rowData.option !== undefined) {
-      Object.assign(this.channelObject, { "option": event.currentChanges.rowData.option });
-    }
-
-    this.tableDirty.emit(true);
-  }
-
-  public channelObject: any = {};
-  public channelObjectsArray: any[] = [];
-
-  public resetTableForm() {
-    this.channelObject = {};
-    this.channelObjectsArray = [];
-    this.dataWithSimpleEdit = [];
-    this.tableWithSimpleEdit.datasource.data = [];
-  
-    setTimeout(() => {
-      this.simpleEditTableRef?.tableFormGroup.reset();
-      this.formStateService.formState$.next(false);
-    });
-    console.log("resetting channel table");
-  }
-
-  handleRowLevelActions($event: any, index: any) {
-    if ($event === 'edit') {
-      this.setDataForSingleLineEditMode(index);
-    } else if ($event === 'trash') {
-      if (this.modeOptionsSimple?.input) {
-        this.deleteTableData(index);
-      } else {
-        this.subscriptions.add(
-          this.bodConfirmAlertDialogsService
-            .confirm(this.ConfirmData)
-            .subscribe(val => {
-              if (val) {
-                this.deleteTableData(index);
-              }
-            })
-        );
-      }
-    } else if ($event === 'save') {
-      this.singleRowEdit = {
-        modeOptions: { input: false, reset: false },
-        index: 0
-      };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-    
-      const updatedRow = this.channelObject as ChannelTable;
-      const allRows = this.tableWithSimpleEdit.datasource.data as ChannelTable[];
-    
-      console.log('%c📝 DEBUG: channelObject:', 'color: cyan', updatedRow);
-      console.log('%c📋 DEBUG: All Rows Before Update:', 'color: orange', [...allRows]);
-    
-      const existingIndex = allRows.findIndex(row => row.id === updatedRow.id);
-    
-      if (existingIndex !== -1) {
-        console.log(`🔄 Updating row at index ${existingIndex}`);
-        allRows[existingIndex] = { ...updatedRow };
-      } else {
-        console.warn('⚠️ Row not found, pushing new one:', updatedRow);
-        allRows.push(updatedRow);
-      }
-    
-      this.channelObjectsArray = [...allRows];
-    
-      console.log('%c✅ DEBUG: Final channelObjectsArray to emit:', 'color: green', this.channelObjectsArray);
-    
-      this.channelDetails.emit(this.channelObjectsArray);
-    
-      this.updateFormStateAsPristine();
-    }
-  }
-
-  private updateFormStateAsPristine() {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef?.tableFormGroup.markAsPristine();
-        this.formStateService.formState$.next(
-          this.simpleEditTableRef.tableFormGroup.dirty
-        );
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
-  public deleteTableData(index) {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef.deleteRow(index);
-        break;
-      }
-      default:
-        break;
-    }
-  }
+  });
 }
