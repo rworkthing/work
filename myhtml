@@ -1,35 +1,17 @@
-<bod-page-container
-  [pageMode]="pageModeSimple"
-  (pageAction)="onPageAction($event)"
-  [messages]="messages"
-  *ngIf="showEdit"
+<bod-form
+  [formGroup]="addChannelsFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
 >
-  <bod-table
-    [data]="tableWithSimpleEdit"
-    [tableActions]="showActionsForSimple ? actionsForSimple : []"
-    [modeOptions]="modeOptionsSimple"
-    [singleRowEdit]="singleRowEdit"
-    [customColumnTemplates]="[
-      { columnName: 'actions', templateName: editActionsTemplate1 }
-    ]"
-    (inputValidationStatus)="checkStatus($event)"
-    (editTableEvent)="onEditTableAction($event)"
-    (onTableActionClick)="addTableData()"
-    [primaryColumnName]="'id'" 
-    #simpleEditTableRef
-  >
-  <ng-template
-  #editActionsTemplate1
-  let-element="element"
-  let-column="column"
-  let-index="index"
->
-  <bod-table-actions
-    [actions]="rowLevelActionsForBasicEdit"
-    (onActionClick)="handleRowLevelActions($event.icon, index)"
-  >
-  </bod-table-actions>
-</ng-template>
-
-  </bod-table>
-</bod-page-container>
+  <bod-channels-multiselect-table
+    #channelsTable
+    [channelsDataSingleSelect]="data.channelsDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addChannelsFormGroup"
+  ></bod-channels-multiselect-table>
+</bod-form>
