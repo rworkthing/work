@@ -1,176 +1,1487 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  BodTableModule, 
-  BodTableComponent, 
-  BodTableMetadata, 
+import {
+  AbstractControl,
+  FormsModule,
+  NgModel,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import {
+  BodAutoCompleteModule,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodConfirmDialogModel,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormTypes,
   BodPageContainerModule,
+  BodPipeName,
+  BodSearchFieldData,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableDataSource,
+  BodTableMetadata,
+  BodTableModule,
+  Column,
+  ControlGroupModule,
+  DirectivesModule,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MaxLengthStrategy,
+  MessageContainerModule,
   NotificationMessage,
-  RowLeftAction,
-  ColumnType,
-  SelectPageMode 
+  NotificationMessageType,
+  SearchFieldModule,
+  SectionContainerModule
 } from '@bod/common';
-import { CurrencyTableSingle } from '../add-edit-conditions/add-edit-conditions.model';
-import { ConditionDetailService } from '../condition-detail.service';
-import { MatTableDataSource } from '@angular/material/table';
-import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatIconModule } from '@angular/material/icon';
+import { MatRadioModule } from '@angular/material/radio';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import {
+  DemoTableDataService,
+  ProductType,
+  SampleEC
+} from '../../bod-table-demo.service';
+import { HttpClient } from '@angular/common/http';
+import {
+  postingTextaction,
+  PostingTextDelete
+} from '../transaction-type-constant';
+import { TransactionTypeService } from '../transaction-type.service';
+import {
+  ChannelTable,
+  PostingTextTable,
+  TransactionTypeList,
+  TransactionTypeTable
+} from '../transaction-type.model';
+import { MatTableDataSource } from '@angular/material/table';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import { forkJoin } from 'rxjs';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { ChannelsMainTableComponent } from '../channels-main-table/channels-main-table.component';
 
 @Component({
-  selector: 'bod-currency-condition',
+  selector: 'bod-add-edit-transactiontype',
   standalone: true,
   imports: [
+    ChannelsMainTableComponent,
+    MatRadioModule,
     CommonModule,
-    BodTableModule,
-    BodPageContainerModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
     MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
     ReactiveFormsModule,
-    FormsModule
-  ],
-  templateUrl: './currency-condition.component.html',
-  styleUrl: './currency-condition.component.scss'
-})
-export class CurrencyConditionComponent implements OnInit, OnChanges {
-  @Input() currencyDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: CurrencyTableSingle[] = [];
-  @Output() rowSelected = new EventEmitter<CurrencyTableSingle[]>();
-  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
-  
-  @ViewChild('currencyConditionsForCurr', { static: false })
-  currencyTable: BodTableComponent;
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
 
-  ngAfterViewInit(): void {
-    setTimeout(() => this.selectCurrencyRows(),0);
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './add-edit-transactiontype.component.html',
+  styleUrl: './add-edit-transactiontype.component.scss'
+})
+export class AddEditTransactiontypeComponent implements OnInit {
+  @Input() editTransactionTypeRow: TransactionTypeList;
+
+  public inlineAddRowActionClick() {
+    this.postingTextForm.reset();
+    this.externalTransactionForm.reset();
   }
-  // @Input() set selectedRowSingleSelect(rows: CurrencyTableSingle[]) {
-  //   this._selectedRowSingleSelect = rows || [];
-  //   if (this.currencyTable?.selection) {
-  //     this.selectCurrencyRows();
-  //   }
-  // }
-  // get selectedRowSingleSelect(): CurrencyTableSingle[] {
-  //   return this._selectedRowSingleSelect;
-  // }
-  // private _selectedRowSingleSelect: CurrencyTableSingle[] = [];
-  
-  
-  
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
-      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectCurrencyRows(), 0);
+
+  transactionTypeList: any[] = [];
+  transactionListPrdTyp: any[] = [];
+  financialOperatType: any[] = [];
+  reverseCondition: any[] = [];
+  public events: any[] = [];
+  public channels: any[] = [];
+  public languages: any[] = [];
+  paymentTypes = [
+    { label: 'Credit', value: 'credit' },
+    { label: 'Debit', value: 'debit' }
+  ];
+
+  classificationTypes = [
+    { label: 'Extrenal', value: 'external' },
+    { label: 'Internal', value: 'internal' },
+    { label: 'HoldFunds', value: 'HoldFunds' }
+  ];
+  cashsettlementDirections = [
+    { label: '', value: '' },
+    { label: 'Incoming', value: 'incoming' },
+    { label: 'Outgoing', value: 'outgoing' }
+  ];
+
+  types = [
+    { label: 'AccountClosure', value: 'AccountClosure' },
+    { label: 'ACHOutgoing', value: 'ACHOutgoing' },
+    { label: 'FIP', value: 'FIP' },
+    { label: 'FIPInternalSuspense', value: 'FIPInternalSuspense' },
+    { label: 'FIPOfficialCheck', value: 'FIPOfficialCheck' },
+    { label: 'ISO8583', value: 'ISO8583' },
+    { label: 'PNC', value: 'PNC' },
+    { label: 'XAA', value: 'XAA' }
+  ];
+  subtypes = [
+    { label: '0100', value: '0100' },
+    { label: '0221', value: '0221' },
+    { label: 'AcoountAnalysis', value: 'AcoountAnalysis' },
+    { label: 'ACHIncoming', value: 'ACHIncoming' },
+    { label: 'CertificateOfDeposit', value: 'CertificateOfDeposit' },
+    { label: 'Checking', value: 'Checking' },
+    { label: 'ClearingDeposit', value: 'ClearingDeposit' },
+    { label: 'ClearingReturn', value: 'ClearingReturn' },
+    { label: 'ClearingWithdrawal', value: 'ClearingWithdrawal' },
+    { label: 'OfficialCheck', value: 'OfficialCheck' },
+    { label: 'OnUsDeposit', value: 'OnUsDeposit' },
+    { label: 'OnUsWithdrawal', value: 'OnUsWithdrawal' },
+    { label: 'Origination', value: 'Origination' },
+    { label: 'Savings', value: 'Savings' }
+  ];
+  @ViewChild('channelsMainTable') channelsMainTable: ChannelsMainTableComponent;
+
+
+  @Input() retainedCode = '';
+  @Input() retainedTransactionTypeIdentifier = 0;
+  @Input() retainedName = '';
+  @Input() retainedDescription = '';
+  @Input() retainedPaymentType = '';
+  @Input() retainedClassificationType = '';
+  @Input() retainedContra = false;
+  @Input() retainedContraName = '';
+  @Input() retainedContraPaymentType = '';
+  @Input() retainedOveridePaymentType = false;
+  @Input() retainedCashSettle = '';
+  @Input() retainedIsReverse = false;
+  @Input() retainedExternalSysId = '';
+  @Input() retainedBalanceReq = false;
+  @Input() retainedCashTransaction = false;
+  @Input() retainedChargEligible = false;
+  @Input() retainedExternalTransactionValues: TransactionTypeTable[] = [];
+  @Input() retainedPostingTextValues: PostingTextTable[] = [];
+  @Input() retainedSearchFieldInput = '';
+  @Input() retainedSearchFieldInput1 = '';
+  @Input() retainedSearchFieldInput3 = '';
+  @Input() retainedSearchFieldInput4 = '';
+  @Input() retainedChannelValues: ChannelTable[] = [];
+
+
+  public translationKey = TranslationKey;
+  public addNewTransactionTypeFormGroup: UntypedFormGroup;
+
+  public channelData: ChannelTable[] = [];
+public isChannelTableDirty = false;
+
+/**
+ * Handle channel table dirty state
+ */
+public onChannelTableDirty(): void {
+  this.isChannelTableDirty = true;
+  this.addNewTransactionTypeFormGroup.markAsDirty();
+}
+
+/**
+ * Handle channel data changes
+ */
+public handleChannelDataChange(data: any) {
+  this.channelData = data;
+  console.log('Received Channel Data from child:', this.channelData);
+}
+
+/**
+ * Get current channel table data
+ */
+public getCurrentChannelData(): ChannelTable[] {
+  return this.channelsMainTable?.getCurrentTableData() || [];
+}
+
+
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+
+    this.addNewTransactionTypeFormGroup.reset();
+    this.postingTextForm.reset();
+    this.externalTransactionForm.reset();
+    this.dataWithPostingTextvalues = [];
+    this.dataWithExternalTransactionValues = [];
+    this.channelData = [];
+  this.isChannelTableDirty = false;
+  if (this.channelsMainTable) {
+    this.channelsMainTable.resetTableForm();
+  }
+    if (this.postingTexttabledata && this.postingTexttabledata.datasource) {
+      this.postingTexttabledata.datasource.data = [
+        ...this.dataWithPostingTextvalues
+      ];
+    }
+    if (
+      this.externalTransactiontabledata &&
+      this.externalTransactiontabledata.datasource
+    ) {
+      this.externalTransactiontabledata.datasource.data = [
+        ...this.dataWithExternalTransactionValues
+      ];
+    }
+    this.searchFieldInput4 = '';
+    this.searchFieldInput = '';
+    this.searchFieldInput1 = '';
+    this.searchFieldInput3 = '';
+
+    if (isEditMode) {
+      // Restore retained form values
+      this.addNewTransactionTypeFormGroup.patchValue({
+        code: this.retainedCode,
+        transactionTypeIdentifier: this.retainedTransactionTypeIdentifier,
+        name: this.retainedName,
+        description: this.retainedDescription,
+        paymentType: this.retainedPaymentType,
+        classificationType: this.retainedClassificationType,
+        contra: this.retainedContra,
+        overidePaymentType: this.retainedOveridePaymentType,
+        cashSettle: this.retainedCashSettle,
+        isReverse: this.retainedIsReverse,
+        externalSysId: this.retainedExternalSysId,
+        balanceReq: this.retainedBalanceReq,
+        cashTransaction: this.retainedCashTransaction,
+        chargEligible: this.retainedChargEligible
+        // Add other fields as needed
+      });
+
+      // Restore Posting Text Table
+      this.dataWithPostingTextvalues = [...this.retainedPostingTextValues];
+      if (this.postingTexttabledata && this.postingTexttabledata.datasource) {
+        this.postingTexttabledata.datasource.data = [
+          ...this.dataWithPostingTextvalues
+        ];
+      }
+
+      // Restore External Transaction Table
+      this.dataWithExternalTransactionValues = [
+        ...this.retainedExternalTransactionValues
+      ];
+      if (
+        this.externalTransactiontabledata &&
+        this.externalTransactiontabledata.datasource
+      ) {
+        this.externalTransactiontabledata.datasource.data = [
+          ...this.dataWithExternalTransactionValues
+        ];
+      }
+
+    // Restore Channel Table
+      this.channelData = [...this.retainedChannelValues];
+
+
+      // Restore search field inputs
+      setTimeout(() => {
+        this.searchFieldInput = this.retainedSearchFieldInput;
+        this.cdr.detectChanges();
+      }, 0);
+      this.searchFieldInput1 = this.retainedSearchFieldInput1;
+      this.searchFieldInput3 = this.retainedSearchFieldInput3;
+      this.searchFieldInput4 = this.retainedSearchFieldInput4;
+
+      // If you want to keep code and identifier disabled in edit mode:
+      this.addNewTransactionTypeFormGroup.get('code')?.disable();
+      this.addNewTransactionTypeFormGroup
+        .get('transactionTypeIdentifier')
+        ?.disable();
+    } else {
+      // Enable code and identifier in add mode
+      this.addNewTransactionTypeFormGroup.get('code')?.enable();
+      this.addNewTransactionTypeFormGroup
+        .get('transactionTypeIdentifier')
+        ?.enable();
+    }
+
+    this.addNewTransactionTypeFormGroup.markAsPristine();
+    this.addNewTransactionTypeFormGroup.markAsUntouched();
+  }
+
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  constructor(
+    private metadataService: MetadataService,
+    private cdr: ChangeDetectorRef,
+    private fb: UntypedFormBuilder,
+    private http: HttpClient,
+    private bodCommonDialogService: BodCommonDialogService,
+    private transactionTypeService: TransactionTypeService
+  ) {}
+
+  ngOnInit() {
+    this.initForm();
+    this.loadDropdownData();
+    this.loadTableData();
+    // if (this.editTransactionTypeRow) {
+    //   this.transactionTypeForm(this.editTransactionTypeRow);
+    // }
+
+    // Listen for changes to searchFieldInput1 and set contraname to the identifier from tableDataForInputBinding1
+    // This works if [(ngModel)]="searchFieldInput1" is used in the template
+    Object.defineProperty(this, 'searchFieldInput1', {
+      get: () => this._searchFieldInput1,
+      set: (value: string) => {
+        this._searchFieldInput1 = value;
+        const data = (
+          this.tableDataForInputBinding1.datasource as MatTableDataSource<any>
+        ).data;
+        const selected = data.find(item => item.code === value);
+        if (selected) {
+          this.addNewTransactionTypeFormGroup
+            .get('contraname')
+            ?.setValue(selected.identifier);
+        } else {
+          this.addNewTransactionTypeFormGroup.get('contraname')?.setValue('');
+        }
+      },
+      configurable: true,
+      enumerable: true
+    });
+    this._searchFieldInput1 = '';
+
+    // Subscribe to contra toggle changes to load table data dynamically
+    this.addNewTransactionTypeFormGroup
+      .get('contra')
+      ?.valueChanges.subscribe(val => {
+        if (val) {
+          this.transactionTypeService
+            .getInternalProdType()
+            .subscribe((data: any[]) => {
+              (
+                this.tableDataForInputBinding
+                  .datasource as MatTableDataSource<any>
+              ).data = data;
+            });
+        } else {
+          // Optionally clear the table data when contra is turned off
+          (
+            this.tableDataForInputBinding.datasource as MatTableDataSource<any>
+          ).data = [];
+        }
+      });
+
+    Object.defineProperty(this, 'searchFieldInput1', {
+      get: () => this._searchFieldInput1,
+      set: (value: string) => {
+        this._searchFieldInput1 = value;
+        this.searchFieldInput = '';
+        const data = (
+          this.tableDataForInputBinding1.datasource as MatTableDataSource<any>
+        ).data;
+        const selected = data.find(item => item.code === value);
+        if (selected) {
+          this.addNewTransactionTypeFormGroup
+            .get('contraname')
+            ?.setValue(selected.identifier);
+        } else {
+          this.addNewTransactionTypeFormGroup.get('contraname')?.setValue('');
+        }
+      },
+      configurable: true,
+      enumerable: true
+    });
+    this._searchFieldInput1 = '';
+    this._searchFieldInput = '';
+
+    this.addNewTransactionTypeFormGroup
+      .get('contra')
+      ?.valueChanges.subscribe(val => {
+        this.searchFieldInput1 = ''; // Clear the input field and contraname
+
+        if (val) {
+          // Load table data when contra is true
+          this.transactionTypeService
+            .getInternalProdType()
+            .subscribe((data: any[]) => {
+              this.tableDataForInputBinding.datasource = new MatTableDataSource(
+                data
+              );
+            });
+        } // When contra is false, do not clear table data — just clear the input
+      });
+  }
+
+  private _searchFieldInput1 = '';
+  private _searchFieldInput = '';
+
+  private initForm(): void {
+    this.addNewTransactionTypeFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(32)
+      ]),
+      contra: new UntypedFormControl(false),
+      name: new UntypedFormControl('', [
+        Validators.required,
+        this.maxLengthValidator(32)
+      ]),
+      description: new UntypedFormControl('', [this.maxLengthValidator(256)]),
+      paymentType: new UntypedFormControl('', [Validators.required]),
+      classificationType: new UntypedFormControl('', [Validators.required]),
+      contraname: new UntypedFormControl({ value: '', disabled: true }),
+      contrapaymentType: new UntypedFormControl({ value: '', disabled: true }),
+      overidePaymentType: new UntypedFormControl(false),
+      cashSettle: new UntypedFormControl(''),
+      isReverse: new UntypedFormControl(false),
+      externalSysId: new UntypedFormControl(''),
+      balanceReq: new UntypedFormControl(false),
+      cashTransaction: new UntypedFormControl(false),
+      chargEligible: new UntypedFormControl(false),
+      transactionTypeIdentifier: [{ value: '', disabled: true }]
+    });
+
+    this.postingTextForm = this.fb.group(
+      {
+        channel: new UntypedFormControl(''),
+        event: new UntypedFormControl(''),
+        language: new UntypedFormControl('', Validators.required),
+        text: new UntypedFormControl('', [
+          Validators.required,
+          this.maxLengthValidator(200)
+        ])
+      },
+      {
+        validators: [
+          this.duplicatePostingTextValidator(this.dataWithPostingTextvalues)
+        ]
+      }
+    );
+    this.externalTransactionForm = this.fb.group({
+      transactionCode: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(32)
+      ]),
+      transactionDescription: new UntypedFormControl('', [
+        Validators.required,
+        this.maxLengthValidator(256)
+      ]),
+      type: new UntypedFormControl('', Validators.required),
+      subtype: new UntypedFormControl('', Validators.required)
+    });
+  }
+
+  noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
+      return forbidden
+        ? { noSpecialCharacters: { value: control.value } }
+        : null;
+    };
+  }
+  maxLengthValidator(maxLength: number) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (value == null) return null;
+
+      const valueStr = value.toString().replace(/^0+/, ''); // Remove leading zeros
+      return valueStr.length > maxLength ? { maxLength: true } : null;
+    };
+  }
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
     }
   }
-  
-  private selectCurrencyRows(): void {
-    const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
-    const selection = this.currencyTable?.selection;
-    
-    if (!selection || tableData.length === 0) {
+  private duplicatePostingTextValidator(
+    existingValues: PostingTextTable[]
+  ): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const channelCtrl = group.get('channel');
+      const eventCtrl = group.get('event');
+      const languageCtrl = group.get('language');
+      const textCtrl = group.get('text');
+
+      // Only check for duplicates if language and text are filled
+      if (!languageCtrl?.value || !textCtrl?.value) {
+        return null;
+      }
+
+      const selectedChannel =
+        this.channels.find(item => item.value === channelCtrl?.value)?.label ||
+        '';
+      const selectedEvent =
+        this.events.find(item => item.value === eventCtrl?.value)?.label || '';
+      const selectedLanguage = languageCtrl.value || '';
+      const selectedText = textCtrl.value || '';
+
+      const exists = existingValues.some(item => {
+        // Case 1: channel and event are empty, check language+text
+        if (!channelCtrl?.value && !eventCtrl?.value) {
+          return (
+            item.language === selectedLanguage && item.text === selectedText
+          );
+        }
+        // Case 2: event is empty, check channel+language
+        if (channelCtrl?.value && !eventCtrl?.value) {
+          return (
+            item.channel === selectedChannel &&
+            item.language === selectedLanguage
+          );
+        }
+        // Case 3: all present, check channel+event+language
+        if (channelCtrl?.value && eventCtrl?.value) {
+          return (
+            item.channel === selectedChannel &&
+            item.event === selectedEvent &&
+            item.language === selectedLanguage
+          );
+        }
+        return false;
+      });
+
+      return exists ? { postingTextDuplicate: true } : null;
+    };
+  }
+
+  loadDropdownData(): void {
+    this.transactionTypeService.getTransactionEvent().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.events = mappedData;
+    });
+
+    this.transactionTypeService.getDeliveryChannel().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.channels = mappedData;
+    });
+
+    this.transactionTypeService.getLocaleCodes().subscribe((data: string[]) => {
+      const mappedData = data.map((code: string) => ({
+        label: code,
+        value: code
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.languages = [...mappedData]; // Add empty option
+    });
+  }
+
+  private loadTableData(): void {
+    forkJoin({
+      prodTypes: this.transactionTypeService.getInternalProdType(),
+      conditions: this.transactionTypeService.getConditions(),
+      financialOps: this.transactionTypeService.getFinancialOperationType(),
+      transactionTypes: this.transactionTypeService.getTransactionType()
+    }).subscribe(
+      ({ prodTypes, conditions, financialOps, transactionTypes }) => {
+        this.transactionListPrdTyp = prodTypes;
+        this.reverseCondition = conditions;
+        this.financialOperatType = financialOps;
+        this.transactionTypeList = transactionTypes;
+
+        this.tableDataForInputBinding.datasource = new MatTableDataSource(
+          prodTypes
+        );
+        this.tableDataForReverseCondition.datasource = new MatTableDataSource(
+          conditions
+        );
+        this.tableDataForFinancialOprType.datasource = new MatTableDataSource(
+          financialOps
+        );
+        this.tableDataForInputBinding1.datasource = new MatTableDataSource(
+          transactionTypes
+        );
+
+        this.cdr.detectChanges(); // ✅ Now safe to call this
+
+        if (this.editTransactionTypeRow) {
+          this.transactionTypeForm(this.editTransactionTypeRow);
+        }
+      }
+    );
+  }
+
+  private columnsForDemoService: Column[] = [
+    { name: 'code' }
+    // { name: 'identifier', disableSorting: true }
+  ];
+
+  private columnsReverseCondition: Column[] = [
+    { name: 'cdarValue' }
+    // { name: 'identifier', disableSorting: true }
+  ];
+  private columnsForDemoService1: Column[] = [
+    { name: 'code' },
+    { name: 'Name', disableSorting: true },
+    { name: 'Payment Type' }
+    // { name: 'identifier' }
+  ];
+
+  public searchFieldInput = '';
+  public searchFieldInput1 = '';
+  public searchFieldInput3 = '';
+  public searchFieldInput4 = '';
+
+  public searchFieldDataFinanciaOprType: BodSearchFieldData = {
+    label: 'Financial operation type',
+    fieldName: 'code',
+    descFieldName: '',
+    required: true,
+    allowOtherInputs: false,
+    hideFilterCriteria: false,
+    disableInput: true
+  };
+
+  public searchFieldDataForReverseCondition: BodSearchFieldData = {
+    label: 'Reverse condition',
+    fieldName: 'cdarValue',
+    descFieldName: '',
+    required: false,
+    allowOtherInputs: false,
+    hideFilterCriteria: false,
+    disableInput: true
+  };
+
+  public searchFieldDataForInputBinding: BodSearchFieldData = {
+    label: 'Internal product type',
+    fieldName: 'code',
+    descFieldName: '',
+    required: true,
+    allowOtherInputs: false,
+    hideFilterCriteria: true,
+    disableInput: true
+  };
+  public searchFieldDataForInputBinding1: BodSearchFieldData = {
+    label: 'Code',
+    fieldName: 'code',
+    descFieldName: '',
+    required: false,
+    allowOtherInputs: false,
+    hideFilterCriteria: true,
+    disableInput: true
+  };
+  dialogData?: Partial<BodConfirmDialogModel> = {
+    title: '',
+    message: '',
+    confirm: '',
+    dismiss: ''
+  };
+  public confirmationDialog = false;
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public maxLength = 50;
+  public tableDataForInputBinding: BodTableMetadata = {
+    columns: this.columnsForDemoService,
+    datasource: new BodTableDataSource<SampleEC>(
+      new DemoTableDataService(this.http)
+    )
+  };
+
+  public tableDataForInputBinding1: BodTableMetadata = {
+    columns: this.columnsForDemoService1,
+    datasource: new BodTableDataSource<SampleEC>(
+      new DemoTableDataService(this.http)
+    )
+  };
+
+  public tableDataForReverseCondition: BodTableMetadata = {
+    columns: this.columnsReverseCondition,
+    datasource: new BodTableDataSource<SampleEC>(
+      new DemoTableDataService(this.http)
+    )
+  };
+
+  public tableDataForFinancialOprType: BodTableMetadata = {
+    columns: this.columnsForDemoService,
+    datasource: new BodTableDataSource<SampleEC>(
+      new DemoTableDataService(this.http)
+    )
+  };
+
+  public postingTexttableActions: BodTableAction[] = postingTextaction;
+  public onValidTableActionClicked(event: BodTableAction): void {}
+  public postingTextForm: UntypedFormGroup;
+  public externalTransactionForm: UntypedFormGroup;
+  public inlineEditRowActionClick(_event: InlineEditOutput) {}
+  public rowLevelActionsForBasicEdit: BodTableAction[] = PostingTextDelete;
+
+  handleRowLevelActionsforExternalTransaction(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteExtrenalTransaction(index);
+    }
+  }
+  deleteExtrenalTransaction(index: number) {
+    this.dataWithExternalTransactionValues.splice(index, 1);
+    this.externalTransactiontabledata.datasource.data = [
+      ...this.dataWithExternalTransactionValues
+    ];
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
+
+  handleRowLevelActionsforPostingText(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRow(index);
+    }
+  }
+  deleteRow(index: number) {
+    this.dataWithPostingTextvalues.splice(index, 1);
+    this.postingTexttabledata.datasource.data = [
+      ...this.dataWithPostingTextvalues
+    ];
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
+  public dataWithPostingTextvalues: PostingTextTable[] = [];
+  onAddPostingText(formValues: any) {
+    this.errorMessages1 = [];
+    if (this.postingTextForm.invalid) {
+      const errors = this.postingTextForm.errors;
+      if (errors?.['postingTextDuplicate']) {
+        this.handleErrorForDuplicatePtgText({
+          errorCode: 'POSTING_TEXT_DUPLICATE',
+          status: 400
+        });
+      }
+      // Optionally handle other errors (like required fields)
       return;
     }
-  
-    // console.log('Table data (for selection):', tableData);
-    // console.log('Incoming selected rows:', this.selectedRowSingleSelect);
-  
-    // Clear current selection first
-    selection.clear();
-  
-    // Select the new rows
-    tableData.forEach(dataRow => {
-      const match = this.selectedRowSingleSelect.find(
-        sel => sel.identifier === dataRow.identifier
-      );
-      if (match) {
-        selection.select(dataRow);
-      }
-    });
-  }
-  public allowRowSelection = true;
-  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
-  public showEdit = true;
-  public defaultForm: FormGroup;
-  
-  constructor(
-    private conditionDetailService: ConditionDetailService,
-    private fb: FormBuilder
-  ) {}
-  
-  ngOnInit() { 
-    this.defaultForm = this.fb.group({});
-    
-    // Initialize the table if not provided by parent
-    if (!this.currencyDataSingleSelect) {
-      this.initializeTable();
-    }
-  }
-  
-  private initializeTable() {
-    this.currencyDataSingleSelect = {
-      title: 'Currency Condition',
-      columns: [...this.conditionDetailService.currency],
-      rowLeftAction: RowLeftAction.multipleRowSelection,
-      enablePagination: true,
-      datasource: new MatTableDataSource<CurrencyTableSingle>([]),
-      noRecordsMessage: 'No Currency defined'
+
+    const selectedRoleType = this.channels.find(
+      item => item.value === formValues.channel
+    );
+    const postingChannel = selectedRoleType ? selectedRoleType.label : '';
+
+    const selectedPostingEvent = this.events.find(
+      item => item.value === formValues.event
+    );
+    const postingEvent = selectedPostingEvent ? selectedPostingEvent.label : '';
+
+    this.dataWithPostingTextvalues = this.dataWithPostingTextvalues || [];
+    const newValidValue: PostingTextTable = {
+      channel: postingChannel,
+      event: postingEvent,
+      language: formValues.language || '',
+      text: formValues.text || ''
     };
-    
-    // Load data if needed
-    this.loadCurrencyData();
+
+    this.dataWithPostingTextvalues.push(newValidValue);
+    if (this.postingTexttabledata && this.postingTexttabledata.datasource) {
+      this.postingTexttabledata.datasource.data = [
+        ...this.dataWithPostingTextvalues
+      ];
+    }
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+
+    // Re-apply the validator with the updated array
+    this.postingTextForm.setValidators([
+      this.duplicatePostingTextValidator(this.dataWithPostingTextvalues)
+    ]);
+    this.postingTextForm.updateValueAndValidity();
+    this.postingTextForm.reset();
+  }
+  private handleErrorForDuplicatePtgText(error: any) {
+    let errorMsg = '';
+    switch (error.errorCode) {
+      case 'POSTING_TEXT_DUPLICATE':
+        errorMsg =
+          'Posting Text already exists for the selected transaction event type, delivery system and language combination.';
+        break;
+      default:
+        errorMsg = 'Unknown error occurred.';
+    }
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages1.push(this.message);
+    setTimeout(() => {
+      this.errorMessages1 = this.errorMessages1.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+  public dataWithExternalTransactionValues: TransactionTypeTable[] = [];
+  public onAddexternalTransaction(formValues: any) {
+    if (this.externalTransactionForm.invalid) {
+      // alert('Please fill all the required fields.');
+      return;
+    }
+    this.dataWithPostingTextvalues = this.dataWithPostingTextvalues || [];
+    const newValidValue: TransactionTypeTable = {
+      code: formValues.transactionCode,
+      description: formValues.transactionDescription,
+      type: formValues.type || '',
+      subtype: formValues.subtype || ''
+    };
+
+    this.dataWithExternalTransactionValues.push(newValidValue);
+    if (
+      this.externalTransactiontabledata &&
+      this.externalTransactiontabledata.datasource
+    ) {
+      this.externalTransactiontabledata.datasource.data = [
+        ...this.dataWithExternalTransactionValues
+      ];
+    }
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
+  public postingTexttabledata: BodTableMetadata = {
+    title: 'Posting Text(Mandatory)',
+    columns: [...this.transactionTypeService.postingTextColumn],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<PostingTextTable>(
+      this.dataWithPostingTextvalues
+    ),
+    noRecordsMessage: 'No Posting Text Defined'
+  };
+
+  public externalTransactiontabledata: BodTableMetadata = {
+    title: 'External Transaction',
+    columns: [...this.transactionTypeService.externalTransactionColumn],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<TransactionTypeTable>(
+      this.dataWithExternalTransactionValues
+    ),
+    noRecordsMessage: 'No External Transaction Defined'
+  };
+  identifierSearch(field: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.metadataService.idfrSearch().subscribe(
+        (response: string) => {
+          if (field === 'transactionTypeIdentifier') {
+            this.addNewTransactionTypeFormGroup.controls[
+              'transactionTypeIdentifier'
+            ].setValue(response);
+            this.addNewTransactionTypeFormGroup.controls[
+              'transactionTypeIdentifier'
+            ].disable();
+          }
+          resolve();
+        },
+        error => {
+          console.error('Error:', error);
+          reject(error);
+        }
+      );
+    });
   }
 
-  public resetSelection() {
-    if (this.currencyTable?.selection) {
-      this.currencyTable.selection.clear();
-    }
-    this.selectedRowSingleSelect = [];
-  }
-  
-  private loadCurrencyData() {
-    this.conditionDetailService.getCurrency().subscribe((response: any[]) => {
-      const currencyData = response.map((item: any, index: number) => ({
-        index: index,
-        identifier: item.identifier,
-        code: item.code,
-        currencyISO4217Val: item.currencyISO4217Val,
-        default: false // Add default property initialized to false
-      }));
-      
-      this.currencyDataSingleSelect.datasource.data = currencyData;
-    });
-  }
-  
-  public rowSelectionSingleSelect(element: CurrencyTableSingle[]) {
-    this.selectedRowSingleSelect = element;
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-  }
-  
-  public onDefaultToggleChange(event: any, rowIndex: number) {
-    // Get current data and the row being toggled
-    const data = [...this.currencyDataSingleSelect.datasource.data];
-    const row = data.find(r => r.index === rowIndex);
-    
-    if (!row) return;
-    
-    // Update default status
-    if (event.checked) {
-      // If this row is now default, unmark all others
-      data.forEach(item => {
-        item.default = item.index === rowIndex;
+  isAdd = true;
+  isEdit = false;
+
+  onAddNewTransactionType(isAdd: boolean) {
+    if (isAdd) {
+      this.identifierSearch('transactionTypeIdentifier').then(() => {
+        this.submitForm(isAdd);
       });
     } else {
-      // Just update this row's default status
-      row.default = false;
+      this.submitForm(isAdd);
     }
-    
-    // Update the data source
-    this.currencyDataSingleSelect.datasource.data = data;
-    
-    // Emit the change
-    this.defaultChanged.emit({
-      rowIndex: rowIndex,
-      isDefault: event.checked
-    });
   }
-  
+
+  @ViewChild('searchFieldInputModel') searchFieldInputModel: NgModel;
+
+  submitForm(isAdd: boolean) {
+    this.errorMessages = [];
+    this.errorMessages1 = [];
+
+    const requiredFields = [
+      'code',
+      'name',
+      'paymentType',
+      'classificationType'
+    ];
+
+    let hasError = false;
+
+    requiredFields.forEach(field => {
+      const control = this.addNewTransactionTypeFormGroup.get(field);
+      if (
+        control?.invalid ||
+        control?.value === '' ||
+        control?.value === null ||
+        control?.value === undefined
+      ) {
+        control?.markAsTouched();
+        hasError = true;
+      }
+    });
+
+    if (hasError) {
+      return; // Stop submission if any required field is invalid
+    }
+
+    if (!this.searchFieldInput4) {
+      this.searchFieldInputModel.control.markAsTouched();
+      hasError = true;
+    }
+
+    if (this.addNewTransactionTypeFormGroup.get('contra')?.value) {
+      if (!this.searchFieldInput) {
+        this.searchFieldInputModel?.control?.markAsTouched();
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      return;
+    }
+
+    // Get channel data
+  const channelData = this.getCurrentChannelData();
+
+    const selectedCode = this.searchFieldInput1; // selected code from search field
+    const selectedItem = this.transactionTypeList.find(
+      item => item.code === selectedCode
+    );
+    const selectedIdentifier = selectedItem?.identifier || null;
+
+    const selectedCodeInternalPrdTyp = this.searchFieldInput; // selected code from search field
+    const selectedItem1 = this.transactionListPrdTyp.find(
+      item => item.code === selectedCodeInternalPrdTyp
+    );
+    const selectedIdentifierForPrdtTyp = selectedItem1?.identifier || null;
+
+    //searchFieldInput3
+
+    const selectedCdarValue = this.searchFieldInput3; // selected code from search field
+    const selectedItem2 = this.reverseCondition.find(
+      item => item.cdarValue === selectedCdarValue
+    );
+    const selectedIdentifierforCondition = selectedItem2?.identifier || null;
+
+    //searchFieldInput4
+
+    const selectedCodeFot = this.searchFieldInput4; // selected code from search field
+    const selectedItem3 = this.financialOperatType.find(
+      item => item.code === selectedCodeFot
+    );
+    const selectedIdentifierforFOT = selectedItem3?.identifier || null;
+
+    const formValue = this.addNewTransactionTypeFormGroup.getRawValue();
+    this.addNewTransactionTypeFormGroup.controls[
+      'transactionTypeIdentifier'
+    ].enable();
+
+    const postingRepeatedTextList =
+      this.dataWithPostingTextvalues?.map(item => ({
+        identifier: 0,
+        postingStdIdentifier: formValue.transactionTypeIdentifier,
+        eventTypeIdentifier:
+          this.events.find(e => e.label === item.event)?.value || '',
+        deliveryChannel:
+          this.channels.find(c => c.label === item.channel)?.value || ''
+      })) || [];
+    const postingTextLanguageRltnpList =
+      this.dataWithPostingTextvalues?.map(item => ({
+        identifier: 0,
+        isoCode: item.language,
+        text: item.text
+      })) || [];
+
+    const externalTransactionTypePostingSTDRltnpDpList =
+      this.dataWithExternalTransactionValues?.map(item => ({
+        code: item.code,
+        type: item.type,
+        subType: item.subtype,
+        postingStdIdentifier: formValue.transactionTypeIdentifier,
+        description: item.description
+      })) || [];
+
+      // Create channel configuration list
+  const channelConfigurationList = channelData?.map(item => ({
+    channelIdentifier: this.channels.find(c => c.label === item.code)?.value || '',
+    channelCode: item.code,
+    optionType: item.option,
+    transactionTypeIdentifier: formValue.transactionTypeIdentifier
+  })) || [];
+
+    const multiLingualCodeTranslationList = [
+      {
+        isoCode: 'en',
+        attributeType: 'transaction type code',
+        neutralCode: 'TXN001',
+        translationText: 'Transaction Type Description in English'
+      }
+    ];
+
+    if (
+      (!postingRepeatedTextList || postingRepeatedTextList.length === 0) &&
+      (!postingTextLanguageRltnpList ||
+        postingTextLanguageRltnpList.length === 0)
+    ) {
+      this.handleError1({
+        errorCode: 'POSTING_TEXT_REQUIRED',
+        status: 400
+      });
+      return;
+    }
+
+    const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+
+    const transactionTypeData = {
+      metadataType: 'TransactionType',
+      postingStdList: [
+        {
+          postingStd: {
+            identifier: formValue.transactionTypeIdentifier,
+            code: formValue.code,
+            name: formValue.name,
+ 
+            ...(formValue.description && {
+              description: formValue.description
+            }),
+ 
+            paymentType: formValue.paymentType,
+            overridePayment: formValue.overidePaymentType ? 'Y' : 'N',
+            ...(formValue.cashSettle && {
+              settlementDirection: formValue.cashSettle
+            }),
+ 
+            contra: formValue.contra ? 0 : selectedIdentifier,
+            contraTemplateIdentifier: formValue.contra
+              ? selectedIdentifierForPrdtTyp
+              : null,
+ 
+            reversibleAllowed: formValue.isReverse ? 'Y' : 'N',
+            reverseCondition: selectedIdentifierforCondition,
+            classificationType: formValue.classificationType,
+ 
+            ...(formValue.externalSysId && {
+              externalSystemCode: formValue.externalSysId
+            }),
+ 
+            invSystemBalance: formValue.balanceReq ? 'Y' : 'N',
+            chargeEligible: formValue.chargEligible ? 'Y' : 'N',
+            cashTransactionAllowed: formValue.cashTransaction ? 'Y' : 'N',
+ 
+            financialOperationType: selectedIdentifierforFOT,
+            multiLingualCodeTranslationList: multiLingualCodeTranslationList
+          },
+          postingRepeatedTextList,
+          postingTextLanguageRltnpList,
+          // postingCategoryList: formValue.postingCategoryList || [],
+
+          postingCategoryList: [
+            {
+              identifier: 0,
+              code: formValue.code,
+              name: formValue.name
+            }
+          ],
+
+          productTypePostingSTDRltnpList: [
+            {
+              productTypeIdentifier: 0,
+              postingStdIdentifier: formValue.transactionTypeIdentifier,
+              postingStdCode: 'string',
+              optionalityType: 'string'
+            }
+          ],
+          productTypePostingSTDDSRltnpList: [
+            {
+              productTypeIdentifier: 0,
+              postingStdIdentifier: formValue.transactionTypeIdentifier,
+              resourceItemIdentifier: 0,
+              optionalityType: 'string'
+            }
+          ],
+          productTypePostingSTDCategoryRltnpList: [
+            {
+              productTypeIdentifier: 0,
+              postingStdIdentifier: formValue.transactionTypeIdentifier,
+              postingCategoryIdentifier: 1
+            }
+          ],
+          productTypePostingSTDPAMRltnpRltnp: {
+            productTypeIdentifier: 0,
+            postingStdIdentifier: formValue.transactionTypeIdentifier,
+            postingApplicationMethodIdentifier: 0
+          },
+          productTypePostingSTDRoletypeRltnpList: [
+            {
+              productTypeIdentifier: 0,
+              postingStdIdentifier: formValue.transactionTypeIdentifier,
+              roleTypeIdentifier: 0
+            }
+          ],
+          productTypeTransEventTypePostingSTDRltnp: {
+            productTypeIdentifier: 0,
+            transactionEventTypeIdentifier: 0,
+            postingStdIdentifier: formValue.transactionTypeIdentifier
+          },
+          externalTransactionTypePostingSTDRltnpDpList
+        }
+      ],
+
+      productTypeList: [
+        {
+          identifier: 1110101,
+          code: 'Checking'
+        }
+      ]
+    };
+
+    const serviceCall = isAdd
+      ? this.transactionTypeService.saveTransactionType(transactionTypeData)
+      : this.transactionTypeService.updateTransactiionType(transactionTypeData);
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, transactionTypeData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+
+    this.addNewTransactionTypeFormGroup.controls[
+      'transactionTypeIdentifier'
+    ].disable();
+  }
+
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+
+  private successResponse(resp, transactionTypeData, isAdd) {
+    const transactionTypeCode =
+      transactionTypeData.postingStdList[0].postingStd.code;
+    const SuccessMsg = isAdd
+      ? `${transactionTypeCode} Added successfully`
+      : `${transactionTypeCode} Updated successfully`;
+    this.apiResponse.emit({ ...transactionTypeData, SuccessMsg });
+  }
+
+  public errorMessages: NotificationMessage[] = [];
+  public errorMessages1: NotificationMessage[] = [];
+
+  public message: NotificationMessage | undefined;
+  private handleError(error: any, isAdd: boolean) {
+    const errorMsg =
+      error?.error?.errorDescription || 'An unexpected error occurred.';
+
+    this.message = {
+      code: error?.error?.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+
+    if (errorMsg) {
+      this.errorMessages.push(this.message);
+    }
+
+    setTimeout(() => {
+      this.errorMessages = this.errorMessages.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+
+  private handleError1(error: any) {
+    let errorMsg = '';
+    switch (error.errorCode) {
+      case 'POSTING_TEXT_REQUIRED':
+        errorMsg = 'Posting text is required.';
+        break;
+
+      default:
+        errorMsg = 'Unknown error occurred.';
+    }
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages.push(this.message);
+    setTimeout(() => {
+      this.errorMessages = this.errorMessages.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+
+  transactionTypeForm(element: TransactionTypeList) {
+    this.isAdd = false;
+    this.retainedTransactionTypeIdentifier = element.identifier ?? 0;
+    this.retainedCode = element.code || '';
+    this.retainedName = element.name || '';
+    this.retainedDescription = element.description || '';
+    this.retainedPaymentType = element.paymentType || '';
+    this.retainedClassificationType = element.classificationType || '';
+
+    //contra
+
+    function determineRetainedContra(element) {
+      if (element.contraTemplateIdentifier) return true;
+      if (!element.contra && !element.contraTemplateIdentifier) return false;
+      if (element.contra) return false;
+      return true;
+    }
+    this.retainedContra = determineRetainedContra(element);
+
+    this.retainedOveridePaymentType =
+      element.overridePayment === 'Y' ? true : false;
+    this.retainedCashSettle = element.settlementDirection || '';
+    this.retainedIsReverse = element.reversibleAllowed === 'Y' ? true : false;
+
+    this.retainedExternalSysId = element.externalSystemCode || '';
+    this.retainedBalanceReq = element.invSystemBalance === 'Y' ? true : false;
+    this.retainedCashTransaction =
+      element.cashTransactionAllowed === 'Y' ? true : false;
+    this.retainedChargEligible = element.chargeEligible === 'Y' ? true : false;
+    //Posting text
+    this.retainedPostingTextValues = (
+      element.postingRepeatedTextList || []
+    ).map((repeatedText, i) => {
+      const languageEntry = (element.postingTextLanguageRltnpList || [])[i];
+      return {
+        channel:
+          this.channels.find(c => c.value === repeatedText.deliveryChannel)
+            ?.label || repeatedText.deliveryChannel,
+        event:
+          this.events.find(e => e.value === repeatedText.eventTypeIdentifier)
+            ?.label || repeatedText.eventTypeIdentifier,
+        language: languageEntry?.isoCode || '',
+        text: languageEntry?.text || ''
+      } as PostingTextTable;
+    });
+    // External Transaction
+    this.retainedExternalTransactionValues = (
+      element.externalTransactionTypePostingSTDRltnpDpList || []
+    ).map(transaction => ({
+      code: transaction.code,
+      description: transaction.description,
+      type: transaction.type,
+      subtype: transaction.subType
+    })) as TransactionTypeTable[];
+    //searchFieldInput1
+    if (element.contra) {
+      const contraTypeItem = this.transactionTypeList.find(
+        item => item.identifier === element.contra
+      );
+      this.searchFieldInput1 = contraTypeItem ? contraTypeItem.code : '';
+      this.retainedSearchFieldInput1 = this.searchFieldInput1;
+    } else {
+      const contraItem = this.transactionListPrdTyp.find(
+        item => item.identifier === element.contraTemplateIdentifier
+      );
+      this.searchFieldInput = contraItem ? contraItem.code : '';
+      this.retainedSearchFieldInput = this.searchFieldInput;
+    }
+    //searchFieldInput3
+    const reverseConditionItem = this.reverseCondition.find(
+      item => item.identifier === element.reverseCondition
+    );
+    this.searchFieldInput3 = reverseConditionItem
+      ? reverseConditionItem.cdarValue
+      : '';
+    this.retainedSearchFieldInput3 = this.searchFieldInput3;
+
+    //searchFieldInput4
+
+    const financialOprTypeItem1 = this.financialOperatType.find(
+      item => item.identifier === element.financialOperationType
+    );
+    this.searchFieldInput4 = financialOprTypeItem1
+      ? financialOprTypeItem1.code
+      : '';
+    this.retainedSearchFieldInput4 = this.searchFieldInput4;
+
+    this.addNewTransactionTypeFormGroup.patchValue({
+      code: element.code,
+      transactionTypeIdentifier: element.identifier,
+
+      contra: element.contraTemplateIdentifier
+        ? true
+        : !element.contra && !element.contraTemplateIdentifier
+        ? false
+        : element.contra
+        ? false
+        : true,
+
+      name: element.name,
+      description: element.description,
+      paymentType: element.paymentType,
+      classificationType: element.classificationType,
+      // contraname: element.contra ? false : true,
+      // contrapaymentType: element.contrapaymentType,
+      overidePaymentType: element.overridePayment ? true : false,
+      cashSettle: element.settlementDirection,
+      isReverse: element.reversibleAllowed ? true : false,
+      externalSysId: element.externalSystemCode,
+      balanceReq: element.invSystemBalance ? true : false,
+      cashTransaction: element.cashTransactionAllowed ? true : false,
+      chargEligible: element.chargeEligible ? true : false
+      // ...add other fields as needed...
+    });
+
+    // Set the code to the search field input based on the identifier
+
+    if (element.contra) {
+      const contraTypeItem = this.transactionTypeList.find(
+        item => item.identifier === element.contra
+      );
+      this.searchFieldInput1 = contraTypeItem ? contraTypeItem.code : '';
+    } else {
+      const contraItem = this.transactionListPrdTyp.find(
+        item => item.identifier === element.contraTemplateIdentifier
+      );
+      this.searchFieldInput = contraItem ? contraItem.code : '';
+    }
+
+    // Set searchFieldInput3
+    const reverseConditionItem2 = this.reverseCondition.find(
+      item => item.identifier === element.reverseCondition
+    );
+
+    this.searchFieldInput3 = reverseConditionItem2
+      ? reverseConditionItem2.cdarValue
+      : '';
+    this.retainedSearchFieldInput3 = this.searchFieldInput3;
+
+    // Set searchFieldInput4
+    const financialOprTypeItem = this.financialOperatType.find(
+      item => item.identifier === element.financialOperationType
+    );
+    this.searchFieldInput4 = financialOprTypeItem
+      ? financialOprTypeItem.code
+      : '';
+    console.log('Financial Operation Type', this.searchFieldInput4);
+
+    //PostingText
+
+    this.postingTexttabledata.datasource.data = [];
+    this.dataWithPostingTextvalues = [];
+
+    const repeatedTextList = element.postingRepeatedTextList || [];
+    const languageEntryList = element.postingTextLanguageRltnpList || [];
+
+    // Assuming each repeatedText corresponds to a languageEntry by index
+    for (let i = 0; i < repeatedTextList.length; i++) {
+      const repeatedText = repeatedTextList[i];
+      const languageEntry = languageEntryList[i];
+
+      if (repeatedText && languageEntry) {
+        const channelObj = this.channels.find(
+          c => c.value === repeatedText.deliveryChannel
+        );
+        const channelCode = channelObj
+          ? channelObj.label
+          : repeatedText.deliveryChannel;
+
+        const eventObj = this.events.find(
+          e => e.value === repeatedText.eventTypeIdentifier
+        );
+        const eventCode = eventObj
+          ? eventObj.label
+          : repeatedText.eventTypeIdentifier;
+
+        const obj: PostingTextTable = {
+          channel: channelCode,
+          event: eventCode,
+          language: languageEntry.isoCode,
+          text: languageEntry.text
+        };
+
+        this.dataWithPostingTextvalues.push(obj);
+      }
+    }
+
+    // Refresh table
+    this.postingTexttabledata.datasource.data = [
+      ...this.dataWithPostingTextvalues
+    ];
+
+    // External Transaction (assuming it's a list now)
+    this.dataWithExternalTransactionValues = [];
+    const externalTransactionList =
+      element.externalTransactionTypePostingSTDRltnpDpList || [];
+
+    for (const transaction of externalTransactionList) {
+      const obj: TransactionTypeTable = {
+        code: transaction.code,
+        description: transaction.description,
+        type: transaction.type,
+        subtype: transaction.subType
+      };
+
+      this.dataWithExternalTransactionValues.push(obj);
+    }
+
+    // Refresh external transaction table
+    this.externalTransactiontabledata.datasource.data = [
+      ...this.dataWithExternalTransactionValues
+    ];
+    this.isEdit = true;
+  }
+
+  onInternalProductTypeChange(value: string) {
+    this.searchFieldInput = value;
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
+
+  onReverseConditionChange(value: string) {
+    this.searchFieldInput3 = value;
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
+
+  onFinancialOperationTypeChange(value: string) {
+    this.searchFieldInput4 = value;
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
+
+  onContraCodeChange(value: string) {
+    this.searchFieldInput1 = value;
+    this.addNewTransactionTypeFormGroup.markAsDirty();
+  }
 }
