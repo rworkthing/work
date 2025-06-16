@@ -1,8 +1,8 @@
+<form [formGroup]="formGroup">
 <bod-table
   #channelsMultiselectTable
-  [data]="currencyDataSingleSelect"
-  [modeOptions]="{ input: true }"
-  (onRowSelect)="rowSelectionSingleSelect($event)"
+  [data]="channelsDataSingleSelect"
+  (onRowSelect)="rowSelection($event)"
   [rowSelectionStrategy]="rowSelectionStrategy"
   [allowSelectAll]="allowRowSelection"
   [alignContent]="'top'"
@@ -11,21 +11,22 @@
     { columnName: 'option', templateName: optionTemplate }
 
   ]"
+  [modeOptions]="{selection: true }"
 >
-
-
   <ng-template
     #optionTemplate
     let-element="element"
     let-column="column"
     let-index="index"
   >
-    <mat-form-field appearance="outline" style="width: 120px;">
-      <mat-select
-        [(ngModel)]="element.option"
-        (ngModelChange)="onOptionChange(element, $event)"
-        [disableRipple]="false"
-      >
+  <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+    <mat-select
+      [formControlName]="'option_' + (element.id ?? index)"
+      (selectionChange)="onOptionChange(element, $event.value)"
+      panelClass="fis-style"
+      name="option"
+      (click)="$event.stopPropagation()"
+    >
         <mat-option *ngFor="let option of options" [value]="option.value">
           {{ option.label }}
         </mat-option>
@@ -34,3 +35,4 @@
     </mat-form-field>
   </ng-template>
 </bod-table>
+</form>
