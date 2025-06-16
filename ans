@@ -1,72 +1,201 @@
+// Add these interfaces to your existing transaction-type.model.ts file
+
+/**
+ * Interface for Counter Table data
+ */
+export interface CounterTable {
+  id: number;
+  code: string;
+  classificationType: string;
+  operatorType: string;
+}
+
+/**
+ * Interface for Counter Configuration in API payload
+ */
+export interface CounterConfiguration {
+  counterIdentifier: string;
+  counterCode: string;
+  classificationType: string;
+  operatorType: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Counter Dropdown Options
+ */
+export interface CounterOption {
+  label: string;
+  value: string;
+}
+
+export interface Counters {
+  id: number;
+  code: string;
+  classificationType: string;
+  operatorType: string;
+}
+
+
+
+
+
+
+
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BodPageContainerModule, BodTableComponent, BodTableMetadata, BodTableModule, RowLeftAction, SelectPageMode } from '@bod/common';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatSelectModule } from '@angular/material/select'; // Add this import
-import { MatFormFieldModule } from '@angular/material/form-field'; // Add this import
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
-import { CurrencyTableSingle } from '../../../conditions/add-edit-conditions/add-edit-conditions.model';
-import { ConditionDetailService } from '../../../conditions/condition-detail.service';
-import { MatTableDataSource } from '@angular/material/table';
 import { TransactionTypeService } from '../../transaction-type.service';
-import { Channels } from '../../transaction-type.model';
+import { Counters } from '../../transaction-type.model';
+import {
+  BOD_DATE_RANGE,
+  BodAutoCompleteModule,
+  BodCommonDialogModel,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableFilterType,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule,
+  SelectPageMode
+} from '@bod/common';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
-  selector: 'bod-channels-multiselect-table',
+  selector: 'bod-counters-multiselect-table',
   standalone: true,
   imports: [
     CommonModule,
     BodTableModule,
     BodPageContainerModule,
     MatSlideToggleModule,
-    MatSelectModule, // Add this
-    MatFormFieldModule, // Add this
     ReactiveFormsModule,
-    FormsModule
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
   ],
-  templateUrl: './channels-multiselect-table.component.html',
-  styleUrl: './channels-multiselect-table.component.scss'
+  templateUrl: './counters-multiselect-table.component.html',
+  styleUrl: './counters-multiselect-table.component.scss'
 })
-export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
+export class CountersMultiselectTableComponent implements OnInit, OnChanges {
 
-  @Input() currencyDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Channels[] = [];
-  @Output() rowSelected = new EventEmitter<Channels[]>();
-  @Output() optionChanged = new EventEmitter<{ element: any, newValue: string }>(); // Add this output
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
 
-  @ViewChild('channelsMultiselectTable', { static: false }) // Update ref name to match template
-  currencyTable: BodTableComponent;
+  @Input() countersDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Counters[] = [];
+  @Output() rowSelected = new EventEmitter<Counters[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  @Output() dirtyChange = new EventEmitter<boolean>();
+  @Input() formGroup: UntypedFormGroup;
 
-  public addChannlesFormGroup: UntypedFormGroup | undefined;
+  @ViewChild('countersMultiselectTable', { static: false })
+  countersTable: BodTableComponent;
 
-  options = [
-    { label: 'Proposed', value: 'Proposed' },
-    { label: 'Mandatory', value: 'Mandatory' }
+  private isDirty = false;
+
+  classificationTypeOptions = [
+    { label: 'Internal', value: 'Internal' },
+    { label: 'External', value: 'External' },
+    { label: 'Mixed', value: 'Mixed' }
+  ];
+
+  operatorTypeOptions = [
+    { label: 'Locked', value: 'Locked' },
+    { label: 'Mandatory', value: 'Mandatory' },
+    { label: 'Optional', value: 'Optional' },
+    { label: 'Proposed', value: 'Proposed' }
   ];
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.selectCurrencyRows(), 0);
+    setTimeout(() => this.selectCountersRows(), 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
       console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectCurrencyRows(), 0);
+      setTimeout(() => this.selectCountersRows(), 0);
     }
   }
 
-  private selectCurrencyRows(): void {
-    const tableData = this.currencyDataSingleSelect?.datasource?.data || [];
-    const selection = this.currencyTable?.selection;
+  private selectCountersRows(): void {
+    const tableData = this.countersDataSingleSelect?.datasource?.data || [];
+    const selection = this.countersTable?.selection;
 
     if (!selection || tableData.length === 0) {
       return;
     }
 
-    // Clear current selection first
     selection.clear();
 
-    // Select the new rows
     tableData.forEach(dataRow => {
       const match = this.selectedRowSingleSelect.find(
         sel => sel.id === dataRow.id
@@ -85,148 +214,288 @@ export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
   constructor(
     private fb: FormBuilder,
     private transactionTypeService: TransactionTypeService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.defaultForm = this.fb.group({});
-    
-    // Initialize option property for all table data if not present
-    if (this.currencyDataSingleSelect?.datasource?.data) {
-      this.currencyDataSingleSelect.datasource.data.forEach(item => {
-        if (!item.option) {
-          item.option = 'Proposed'; // Set default value
-        }
-      });
-    }
   }
 
-  // Add this method to handle option changes
-  public onOptionChange(element: any, newValue: string): void {
-    console.log('Option changed for element:', element, 'New value:', newValue);
-    
-    // Update the element's option value
-    element.option = newValue;
-    
-    // Update the datasource to reflect the change
-    const data = [...this.currencyDataSingleSelect.datasource.data];
-    const index = data.findIndex(item => item.id === element.id);
-    if (index !== -1) {
-      data[index].option = newValue;
-      this.currencyDataSingleSelect.datasource.data = data;
-    }
-    
-    // Emit the change event
-    this.optionChanged.emit({ element, newValue });
+  public onClassificationTypeChange(element: any, value: string) {
+    element.classificationType = value;
+    this.setDirty(true);
+  }
+
+  public onOperatorTypeChange(element: any, value: string) {
+    element.operatorType = value;
+    this.setDirty(true);
+  }
+
+  private loadCounterData() {
+    this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
+      this.countersDataSingleSelect.datasource.data = counters.map((item: any, index: number) => ({
+        id: index + 1,
+        code: item.code,
+        classificationType: '',
+        operatorType: '',
+        default: false
+      }));
+    });
   }
 
   public resetSelection() {
-    if (this.currencyTable?.selection) {
-      this.currencyTable.selection.clear();
+    if (this.countersTable?.selection) {
+      this.countersTable.selection.clear();
     }
     this.selectedRowSingleSelect = [];
+    this.setDirty(false);
   }
 
-  public rowSelectionSingleSelect(element: Channels[]) {
+  public rowSelectionSingleSelect(element: Counters[]) {
+    console.log('rowSelectionSingleSelect called with:', element);
     this.selectedRowSingleSelect = element;
     this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+  }
+
+  public rowSelection(element: Counters[]) {
+    console.log('rowSelection called with:', element);
+    if (element.length !== 0) {
+      this.selectedRowSingleSelect = element;
+    } else {
+      this.selectedRowSingleSelect = [];
+    }
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    console.log('Counters selectedRowSingleSelect:', this.selectedRowSingleSelect);
+  }
+
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    const data = [...this.countersDataSingleSelect.datasource.data];
+    const row = data.find(r => r.index === rowIndex);
+
+    if (!row) return;
+
+    if (event.checked) {
+      data.forEach(item => {
+        item.default = item.index === rowIndex;
+      });
+    } else {
+      row.default = false;
+    }
+
+    this.countersDataSingleSelect.datasource.data = data;
+
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
+    });
+  }
+
+  private setDirty(dirty: boolean) {
+    this.isDirty = dirty;
+    this.dirtyChange.emit(this.isDirty);
   }
 }
 
 
 
 
-
-
+<form [formGroup]="formGroup">
 <bod-table
-  #channelsMultiselectTable
-  [data]="currencyDataSingleSelect"
-  [modeOptions]="{ input: true }"
-  (onRowSelect)="rowSelectionSingleSelect($event)"
+  #countersMultiselectTable
+  [data]="countersDataSingleSelect"
+  (onRowSelect)="rowSelection($event)"
   [rowSelectionStrategy]="rowSelectionStrategy"
   [allowSelectAll]="allowRowSelection"
   [alignContent]="'top'"
   [customColumnTemplates]="[
-    { columnName: 'option', templateName: optionTemplate }
+    { columnName: 'classificationType', templateName: classificationTypeTemplate },
+    { columnName: 'operatorType', templateName: operatorTypeTemplate }
   ]"
+  [modeOptions]="{selection: true }"
 >
-
-<ng-template
-  #optionTemplate
-  let-element="element"
-  let-column="column"
-  let-index="index"
->
-  <mat-form-field appearance="outline" style="width: 120px;">
+  <ng-template
+    #classificationTypeTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+  <mat-form-field appearance="outline" fisStyle style="width: 140px;">
     <mat-select
-      [value]="element.option || 'Proposed'"
-      (selectionChange)="onOptionChange(element, $event.value)"
-      [disableRipple]="false"
+      [formControlName]="'classificationType_' + (element.id ?? index)"
+      (selectionChange)="onClassificationTypeChange(element, $event.value)"
+      panelClass="fis-style"
+      name="classificationType"
+      (click)="$event.stopPropagation()"
     >
-      <mat-option *ngFor="let option of options" [value]="option.value">
-        {{ option.label }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-</ng-template>
+        <mat-option *ngFor="let option of classificationTypeOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-template>
 
+  <ng-template
+    #operatorTypeTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+  <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+    <mat-select
+      [formControlName]="'operatorType_' + (element.id ?? index)"
+      (selectionChange)="onOperatorTypeChange(element, $event.value)"
+      panelClass="fis-style"
+      name="operatorType"
+      (click)="$event.stopPropagation()"
+    >
+        <mat-option *ngFor="let option of operatorTypeOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-template>
 </bod-table>
+</form>
 
 
 
 
 
 
-import { Component, Inject } from '@angular/core';
+
+
+
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ChannelsMultiselectTableComponent } from './channels-multiselect-table/channels-multiselect-table.component';
+import { CountersMultiselectTableComponent } from '../counters-multiselect-table/counters-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Counters, CounterTable } from '../../transaction-type.model';
 
 @Component({
-  selector: 'bod-channels-multiselect-dialog',
+  selector: 'bod-counters-multiselect-dialog',
   standalone: true,
-  imports: [ChannelsMultiselectTableComponent],
-  template: `
-    <div mat-dialog-content>
-      <h2 mat-dialog-title>Select Channels</h2>
-      <bod-channels-multiselect-table
-        [currencyDataSingleSelect]="data.currencyDataSingleSelect"
-        [selectedRowSingleSelect]="data.selectedRowSingleSelect"
-        (rowSelected)="onRowSelected($event)"
-        (optionChanged)="onOptionChanged($event)"
-      ></bod-channels-multiselect-table>
-    </div>
-    <div mat-dialog-actions>
-      <button mat-button (click)="onCancel()">Cancel</button>
-      <button mat-button color="primary" (click)="onConfirm()">OK</button>
-    </div>
-  `
+  imports: [
+    CountersMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './counters-multiselect-dialog.component.html',
+  styleUrls: ['./counters-multiselect-dialog.component.scss']
 })
-export class ChannelsMultiselectDialogComponent {
-  selectedRows: any[] = [];
+export class CountersMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('countersTable', { static: false }) countersTable: CountersMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<CounterTable[]>();
+
+  selectedRows: Counters[] = [];
+  public addCountersFormGroup: UntypedFormGroup;
+  isDirty = false;
 
   constructor(
-    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    public dialogRef: MatDialogRef<CountersMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
   ) {
-    console.log('[Dialog] Received data for table:', data.currencyDataSingleSelect);
-    this.selectedRows = data.selectedRowSingleSelect || [];
+    this.initForm();
   }
 
-  onRowSelected(selectedRows: any[]) {
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.countersDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+      controls['classificationType_' + row.id] = [row.classificationType || null];
+      controls['operatorType_' + row.id] = [row.operatorType || null];
+    });
+    this.addCountersFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['counterData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isDirty = dirty;
+    if (dirty) {
+      this.addCountersFormGroup.markAsDirty();
+    }
+  }
+
+  public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addCountersFormGroup.markAsDirty();
+  }
+
+  onRowSelected(selectedRows: Counters[]) {
+    console.log('onRowSelected called with:', selectedRows);
     this.selectedRows = selectedRows;
-    console.log('Selected rows updated:', this.selectedRows);
+    this.isDirty = true;
+    this.initForm();
   }
 
-  onOptionChanged(event: { element: any, newValue: string }) {
-    console.log('Option changed in dialog:', event);
-    // Handle option change if needed
+  onSubmit() {
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedCounters: this.selectedRows });
   }
 
-  onCancel() {
-    this.dialogRef.close(null);
-  }
-
-  onConfirm() {
-    this.dialogRef.close(this.selectedRows);
+  onReset() {
+    this.isDirty = false;
   }
 }
 
@@ -236,43 +505,358 @@ export class ChannelsMultiselectDialogComponent {
 
 
 
-public addTableData() {
-  // Ensure the data has the correct structure with option property
-  const dialogData = {
-    ...this.currencyDataSingleSelect,
-    datasource: {
-      ...this.currencyDataSingleSelect.datasource,
-      data: this.currencyDataSingleSelect.datasource.data.map(item => ({
-        ...item,
-        option: item.option || 'Proposed' // Ensure option property exists
-      }))
-    }
-  };
 
-  // Open the dialog
-  const dialogRef = this.dialog.open(ChannelsMultiselectDialogComponent, {
-    width: '900px',
+<bod-form
+  [formGroup]="addCountersFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
+>
+  <bod-counters-multiselect-table
+    #countersTable
+    [countersDataSingleSelect]="data.countersDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addCountersFormGroup"
+  ></bod-counters-multiselect-table>
+</bod-form>
+
+
+
+
+
+
+
+
+// Add these imports to your existing channels-main-table.component.ts
+
+import { CountersMultiselectTableComponent } from './counters-multiselect-table/counters-multiselect-table.component';
+import { CountersMultiselectDialogComponent } from './counters-multiselect-dialog/counters-multiselect-dialog.component';
+import { CounterTable, Counters } from '../transaction-type.model';
+
+// Add to the imports array in @Component decorator
+imports: [
+  // ... existing imports
+  CountersMultiselectTableComponent,
+  CountersMultiselectDialogComponent,
+  // ... rest of existing imports
+],
+
+// Add these properties to your class:
+
+// Counter-related properties
+@Input() counterData: CounterTable[] = [];
+@Output() counterDetails = new EventEmitter<any>();
+
+public selectedRowCounters: CounterTable[] = [];
+public selectedCounterData: any[] = [];
+
+public countersDataSingleSelect: BodTableMetadata = {
+  title: 'Counters',
+  columns: [...this.transactionTypeService.counters],
+  rowLeftAction: RowLeftAction.multipleRowSelection,
+  enablePagination: true,
+  paginationOptions: {
+    pageSize: 5,
+    length: 12,
+    pageSizeOptions: [5, 8, 10],
+    showLastButton: true,
+    showPageSizeOptions: true
+  },
+  datasource: new MatTableDataSource<CounterTable>(this.selectedRowCounters),
+  noRecordsMessage: 'No Counters defined'
+};
+
+// Add these methods to your class:
+
+// Method to open counter dialog (replace addTableData for counter table)
+public addCounterTableData() {
+  const dialogRef = this.dialog.open(CountersMultiselectDialogComponent, {
+    width: '1000px',
+    height: '600px',
     data: {
-      currencyDataSingleSelect: dialogData,
-      selectedRowSingleSelect: this.selectedRowSingleSelect || []
+      countersDataSingleSelect: this.countersDataSingleSelect,
+      selectedRowSingleSelect: this.selectedRowCounters
     }
   });
 
   dialogRef.afterClosed().subscribe(result => {
-    if (result) {
-      console.log('Dialog closed with result:', result);
-      // Handle selected rows from multiselect table
-      result.forEach(selectedRow => {
-        const exists = this.dataWithSimpleEdit.some(row => row.id === selectedRow.id);
-        if (!exists) {
-          this.dataWithSimpleEdit.push({
-            id: this.generateUniqueId(this.dataWithSimpleEdit),
-            channel: selectedRow.code || selectedRow.channel,
-            option: selectedRow.option || 'Proposed'
-          });
-        }
-      });
-      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
+    if (result?.selectedCounters) {
+      const mapped = result.selectedCounters.map(row => ({
+        id: row.id,
+        classificationType: row.classificationType,
+        operatorType: row.operatorType,
+        code: row.code
+      }));
+      console.log('Assigning to counter table:', mapped);
+      if (mapped.some(row => !row.code || !row.classificationType || !row.operatorType)) {
+        console.error('Some rows are missing required fields:', mapped);
+      }
+      this.selectedCounterData = mapped;
+      this.counterData = [...mapped];
+      console.log('Received Counters from multi:', this.selectedCounterData);
+      
+      // Emit counter data change
+      this.counterDetails.emit(this.counterData);
     }
   });
 }
+
+// Update your loadDropdownData method to include counter data loading:
+loadDropdownData(): void {
+  // ... existing channel loading code ...
+
+  // Add counter data loading
+  this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
+    console.log('Fetched counters:', JSON.stringify(counters, null, 2));
+    
+    this.countersDataSingleSelect.datasource.data = counters.map((counter, idx) => ({
+      id: idx + 1,
+      code: counter.code,
+      classificationType: '',
+      operatorType: ''
+    }));
+  });
+}
+
+// Add to your resetTableForm method:
+public resetTableForm() {
+  // ... existing reset code ...
+  
+  // Add counter reset
+  this.selectedCounterData = [];
+  this.counterData = [];
+  // Reset counter form if you have one
+}
+
+// Update your getCurrentTableData method to include counter data:
+public getCurrentCounterData(): CounterTable[] {
+  return this.counterData || [];
+}
+
+
+
+
+
+
+<!-- Replace your existing counter table section with this updated version -->
+
+<!-- Counters Table -->
+<bod-table
+  #counterTable
+  [data]="counterData"
+  [tableActions]="actionsForChannels"
+  (onTableActionClick)="addCounterTableData()"
+  [modeOptions]="modeOptionsSimple"
+  [singleRowEdit]="singleRowEdit"
+  (onRowSelect)="rowSelection($event)"
+  [rowSelectionStrategy]="rowSelectionStrategy"
+  [alignContent]="'top'"
+  [customColumnTemplates]="[
+    { columnName: 'classificationType', templateName: classificationTypeTemplate },
+    { columnName: 'operatorType', templateName: operatorTypeTemplate },
+    { columnName: 'actions', templateName: counterDeleteActionTemplate }
+  ]"
+  [modeOptions]="{ selection: true }"
+>
+  <ng-template
+    #classificationTypeTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <mat-form-field appearance="outline" fisStyle style="width: 140px">
+      <mat-select
+        [(ngModel)]="element.classificationType"
+        (ngModelChange)="onValueChange()"
+        panelClass="fis-style"
+        name="classificationType"
+        (click)="$event.stopPropagation()"
+      >
+        <mat-option value="Internal">Internal</mat-option>
+        <mat-option value="External">External</mat-option>
+        <mat-option value="Mixed">Mixed</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-template>
+
+  <ng-template
+    #operatorTypeTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <mat-form-field appearance="outline" fisStyle style="width: 120px">
+      <mat-select
+        [(ngModel)]="element.operatorType"
+        (ngModelChange)="onValueChange()"
+        panelClass="fis-style"
+        name="operatorType"
+        (click)="$event.stopPropagation()"
+      >
+        <mat-option value="Locked">Locked</mat-option>
+        <mat-option value="Mandatory">Mandatory</mat-option>
+        <mat-option value="Optional">Optional</mat-option>
+        <mat-option value="Proposed">Proposed</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </ng-template>
+
+  <ng-template
+    #counterDeleteActionTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <bod-table-actions
+      [actions]="rowLevelActionsForBasicEdit"
+      (onActionClick)="handleCounterRowLevelActions($event.icon, index)"
+    >
+    </bod-table-actions>
+  </ng-template>
+</bod-table>
+<!-- End counters table -->
+
+
+
+
+
+
+
+
+
+
+// Add this method to channels-main-table.component.ts
+
+// Handle counter row level actions (delete, edit, etc.)
+handleCounterRowLevelActions(action: string, index: number) {
+  if (action === 'trash') {
+    if (this.modeOptionsSimple?.input) {
+      this.deleteCounterTableData(index);
+    } else {
+      this.subscriptions.add(
+        this.bodConfirmAlertDialogsService
+          .confirm(this.ConfirmData)
+          .subscribe(val => {
+            if (val) {
+              this.deleteCounterTableData(index);
+            }
+          })
+      );
+    }
+  }
+}
+
+// Delete counter data
+public deleteCounterTableData(index: number) {
+  this.selectedCounterData.splice(index, 1);
+  this.counterData = [...this.selectedCounterData];
+  
+  // Update table datasource if you have one
+  if (this.counterTable) {
+    // Assuming you have a counter table reference
+    // this.counterTable.deleteRow(index);
+  }
+  
+  this.counterDetails.emit(this.counterData);
+}
+
+// Add onValueChange method if not exists
+public onValueChange() {
+  // Mark form as dirty when values change
+  this.tableDirty.emit(true);
+}
+
+// ========================================
+// Service Updates (transaction-type.service.ts)
+// ========================================
+
+// Make sure your service has proper counter column definitions:
+public counters: Column[] = [
+  {
+    name: 'code',
+    title: 'Counter',
+    width: 2,
+    truncate: true,
+    noOverflow: true,
+    widthUnit: 'rem'
+  },
+  {
+    name: 'classificationType', 
+    title: 'Classification Type',
+    width: 2,
+    inputModeOptions: {
+      type: ColumnType.select,
+      model: [
+        { label: 'Internal', value: 'Internal' },
+        { label: 'External', value: 'External' },
+        { label: 'Mixed', value: 'Mixed' }
+      ],
+      validators: {
+        required: true
+      }
+    }
+  },
+  {
+    name: 'operatorType',
+    title: 'Operator Type', 
+    width: 2,
+    inputModeOptions: {
+      type: ColumnType.select,
+      model: [
+        { label: 'Locked', value: 'Locked' },
+        { label: 'Mandatory', value: 'Mandatory' },
+        { label: 'Optional', value: 'Optional' },
+        { label: 'Proposed', value: 'Proposed' }
+      ],
+      validators: {
+        required: true
+      }
+    }
+  },
+  {
+    name: 'actions',
+    title: ' ',
+    hasAction: true,
+    width: 1
+  }
+];
+
+// ========================================
+// Integration in Add/Edit Transaction Type Component
+// ========================================
+
+// Add these to add-edit-transactiontype.component.ts:
+
+@Input() retainedCounterValues: CounterTable[] = [];
+public counterData: CounterTable[] = [];
+
+// In your onReset method, add:
+this.counterData = [];
+if (isEditMode) {
+  this.counterData = [...this.retainedCounterValues];
+}
+
+// In your submitForm method, add counter data to the payload:
+const counterConfigurationList = this.getCurrentCounterData()?.map(item => ({
+  counterIdentifier: '', // You might need to map this properly
+  counterCode: item.code,
+  classificationType: item.classificationType,
+  operatorType: item.operatorType,
+  transactionTypeIdentifier: formValue.transactionTypeIdentifier
+})) || [];
+
+// Add to your transactionTypeData object:
+// counterConfigurationList: counterConfigurationList,
+
+// Method to get current counter data
+public getCurrentCounterData(): CounterTable[] {
+  return this.channelsMainTable?.getCurrentCounterData() || [];
+}
+
+
+
+
