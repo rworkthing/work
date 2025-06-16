@@ -1,30 +1,92 @@
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ChannelsMultiselectTableComponent } from './channels-multiselect-table/channels-multiselect-table.component';
+export interface PostingTextTable {
+  channel: string;
+  event?: string;
+  language: string;
+  text: string;
+}
+export interface TransactionTypeTable {
+  code: string;
+  description: string;
+  type: string;
+  subtype: string;
+}
 
-@Component({
-  selector: 'bod-channels-multiselect-dialog',
-  standalone: true,
-  imports: [ChannelsMultiselectTableComponent],
-  template: `
-    <bod-channels-multiselect-table
-      [currencyDataSingleSelect]="data.currencyDataSingleSelect"
-      [selectedRowSingleSelect]="data.selectedRowSingleSelect"
-    ></bod-channels-multiselect-table>
-  `
-})
-export class ChannelsMultiselectDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
-  ) {
-    console.log('[Dialog] Received data for table:', data.currencyDataSingleSelect);
-  }
+export interface TransactionTypeList {
+  identifier: number;
+  code: string;
+  name: string;
+  description: string;
+  paymentType: string;
+  overridePayment: string;
+  settlementDirection: string;
+  contra: number;
+  contraTemplateIdentifier: number | null;
+  reversibleAllowed: string;
+  reverseCondition: number;
+  classificationType: string;
+  externalSystemCode: string | null;
+  invSystemBalance: string;
+  chargeEligible: string;
+  cashTransactionAllowed: string;
+  financialOperationType: number;
+  multiLingualCodeTranslationList: MultiLingualTranslation[];
+  postingRepeatedTextList: any;
+  postingTextLanguageRltnpList: any;
+  postingCategoryList: any[];
+  productTypePostingSTDRltnpList: any[];
+  productTypePostingSTDDSRltnpList: any[];
+  productTypePostingSTDCategoryRltnpList: any[];
+  productTypePostingSTDPAMRltnpRltnp: any;
+  productTypePostingSTDRoletypeRltnpList: any[];
+  productTypeTransEventTypePostingSTDRltnp: any;
+  externalTransactionTypePostingSTDRltnpDpList: any;
+  transactionTypeInquiry:TransactionTypeInquiry[]
+  contraPostInquiry:TransactionTypeInquiry[],
+  additionalDetialinquiry: TransactionTypeInquiry[],
+}
 
-  onRowSelected(selectedRows: any[]) {
-    this.dialogRef.close(selectedRows);
-  }
-  confirmSelection(selectedRows: any[]) {
-    this.dialogRef.close(selectedRows);
-  }
+export interface TransactionTypeInquiry {
+  id: number;
+  label: string;
+  value: string;
+}
+
+export interface MultiLingualTranslation {
+  isoCode: string;
+  attributeType: string;
+  neutralCode: string;
+  translationText: string;
+}
+
+/**
+ * Interface for Channel Table data
+ */
+export interface ChannelTable {
+  id: number;
+  code: string;
+  option: string;
+}
+
+/**
+ * Interface for Channel Configuration in API payload
+ */
+export interface ChannelConfiguration {
+  channelIdentifier: string;
+  channelCode: string;
+  optionType: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Channel Dropdown Options
+ */
+export interface ChannelOption {
+  label: string;
+  value: string;
+}
+
+export interface Channels {
+  id: number;
+  code: string;
+  option: string;
 }
