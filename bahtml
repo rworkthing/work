@@ -1,710 +1,153 @@
-<bod-message-container [messages]="errorMessages"></bod-message-container>
-
 <bod-form
-  [formGroup]="addNewTransactionTypeFormGroup"
+  [formGroup]="addChannelsFormGroup"
   rufId
   [type]="formType"
-  (onSubmit)="onAddNewTransactionType(isAdd)"
-  (onReset)="onReset(isAdd)"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
   fisStyle
 >
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.contra'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="contra"
-        name="contra"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.code'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <div *ngIf="isEdit">
-        {{ addNewTransactionTypeFormGroup.get('code')?.value }}
-      </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="code"
-          name="code"
-        />
-
-        <mat-error>
-          {{ getError('code', addNewTransactionTypeFormGroup) | translate }}
-        </mat-error>
-        <mat-error
-          *ngIf="
-            addNewTransactionTypeFormGroup
-              .get('code')
-              .hasError('noSpecialCharacters')
-          "
-        >
-        </mat-error>
-        <mat-error
-          *ngIf="
-            addNewTransactionTypeFormGroup.get('code').hasError('maxLength')
-          "
-        >
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <!-- Name input -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="name"
-          name="name"
-        />
-        <mat-error>
-          {{ getError('name', addNewTransactionTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <!-- Description input -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.description'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="description"
-          name="description"
-        />
-         <mat-error
-              *ngIf="
-                addNewTransactionTypeFormGroup
-                  .get('description')
-                  .hasError('maxLength')
-              "
-            >
-             Exceeds maximum length
-            </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <!-- Payment Type dropdown -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.paymenttype'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="paymentType"
-          name="paymentType"
-          fisStyle
-        >
-          <mat-option
-            *ngFor="let option of paymentTypes"
-            [value]="option.value"
-          >
-            {{ option.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{
-            getError('paymentType', addNewTransactionTypeFormGroup) | translate
-          }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <!-- Classification Type dropdown -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.classificationtype'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <div *ngIf="isEdit">
-        {{ addNewTransactionTypeFormGroup.get('classificationType')?.value }}
-      </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
-        <mat-select
-          panelClass="fis-style"
-          formControlName="classificationType"
-          name="classificationType"
-          fisStyle
-        >
-          <mat-option
-            *ngFor="let option of classificationTypes"
-            [value]="option.value"
-          >
-            {{ option.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{
-            getError('classificationType', addNewTransactionTypeFormGroup)
-              | translate
-          }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <ng-container *ngIf="addNewTransactionTypeFormGroup.get('contra')?.value">
-      <form searchFieldInput>
-        <bod-search-field
-          [(ngModel)]="searchFieldInput"
-          (ngModelChange)="onInternalProductTypeChange($event)"
-          #searchFieldInputModel="ngModel"
-          [searchFieldData]="searchFieldDataForInputBinding"
-          [searchTableData]="tableDataForInputBinding"
-          [ngModelOptions]="{ standalone: true }"
-          [maxLength]="maxLength"
-          [selectedStrategy]="selectedStrategy"
-          [showConfirmationDialog]="confirmationDialog"
-          [confirmDialogData]="dialogData"
-        >
-        </bod-search-field>
-      </form>
-    </ng-container>
-  </bod-input-layout>
-  <ng-container *ngIf="!addNewTransactionTypeFormGroup.get('contra')?.value">
-    <bod-input-layout col="1">
-      <bod-page-container title="Contra Posting Details"></bod-page-container>
-      <form searchFieldInput>
-        <bod-input-layout [col]="2">
-          <bod-search-field
-            [(ngModel)]="searchFieldInput1"
-            (ngModelChange)="onContraCodeChange($event)"
-            #searchFieldInputModel="ngModel"
-            [searchFieldData]="searchFieldDataForInputBinding1"
-            [searchTableData]="tableDataForInputBinding1"
-            [ngModelOptions]="{ standalone: true }"
-            [maxLength]="maxLength"
-            [selectedStrategy]="selectedStrategy"
-            [showConfirmationDialog]="confirmationDialog"
-            [confirmDialogData]="dialogData"
-          >
-          </bod-search-field>
-        </bod-input-layout>
-      </form>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.name'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="contraname"
-              name="contraname"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.paymenttype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="contrapaymentType"
-              name="contrapaymentType"
-            />
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </bod-input-layout>
-  </ng-container>
-  <bod-page-container title="Additional Details"></bod-page-container>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.overridepaymenttype'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="overidePaymentType"
-        name="overidePaymentType"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.cashsettlementdirection'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="cashSettle"
-          name="cashSettle"
-          fisStyle
-        >
-          <mat-option
-            *ngFor="let option of cashsettlementDirections"
-            [value]="option.value"
-          >
-            {{ option.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.isreversible'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="isReverse"
-        name="isReverse"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.externalsystemid'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="externalSysId"
-          name="externalSysId"
-        />
-
-        <!-- <mat-error>
-          {{ getError('code', addNewConditionFormGroup) | translate }}
-        </mat-error>
-        <mat-error
-          *ngIf="
-            addNewConditionFormGroup.get('code').hasError('noSpecialCharacters')
-          "
-        >
-        </mat-error>
-        <mat-error
-          *ngIf="addNewConditionFormGroup.get('code').hasError('maxLength')"
-        >
-        </mat-error> -->
-      </mat-form-field>
-    </bod-control-group>
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.balancingrequired'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="balanceReq"
-        name="balanceReq"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-
-    <form searchFieldInput>
-      <bod-search-field
-        [(ngModel)]="searchFieldInput3"
-        (ngModelChange)="onReverseConditionChange($event)"
-        #searchFieldInputModel="ngModel"
-        [searchFieldData]="searchFieldDataForReverseCondition"
-        [searchTableData]="tableDataForReverseCondition"
-        [ngModelOptions]="{ standalone: true }"
-        [maxLength]="maxLength"
-        [selectedStrategy]="selectedStrategy"
-        [showConfirmationDialog]="confirmationDialog"
-        [confirmDialogData]="dialogData"
-      >
-      </bod-search-field>
-    </form>
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.cashtransaction'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="cashTransaction"
-        name="cashTransaction"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <form searchFieldInput>
-      <bod-search-field
-        [(ngModel)]="searchFieldInput4"
-        (ngModelChange)="onFinancialOperationTypeChange($event)"
-        #searchFieldInputModel="ngModel"
-        [searchFieldData]="searchFieldDataFinanciaOprType"
-        [searchTableData]="tableDataForFinancialOprType"
-        [ngModelOptions]="{ standalone: true }"
-        [maxLength]="maxLength"
-        [selectedStrategy]="selectedStrategy"
-        [showConfirmationDialog]="confirmationDialog"
-        [confirmDialogData]="dialogData"
-      >
-      </bod-search-field>
-    </form>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.chargeeligible'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="chargEligible"
-        name="chargEligible"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-  <bod-message-container [messages]="errorMessages1"></bod-message-container>
-  <bod-table
-    #postingText
-    [data]="postingTexttabledata"
-    [tableActions]="postingTexttableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Posting Text' | translate,
-      formGroup: postingTextForm,
-      formTemplateName: postingTextTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddPostingText(postingTextForm.value)"
-    (onInlineFormEditSubmit)="onAddPostingText(postingTextForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="
-          handleRowLevelActionsforPostingText($event.icon, index)
-        "
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="postingTextForm">
-    <ng-template #postingTextTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.event'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="event"
-              name="event"
-            >
-              <mat-option *ngFor="let event of events" [value]="event.value">
-                {{ event.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.channel'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="channel"
-              name="channel"
-            >
-              <mat-option
-                *ngFor="let channel of channels"
-                [value]="channel.value"
-              >
-                {{ channel.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.language'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="language"
-              name="language"
-            >
-              <mat-option
-                *ngFor="let language of languages"
-                [value]="language.value"
-              >
-                {{ language.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('language', postingTextForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.text'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="text"
-              name="text"
-            />
-            <mat-error>
-              {{ getError('text', postingTextForm) | translate }}
-            </mat-error>
-             <mat-error
-              *ngIf="
-                postingTextForm
-                  .get('text')
-                  .hasError('maxLength')
-              "
-            >
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-
-  <bod-table
-    #externalTransaction
-    [data]="externalTransactiontabledata"
-    [tableActions]="postingTexttableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New External Transaction' | translate,
-      formGroup: externalTransactionForm,
-      formTemplateName: externalTransactionTemplate
-    }"
-    (onInlineFormAddSubmit)="
-      onAddexternalTransaction(externalTransactionForm.value)
-    "
-    (onInlineFormEditSubmit)="
-      onAddexternalTransaction(externalTransactionForm.value)
-    "
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="
-          handleRowLevelActionsforExternalTransaction($event.icon, index)
-        "
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="externalTransactionForm">
-    <ng-template #externalTransactionTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.code'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="transactionCode"
-              name="transactionCode"
-            />
-            <mat-error>
-              {{
-                getError('transactionCode', externalTransactionForm) | translate
-              }}
-            </mat-error>
-            <mat-error
-              *ngIf="
-                externalTransactionForm
-                  .get('transactionCode')
-                  .hasError('noSpecialCharacters')
-              "
-            >
-            </mat-error>
-            <mat-error
-              *ngIf="
-                externalTransactionForm
-                  .get('transactionCode')
-                  .hasError('maxLength')
-              "
-            >
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.description'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="transactionDescription"
-              name="transactionDescription"
-            />
-            <mat-error>
-              {{
-                getError('transactionDescription', externalTransactionForm)
-                  | translate
-              }}
-            </mat-error>
-            <mat-error
-              *ngIf="
-                externalTransactionForm
-                  .get('transactionDescription')
-                  .hasError('maxLength')
-              "
-            >
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.type'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="type"
-              name="type"
-            >
-              <mat-option *ngFor="let type of types" [value]="type.value">
-                {{ type.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('type', externalTransactionForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.subtype'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="subtype"
-              name="subtype"
-            >
-              <mat-option
-                *ngFor="let subtype of subtypes"
-                [value]="subtype.value"
-              >
-                {{ subtype.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('subtype', externalTransactionForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-
-  <bod-channels-main-table
-    #channelsMainTable
-    [channelData]="channelData"
-    (completeDeltaChange)="handleChannelDataChange($event)"
-    (tableDirty)="onChannelTableDirty()"
-    (channelDetails)="handleChannelDataChange($event)"
-  ></bod-channels-main-table>
+  <bod-channels-multiselect-table
+    #channelsTable
+    [channelsDataSingleSelect]="data.channelsDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addChannelsFormGroup"
+  ></bod-channels-multiselect-table>
 </bod-form>
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ChannelsMultiselectTableComponent } from '../channels-multiselect-table/channels-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Channels, ChannelTable } from '../../transaction-type.model';
+// If you want to use bod-form, also import BodFormModule
+// import { BodFormModule } from '@bod/common';
+
+@Component({
+  selector: 'bod-channels-multiselect-dialog',
+  standalone: true,
+  imports: [
+    ChannelsMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './channels-multiselect-dialog.component.html',
+  styleUrls: ['./channels-multiselect-dialog.component.scss']
+})
+export class ChannelsMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('channelsTable', { static: false }) channelsTable: ChannelsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<ChannelTable[]>();
+  @Output() tableDirty = new EventEmitter<void>();
+
+  selectedRows: Channels[] = [];
+  public addChannelsFormGroup: UntypedFormGroup;
+  isDirty = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
+
+  }
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.channelsDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+      controls['option_' + row.id] = [row.option || null];
+    });
+    this.addChannelsFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+
+  }
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['channelData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isDirty = dirty;
+    if (dirty) {
+      this.addChannelsFormGroup.markAsDirty();
+    }
+  } public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addChannelsFormGroup.markAsDirty();
+
+  }
+
+
+  onRowSelected(selectedRows: Channels[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.addChannelsFormGroup.markAsDirty(); // <-- Mark the form as dirty
+    this.tableDirty.emit();
+    this.initForm();
+  }
+  
+
+  onSubmit() {
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedChannels: this.selectedRows });
+  }
+  onReset() {
+    this.isDirty = false;
+  }
+}
