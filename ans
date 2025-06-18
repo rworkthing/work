@@ -1,136 +1,943 @@
-// Replace these methods in your ChannelsMainTableComponent
+<form [formGroup]="formGroup">
+    <bod-table
+      #conditionsMultiselectTable
+      [data]="conditionsDataSingleSelect"
+      (onRowSelect)="rowSelection($event)"
+      [rowSelectionStrategy]="rowSelectionStrategy"
+      [allowSelectAll]="allowRowSelection"
+      [alignContent]="'top'"
+      [customColumnTemplates]="[
+        { columnName: 'relationshipType', templateName: relationshipTypeTemplate }
+      ]"
+      [modeOptions]="{selection: true }"
+    >
+    
+      <ng-template
+        #relationshipTypeTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+        <mat-select
+          [formControlName]="'relationshipType_' + (element.id ?? index)"
+          (selectionChange)="onRelationshipTypeChange(element, $event.value)"
+          panelClass="fis-style"
+          name="relationshipType"
+          (click)="$event.stopPropagation()"
+        >
+            <mat-option *ngFor="let option of relationshipTypeOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-template>
+    </bod-table>
+</form>
 
-setDataForSingleLineEditMode(editIndex: number) {
-  const row = this.dataWithSimpleEdit[editIndex];
-  this.currentChannelRowId = row.id;
-  
-  if (!this.channelForms[row.id]) {
-    this.channelForms[row.id] = this.formBuilder.group({
-      id: [row.id],
-      attributeForChannel: [row.attributeForChannel || ''],
-      // ...other fields...
-    });
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Conditions } from '../../transaction-type.model';
+import {
+  BOD_DATE_RANGE,
+  BodAutoCompleteModule,
+  BodCommonDialogModel,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableFilterType,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule,
+  SelectPageMode
+} from '@bod/common';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
+
+@Component({
+  selector: 'bod-conditions-multiselect-table',
+  standalone: true,
+  imports: [
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './conditions-multiselect-table.component.html',
+  styleUrl: './conditions-multiselect-table.component.scss'
+})
+export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
+
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+
+  @Input() conditionsDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Conditions[] = [];
+  @Output() rowSelected = new EventEmitter<Conditions[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  @Output() dirtyChange = new EventEmitter<boolean>();
+  @Input() formGroup: UntypedFormGroup;
+
+  @ViewChild('conditionsMultiselectTable', { static: false })
+  conditionsTable: BodTableComponent;
+
+  private isDirty = false;
+
+  relationshipTypeOptions = [
+    { label: 'Locked', value: 'Locked' },
+    { label: 'Mandatory', value: 'Mandatory' },
+    { label: 'Optional', value: 'Optional' },
+    { label: 'Proposed', value: 'Proposed' }
+  ];
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectConditionsRows(), 0);
   }
-  
-  this.addNewChannelForm = this.channelForms[row.id];
-  
-  // IMPORTANT: Create a fresh copy of counters for this specific channel
-  this.dataWithSimpleCounter = this.counterMap[row.id] ? [...this.counterMap[row.id]] : [];
-  this.tableWithSimpleCounter.datasource.data = [...this.dataWithSimpleCounter];
-  
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: editIndex
-  };
-  this.pageModeSimple = PageMode.NONE;
-}
 
-public addCounterTableData() {
-  if (this.currentChannelRowId == null) return; // No row selected
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+      setTimeout(() => this.selectConditionsRows(), 0);
+    }
+  }
 
-  this.addNewChannelForm.markAsDirty();
-  this.transactionTypeService.getCounters().subscribe((response: any[]) => {
-    const dialogTableMetadata: BodTableMetadata = {
-      ...this.countersTableMetadata,
-      datasource: new MatTableDataSource<CounterTable>(
-        response.map((counter, idx) => ({
-          id: idx + 1,
-          code: counter.code,
-          identifier: counter.identifier,
-          classificationType: '',
-          operatorType: ''
-        }))
-      )
-    };
+  private selectConditionsRows(): void {
+    const tableData = this.conditionsDataSingleSelect?.datasource?.data || [];
+    const selection = this.conditionsTable?.selection;
 
-    // Use the counters for the current row ONLY
-    const selectedCounters = this.counterMap[this.currentChannelRowId] || [];
+    if (!selection || tableData.length === 0) {
+      return;
+    }
 
-    const dialogRef = this.dialog.open(CountersMultiselectDialogComponent, {
-      width: '1000px',
-      height: '600px',
-      data: {
-        countersDataSingleSelect: dialogTableMetadata,
-        selectedRowSingleSelect: selectedCounters
+    selection.clear();
+
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.id === dataRow.id
+      );
+      if (match) {
+        selection.select(dataRow);
       }
     });
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.selectedCounters) {
-        const mapped = result.selectedCounters.map(row => ({
-          id: row.id,
-          code: row.code,
-          identifier: row.identifier,
-          classificationType: row.classificationType,
-          operatorType: row.operatorType
-        }));
-        
-        // Store counters for this specific channel row ONLY
-        this.counterMap[this.currentChannelRowId!] = [...mapped];
-        
-        // Update the UI for the current row ONLY
-        this.dataWithSimpleCounter = [...mapped];
-        this.tableWithSimpleCounter.datasource.data = [...mapped];
-        
-        // Update the specific row in dataWithSimpleEdit
-        const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
-        if (idx !== -1) {
-          this.dataWithSimpleEdit[idx] = {
-            ...this.dataWithSimpleEdit[idx],
-            counters: [...mapped]
-          };
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
+
+  constructor(
+    private fb: FormBuilder,
+    private transactionTypeService: TransactionTypeService
+  ) { }
+
+  ngOnInit() {
+    this.defaultForm = this.fb.group({});
+  }
+
+  public onRelationshipTypeChange(element: any, value: string) {
+    element.relationshipType = value;
+    this.setDirty(true);
+  }
+
+  private loadConditionData() {
+    this.transactionTypeService.getConditions().subscribe((conditions: any[]) => {
+      this.conditionsDataSingleSelect.datasource.data = conditions.map((item: any, index: number) => ({
+        id: index + 1,
+        code: item.code,
+        relationshipType: '',
+        default: false
+      }));
+    });
+  }
+
+  public resetSelection() {
+    if (this.conditionsTable?.selection) {
+      this.conditionsTable.selection.clear();
+    }
+    this.selectedRowSingleSelect = [];
+    this.setDirty(false);
+  }
+
+  public rowSelectionSingleSelect(element: Conditions[]) {
+    console.log('rowSelectionSingleSelect called with:', element);
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+  }
+
+  public rowSelection(element: Conditions[]) {
+    console.log('rowSelection called with:', element);
+    if (element.length !== 0) {
+      this.selectedRowSingleSelect = element;
+    } else {
+      this.selectedRowSingleSelect = [];
+    }
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    console.log('Conditions selectedRowSingleSelect:', this.selectedRowSingleSelect);
+  }
+
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    const data = [...this.conditionsDataSingleSelect.datasource.data];
+    const row = data.find(r => r.index === rowIndex);
+
+    if (!row) return;
+
+    if (event.checked) {
+      data.forEach(item => {
+        item.default = item.index === rowIndex;
+      });
+    } else {
+      row.default = false;
+    }
+
+    this.conditionsDataSingleSelect.datasource.data = data;
+
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
+    });
+  }
+
+  private setDirty(dirty: boolean) {
+    this.isDirty = dirty;
+    this.dirtyChange.emit(this.isDirty);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+<bod-form
+  [formGroup]="addConditionsFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
+>
+  <bod-conditions-multiselect-table
+    #conditionsTable
+    [conditionsDataSingleSelect]="data.conditionsDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addConditionsFormGroup"
+  ></bod-conditions-multiselect-table>
+</bod-form>
+
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ConditionsMultiselectTableComponent } from '../conditions-multiselect-table/conditions-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Conditions, ConditionTable } from '../../transaction-type.model';
+
+@Component({
+  selector: 'bod-conditions-multiselect-dialog',
+  standalone: true,
+  imports: [
+    ConditionsMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './conditions-multiselect-dialog.component.html',
+  styleUrls: ['./conditions-multiselect-dialog.component.scss']
+})
+export class ConditionsMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('conditionsTable', { static: false }) conditionsTable: ConditionsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<ConditionTable[]>();
+
+  selectedRows: Conditions[] = [];
+  public addConditionsFormGroup: UntypedFormGroup;
+  isDirty = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<ConditionsMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
+  }
+
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.conditionsDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+     
+      controls['relationshipType_' + row.id] = [row.relationshipType || null];
+    });
+    this.addConditionsFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['conditionData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isDirty = dirty;
+    if (dirty) {
+      this.addConditionsFormGroup.markAsDirty();
+    }
+  }
+
+  public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addConditionsFormGroup.markAsDirty();
+  }
+
+  onRowSelected(selectedRows: Conditions[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.initForm();
+  }
+
+  onSubmit() {
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedConditions: this.selectedRows });
+  }
+
+  onReset() {
+    this.isDirty = false;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export interface PostingTextTable {
+  channel: string;
+  event?: string;
+  language: string;
+  text: string;
+}
+export interface TransactionTypeTable {
+  code: string;
+  description: string;
+  type: string;
+  subtype: string;
+}
+
+export interface TransactionTypeList {
+  identifier: number;
+  code: string;
+  name: string;
+  description: string;
+  paymentType: string;
+  overridePayment: string;
+  settlementDirection: string;
+  contra: number;
+  contraTemplateIdentifier: number | null;
+  reversibleAllowed: string;
+  reverseCondition: number;
+  classificationType: string;
+  externalSystemCode: string | null;
+  invSystemBalance: string;
+  chargeEligible: string;
+  cashTransactionAllowed: string;
+  financialOperationType: number;
+  optionalityType: string;
+  eventType: number;
+  multiLingualCodeTranslationList: MultiLingualTranslation[];
+  postingRepeatedTextList: any;
+  postingTextLanguageRltnpList: any;
+  postingCategoryList: any[];
+  productTypePostingSTDRltnpList: any[];
+  productTypePostingSTDDSRltnpList: any[];
+  productTypePostingSTDDSCounterRltnp: any[];
+  productTypePostingSTDCategoryRltnpList: any[];
+  productTypePostingSTDPAMRltnpList: any;
+  productTypePostingSTDRoletypeRltnpList: any[];
+  productTypeTransEventTypePostingSTDRltnpList: any;
+  externalTransactionTypePostingSTDRltnpDpList: any;
+  transactionTypeInquiry:TransactionTypeInquiry[]
+  contraPostInquiry:TransactionTypeInquiry[],
+  additionalDetialinquiry: TransactionTypeInquiry[],
+  prdtTypeRelInquiry: TransactionTypeInquiry[],
+  relInquiry: TransactionTypeInquiry[],
+  psamInquiry: TransactionTypeInquiry[],
+  
+}
+
+export interface TransactionTypeInquiry {
+  id: number;
+  label: string;
+  value: string;
+}
+
+export interface MultiLingualTranslation {
+  isoCode: string;
+  attributeType: string;
+  neutralCode: string;
+  translationText: string;
+}
+export interface PSAMTable{
+  order: number;
+  value: string;
+  balance_type_identifier: number;
+  sub_balance_type: string;
+  customization_type_value:string
+}
+
+/**
+ * Interface for Channel Table data
+ */
+export interface ChannelTable {
+  id: number;
+  code: string;
+  option: string;
+  identifier?: string;
+  attributeForChannel?: string;
+  counters?: CounterTable[];
+  conditions?: ConditionTable[];
+}
+
+/**
+ * Interface for Channel Configuration in API payload
+ */
+export interface ChannelConfiguration {
+  channelIdentifier: string;
+  channelCode: string;
+  optionType: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Channel Dropdown Options
+ */
+export interface ChannelOption {
+  label: string;
+  value: string;
+}
+
+export interface Channels {
+  id: number;
+  code: string;
+  option: string;
+}
+
+/**
+ * Interface for Counter Table data
+ */
+export interface CounterTable {
+  id: number;
+  code: string;
+  identifier: string | number;
+  classificationType?: string;
+  operatorType?: string;
+  channelidentifier?: string | number; // <-- Add this line
+}
+
+/**
+ * Interface for Counter Configuration in API payload
+ */
+export interface CounterConfiguration {
+  counterIdentifier: string;
+  counterCode: string;
+  classificationType: string;
+  operatorType: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Counter Dropdown Options
+ */
+export interface CounterOption {
+  label: string;
+  value: string;
+}
+
+export interface Counters {
+  id: number;
+  code: string;
+  classificationType: string;
+  operatorType: string;
+}
+
+/**
+ * Interface for Condition Table data
+ */
+export interface ConditionTable {
+  id: number;
+  code: string;
+  identifier: string | number;
+  relationshipType?: string;
+  channelidentifier?: string | number;
+}
+
+/**
+ * Interface for Condition Configuration in API payload
+ */
+export interface ConditionConfiguration {
+  conditionIdentifier: string;
+  conditionCode: string;
+  relationshipType: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Condition Dropdown Options
+ */
+export interface ConditionOption {
+  label: string;
+  value: string;
+}
+
+export interface Conditions {
+  id: number;
+  code: string;
+  relationshipType: string;
+}
+
+
+
+
+
+
+
+
+
+
+// Add this to the TransactionTypeService class, after the existing counters definition
+
+  public conditions: Column[] = [
+    {
+      name: 'code',
+      title: 'Conditions',
+      width: 2,
+      truncate: true,
+      noOverflow: true,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'relationshipType',
+      title: 'Relationship Type',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: [
+          { label: 'Locked', value: 'Locked' },
+          { label: 'Mandatory', value: 'Mandatory' },
+          { label: 'Optional', value: 'Optional' },
+          { label: 'Proposed', value: 'Proposed' },
+        ],
+        validators: {
+          required: true
         }
       }
-    });
-  });
-}
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
 
-onSaveChannelRow(formValue: any) {
-  const rowId = formValue.id || this.currentChannelRowId;
-  const index = this.dataWithSimpleEdit.findIndex(row => row.id === rowId);
+
+
+
+
+
+
+// Add these imports at the top
+import { ConditionsMultiselectTableComponent } from './conditions-multiselect-table/conditions-multiselect-table.component';
+import { ConditionsMultiselectDialogComponent } from './conditions-multiselect-dialog/conditions-multiselect-dialog.component';
+import { ConditionTable } from '../transaction-type.model';
+
+// Add to the imports array in @Component decorator
+imports: [
+  ConditionsMultiselectTableComponent,
+  ConditionsMultiselectDialogComponent,
+  // ... existing imports
+]
+
+// Add these properties to the component class
+export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
+  public conditionMap: { [key: number]: ConditionTable[] } = {}; // Add this line
   
-  if (index !== -1) {
-    // Get the counters specific to this channel
-    const channelCounters = this.counterMap[rowId] || [];
-    
-    this.dataWithSimpleEdit[index] = {
-      ...this.dataWithSimpleEdit[index],
-      ...formValue,
-      attributeForChannel: this.addNewChannelForm.get('attributeForChannel')?.value,
-      counters: [...channelCounters], // Use channel-specific counters
+  // Condition-related properties
+  @Output() conditionDetails = new EventEmitter<any[]>(); // Add this line
+  @Input() conditionData: ConditionTable[] = [];
+
+  public selectedRowConditions: ConditionTable[] = [];
+  public selectedConditionData: any[] = [];
+
+  public conditionsTableMetadata: BodTableMetadata = {
+    title: 'Conditions',
+    columns: [...this.transactionTypeService.conditions],
+    rowLeftAction: RowLeftAction.multipleRowSelection,
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 5,
+      length: 12,
+      pageSizeOptions: [5, 8, 10],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<ConditionTable>([]), // EMPTY ARRAY
+    noRecordsMessage: 'No Condition defined'
+  };
+
+  public dataWithSimpleCondition: ConditionTable[] = [];
+
+  public tableWithSimpleCondition: BodTableMetadata = {
+    title: 'Conditions',
+    columns: [...this.transactionTypeService.conditions],
+    datasource: new MatTableDataSource<ConditionTable>(this.dataWithSimpleCondition),
+    noRecordsMessage: 'No Condition defined'
+  };
+
+  // Add this method
+  addConditionTableData() {
+    this.addNewChannelForm.markAsDirty();
+    this.transactionTypeService.getConditions().subscribe((response: any[]) => {
+      const dialogTableMetadata: BodTableMetadata = {
+        ...this.conditionsTableMetadata,
+        datasource: new MatTableDataSource<ConditionTable>(
+          response.map((condition, idx) => ({
+            id: idx + 1,
+            code: condition.code,
+            identifier: condition.identifier,
+            relationshipType: ''
+          }))
+        )
+      };
+  
+      // Use the conditions for the current row
+      const selectedConditions = this.conditionMap[this.currentChannelRowId!] || [];
+  
+      const dialogRef = this.dialog.open(ConditionsMultiselectDialogComponent, {
+        width: '1000px',
+        height: '600px',
+        data: {
+          conditionsDataSingleSelect: dialogTableMetadata,
+          selectedRowSingleSelect: selectedConditions
+        }
+      });
+  
+      dialogRef.afterClosed().subscribe(result => {
+        if (result?.selectedConditions) {
+          const mapped = result.selectedConditions.map(row => ({
+            id: row.id,
+            code: row.code,
+            identifier: row.identifier,
+            relationshipType: row.relationshipType
+          }));
+          // Store conditions for this channel row only
+          this.conditionMap[this.currentChannelRowId!] = mapped;
+          // Update the UI for the current row
+          this.dataWithSimpleCondition = mapped;
+          this.tableWithSimpleCondition.datasource.data = [...mapped];
+          // Optionally update the row in dataWithSimpleEdit
+          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
+          if (idx !== -1) {
+            this.dataWithSimpleEdit[idx].conditions = mapped;
+          }
+          this.conditionDetails.emit(mapped);
+        }
+      });
+    });
+  }
+
+  // Add this method
+  handleConditionRowLevelActions($event: any, index: number) {
+    if ($event === 'trash') {
+      // Remove the row from your data array
+      this.dataWithSimpleCondition.splice(index, 1);
+      // Update the table datasource
+      this.tableWithSimpleCondition.datasource.data = [...this.dataWithSimpleCondition];
+      // Emit the updated data if needed
+      this.conditionDetails.emit(this.dataWithSimpleCondition);
+    }
+    this.addNewChannelForm.markAsDirty();
+    // You can add 'edit' or 'save' logic here if needed
+  }
+
+  // Update the inlineEditRowActionClick method to load conditions for the current row
+  inlineEditRowActionClick(
+    inlineEditOutput: InlineEditOutput,
+    index: number,
+    template?: any
+  ) {
+    const element = (this.editRowElement = inlineEditOutput.editRowElement);
+
+    if (element && element.id) {
+      this.addNewChannelForm.reset();
+      this.addNewChannelForm.patchValue(element);
+      this.currentChannelRowId = element.id; // Track the channel row being edited
+    }
+
+    this.editIndex = inlineEditOutput.editRowIndex ?? index;
+
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: this.editIndex
     };
-    
-    // Ensure the counterMap is updated for this specific channel
-    this.counterMap[rowId] = [...channelCounters];
-    
-    // Update the table datasource
-    this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
-  }
-  
-  // Reset the single row edit mode
-  this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-  this.currentChannelRowId = null; // Clear the current channel ID
-}
 
-// Add this method to properly initialize counter data when loading existing data
-ngOnChanges(changes: SimpleChanges) {
-  if (changes['channelData']) {
-    // Update your table data source
-    this.dataWithSimpleEdit = this.channelData || [];
-    this.tableWithSimpleEdit.datasource.data = [...(this.channelData || [])];
+    // Load counters for this channel row if you have them stored
+    this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
+    this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
     
-    // Initialize counterMap with existing counter data
-    this.dataWithSimpleEdit.forEach(channel => {
-      if (channel.counters) {
-        this.counterMap[channel.id] = [...channel.counters];
-      }
+    // Load conditions for this channel row if you have them stored
+    this.dataWithSimpleCondition = this.conditionMap?.[element.id] ? [...this.conditionMap[element.id]] : [];
+    this.tableWithSimpleCondition.datasource.data = this.dataWithSimpleCondition;
+  }
+
+  // Update the getAllCountersWithChannelIdentifier method to include conditions
+  public getAllConditionsWithChannelIdentifier(): any[] {
+    // Flatten all conditions from all channels, adding channelidentifier to each
+    return (this.dataWithSimpleEdit || [])
+      .filter(channel => Array.isArray(channel.conditions))
+      .map(channel =>
+        (channel.conditions ?? []).map(condition => ({
+          ...condition,
+          channelidentifier: channel.identifier
+        }))
+      )
+      .reduce((acc, val) => acc.concat(val), []);
+  }
+
+  // Update the emitCompleteDelta method to include conditions
+  emitCompleteDelta() {
+    const currentData = this.getCurrentTableData();
+    const allCounters = this.getAllCountersWithChannelIdentifier();
+    const allConditions = this.getAllConditionsWithChannelIdentifier();
+    console.log('[ChannelsMainTableComponent] Emitting CompleteDelta:', {
+      channels: currentData,
+      counters: allCounters,
+      conditions: allConditions
+    });
+    this.completeDeltaChange.emit({
+      channels: currentData,
+      counters: allCounters,
+      conditions: allConditions
     });
   }
 }
 
-// Add this method to clear data when needed
-private clearCurrentChannelData() {
-  this.currentChannelRowId = null;
-  this.dataWithSimpleCounter = [];
-  this.tableWithSimpleCounter.datasource.data = [];
-}
+
+
+
+
+
+
+<!-- Add this conditions table section after the counters table and before the closing ng-template -->
+      
+      <!-- Conditions Table -->
+      <bod-table
+        *ngIf="
+          addNewChannelForm.get('attributeForChannel')?.value === 'Conditions'
+        "
+        #conditionTable
+        [data]="tableWithSimpleCondition"
+        [tableActions]="actionsForChannels"
+        (onTableActionClick)="addConditionTableData()"
+        [modeOptions]="modeOptionsSimple"
+        [alignContent]="'top'"
+        [customColumnTemplates]="[
+          { columnName: 'conditions', templateName: conditionsTemplate },
+          {
+            columnName: 'relationshipType',
+            templateName: relationshipTypeTemplate
+          },
+          { columnName: 'actions', templateName: editActionsTemplate1 }
+        ]"
+      >
+        <!-- Conditions column template -->
+        <ng-template
+          #conditionsTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.code }}</span>
+        </ng-template>
+
+        <!-- Relationship Type column template -->
+        <ng-template
+          #relationshipTypeTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.relationshipType }}</span>
+        </ng-template>
+
+        <ng-template
+          #editActionsTemplate1
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <bod-table-actions
+            [actions]="rowLevelActionsForBasicEdit"
+            (onActionClick)="handleConditionRowLevelActions($event.icon, index)"
+          >
+          </bod-table-actions>
+        </ng-template>
+      </bod-table>
+      <!-- End conditions table -->
