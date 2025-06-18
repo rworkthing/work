@@ -1,130 +1,52 @@
-<form [formGroup]="formGroup">
-    <bod-table
-      #countersMultiselectTable
-      [data]="countersDataSingleSelect"
-      (onRowSelect)="rowSelection($event)"
-      [rowSelectionStrategy]="rowSelectionStrategy"
-      [allowSelectAll]="allowRowSelection"
-      [alignContent]="'top'"
-      [customColumnTemplates]="[
-        { columnName: 'classificationType', templateName: classificationTypeTemplate },
-        { columnName: 'operatorType', templateName: operatorTypeTemplate }
-      ]"
-      [modeOptions]="{selection: true }"
-    >
-      <ng-template
-        #classificationTypeTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-      <mat-form-field appearance="outline" fisStyle style="width: 140px;">
-        <mat-select
-          [formControlName]="'classificationType_' + (element.id ?? index)"
-          (selectionChange)="onClassificationTypeChange(element, $event.value)"
-          panelClass="fis-style"
-          name="classificationType"
-          (click)="$event.stopPropagation()"
-        >
-            <mat-option *ngFor="let option of classificationTypeOptions" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-template>
-    
-      <ng-template
-        #operatorTypeTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
-        <mat-select
-          [formControlName]="'operatorType_' + (element.id ?? index)"
-          (selectionChange)="onOperatorTypeChange(element, $event.value)"
-          panelClass="fis-style"
-          name="operatorType"
-          (click)="$event.stopPropagation()"
-        >
-            <mat-option *ngFor="let option of operatorTypeOptions" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-template>
-    </bod-table>
-    </form>
+<bod-form
+  [formGroup]="addChannelsFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
+>
+  <bod-channels-multiselect-table
+    #channelsTable
+    [channelsDataSingleSelect]="data.channelsDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addChannelsFormGroup"
+  ></bod-channels-multiselect-table>
+</bod-form>
 
 
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ChannelsMultiselectTableComponent } from '../channels-multiselect-table/channels-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
-import { TransactionTypeService } from '../../transaction-type.service';
-import { Counters } from '../../transaction-type.model';
-import {
-  BOD_DATE_RANGE,
-  BodAutoCompleteModule,
-  BodCommonDialogModel,
-  BodCommonDialogService,
-  BodCommonModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BodDynamicFormModule,
-  BodFormModule,
-  BodFormStateService,
-  BodFormTypes,
-  BodPageContainerModule,
-  BodTableAction,
-  BodTableActionType,
-  BodTableActionsModule,
-  BodTableComponent,
-  BodTableFilterType,
-  BodTableMetadata,
-  BodTableModule,
-  CommonDialogComponent,
-  ControlGroupModule,
-  DirectivesModule,
-  EditTableAction,
-  InlineEditOutput,
-  InputLayoutModule,
-  InquiryLayoutModule,
-  MessageContainerModule,
-  ModeOptions,
-  NotificationMessage,
-  NotificationMessageType,
-  RowLeftAction,
-  SearchFieldModule,
-  SectionContainerModule,
-  SelectPageMode
-} from '@bod/common';
-import { MatIconModule } from '@angular/material/icon';
-import { RufIconModule } from '@ruf/shell/icon';
-import {
-  MatSlideToggle,
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTableDataSource } from '@angular/material/table';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Channels, ChannelTable } from '../../transaction-type.model';
+// If you want to use bod-form, also import BodFormModule
+// import { BodFormModule } from '@bod/common';
 
 @Component({
-  selector: 'bod-counters-multiselect-table',
+  selector: 'bod-channels-multiselect-dialog',
   standalone: true,
   imports: [
-    CommonModule,
-    BodTableModule,
-    BodPageContainerModule,
-    MatSlideToggleModule,
+    ChannelsMultiselectTableComponent,
     ReactiveFormsModule,
+    BodFormModule,
     FormsModule,
     BodAutoCompleteModule,
     InquiryLayoutModule,
@@ -158,156 +80,75 @@ import { MatTableDataSource } from '@angular/material/table';
     BodCurrencyControlModule,
     BodCommonModule
   ],
-  templateUrl: './counters-multiselect-table.component.html',
-  styleUrl: './counters-multiselect-table.component.scss'
+  templateUrl: './channels-multiselect-dialog.component.html',
+  styleUrls: ['./channels-multiselect-dialog.component.scss']
 })
-export class CountersMultiselectTableComponent implements OnInit, OnChanges {
+export class ChannelsMultiselectDialogComponent {
+  public translationKey = TranslationKey;
 
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('channelsTable', { static: false }) channelsTable: ChannelsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<ChannelTable[]>();
+  @Output() tableDirty = new EventEmitter<void>();
 
-  @Input() countersDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Counters[] = [];
-  @Output() rowSelected = new EventEmitter<Counters[]>();
-  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
-  @Output() dirtyChange = new EventEmitter<boolean>();
-  @Input() formGroup: UntypedFormGroup;
-
-  @ViewChild('countersMultiselectTable', { static: false })
-  countersTable: BodTableComponent;
-
-  private isDirty = false;
-
-  classificationTypeOptions = [
-    { label: 'Internal', value: 'Internal' },
-    { label: 'External', value: 'External' },
-    { label: 'Mixed', value: 'Mixed' }
-  ];
-
-  operatorTypeOptions = [
-    { label: 'Increment', value: 'Increment' },
-    { label: 'Decrement', value: 'Decrement' },
-    { label: 'Reset', value: 'Reset' }
-  ];
-
-  ngAfterViewInit(): void {
-    setTimeout(() => this.selectCountersRows(), 0);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
-      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectCountersRows(), 0);
-    }
-  }
-
-  private selectCountersRows(): void {
-    const tableData = this.countersDataSingleSelect?.datasource?.data || [];
-    const selection = this.countersTable?.selection;
-
-    if (!selection || tableData.length === 0) {
-      return;
-    }
-
-    selection.clear();
-
-    tableData.forEach(dataRow => {
-      const match = this.selectedRowSingleSelect.find(
-        sel => sel.id === dataRow.id
-      );
-      if (match) {
-        selection.select(dataRow);
-      }
-    });
-  }
-
-  public allowRowSelection = true;
-  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
-  public showEdit = true;
-  public defaultForm: FormGroup;
+  selectedRows: Channels[] = [];
+  public addChannelsFormGroup: UntypedFormGroup;
+  isDirty = false;
 
   constructor(
-    private fb: FormBuilder,
-    private transactionTypeService: TransactionTypeService
-  ) { }
+    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
 
-  ngOnInit() {
-    this.defaultForm = this.fb.group({});
   }
-
-  public onClassificationTypeChange(element: any, value: string) {
-    element.classificationType = value;
-    this.setDirty(true);
-  }
-
-  public onOperatorTypeChange(element: any, value: string) {
-    element.operatorType = value;
-    this.setDirty(true);
-  }
-
-  private loadCounterData() {
-    this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
-      this.countersDataSingleSelect.datasource.data = counters.map((item: any, index: number) => ({
-        id: index + 1,
-        code: item.code,
-        classificationType: '',
-        operatorType: '',
-        default: false
-      }));
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.channelsDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+      controls['option_' + row.id] = [row.option || null];
     });
-  }
+    this.addChannelsFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
 
-  public resetSelection() {
-    if (this.countersTable?.selection) {
-      this.countersTable.selection.clear();
+  }
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['channelData']) {
+      this.initForm();
     }
-    this.selectedRowSingleSelect = [];
-    this.setDirty(false);
   }
 
-  public rowSelectionSingleSelect(element: Counters[]) {
-    console.log('rowSelectionSingleSelect called with:', element);
-    this.selectedRowSingleSelect = element;
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-    this.setDirty(true);
-  }
-
-  public rowSelection(element: Counters[]) {
-    console.log('rowSelection called with:', element);
-    if (element.length !== 0) {
-      this.selectedRowSingleSelect = element;
-    } else {
-      this.selectedRowSingleSelect = [];
-    }
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-    this.setDirty(true);
-    console.log('Counters selectedRowSingleSelect:', this.selectedRowSingleSelect);
-  }
-
-  public onDefaultToggleChange(event: any, rowIndex: number) {
-    const data = [...this.countersDataSingleSelect.datasource.data];
-    const row = data.find(r => r.index === rowIndex);
-
-    if (!row) return;
-
-    if (event.checked) {
-      data.forEach(item => {
-        item.default = item.index === rowIndex;
-      });
-    } else {
-      row.default = false;
-    }
-
-    this.countersDataSingleSelect.datasource.data = data;
-
-    this.defaultChanged.emit({
-      rowIndex: rowIndex,
-      isDefault: event.checked
-    });
-  }
-
-  private setDirty(dirty: boolean) {
+  onTableDirtyChange(dirty: boolean) {
     this.isDirty = dirty;
-    this.dirtyChange.emit(this.isDirty);
+    if (dirty) {
+      this.addChannelsFormGroup.markAsDirty();
+    }
+  } public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addChannelsFormGroup.markAsDirty();
+
+  }
+
+
+  onRowSelected(selectedRows: Channels[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.addChannelsFormGroup.markAsDirty(); // <-- Mark the form as dirty
+    this.tableDirty.emit();
+    this.initForm();
+  }
+  
+
+  onSubmit() {
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedChannels: this.selectedRows });
+  }
+  onReset() {
+    this.isDirty = false;
   }
 }
