@@ -1,153 +1,170 @@
-<bod-form
-  [formGroup]="addChannelsFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onSubmit()"
-  (onReset)="onReset()"
-  fisStyle
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
 >
-  <bod-channels-multiselect-table
-    #channelsTable
-    [channelsDataSingleSelect]="data.channelsDataSingleSelect"
-    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
-    (rowSelected)="onRowSelected($event)"
-    (tableDirty)="onTableDirty()"
-    [formGroup]="addChannelsFormGroup"
-  ></bod-channels-multiselect-table>
-</bod-form>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'channel', templateName: channelTemplate1 },
+      { columnName: 'option', templateName: optionTemplate1 },
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    (onInlineEditRowActionClick)="
+      inlineEditRowActionClick($event, 0)
+    "
+    (onInlineFormEditSubmit)="onSaveChannelRow($event)"
+    #simpleEditTableRef
+    [expandedRowTemplate]="expandedRowTemplate1"
+    [inlineModal]="{
+      formGroup: addNewChannelForm,
+      formTemplateName: addNewChannelTemplate
+    }"
+  >
+    <ng-template #channelTemplate1 let-element="element" let-column="column">
+      <span>{{ element.channel }}</span>
+    </ng-template>
+    <ng-template
+      #optionTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <mat-form-field appearance="outline" fisStyle style="min-width: 120px">
+        <mat-select
+          panelClass="fis-style"
+          [(ngModel)]="element.option"
+          #optionModel="ngModel"
+          [ngModelOptions]="{ updateOn: 'change' }"
+          (ngModelChange)="onValueChange()"
+          required
+          (click)="$event.stopPropagation()"
+        >
+          <mat-option
+            *ngFor="let opt of column.inputModeOptions.model"
+            [value]="opt.value"
+          >
+            {{ opt.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-template>
+    
 
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <bod-table-actions
+        [actions]="rowLevelActionsForBasicEdit"
+        (onActionClick)="handleRowLevelActions($event.icon, index)"
+      >
+      </bod-table-actions>
+    </ng-template>
+  </bod-table>
+  <!-- ...existing code... -->
+  <form [formGroup]="addNewChannelForm">
+    <ng-template #addNewChannelTemplate>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.attributeForChannel'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="attributeForChannel"
+              name="attributeForChannel"
+              required
+              (selectionChange)="onAttributeForChannelChange($event)"
+            >
+              <mat-option
+                *ngFor="let attributeForChannel of attributeForChannels"
+                [value]="attributeForChannel.value"
+              >
+                {{ attributeForChannel.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
 
-import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ChannelsMultiselectTableComponent } from '../channels-multiselect-table/channels-multiselect-table.component';
-import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
-import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
-import { RufIconModule } from '@ruf/shell/icon';
-import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { Channels, ChannelTable } from '../../transaction-type.model';
-// If you want to use bod-form, also import BodFormModule
-// import { BodFormModule } from '@bod/common';
+      <!-- Counters Table -->
+      <bod-table
+        *ngIf="
+          addNewChannelForm.get('attributeForChannel')?.value === 'Counters'
+        "
+        #counterTable
+        [data]="tableWithSimpleCounter"
+        [tableActions]="actionsForChannels"
+        (onTableActionClick)="addCounterTableData()"
+        [modeOptions]="modeOptionsSimple"
+        [alignContent]="'top'"
+        [customColumnTemplates]="[
+          { columnName: 'counters', templateName: countersTemplate },
+          {
+            columnName: 'classificationType',
+            templateName: classificationTypeTemplate
+          },
+          { columnName: 'operatorType', templateName: operatorTypeTemplate },
+          { columnName: 'actions', templateName: editActionsTemplate1 }
+        ]"
+      >
+        <!-- Counters column template -->
+        <ng-template
+          #countersTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.code }}</span>
+        </ng-template>
 
-@Component({
-  selector: 'bod-channels-multiselect-dialog',
-  standalone: true,
-  imports: [
-    ChannelsMultiselectTableComponent,
-    ReactiveFormsModule,
-    BodFormModule,
-    FormsModule,
-    BodAutoCompleteModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    TranslateModule,
-    BodTableActionsModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatInputModule,
-    TranslateModule,
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    BodCommonModule
-  ],
-  templateUrl: './channels-multiselect-dialog.component.html',
-  styleUrls: ['./channels-multiselect-dialog.component.scss']
-})
-export class ChannelsMultiselectDialogComponent {
-  public translationKey = TranslationKey;
+        <!-- Classification Type column template -->
+        <ng-template
+          #classificationTypeTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.classificationType }}</span>
+        </ng-template>
 
-  formType: BodFormTypes = BodFormTypes.FORM;
-  @ViewChild('channelsTable', { static: false }) channelsTable: ChannelsMultiselectTableComponent;
-  @Output() rowSelected = new EventEmitter<ChannelTable[]>();
-  @Output() tableDirty = new EventEmitter<void>();
-
-  selectedRows: Channels[] = [];
-  public addChannelsFormGroup: UntypedFormGroup;
-  isDirty = false;
-
-  constructor(
-    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private fb: UntypedFormBuilder
-  ) {
-    this.initForm();
-
-  }
-  private initForm(): void {
-    const controls: { [key: string]: any } = {};
-    // Always get the latest data
-    const allRows = this.data?.channelsDataSingleSelect?.datasource?.data || [];
-    allRows.forEach((row: any, idx: number) => {
-      controls['option_' + row.id] = [row.option || null];
-    });
-    this.addChannelsFormGroup = this.fb.group(controls);
-    console.log('Dialog initForm - Form controls:', Object.keys(controls));
-
-  }
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] || changes['channelData']) {
-      this.initForm();
-    }
-  }
-
-  onTableDirtyChange(dirty: boolean) {
-    this.isDirty = dirty;
-    if (dirty) {
-      this.addChannelsFormGroup.markAsDirty();
-    }
-  } public isTableDirty = false;
-
-  public onTableDirty(): void {
-    this.isTableDirty = true;
-    this.addChannelsFormGroup.markAsDirty();
-
-  }
-
-
-  onRowSelected(selectedRows: Channels[]) {
-    console.log('onRowSelected called with:', selectedRows);
-    this.selectedRows = selectedRows;
-    this.isDirty = true;
-    this.addChannelsFormGroup.markAsDirty(); // <-- Mark the form as dirty
-    this.tableDirty.emit();
-    this.initForm();
-  }
-  
-
-  onSubmit() {
-    // Pass the selectedRows object when closing the dialog
-    this.dialogRef.close({ selectedChannels: this.selectedRows });
-  }
-  onReset() {
-    this.isDirty = false;
-  }
-}
+        <!-- Operator Type column template -->
+        <ng-template
+          #operatorTypeTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.operatorType }}</span>
+        </ng-template>
+        <ng-template
+          #editActionsTemplate1
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <bod-table-actions
+            [actions]="rowLevelActionsForBasicEdit"
+            (onActionClick)="handleCounterRowLevelActions($event.icon, index)"
+          >
+          </bod-table-actions>
+        </ng-template>
+      </bod-table>
+      <!-- End counters table -->
+    </ng-template>
+  </form>
+</bod-page-container>
