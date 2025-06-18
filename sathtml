@@ -1,38 +1,149 @@
-<form [formGroup]="formGroup">
-<bod-table
-  #channelsMultiselectTable
-  [data]="channelsDataSingleSelect"
-  (onRowSelect)="rowSelection($event)"
-  [rowSelectionStrategy]="rowSelectionStrategy"
-  [allowSelectAll]="allowRowSelection"
-  [alignContent]="'top'"
-  [customColumnTemplates]="[
-   
-    { columnName: 'option', templateName: optionTemplate }
-
-  ]"
-  [modeOptions]="{selection: true }"
+<bod-form
+  [formGroup]="addCountersFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
 >
-  <ng-template
-    #optionTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-  <mat-form-field appearance="outline" fisStyle style="width: 120px;">
-    <mat-select
-      [formControlName]="'option_' + (element.id ?? index)"
-      (selectionChange)="onOptionChange(element, $event.value)"
-      panelClass="fis-style"
-      name="option"
-      (click)="$event.stopPropagation()"
-    >
-        <mat-option *ngFor="let option of options" [value]="option.value">
-          {{ option.label }}
-        </mat-option>
-        
-      </mat-select>
-    </mat-form-field>
-  </ng-template>
-</bod-table>
-</form>
+  <bod-counters-multiselect-table
+    #countersTable
+    [countersDataSingleSelect]="data.countersDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addCountersFormGroup"
+  ></bod-counters-multiselect-table>
+</bod-form>
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { CountersMultiselectTableComponent } from '../counters-multiselect-table/counters-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Counters, CounterTable } from '../../transaction-type.model';
+
+@Component({
+  selector: 'bod-counters-multiselect-dialog',
+  standalone: true,
+  imports: [
+    CountersMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './counters-multiselect-dialog.component.html',
+  styleUrls: ['./counters-multiselect-dialog.component.scss']
+})
+export class CountersMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('countersTable', { static: false }) countersTable: CountersMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<CounterTable[]>();
+
+  selectedRows: Counters[] = [];
+  public addCountersFormGroup: UntypedFormGroup;
+  isDirty = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<CountersMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
+  }
+
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.countersDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+     
+      controls['operatorType_' + row.id] = [row.operatorType || null];
+    });
+    this.addCountersFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['counterData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isDirty = dirty;
+    if (dirty) {
+      this.addCountersFormGroup.markAsDirty();
+    }
+  }
+
+  public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addCountersFormGroup.markAsDirty();
+  }
+
+  onRowSelected(selectedRows: Counters[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.initForm();
+  }
+
+  onSubmit() {
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedCounters: this.selectedRows });
+  }
+
+  onReset() {
+    this.isDirty = false;
+  }
+}
