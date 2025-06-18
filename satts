@@ -1,8 +1,47 @@
+<form [formGroup]="formGroup">
+    <bod-table
+      #countersMultiselectTable
+      [data]="countersDataSingleSelect"
+      (onRowSelect)="rowSelection($event)"
+      [rowSelectionStrategy]="rowSelectionStrategy"
+      [allowSelectAll]="allowRowSelection"
+      [alignContent]="'top'"
+      [customColumnTemplates]="[
+        { columnName: 'operatorType', templateName: operatorTypeTemplate }
+      ]"
+      [modeOptions]="{selection: true }"
+    >
+    
+      <ng-template
+        #operatorTypeTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+        <mat-select
+          [formControlName]="'operatorType_' + (element.id ?? index)"
+          (selectionChange)="onOperatorTypeChange(element, $event.value)"
+          panelClass="fis-style"
+          name="operatorType"
+          (click)="$event.stopPropagation()"
+        >
+            <mat-option *ngFor="let option of operatorTypeOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-template>
+    </bod-table>
+    </form>
+
+
+
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
 import { TransactionTypeService } from '../../transaction-type.service';
-import { Channels } from '../../transaction-type.model';
+import { Counters } from '../../transaction-type.model';
 import {
   BOD_DATE_RANGE,
   BodAutoCompleteModule,
@@ -57,7 +96,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
-  selector: 'bod-channels-multiselect-table',
+  selector: 'bod-counters-multiselect-table',
   standalone: true,
   imports: [
     CommonModule,
@@ -98,48 +137,52 @@ import { MatTableDataSource } from '@angular/material/table';
     BodCurrencyControlModule,
     BodCommonModule
   ],
-  templateUrl: './channels-multiselect-table.component.html',
-  styleUrl: './channels-multiselect-table.component.scss'
+  templateUrl: './counters-multiselect-table.component.html',
+  styleUrl: './counters-multiselect-table.component.scss'
 })
-export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
+export class CountersMultiselectTableComponent implements OnInit, OnChanges {
 
   public modeOptions: ModeOptions = { input: false, reset: false };
   public modeOptionsSimple = this.modeOptions;
 
-  @Input() channelsDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Channels[] = [];
-  @Output() rowSelected = new EventEmitter<Channels[]>();
+  @Input() countersDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Counters[] = [];
+  @Output() rowSelected = new EventEmitter<Counters[]>();
   @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
   @Output() dirtyChange = new EventEmitter<boolean>();
   @Input() formGroup: UntypedFormGroup;
 
-
-  @ViewChild('channelsMultiselectTable', { static: false })
-  channelsTable: BodTableComponent;
+  @ViewChild('countersMultiselectTable', { static: false })
+  countersTable: BodTableComponent;
 
   private isDirty = false;
 
-  options = [
-    { label: 'Locked', value: 'Locked' },
-    { label: 'Mandatory', value: 'Mandatory' },
-    { label: 'Optional', value: 'Optional' },
-    { label: 'Proposed', value: 'Proposed' },
+  classificationTypeOptions = [
+    { label: 'Internal', value: 'Internal' },
+    { label: 'External', value: 'External' },
+    { label: 'Mixed', value: 'Mixed' }
+  ];
+
+  operatorTypeOptions = [
+    { label: 'Increment', value: 'Increment' },
+    { label: 'Decrement', value: 'Decrement' },
+    { label: 'Reset', value: 'Reset' }
   ];
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.selectChannelsRows(), 0);
+    setTimeout(() => this.selectCountersRows(), 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
       console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectChannelsRows(), 0);
+      setTimeout(() => this.selectCountersRows(), 0);
     }
   }
 
-  private selectChannelsRows(): void {
-    const tableData = this.channelsDataSingleSelect?.datasource?.data || [];
-    const selection = this.channelsTable?.selection;
+  private selectCountersRows(): void {
+    const tableData = this.countersDataSingleSelect?.datasource?.data || [];
+    const selection = this.countersTable?.selection;
 
     if (!selection || tableData.length === 0) {
       return;
@@ -156,6 +199,7 @@ export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
       }
     });
   }
+
   public allowRowSelection = true;
   public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
   public showEdit = true;
@@ -170,37 +214,44 @@ export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
     this.defaultForm = this.fb.group({});
   }
 
-  public onOptionChange(element: any, value: string) {
-    element.option = value;
+  public onClassificationTypeChange(element: any, value: string) {
+    element.classificationType = value;
     this.setDirty(true);
   }
 
-  private loadChannelData() {
-    this.transactionTypeService.getDeliveryChannel().subscribe((channels: any[]) => {
-      this.channelsDataSingleSelect.datasource.data = channels.map((item: any, index: number) => ({
+  public onOperatorTypeChange(element: any, value: string) {
+    element.operatorType = value;
+    this.setDirty(true);
+  }
+
+  private loadCounterData() {
+    this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
+      this.countersDataSingleSelect.datasource.data = counters.map((item: any, index: number) => ({
         id: index + 1,
-        channel: item.code,
-        option: '', // or set a default if needed
+        code: item.code,
+        classificationType: '',
+        operatorType: '',
         default: false
       }));
     });
   }
 
   public resetSelection() {
-    if (this.channelsTable?.selection) {
-      this.channelsTable.selection.clear();
+    if (this.countersTable?.selection) {
+      this.countersTable.selection.clear();
     }
     this.selectedRowSingleSelect = [];
     this.setDirty(false);
   }
 
-  public rowSelectionSingleSelect(element: Channels[]) {
+  public rowSelectionSingleSelect(element: Counters[]) {
     console.log('rowSelectionSingleSelect called with:', element);
     this.selectedRowSingleSelect = element;
     this.rowSelected.emit(this.selectedRowSingleSelect);
     this.setDirty(true);
   }
-  public rowSelection(element: Channels[]) {
+
+  public rowSelection(element: Counters[]) {
     console.log('rowSelection called with:', element);
     if (element.length !== 0) {
       this.selectedRowSingleSelect = element;
@@ -209,11 +260,11 @@ export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
     }
     this.rowSelected.emit(this.selectedRowSingleSelect);
     this.setDirty(true);
-    console.log('Channels selectedRowSingleSelect:', this.selectedRowSingleSelect);
+    console.log('Counters selectedRowSingleSelect:', this.selectedRowSingleSelect);
   }
 
   public onDefaultToggleChange(event: any, rowIndex: number) {
-    const data = [...this.channelsDataSingleSelect.datasource.data];
+    const data = [...this.countersDataSingleSelect.datasource.data];
     const row = data.find(r => r.index === rowIndex);
 
     if (!row) return;
@@ -226,7 +277,7 @@ export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
       row.default = false;
     }
 
-    this.channelsDataSingleSelect.datasource.data = data;
+    this.countersDataSingleSelect.datasource.data = data;
 
     this.defaultChanged.emit({
       rowIndex: rowIndex,
@@ -238,5 +289,4 @@ export class ChannelsMultiselectTableComponent implements OnInit, OnChanges {
     this.isDirty = dirty;
     this.dirtyChange.emit(this.isDirty);
   }
-
 }
