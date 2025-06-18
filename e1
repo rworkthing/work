@@ -29,20 +29,27 @@ export interface TransactionTypeList {
   chargeEligible: string;
   cashTransactionAllowed: string;
   financialOperationType: number;
+  optionalityType: string;
+  eventType: number;
   multiLingualCodeTranslationList: MultiLingualTranslation[];
   postingRepeatedTextList: any;
   postingTextLanguageRltnpList: any;
   postingCategoryList: any[];
   productTypePostingSTDRltnpList: any[];
   productTypePostingSTDDSRltnpList: any[];
+  productTypePostingSTDDSCounterRltnp: any[];
   productTypePostingSTDCategoryRltnpList: any[];
-  productTypePostingSTDPAMRltnpRltnp: any;
+  productTypePostingSTDPAMRltnpList: any;
   productTypePostingSTDRoletypeRltnpList: any[];
-  productTypeTransEventTypePostingSTDRltnp: any;
+  productTypeTransEventTypePostingSTDRltnpList: any;
   externalTransactionTypePostingSTDRltnpDpList: any;
   transactionTypeInquiry:TransactionTypeInquiry[]
   contraPostInquiry:TransactionTypeInquiry[],
   additionalDetialinquiry: TransactionTypeInquiry[],
+  prdtTypeRelInquiry: TransactionTypeInquiry[],
+  relInquiry: TransactionTypeInquiry[],
+  psamInquiry: TransactionTypeInquiry[],
+  
 }
 
 export interface TransactionTypeInquiry {
@@ -56,6 +63,13 @@ export interface MultiLingualTranslation {
   attributeType: string;
   neutralCode: string;
   translationText: string;
+}
+export interface PSAMTable{
+  order: number;
+  value: string;
+  balance_type_identifier: number;
+  sub_balance_type: string;
+  customization_type_value:string
 }
 
 /**
@@ -100,8 +114,10 @@ export interface Channels {
 export interface CounterTable {
   id: number;
   code: string;
-  classificationType: string;
-  operatorType: string;
+  identifier: string | number;
+  classificationType?: string;
+  operatorType?: string;
+  channelidentifier?: string | number; // <-- Add this line
 }
 
 /**
