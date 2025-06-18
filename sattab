@@ -1,428 +1,292 @@
-import { Injectable } from "@angular/core";
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+<form [formGroup]="formGroup">
+    <bod-table
+      #countersMultiselectTable
+      [data]="countersDataSingleSelect"
+      (onRowSelect)="rowSelection($event)"
+      [rowSelectionStrategy]="rowSelectionStrategy"
+      [allowSelectAll]="allowRowSelection"
+      [alignContent]="'top'"
+      [customColumnTemplates]="[
+        { columnName: 'operatorType', templateName: operatorTypeTemplate }
+      ]"
+      [modeOptions]="{selection: true }"
+    >
+    
+      <ng-template
+        #operatorTypeTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+        <mat-select
+          [formControlName]="'operatorType_' + (element.id ?? index)"
+          (selectionChange)="onOperatorTypeChange(element, $event.value)"
+          panelClass="fis-style"
+          name="operatorType"
+          (click)="$event.stopPropagation()"
+        >
+            <mat-option *ngFor="let option of operatorTypeOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-template>
+    </bod-table>
+    </form>
+
+
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Counters } from '../../transaction-type.model';
 import {
-  Column,
-  ColumnType,
-  InquiryLayoutInput,
-  UIContextService
+  BOD_DATE_RANGE,
+  BodAutoCompleteModule,
+  BodCommonDialogModel,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableFilterType,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule,
+  SelectPageMode
 } from '@bod/common';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { DataSharingService } from '../data-sharing-service.service';
-import { TransactionTypeList } from "./transaction-type.model";
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
 
-@Injectable({
-  providedIn: 'root'
+@Component({
+  selector: 'bod-counters-multiselect-table',
+  standalone: true,
+  imports: [
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './counters-multiselect-table.component.html',
+  styleUrl: './counters-multiselect-table.component.scss'
 })
+export class CountersMultiselectTableComponent implements OnInit, OnChanges {
 
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
 
-export class TransactionTypeService {
-  public columns: Column[] = [
-    {
-      name: 'code',
-      title: 'Transaction Type',
-      truncate: true,
-      noOverflow: true,
-      width: 70,
-      widthUnit: 'rem'
-    },
+  @Input() countersDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Counters[] = [];
+  @Output() rowSelected = new EventEmitter<Counters[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  @Output() dirtyChange = new EventEmitter<boolean>();
+  @Input() formGroup: UntypedFormGroup;
 
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-  public postingTextColumn: Column[] = [
-    {
-      name: 'event',
-      title: 'Event',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'channel',
-      title: 'Channel',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'language',
-      title: 'Language',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'text',
-      title: 'Text',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
+  @ViewChild('countersMultiselectTable', { static: false })
+  countersTable: BodTableComponent;
 
+  private isDirty = false;
 
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-  public externalTransactionColumn: Column[] = [
-    {
-      name: 'code',
-      title: 'Code',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'type',
-      title: 'Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'subtype',
-      title: 'Sub Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-
-
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
+  classificationTypeOptions = [
+    { label: 'Internal', value: 'Internal' },
+    { label: 'External', value: 'External' },
+    { label: 'Mixed', value: 'Mixed' }
   ];
 
-  public channels: Column[] = [
-    {
-      name: 'code',
-      title: 'Channel',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'option',
-      title: 'Option',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
-        ],
-        validators: {
-          required: true
-        }
+  operatorTypeOptions = [
+    { label: 'Increment', value: 'Increment' },
+    { label: 'Decrement', value: 'Decrement' },
+    { label: 'Reset', value: 'Reset' }
+  ];
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectCountersRows(), 0);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+      setTimeout(() => this.selectCountersRows(), 0);
+    }
+  }
+
+  private selectCountersRows(): void {
+    const tableData = this.countersDataSingleSelect?.datasource?.data || [];
+    const selection = this.countersTable?.selection;
+
+    if (!selection || tableData.length === 0) {
+      return;
+    }
+
+    selection.clear();
+
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.id === dataRow.id
+      );
+      if (match) {
+        selection.select(dataRow);
       }
-    }
-  ];
-  public counters: Column[] = [
-    {
-      name: 'code',
-      title: 'Counters',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'classificationType',
-      title: 'Classification Type',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'operatorType',
-      title: 'Operator Type',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
-        ],
-        validators: {
-          required: true
-        }
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
+    });
+  }
 
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
 
-  private eventUrl = '';
-  private channelUrl = '';
-  private localeUrl = '';
-  private productTypeUrl = '';
-  private condUrl = '';
-  private financeOptypUrl = '';
-  private transTypeUrl = '';
-  private saveUrl = '';
-  private updateUrl = '';
-  private retrieveUrl = '';
-  private deleteUrl = '';
-  private counterUrl = '';
-
-
-
-
-  businessProductLine: any[] = [];
-  private reqDfnId = '';
-  private clientCode = '';
-  private countryCode = '';
-  private productLines: any[] = [];
-  private productTypes: any[] = [];
-  private productTypesIdfr: any[] = [];
-  private productTypeKeyValueMap: { [key: string]: number } = {};
-  private productTypeKeys: string[] = [];
-  private productTypeValues: number[] = [];
   constructor(
-    private http: HttpClient,
-    private uiContextService: UIContextService,
-    private readonly dataSharingService: DataSharingService
-  ) {
-    let url =
-      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
-        .sdkServiceUrl.value;
+    private fb: FormBuilder,
+    private transactionTypeService: TransactionTypeService
+  ) { }
 
-    this.dataSharingService.data$.subscribe(data => {
-      if (data) {
-        this.reqDfnId = data.reqDfnId;
-        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
-        this.countryCode = data.countryCode;
-        this.clientCode = data.countryCode;
-        this.productLines = [
-          ...new Set(this.businessProductLine.map(obj => obj.value))
-        ];
-        this.productTypes = [
-          ...new Set(this.businessProductLine.map(obj => obj.type))
-        ];
-        if (data.identifier) {
-          try {
-            const parsedIdentifiers: { key: string; value: number }[] = JSON.parse(data.identifier);
+  ngOnInit() {
+    this.defaultForm = this.fb.group({});
+  }
 
-            this.productTypeKeyValueMap = parsedIdentifiers.reduce(
-              (acc: { [key: string]: number }, curr: { key: string; value: number }) => {
-                acc[curr.key] = curr.value;
-                return acc;
-              },
-              {}
-            );
+  public onClassificationTypeChange(element: any, value: string) {
+    element.classificationType = value;
+    this.setDirty(true);
+  }
 
-            this.productTypeKeys = parsedIdentifiers.map((item: { key: string; value: number }) => item.key);
-            this.productTypeValues = parsedIdentifiers.map((item: { key: string; value: number }) => item.value);
-          } catch (e) {
-            console.error('Failed to parse identifier JSON:', e);
-          }
-        }
-        this.eventUrl = url + '/basedata/transevtype';
-        this.channelUrl = url + '/basedata/deliverysystem';
-        this.localeUrl = url + '/basedata/multilingualinfo';
-        this.productTypeUrl = url + '/basedata/producttype';
-        this.condUrl = url + '/basedata/condition';
-        this.financeOptypUrl = url + '/basedata/financialoperationtype';
-        this.transTypeUrl = url + '/basedata/pstgstd';
-        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
-        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
-        this.retrieveUrl =
-          url +
-          '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=TransactionType';
-        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
-        this.counterUrl = url + '/basedata/counterbyprodtypeids' + '?product-type-idfr-list=1110101' 
+  public onOperatorTypeChange(element: any, value: string) {
+    element.operatorType = value;
+    this.setDirty(true);
+  }
 
-
-
-
-
-      }
+  private loadCounterData() {
+    this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
+      this.countersDataSingleSelect.datasource.data = counters.map((item: any, index: number) => ({
+        id: index + 1,
+        code: item.code,
+        classificationType: '',
+        operatorType: '',
+        default: false
+      }));
     });
   }
 
-  createHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'country-code': this.countryCode,
-      'client-code': this.clientCode,
-      'product-line': this.productLines,
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID(),
-      'requirement-id': this.reqDfnId
+  public resetSelection() {
+    if (this.countersTable?.selection) {
+      this.countersTable.selection.clear();
+    }
+    this.selectedRowSingleSelect = [];
+    this.setDirty(false);
+  }
+
+  public rowSelectionSingleSelect(element: Counters[]) {
+    console.log('rowSelectionSingleSelect called with:', element);
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+  }
+
+  public rowSelection(element: Counters[]) {
+    console.log('rowSelection called with:', element);
+    if (element.length !== 0) {
+      this.selectedRowSingleSelect = element;
+    } else {
+      this.selectedRowSingleSelect = [];
+    }
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    console.log('Counters selectedRowSingleSelect:', this.selectedRowSingleSelect);
+  }
+
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    const data = [...this.countersDataSingleSelect.datasource.data];
+    const row = data.find(r => r.index === rowIndex);
+
+    if (!row) return;
+
+    if (event.checked) {
+      data.forEach(item => {
+        item.default = item.index === rowIndex;
+      });
+    } else {
+      row.default = false;
+    }
+
+    this.countersDataSingleSelect.datasource.data = data;
+
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
     });
   }
-  generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0,
-          v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }
-    );
-  }
 
-  getTransactionEvent(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.eventUrl}`, { headers });
+  private setDirty(dirty: boolean) {
+    this.isDirty = dirty;
+    this.dirtyChange.emit(this.isDirty);
   }
-  getDeliveryChannel(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.channelUrl}`, { headers });
-  }
-  getCounters(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.counterUrl}`, { headers });
-  }
-
-  getLocaleCodes(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.localeUrl}`, { headers });
-  }
-  getInternalProdType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.productTypeUrl}`, { headers });
-  }
-  getConditions(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.condUrl}`, { headers });
-  }
-  getFinancialOperationType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.financeOptypUrl}`, { headers });
-  }
-  getTransactionType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.transTypeUrl}`, { headers });
-  }
-  saveTransactionType(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.post(this.saveUrl, request, { headers });
-  }
-  updateTransactiionType(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.put(this.updateUrl, request, { headers });
-  }
-  deleteTransactionType(
-    metadataConfigType: string,
-    metadataConfigIdfr: number
-  ): Observable<any> {
-    const headers = this.createHeaders();
-    const params = {
-      'metadata-config-type': metadataConfigType,
-      'metadata-config-idfr': metadataConfigIdfr
-    };
-
-    return this.http.delete(this.deleteUrl, { headers, params });
-  }
-  public getProductTypeValues(): number[] {
-    return this.productTypeValues;
-  }
-  public getProductTypeKeys(): string[] {
-    return this.productTypeKeys;
-  }
-
-  retrieveTransactionType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<TransactionTypeList[]>(this.retrieveUrl, { headers });
-  }
-  //
-  public getTransactionTypeData(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.transactionTypeInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.transactionTypeInquiry[i].id,
-        label: element.transactionTypeInquiry[i].label,
-        value: element.transactionTypeInquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  //getPostingDetails
-
-  public getPostingDetails(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.contraPostInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.contraPostInquiry[i].id,
-        label: element.contraPostInquiry[i].label,
-        value: element.contraPostInquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-  //additionDetails
-
-  public additionDetails(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.additionalDetialinquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.additionalDetialinquiry[i].id,
-        label: element.additionalDetialinquiry[i].label,
-        value: element.additionalDetialinquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-
-
-
 }
