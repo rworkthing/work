@@ -47,6 +47,7 @@
           (ngModelChange)="onValueChange()"
           required
           (click)="$event.stopPropagation()"
+          [disabled]="element.code === 'All'"
         >
           <mat-option
             *ngFor="let opt of column.inputModeOptions.model"
@@ -66,7 +67,7 @@
       let-index="index"
     >
       <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
+        [actions]="getRowLevelActionsForBasicEdit(element)"
         (onActionClick)="handleRowLevelActions($event.icon, index)"
       >
       </bod-table-actions>
@@ -165,6 +166,116 @@
         </ng-template>
       </bod-table>
       <!-- End counters table -->
+
+       <!-- Conditions Table -->
+       <bod-table
+       *ngIf="
+         addNewChannelForm.get('attributeForChannel')?.value === 'Conditions'
+       "
+       #conditionTable
+       [data]="tableWithSimpleCondition"
+       [tableActions]="actionsForChannels"
+       (onTableActionClick)="addConditionTableData()"
+       [modeOptions]="modeOptionsSimple"
+       [alignContent]="'top'"
+       [customColumnTemplates]="[
+         { columnName: 'conditions', templateName: conditionsTemplate },
+         {
+           columnName: 'relationshipType',
+           templateName: relationshipTypeTemplate
+         },
+         { columnName: 'actions', templateName: editActionsTemplate1 }
+       ]"
+     >
+       <!-- Conditions column template -->
+       <ng-template
+         #conditionsTemplate
+         let-element="element"
+         let-column="column"
+         let-index="index"
+       >
+         <span>{{ element.code }}</span>
+       </ng-template>
+
+       <!-- Relationship Type column template -->
+       <ng-template
+         #relationshipTypeTemplate
+         let-element="element"
+         let-column="column"
+         let-index="index"
+       >
+         <span>{{ element.relationshipType }}</span>
+       </ng-template>
+
+       <ng-template
+         #editActionsTemplate1
+         let-element="element"
+         let-column="column"
+         let-index="index"
+       >
+         <bod-table-actions
+           [actions]="rowLevelActionsForBasicEdit"
+           (onActionClick)="handleConditionRowLevelActions($event.icon, index)"
+         >
+         </bod-table-actions>
+       </ng-template>
+     </bod-table>
+     <!-- End conditions table -->
+
+      <!-- Restrictions Table -->
+      <bod-table
+        *ngIf="
+          addNewChannelForm.get('attributeForChannel')?.value === 'Restrictions'
+        "
+        #restrictionTable
+        [data]="tableWithSimpleRestriction"
+        [tableActions]="actionsForChannels"
+        (onTableActionClick)="addRestrictionTableData()"
+        [modeOptions]="modeOptionsSimple"
+        [alignContent]="'top'"
+        [customColumnTemplates]="[
+          { columnName: 'restrictions', templateName: restrictionsTemplate },
+          {
+            columnName: 'type',
+            templateName: restrictionTypeTemplate
+          },
+          { columnName: 'actions', templateName: editActionsTemplate1 }
+        ]"
+      >
+        <!-- Restrictions column template -->
+        <ng-template
+          #restrictionsTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.code }}</span>
+        </ng-template>
+
+        <!-- Type column template -->
+        <ng-template
+          #restrictionTypeTemplate
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <span>{{ element.type }}</span>
+        </ng-template>
+
+        <ng-template
+          #editActionsTemplate1
+          let-element="element"
+          let-column="column"
+          let-index="index"
+        >
+          <bod-table-actions
+            [actions]="rowLevelActionsForBasicEdit"
+            (onActionClick)="handleRestrictionRowLevelActions($event.icon, index)"
+          >
+          </bod-table-actions>
+        </ng-template>
+      </bod-table>
+      <!-- End restrictions table -->
     </ng-template>
   </form>
 </bod-page-container>
