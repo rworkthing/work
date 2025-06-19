@@ -1,37 +1,96 @@
+/**
+ * Interface for Communication Table data
+ */
+export interface CommunicationTable {
+  id: number;
+  serviceElement: string;
+  communicationServices: string;
+  identifier?: string | number;
+  channelidentifier?: string | number;
+}
+
+/**
+ * Interface for Communication Configuration in API payload
+ */
+export interface CommunicationConfiguration {
+  communicationIdentifier: string;
+  serviceElement: string;
+  communicationServices: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Communication Dropdown Options
+ */
+export interface CommunicationOption {
+  label: string;
+  value: string;
+}
+
+export interface Communications {
+  id: number;
+  serviceElement: string;
+  communicationServices: string;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 <form [formGroup]="formGroup">
     <bod-table
-      #conditionsMultiselectTable
-      [data]="conditionsDataSingleSelect"
+      #communicationsMultiselectTable
+      [data]="communicationsDataSingleSelect"
       (onRowSelect)="rowSelection($event)"
       [rowSelectionStrategy]="rowSelectionStrategy"
       [allowSelectAll]="allowRowSelection"
       [alignContent]="'top'"
       [customColumnTemplates]="[
-        { columnName: 'relationshipType', templateName: relationshipTypeTemplate }
+        { columnName: 'serviceElement', templateName: serviceElementTemplate },
+        { columnName: 'communicationServices', templateName: communicationServicesTemplate }
       ]"
       [modeOptions]="{selection: true }"
     >
     
-      <ng-template
-        #relationshipTypeTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
+    <ng-template
+      #serviceElementTemplate
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <!-- Show as readonly text for Service Element -->
+      <span style="padding-left: 8px; font-weight: 500;">
+        {{ element.serviceElement || 'Blank Alert' }}
+      </span>
+    </ng-template>
+
+    <ng-template
+      #communicationServicesTemplate
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
       <mat-form-field appearance="outline" fisStyle style="width: 120px;">
         <mat-select
-          [formControlName]="'relationshipType_' + (element.id ?? index)"
-          (selectionChange)="onRelationshipTypeChange(element, $event.value)"
+          [formControlName]="'communicationServices_' + (element.id ?? index)"
+          (selectionChange)="onCommunicationServicesChange(element, $event.value)"
           panelClass="fis-style"
-          name="relationshipType"
+          name="communicationServices"
           (click)="$event.stopPropagation()"
         >
-            <mat-option *ngFor="let option of relationshipTypeOptions" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-template>
+          <mat-option *ngFor="let service of communicationServicesOptions" [value]="service.value">
+            {{ service.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-template>
     </bod-table>
 </form>
 
@@ -47,7 +106,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
 import { TransactionTypeService } from '../../transaction-type.service';
-import { Conditions } from '../../transaction-type.model';
+import { Communications } from '../../transaction-type.model';
 import {
   BOD_DATE_RANGE,
   BodAutoCompleteModule,
@@ -102,7 +161,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
-  selector: 'bod-conditions-multiselect-table',
+  selector: 'bod-communications-multiselect-table',
   standalone: true,
   imports: [
     CommonModule,
@@ -143,47 +202,47 @@ import { MatTableDataSource } from '@angular/material/table';
     BodCurrencyControlModule,
     BodCommonModule
   ],
-  templateUrl: './conditions-multiselect-table.component.html',
-  styleUrl: './conditions-multiselect-table.component.scss'
+  templateUrl: './communications-multiselect-table.component.html',
+  styleUrl: './communications-multiselect-table.component.scss'
 })
-export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
+export class CommunicationsMultiselectTableComponent implements OnInit, OnChanges {
 
   public modeOptions: ModeOptions = { input: false, reset: false };
   public modeOptionsSimple = this.modeOptions;
 
-  @Input() conditionsDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Conditions[] = [];
-  @Output() rowSelected = new EventEmitter<Conditions[]>();
+  @Input() communicationsDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Communications[] = [];
+  @Output() rowSelected = new EventEmitter<Communications[]>();
   @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
   @Output() dirtyChange = new EventEmitter<boolean>();
   @Input() formGroup: UntypedFormGroup;
 
-  @ViewChild('conditionsMultiselectTable', { static: false })
-  conditionsTable: BodTableComponent;
+  @ViewChild('communicationsMultiselectTable', { static: false })
+  communicationsTable: BodTableComponent;
 
   private isDirty = false;
 
-  relationshipTypeOptions = [
-    { label: 'Locked', value: 'Locked' },
-    { label: 'Mandatory', value: 'Mandatory' },
-    { label: 'Optional', value: 'Optional' },
-    { label: 'Proposed', value: 'Proposed' }
+  communicationServicesOptions = [
+    { label: 'Email', value: 'Email' },
+    { label: 'SMS', value: 'SMS' },
+    { label: 'Push Notification', value: 'Push Notification' },
+    { label: 'In-App Message', value: 'In-App Message' }
   ];
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.selectConditionsRows(), 0);
+    setTimeout(() => this.selectCommunicationsRows(), 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
       console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectConditionsRows(), 0);
+      setTimeout(() => this.selectCommunicationsRows(), 0);
     }
   }
 
-  private selectConditionsRows(): void {
-    const tableData = this.conditionsDataSingleSelect?.datasource?.data || [];
-    const selection = this.conditionsTable?.selection;
+  private selectCommunicationsRows(): void {
+    const tableData = this.communicationsDataSingleSelect?.datasource?.data || [];
+    const selection = this.communicationsTable?.selection;
 
     if (!selection || tableData.length === 0) {
       return;
@@ -215,38 +274,40 @@ export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
     this.defaultForm = this.fb.group({});
   }
 
-  public onRelationshipTypeChange(element: any, value: string) {
-    element.relationshipType = value;
+  public onCommunicationServicesChange(element: any, value: string) {
+    element.communicationServices = value;
     this.setDirty(true);
   }
 
-  private loadConditionData() {
-    this.transactionTypeService.getConditions().subscribe((conditions: any[]) => {
-      this.conditionsDataSingleSelect.datasource.data = conditions.map((item: any, index: number) => ({
-        id: index + 1,
-        code: item.code,
-        relationshipType: '',
-        default: false
-      }));
-    });
+  private loadCommunicationData() {
+    // This could be replaced with an actual API call if communication services come from backend
+    // For now, we'll use hardcoded data since Service Element is "Blank Alert"
+    const communicationData = this.communicationServicesOptions.map((service, index) => ({
+      id: index + 1,
+      serviceElement: 'Blank Alert',
+      communicationServices: service.value,
+      default: false
+    }));
+
+    this.communicationsDataSingleSelect.datasource.data = communicationData;
   }
 
   public resetSelection() {
-    if (this.conditionsTable?.selection) {
-      this.conditionsTable.selection.clear();
+    if (this.communicationsTable?.selection) {
+      this.communicationsTable.selection.clear();
     }
     this.selectedRowSingleSelect = [];
     this.setDirty(false);
   }
 
-  public rowSelectionSingleSelect(element: Conditions[]) {
+  public rowSelectionSingleSelect(element: Communications[]) {
     console.log('rowSelectionSingleSelect called with:', element);
     this.selectedRowSingleSelect = element;
     this.rowSelected.emit(this.selectedRowSingleSelect);
     this.setDirty(true);
   }
 
-  public rowSelection(element: Conditions[]) {
+  public rowSelection(element: Communications[]) {
     console.log('rowSelection called with:', element);
     if (element.length !== 0) {
       this.selectedRowSingleSelect = element;
@@ -255,11 +316,11 @@ export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
     }
     this.rowSelected.emit(this.selectedRowSingleSelect);
     this.setDirty(true);
-    console.log('Conditions selectedRowSingleSelect:', this.selectedRowSingleSelect);
+    console.log('Communications selectedRowSingleSelect:', this.selectedRowSingleSelect);
   }
 
   public onDefaultToggleChange(event: any, rowIndex: number) {
-    const data = [...this.conditionsDataSingleSelect.datasource.data];
+    const data = [...this.communicationsDataSingleSelect.datasource.data];
     const row = data.find(r => r.index === rowIndex);
 
     if (!row) return;
@@ -272,7 +333,7 @@ export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
       row.default = false;
     }
 
-    this.conditionsDataSingleSelect.datasource.data = data;
+    this.communicationsDataSingleSelect.datasource.data = data;
 
     this.defaultChanged.emit({
       rowIndex: rowIndex,
@@ -296,25 +357,26 @@ export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
 
 
 
-
-
 <bod-form
-  [formGroup]="addConditionsFormGroup"
+  [formGroup]="addCommunicationsFormGroup"
   rufId
   [type]="formType"
   (onSubmit)="onSubmit()"
   (onReset)="onReset()"
   fisStyle
 >
-  <bod-conditions-multiselect-table
-    #conditionsTable
-    [conditionsDataSingleSelect]="data.conditionsDataSingleSelect"
+  <bod-communications-multiselect-table
+    #communicationsTable
+    [communicationsDataSingleSelect]="data.communicationsDataSingleSelect"
     [selectedRowSingleSelect]="data.selectedRowSingleSelect"
     (rowSelected)="onRowSelected($event)"
     (tableDirty)="onTableDirty()"
-    [formGroup]="addConditionsFormGroup"
-  ></bod-conditions-multiselect-table>
+    [formGroup]="addCommunicationsFormGroup"
+  ></bod-communications-multiselect-table>
 </bod-form>
+
+
+
 
 
 
@@ -326,7 +388,7 @@ export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
 
 import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ConditionsMultiselectTableComponent } from '../conditions-multiselect-table/conditions-multiselect-table.component';
+import { CommunicationsMultiselectTableComponent } from '../communications-multiselect-table/communications-multiselect-table.component';
 import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
 import { CommonModule } from '@angular/common';
@@ -342,13 +404,13 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 import { RufIconModule } from '@ruf/shell/icon';
 import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { Conditions, ConditionTable } from '../../transaction-type.model';
+import { Communications, CommunicationTable } from '../../transaction-type.model';
 
 @Component({
-  selector: 'bod-conditions-multiselect-dialog',
+  selector: 'bod-communications-multiselect-dialog',
   standalone: true,
   imports: [
-    ConditionsMultiselectTableComponent,
+    CommunicationsMultiselectTableComponent,
     ReactiveFormsModule,
     BodFormModule,
     FormsModule,
@@ -384,22 +446,22 @@ import { Conditions, ConditionTable } from '../../transaction-type.model';
     BodCurrencyControlModule,
     BodCommonModule
   ],
-  templateUrl: './conditions-multiselect-dialog.component.html',
-  styleUrls: ['./conditions-multiselect-dialog.component.scss']
+  templateUrl: './communications-multiselect-dialog.component.html',
+  styleUrls: ['./communications-multiselect-dialog.component.scss']
 })
-export class ConditionsMultiselectDialogComponent {
+export class CommunicationsMultiselectDialogComponent {
   public translationKey = TranslationKey;
 
   formType: BodFormTypes = BodFormTypes.FORM;
-  @ViewChild('conditionsTable', { static: false }) conditionsTable: ConditionsMultiselectTableComponent;
-  @Output() rowSelected = new EventEmitter<ConditionTable[]>();
+  @ViewChild('communicationsTable', { static: false }) communicationsTable: CommunicationsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<CommunicationTable[]>();
 
-  selectedRows: Conditions[] = [];
-  public addConditionsFormGroup: UntypedFormGroup;
+  selectedRows: Communications[] = [];
+  public addCommunicationsFormGroup: UntypedFormGroup;
   isDirty = false;
 
   constructor(
-    public dialogRef: MatDialogRef<ConditionsMultiselectDialogComponent>,
+    public dialogRef: MatDialogRef<CommunicationsMultiselectDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
     private fb: UntypedFormBuilder
   ) {
@@ -409,17 +471,16 @@ export class ConditionsMultiselectDialogComponent {
   private initForm(): void {
     const controls: { [key: string]: any } = {};
     // Always get the latest data
-    const allRows = this.data?.conditionsDataSingleSelect?.datasource?.data || [];
+    const allRows = this.data?.communicationsDataSingleSelect?.datasource?.data || [];
     allRows.forEach((row: any, idx: number) => {
-     
-      controls['relationshipType_' + row.id] = [row.relationshipType || null];
+      controls['communicationServices_' + row.id] = [row.communicationServices || null];
     });
-    this.addConditionsFormGroup = this.fb.group(controls);
+    this.addCommunicationsFormGroup = this.fb.group(controls);
     console.log('Dialog initForm - Form controls:', Object.keys(controls));
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] || changes['conditionData']) {
+    if (changes['data'] || changes['communicationData']) {
       this.initForm();
     }
   }
@@ -427,7 +488,7 @@ export class ConditionsMultiselectDialogComponent {
   onTableDirtyChange(dirty: boolean) {
     this.isDirty = dirty;
     if (dirty) {
-      this.addConditionsFormGroup.markAsDirty();
+      this.addCommunicationsFormGroup.markAsDirty();
     }
   }
 
@@ -435,19 +496,20 @@ export class ConditionsMultiselectDialogComponent {
 
   public onTableDirty(): void {
     this.isTableDirty = true;
-    this.addConditionsFormGroup.markAsDirty();
+    this.addCommunicationsFormGroup.markAsDirty();
   }
 
-  onRowSelected(selectedRows: Conditions[]) {
+  onRowSelected(selectedRows: Communications[]) {
     console.log('onRowSelected called with:', selectedRows);
     this.selectedRows = selectedRows;
     this.isDirty = true;
-    this.initForm();
+    this.addCommunicationsFormGroup.markAsDirty();
+    // this.initForm();
   }
 
   onSubmit() {
     // Pass the selectedRows object when closing the dialog
-    this.dialogRef.close({ selectedConditions: this.selectedRows });
+    this.dialogRef.close({ selectedCommunications: this.selectedRows });
   }
 
   onReset() {
@@ -469,82 +531,327 @@ export class ConditionsMultiselectDialogComponent {
 
 
 
-export interface PostingTextTable {
-  channel: string;
-  event?: string;
-  language: string;
-  text: string;
-}
-export interface TransactionTypeTable {
-  code: string;
-  description: string;
-  type: string;
-  subtype: string;
-}
+// Add this to the TransactionTypeService class
 
-export interface TransactionTypeList {
-  identifier: number;
-  code: string;
-  name: string;
-  description: string;
-  paymentType: string;
-  overridePayment: string;
-  settlementDirection: string;
-  contra: number;
-  contraTemplateIdentifier: number | null;
-  reversibleAllowed: string;
-  reverseCondition: number;
-  classificationType: string;
-  externalSystemCode: string | null;
-  invSystemBalance: string;
-  chargeEligible: string;
-  cashTransactionAllowed: string;
-  financialOperationType: number;
-  optionalityType: string;
-  eventType: number;
-  multiLingualCodeTranslationList: MultiLingualTranslation[];
-  postingRepeatedTextList: any;
-  postingTextLanguageRltnpList: any;
-  postingCategoryList: any[];
-  productTypePostingSTDRltnpList: any[];
-  productTypePostingSTDDSRltnpList: any[];
-  productTypePostingSTDDSCounterRltnp: any[];
-  productTypePostingSTDCategoryRltnpList: any[];
-  productTypePostingSTDPAMRltnpList: any;
-  productTypePostingSTDRoletypeRltnpList: any[];
-  productTypeTransEventTypePostingSTDRltnpList: any;
-  externalTransactionTypePostingSTDRltnpDpList: any;
-  transactionTypeInquiry:TransactionTypeInquiry[]
-  contraPostInquiry:TransactionTypeInquiry[],
-  additionalDetialinquiry: TransactionTypeInquiry[],
-  prdtTypeRelInquiry: TransactionTypeInquiry[],
-  relInquiry: TransactionTypeInquiry[],
-  psamInquiry: TransactionTypeInquiry[],
+public communications: Column[] = [
+  {
+    name: 'serviceElement',
+    title: 'Service Element',
+    width: 2,
+    truncate: true,
+    noOverflow: true,
+    widthUnit: 'rem'
+  },
+  {
+    name: 'communicationServices',
+    title: 'Communication Services',
+    width: 2,
+    inputModeOptions: {
+      type: ColumnType.select,
+      model: [
+        { label: 'Email', value: 'Email' },
+        { label: 'SMS', value: 'SMS' },
+        { label: 'Push Notification', value: 'Push Notification' },
+        { label: 'In-App Message', value: 'In-App Message' }
+      ],
+      validators: {
+        required: true
+      }
+    }
+  },
+  {
+    name: 'actions',
+    title: ' ',
+    hasAction: true
+  }
+];
+
+// Add this method to get communications data
+getCommunications(): Observable<any> {
+  // Since Service Element is hardcoded as "Blank Alert", we can return static data
+  // or make an API call if communication services are dynamic
+  const communicationServices = [
+    { code: 'Email', identifier: '1', serviceElement: 'Blank Alert' },
+    { code: 'SMS', identifier: '2', serviceElement: 'Blank Alert' },
+    { code: 'Push Notification', identifier: '3', serviceElement: 'Blank Alert' },
+    { code: 'In-App Message', identifier: '4', serviceElement: 'Blank Alert' }
+  ];
   
+  return new Observable(observer => {
+    observer.next(communicationServices);
+    observer.complete();
+  });
 }
 
-export interface TransactionTypeInquiry {
-  id: number;
-  label: string;
-  value: string;
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add these imports to the main channels component
+import { CommunicationsMultiselectTableComponent } from './communications-multiselect-table/communications-multiselect-table.component';
+import { CommunicationsMultiselectDialogComponent } from './communications-multiselect-dialog/communications-multiselect-dialog.component';
+import { CommunicationTable } from '../transaction-type.model';
+
+// Add these to the @Component imports array
+CommunicationsMultiselectTableComponent,
+CommunicationsMultiselectDialogComponent,
+
+// Add these properties to the component class
+public communicationMap: { [key: number]: CommunicationTable[] } = {};
+@Output() communicationDetails = new EventEmitter<any[]>();
+@Input() communicationData: CommunicationTable[] = [];
+
+public dataWithSimpleCommunication: CommunicationTable[] = [];
+
+public tableWithSimpleCommunication: BodTableMetadata = {
+  title: 'Communications',
+  columns: [...this.transactionTypeService.communications],
+  datasource: new MatTableDataSource<CommunicationTable>(this.dataWithSimpleCommunication),
+  noRecordsMessage: 'No Communication defined'
+};
+
+public communicationsTableMetadata: BodTableMetadata = {
+  title: 'Communications',
+  columns: [...this.transactionTypeService.communications],
+  rowLeftAction: RowLeftAction.multipleRowSelection,
+  enablePagination: true,
+  paginationOptions: {
+    pageSize: 5,
+    length: 12,
+    pageSizeOptions: [5, 8, 10],
+    showLastButton: true,
+    showPageSizeOptions: true
+  },
+  datasource: new MatTableDataSource<CommunicationTable>([]),
+  noRecordsMessage: 'No Communication defined'
+};
+
+// Add this method to handle adding communication table data
+addCommunicationTableData() {
+  this.addNewChannelForm.markAsDirty();
+  this.transactionTypeService.getCommunications().subscribe((response: any[]) => {
+    const dialogTableMetadata: BodTableMetadata = {
+      ...this.communicationsTableMetadata,
+      datasource: new MatTableDataSource<CommunicationTable>(
+        response.map((communication, idx) => ({
+          id: idx + 1,
+          serviceElement: communication.serviceElement,
+          communicationServices: communication.code,
+          identifier: communication.identifier
+        }))
+      )
+    };
+
+    // Use the communications for the current row
+    const selectedCommunications = this.communicationMap[this.currentChannelRowId!] || [];
+
+    const dialogRef = this.dialog.open(CommunicationsMultiselectDialogComponent, {
+      width: '1000px',
+      height: '600px',
+      data: {
+        communicationsDataSingleSelect: dialogTableMetadata,
+        selectedRowSingleSelect: selectedCommunications
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.selectedCommunications) {
+        const mapped = result.selectedCommunications.map(row => ({
+          id: row.id,
+          serviceElement: row.serviceElement || 'Blank Alert',
+          communicationServices: row.communicationServices,
+          identifier: row.identifier
+        }));
+        // Store communications for this channel row only
+        this.communicationMap[this.currentChannelRowId!] = mapped;
+        // Update the UI for the current row
+        this.dataWithSimpleCommunication = mapped;
+        this.tableWithSimpleCommunication.datasource.data = [...mapped];
+        // Optionally update the row in dataWithSimpleEdit
+        const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
+        if (idx !== -1) {
+          this.dataWithSimpleEdit[idx].communications = mapped;
+        }
+        this.communicationDetails.emit(mapped);
+      }
+    });
+  });
 }
 
-export interface MultiLingualTranslation {
-  isoCode: string;
-  attributeType: string;
-  neutralCode: string;
-  translationText: string;
+// Add this method to handle communication row level actions
+handleCommunicationRowLevelActions($event: any, index: number) {
+  if ($event === 'trash') {
+    // Remove the row from your data array
+    this.dataWithSimpleCommunication.splice(index, 1);
+    // Update the table datasource
+    this.tableWithSimpleCommunication.datasource.data = [...this.dataWithSimpleCommunication];
+    // Emit the updated data if needed
+    this.communicationDetails.emit(this.dataWithSimpleCommunication);
+  }
+  this.addNewChannelForm.markAsDirty();
+  // You can add 'edit' or 'save' logic here if needed
 }
-export interface PSAMTable{
-  order: number;
-  value: string;
-  balance_type_identifier: number;
-  sub_balance_type: string;
-  customization_type_value:string
+
+// Update the inlineEditRowActionClick method to load communications
+inlineEditRowActionClick(
+  inlineEditOutput: InlineEditOutput,
+  index: number,
+  template?: any
+) {
+  const element = (this.editRowElement = inlineEditOutput.editRowElement);
+
+  if (element && element.id) {
+    this.addNewChannelForm.reset();
+    this.addNewChannelForm.patchValue(element);
+    this.currentChannelRowId = element.id; // Track the channel row being edited
+  }
+
+  this.editIndex = inlineEditOutput.editRowIndex ?? index;
+
+  this.singleRowEdit = {
+    modeOptions: { input: true, reset: false },
+    index: this.editIndex
+  };
+
+  // Load counters for this channel row if you have them stored
+  this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
+  this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
+
+  // Load conditions for this channel row if you have them stored
+  this.dataWithSimpleCondition = this.conditionMap?.[element.id] ? [...this.conditionMap[element.id]] : [];
+  this.tableWithSimpleCondition.datasource.data = this.dataWithSimpleCondition;
+
+  // Load restrictions for this channel row if you have them stored
+  this.dataWithSimpleRestriction = this.restrictionMap?.[element.id] ? [...this.restrictionMap[element.id]] : [];
+  this.tableWithSimpleRestriction.datasource.data = this.dataWithSimpleRestriction;
+
+  // Load communications for this channel row if you have them stored
+  this.dataWithSimpleCommunication = this.communicationMap?.[element.id] ? [...this.communicationMap[element.id]] : [];
+  this.tableWithSimpleCommunication.datasource.data = this.dataWithSimpleCommunication;
 }
+
+// Update the getAllCommunicationsWithChannelIdentifier method
+public getAllCommunicationsWithChannelIdentifier(): any[] {
+  // Flatten all communications from all channels, adding channelidentifier to each
+  return (this.dataWithSimpleEdit || [])
+    .filter(channel => Array.isArray(channel.communications))
+    .map(channel =>
+      (channel.communications ?? []).map(communication => ({
+        ...communication,
+        channelidentifier: channel.identifier
+      }))
+    )
+    .reduce((acc, val) => acc.concat(val), []);
+}
+
+// Update the emitCompleteDelta method to include communications
+emitCompleteDelta() {
+  const currentData = this.getCurrentTableData();
+  const allCounters = this.getAllCountersWithChannelIdentifier();
+  const allConditions = this.getAllConditionsWithChannelIdentifier();
+  const allRestrictions = this.getAllRestrictionsWithChannelIdentifier();
+  const allCommunications = this.getAllCommunicationsWithChannelIdentifier();
+  console.log('[ChannelsMainTableComponent] Emitting CompleteDelta:', {
+    channels: currentData,
+    counters: allCounters,
+    conditions: allConditions,
+    restrictions: allRestrictions,
+    communications: allCommunications
+  });
+  this.completeDeltaChange.emit({
+    channels: currentData,
+    counters: allCounters,
+    conditions: allConditions,
+    restrictions: allRestrictions,
+    communications: allCommunications
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Add this section to the main HTML template after the Restrictions Table section -->
+
+<!-- Communications Table -->
+<bod-table
+  *ngIf="
+    addNewChannelForm.get('attributeForChannel')?.value === 'CommunicationServices'
+  "
+  #communicationTable
+  [data]="tableWithSimpleCommunication"
+  [tableActions]="actionsForChannels"
+  (onTableActionClick)="addCommunicationTableData()"
+  [modeOptions]="modeOptionsSimple"
+  [alignContent]="'top'"
+  [customColumnTemplates]="[
+    { columnName: 'serviceElement', templateName: serviceElementTemplate },
+    { columnName: 'communicationServices', templateName: communicationServicesTemplate },
+    { columnName: 'actions', templateName: editActionsTemplate1 }
+  ]"
+>
+  <!-- Service Element column template -->
+  <ng-template
+    #serviceElementTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <span>{{ element.serviceElement || 'Blank Alert' }}</span>
+  </ng-template>
+
+  <!-- Communication Services column template -->
+  <ng-template
+    #communicationServicesTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <span>{{ element.communicationServices }}</span>
+  </ng-template>
+
+  <ng-template
+    #editActionsTemplate1
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <bod-table-actions
+      [actions]="rowLevelActionsForBasicEdit"
+      (onActionClick)="handleCommunicationRowLevelActions($event.icon, index)"
+    >
+    </bod-table-actions>
+  </ng-template>
+</bod-table>
+<!-- End communications table -->
+
+
+
+
+
+
+
+
+
 
 /**
- * Interface for Channel Table data
+ * Updated Interface for Channel Table data with Communications
  */
 export interface ChannelTable {
   id: number;
@@ -554,103 +861,8 @@ export interface ChannelTable {
   attributeForChannel?: string;
   counters?: CounterTable[];
   conditions?: ConditionTable[];
-}
-
-/**
- * Interface for Channel Configuration in API payload
- */
-export interface ChannelConfiguration {
-  channelIdentifier: string;
-  channelCode: string;
-  optionType: string;
-  transactionTypeIdentifier: number;
-}
-
-/**
- * Interface for Channel Dropdown Options
- */
-export interface ChannelOption {
-  label: string;
-  value: string;
-}
-
-export interface Channels {
-  id: number;
-  code: string;
-  option: string;
-}
-
-/**
- * Interface for Counter Table data
- */
-export interface CounterTable {
-  id: number;
-  code: string;
-  identifier: string | number;
-  classificationType?: string;
-  operatorType?: string;
-  channelidentifier?: string | number; // <-- Add this line
-}
-
-/**
- * Interface for Counter Configuration in API payload
- */
-export interface CounterConfiguration {
-  counterIdentifier: string;
-  counterCode: string;
-  classificationType: string;
-  operatorType: string;
-  transactionTypeIdentifier: number;
-}
-
-/**
- * Interface for Counter Dropdown Options
- */
-export interface CounterOption {
-  label: string;
-  value: string;
-}
-
-export interface Counters {
-  id: number;
-  code: string;
-  classificationType: string;
-  operatorType: string;
-}
-
-/**
- * Interface for Condition Table data
- */
-export interface ConditionTable {
-  id: number;
-  code: string;
-  identifier: string | number;
-  relationshipType?: string;
-  channelidentifier?: string | number;
-}
-
-/**
- * Interface for Condition Configuration in API payload
- */
-export interface ConditionConfiguration {
-  conditionIdentifier: string;
-  conditionCode: string;
-  relationshipType: string;
-  transactionTypeIdentifier: number;
-}
-
-/**
- * Interface for Condition Dropdown Options
- */
-export interface ConditionOption {
-  label: string;
-  value: string;
-}
-
-export interface Conditions {
-  id: number;
-  code: string;
-  relationshipType: string;
+  restrictions?: RestrictionTable[];
+  communications?: CommunicationTable[]; // Add this line
 }
 
 
@@ -660,284 +872,3 @@ export interface Conditions {
 
 
 
-
-
-// Add this to the TransactionTypeService class, after the existing counters definition
-
-  public conditions: Column[] = [
-    {
-      name: 'code',
-      title: 'Conditions',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'relationshipType',
-      title: 'Relationship Type',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
-        ],
-        validators: {
-          required: true
-        }
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-
-
-
-
-
-
-
-// Add these imports at the top
-import { ConditionsMultiselectTableComponent } from './conditions-multiselect-table/conditions-multiselect-table.component';
-import { ConditionsMultiselectDialogComponent } from './conditions-multiselect-dialog/conditions-multiselect-dialog.component';
-import { ConditionTable } from '../transaction-type.model';
-
-// Add to the imports array in @Component decorator
-imports: [
-  ConditionsMultiselectTableComponent,
-  ConditionsMultiselectDialogComponent,
-  // ... existing imports
-]
-
-// Add these properties to the component class
-export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
-  public conditionMap: { [key: number]: ConditionTable[] } = {}; // Add this line
-  
-  // Condition-related properties
-  @Output() conditionDetails = new EventEmitter<any[]>(); // Add this line
-  @Input() conditionData: ConditionTable[] = [];
-
-  public selectedRowConditions: ConditionTable[] = [];
-  public selectedConditionData: any[] = [];
-
-  public conditionsTableMetadata: BodTableMetadata = {
-    title: 'Conditions',
-    columns: [...this.transactionTypeService.conditions],
-    rowLeftAction: RowLeftAction.multipleRowSelection,
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 5,
-      length: 12,
-      pageSizeOptions: [5, 8, 10],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<ConditionTable>([]), // EMPTY ARRAY
-    noRecordsMessage: 'No Condition defined'
-  };
-
-  public dataWithSimpleCondition: ConditionTable[] = [];
-
-  public tableWithSimpleCondition: BodTableMetadata = {
-    title: 'Conditions',
-    columns: [...this.transactionTypeService.conditions],
-    datasource: new MatTableDataSource<ConditionTable>(this.dataWithSimpleCondition),
-    noRecordsMessage: 'No Condition defined'
-  };
-
-  // Add this method
-  addConditionTableData() {
-    this.addNewChannelForm.markAsDirty();
-    this.transactionTypeService.getConditions().subscribe((response: any[]) => {
-      const dialogTableMetadata: BodTableMetadata = {
-        ...this.conditionsTableMetadata,
-        datasource: new MatTableDataSource<ConditionTable>(
-          response.map((condition, idx) => ({
-            id: idx + 1,
-            code: condition.code,
-            identifier: condition.identifier,
-            relationshipType: ''
-          }))
-        )
-      };
-  
-      // Use the conditions for the current row
-      const selectedConditions = this.conditionMap[this.currentChannelRowId!] || [];
-  
-      const dialogRef = this.dialog.open(ConditionsMultiselectDialogComponent, {
-        width: '1000px',
-        height: '600px',
-        data: {
-          conditionsDataSingleSelect: dialogTableMetadata,
-          selectedRowSingleSelect: selectedConditions
-        }
-      });
-  
-      dialogRef.afterClosed().subscribe(result => {
-        if (result?.selectedConditions) {
-          const mapped = result.selectedConditions.map(row => ({
-            id: row.id,
-            code: row.code,
-            identifier: row.identifier,
-            relationshipType: row.relationshipType
-          }));
-          // Store conditions for this channel row only
-          this.conditionMap[this.currentChannelRowId!] = mapped;
-          // Update the UI for the current row
-          this.dataWithSimpleCondition = mapped;
-          this.tableWithSimpleCondition.datasource.data = [...mapped];
-          // Optionally update the row in dataWithSimpleEdit
-          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
-          if (idx !== -1) {
-            this.dataWithSimpleEdit[idx].conditions = mapped;
-          }
-          this.conditionDetails.emit(mapped);
-        }
-      });
-    });
-  }
-
-  // Add this method
-  handleConditionRowLevelActions($event: any, index: number) {
-    if ($event === 'trash') {
-      // Remove the row from your data array
-      this.dataWithSimpleCondition.splice(index, 1);
-      // Update the table datasource
-      this.tableWithSimpleCondition.datasource.data = [...this.dataWithSimpleCondition];
-      // Emit the updated data if needed
-      this.conditionDetails.emit(this.dataWithSimpleCondition);
-    }
-    this.addNewChannelForm.markAsDirty();
-    // You can add 'edit' or 'save' logic here if needed
-  }
-
-  // Update the inlineEditRowActionClick method to load conditions for the current row
-  inlineEditRowActionClick(
-    inlineEditOutput: InlineEditOutput,
-    index: number,
-    template?: any
-  ) {
-    const element = (this.editRowElement = inlineEditOutput.editRowElement);
-
-    if (element && element.id) {
-      this.addNewChannelForm.reset();
-      this.addNewChannelForm.patchValue(element);
-      this.currentChannelRowId = element.id; // Track the channel row being edited
-    }
-
-    this.editIndex = inlineEditOutput.editRowIndex ?? index;
-
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: this.editIndex
-    };
-
-    // Load counters for this channel row if you have them stored
-    this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
-    this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
-    
-    // Load conditions for this channel row if you have them stored
-    this.dataWithSimpleCondition = this.conditionMap?.[element.id] ? [...this.conditionMap[element.id]] : [];
-    this.tableWithSimpleCondition.datasource.data = this.dataWithSimpleCondition;
-  }
-
-  // Update the getAllCountersWithChannelIdentifier method to include conditions
-  public getAllConditionsWithChannelIdentifier(): any[] {
-    // Flatten all conditions from all channels, adding channelidentifier to each
-    return (this.dataWithSimpleEdit || [])
-      .filter(channel => Array.isArray(channel.conditions))
-      .map(channel =>
-        (channel.conditions ?? []).map(condition => ({
-          ...condition,
-          channelidentifier: channel.identifier
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
-  }
-
-  // Update the emitCompleteDelta method to include conditions
-  emitCompleteDelta() {
-    const currentData = this.getCurrentTableData();
-    const allCounters = this.getAllCountersWithChannelIdentifier();
-    const allConditions = this.getAllConditionsWithChannelIdentifier();
-    console.log('[ChannelsMainTableComponent] Emitting CompleteDelta:', {
-      channels: currentData,
-      counters: allCounters,
-      conditions: allConditions
-    });
-    this.completeDeltaChange.emit({
-      channels: currentData,
-      counters: allCounters,
-      conditions: allConditions
-    });
-  }
-}
-
-
-
-
-
-
-
-<!-- Add this conditions table section after the counters table and before the closing ng-template -->
-      
-      <!-- Conditions Table -->
-      <bod-table
-        *ngIf="
-          addNewChannelForm.get('attributeForChannel')?.value === 'Conditions'
-        "
-        #conditionTable
-        [data]="tableWithSimpleCondition"
-        [tableActions]="actionsForChannels"
-        (onTableActionClick)="addConditionTableData()"
-        [modeOptions]="modeOptionsSimple"
-        [alignContent]="'top'"
-        [customColumnTemplates]="[
-          { columnName: 'conditions', templateName: conditionsTemplate },
-          {
-            columnName: 'relationshipType',
-            templateName: relationshipTypeTemplate
-          },
-          { columnName: 'actions', templateName: editActionsTemplate1 }
-        ]"
-      >
-        <!-- Conditions column template -->
-        <ng-template
-          #conditionsTemplate
-          let-element="element"
-          let-column="column"
-          let-index="index"
-        >
-          <span>{{ element.code }}</span>
-        </ng-template>
-
-        <!-- Relationship Type column template -->
-        <ng-template
-          #relationshipTypeTemplate
-          let-element="element"
-          let-column="column"
-          let-index="index"
-        >
-          <span>{{ element.relationshipType }}</span>
-        </ng-template>
-
-        <ng-template
-          #editActionsTemplate1
-          let-element="element"
-          let-column="column"
-          let-index="index"
-        >
-          <bod-table-actions
-            [actions]="rowLevelActionsForBasicEdit"
-            (onActionClick)="handleConditionRowLevelActions($event.icon, index)"
-          >
-          </bod-table-actions>
-        </ng-template>
-      </bod-table>
-      <!-- End conditions table -->
