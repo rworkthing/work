@@ -38,6 +38,8 @@ export interface TransactionTypeList {
   productTypePostingSTDRltnpList: any[];
   productTypePostingSTDDSRltnpList: any[];
   productTypePostingSTDDSCounterRltnp: any[];
+  productTypePostingSTDDSRestrcitionRltnp: any[];
+  productTypePostingSTDDSCDRltnpList: any[];
   productTypePostingSTDCategoryRltnpList: any[];
   productTypePostingSTDPAMRltnpList: any;
   productTypePostingSTDRoletypeRltnpList: any[];
@@ -82,6 +84,8 @@ export interface ChannelTable {
   identifier?: string;
   attributeForChannel?: string;
   counters?: CounterTable[];
+  conditions?: ConditionTable[];
+  restrictions?: RestrictionTable[];
 }
 
 /**
@@ -144,4 +148,75 @@ export interface Counters {
   code: string;
   classificationType: string;
   operatorType: string;
+}
+
+/**
+ * Interface for Condition Table data
+ */
+export interface ConditionTable {
+  id: number;
+  code: string;
+  identifier: string | number;
+  relationshipType?: string;
+  channelidentifier?: string | number;
+}
+
+/**
+ * Interface for Condition Configuration in API payload
+ */
+export interface ConditionConfiguration {
+  conditionIdentifier: string;
+  conditionCode: string;
+  relationshipType: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Condition Dropdown Options
+ */
+export interface ConditionOption {
+  label: string;
+  value: string;
+}
+
+export interface Conditions {
+  id: number;
+  code: string;
+  relationshipType: string;
+}
+
+
+/**
+ * Interface for Restriction Table data
+ */
+export interface RestrictionTable {
+  id: number;
+  code: string;
+  identifier: string | number;
+  type?: string;
+  channelidentifier?: string | number;
+}
+
+/**
+ * Interface for Restriction Configuration in API payload
+ */
+export interface RestrictionConfiguration {
+  restrictionIdentifier: string;
+  restrictionCode: string;
+  type: string;
+  transactionTypeIdentifier: number;
+}
+
+/**
+ * Interface for Restriction Dropdown Options
+ */
+export interface RestrictionOption {
+  label: string;
+  value: string;
+}
+
+export interface Restrictions {
+  id: number;
+  code: string;
+  type: string;
 }
