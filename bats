@@ -59,6 +59,12 @@ import { ChannelTable, CounterTable } from '../transaction-type.model';
 import { ChannelsMultiselectDialogComponent } from './channels-multiselect-dialog/channels-multiselect-dialog.component';
 import { CountersMultiselectTableComponent } from './counters-multiselect-table/counters-multiselect-table.component';
 import { CountersMultiselectDialogComponent } from './counters-multiselect-dialog/counters-multiselect-dialog.component';
+import { ConditionsMultiselectTableComponent } from './conditions-multiselect-table/conditions-multiselect-table.component';
+import { ConditionsMultiselectDialogComponent } from './conditions-multiselect-dialog/conditions-multiselect-dialog.component';
+import { ConditionTable } from '../transaction-type.model';
+import { RestrictionsMultiselectTableComponent } from './restrictions-multiselect-table/restrictions-multiselect-table.component';
+import { RestrictionsMultiselectDialogComponent } from './restrictions-multiselect-dialog/restrictions-multiselect-dialog.component';
+import { RestrictionTable } from '../transaction-type.model';
 
 
 
@@ -66,6 +72,10 @@ import { CountersMultiselectDialogComponent } from './counters-multiselect-dialo
   selector: 'bod-channels-main-table',
   standalone: true,
   imports: [
+    RestrictionsMultiselectTableComponent,
+    RestrictionsMultiselectDialogComponent,
+    ConditionsMultiselectTableComponent,
+    ConditionsMultiselectDialogComponent,
     CountersMultiselectTableComponent,
     CountersMultiselectDialogComponent,
     ChannelsMultiselectTableComponent,
@@ -105,6 +115,8 @@ import { CountersMultiselectDialogComponent } from './counters-multiselect-dialo
 })
 export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   public counterMap: { [key: number]: CounterTable[] } = {}; // Add this line
+  public conditionMap: { [key: number]: ConditionTable[] } = {};
+  public restrictionMap: { [key: number]: RestrictionTable[] } = {}; // Add this line
 
   private subscriptions: Subscription = new Subscription();
   public messages: NotificationMessage[] = [];
@@ -135,18 +147,28 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
   // Counter-related properties
   @Output() counterDetails = new EventEmitter<any[]>(); // Add this line
   @Input() counterData: CounterTable[] = [];
+  @Output() conditionDetails = new EventEmitter<any[]>(); // Add this line
+  @Input() conditionData: ConditionTable[] = [];
+  @Output() restrictionDetails = new EventEmitter<any[]>(); // Add this line
+  @Input() restrictionData: RestrictionTable[] = [];
 
 
   emitCompleteDelta() {
     const currentData = this.getCurrentTableData();
     const allCounters = this.getAllCountersWithChannelIdentifier();
+    const allConditions = this.getAllConditionsWithChannelIdentifier();
+    const allRestrictions = this.getAllRestrictionsWithChannelIdentifier();
     console.log('[ChannelsMainTableComponent] Emitting CompleteDelta:', {
       channels: currentData,
-      counters: allCounters
+      counters: allCounters,
+      conditions: allConditions,
+      restrictions: allRestrictions
     });
     this.completeDeltaChange.emit({
       channels: currentData,
-      counters: allCounters
+      counters: allCounters,
+      conditions: allConditions,
+      restrictions: allRestrictions
     });
   }
 
@@ -167,6 +189,44 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
   public selectedRowCounters: CounterTable[] = [];
   public selectedCounterData: any[] = [];
 
+  public selectedRowConditions: ConditionTable[] = [];
+  public selectedConditionData: any[] = [];
+
+  public selectedRowRestrictions: RestrictionTable[] = [];
+  public selectedRestrictionData: any[] = [];
+
+  public restrictionsTableMetadata: BodTableMetadata = {
+    title: 'Restrictions',
+    columns: [...this.transactionTypeService.restrictions],
+    rowLeftAction: RowLeftAction.multipleRowSelection,
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 5,
+      length: 12,
+      pageSizeOptions: [5, 8, 10],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<RestrictionTable>([]), // EMPTY ARRAY
+    noRecordsMessage: 'No Restriction defined'
+  };
+
+
+  public conditionsTableMetadata: BodTableMetadata = {
+    title: 'Conditions',
+    columns: [...this.transactionTypeService.conditions],
+    rowLeftAction: RowLeftAction.multipleRowSelection,
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 5,
+      length: 12,
+      pageSizeOptions: [5, 8, 10],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<ConditionTable>([]), // EMPTY ARRAY
+    noRecordsMessage: 'No Condition defined'
+  };
 
   public countersTableMetadata: BodTableMetadata = {
     title: 'Counters',
@@ -239,6 +299,18 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
     }
   ];
 
+  getRowLevelActionsForBasicEdit(row: any): BodTableAction[] {
+    return [
+      {
+        id: 1,
+        icon: 'trash',
+        label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+        mostCommon: false,
+        disabled: row?.code === 'All'
+      }
+    ];
+  }
+
   public actionsForSimple: BodTableAction[] = [
 
     { id: 'edit', icon: 'edit', label: 'Edit' }
@@ -257,7 +329,7 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
 
   attributeForChannels = [
     { label: 'Counters', value: 'Counters' },
-    { label: 'Restriction', value: 'Restriction' },
+    { label: 'Restrictions', value: 'Restrictions' },
     { label: 'Communication Services', value: 'CommunicationServices' },
     { label: 'Conditions', value: 'Conditions' },
   ];
@@ -368,6 +440,20 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
     this.onPageAction("");
     this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
 
+    if (!this.dataWithSimpleEdit.some(row => row.code === 'All')) {
+      const allRow = {
+        id: -1, // Use 0 or another unique value that won't clash with real channels
+        code: 'All',
+        channel: 'All', 
+        option: '',
+        identifier: '0',
+        attributeForChannel: '',
+        // Add any other required fields here
+      };
+      this.dataWithSimpleEdit.unshift(allRow);
+      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
+    }
+
     this.subscriptions.add(
       this.translate.onTranslationChange.subscribe(lang => {
         const keys = [
@@ -384,7 +470,8 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
       })
     );
   }
-  public countersRawData: any[] = []; // Store the raw counters
+  public countersRawData: any[] = [];
+  public conditionsRawData: any[] = []; // Store the raw counters
 
 
   loadDropdownData(): void {
@@ -420,6 +507,16 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
       // Optionally, update selectedRowCounters if you want to preselect
       // this.selectedRowCounters = [];
       console.log('Counters response:', JSON.stringify(response, null, 2));
+    });
+    this.transactionTypeService.getConditions().subscribe((response: any[]) => {
+      this.conditionsRawData = response;
+      
+      console.log('conditions response:', JSON.stringify(response, null, 2));
+    });
+    this.transactionTypeService.getRestrictions().subscribe((response: any[]) => {
+      this.conditionsRawData = response;
+      
+      console.log('Restrictions response:', JSON.stringify(response, null, 2));
     });
   }
 
@@ -465,6 +562,25 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
     noRecordsMessage: 'No Counter defined'
   };
 
+  public dataWithSimpleCondition: ConditionTable[] = [];
+
+  public tableWithSimpleCondition: BodTableMetadata = {
+    title: 'Conditions',
+    columns: [...this.transactionTypeService.conditions],
+    datasource: new MatTableDataSource<ConditionTable>(this.dataWithSimpleCondition),
+    noRecordsMessage: 'No Condition defined'
+  };
+
+  public dataWithSimpleRestriction: RestrictionTable[] = [];
+
+  public tableWithSimpleRestriction: BodTableMetadata = {
+    title: 'Restrictions',
+    columns: [...this.transactionTypeService.restrictions],
+    datasource: new MatTableDataSource<RestrictionTable>(this.dataWithSimpleRestriction),
+    noRecordsMessage: 'No Restriction defined'
+  };
+
+
   public reset() {
     this.modeOptionsSimple = { input: true, reset: true };
     this.updateMsgArr(this.resetMsg);
@@ -488,7 +604,7 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
     this.addNewChannelForm.markAsDirty();
   }
   // channels-main-table.component.ts
- 
+
   public newId = this.generateUniqueId(this.tableWithSimpleEdit.datasource.data);
 
   // Initialize all required fields for the new row
@@ -523,7 +639,7 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
     const formValue = this.addNewChannelForm.value;
     const rowId = formValue.id;
     const index = this.dataWithSimpleEdit.findIndex(row => row.id === rowId);
-  
+
     // Validation example for counters (if needed)
     if (this.addNewChannelForm.get('attributeForChannel')?.value === 'Counters') {
       // Example: check for empty counters
@@ -533,7 +649,7 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
         return;
       }
     }
-  
+
     // Update the row with form and counters data
     if (index !== -1) {
       const savedRow = {
@@ -544,18 +660,18 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
       };
       // Print/log what you are saving
       console.log('Saving row:', savedRow);
-  
+
       this.dataWithSimpleEdit[index] = savedRow;
       this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
     }
-  
+
     // Optionally reset edit mode or close modal
     this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
     this.emitCompleteDelta();
   }
 
 
-  
+
 
   public addTableData() {
     const dialogRef = this.dialog.open(ChannelsMultiselectDialogComponent, {
@@ -576,17 +692,30 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
           id: row.id,
           option: row.option,
           channel: row.code,
-          identifier: row.identifier,// or row.channel if already named so
+          identifier: row.identifier,
           attributeForChannel: currentAttr
         }));
-        console.log('Assigning to table:', mapped);
-        if (mapped.some(row => !row.channel || !row.option)) {
-          console.error('Some rows are missing channel or option:', mapped);
+  
+        // --- Ensure "All" row is always present at the top ---
+        const allRow = this.dataWithSimpleEdit.find(row => row.code === 'All' );
+        let newData: any[] = [];
+        if (allRow) {
+          newData = [allRow, ...mapped.filter(row => (row.code ?? row.channel) !== 'All')];
+        } else {
+          // fallback: create a new "All" row if not present
+          newData = [{
+            id: -1,
+            code: 'All',
+            channel: 'All',
+            option: '',
+            identifier: '0',
+            attributeForChannel: currentAttr
+          }, ...mapped.filter(row => (row.code ?? row.channel) !== 'All')];
         }
-        this.dataWithSimpleEdit = mapped;
-        this.tableWithSimpleEdit.datasource.data = [...mapped];
-        this.channelData = [...mapped];
-        console.log('Recieved Channels from multi:', this.dataWithSimpleEdit);
+  
+        this.dataWithSimpleEdit = newData;
+        this.tableWithSimpleEdit.datasource.data = [...newData];
+        this.channelData = [...newData];
         this.emitCompleteDelta();
       }
     });
@@ -607,10 +736,10 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
           }))
         )
       };
-  
+
       // Use the counters for the current row
       const selectedCounters = this.counterMap[this.currentChannelRowId!] || [];
-  
+
       const dialogRef = this.dialog.open(CountersMultiselectDialogComponent, {
         width: '1000px',
         height: '600px',
@@ -619,7 +748,7 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
           selectedRowSingleSelect: selectedCounters
         }
       });
-  
+
       dialogRef.afterClosed().subscribe(result => {
         if (result?.selectedCounters) {
           const mapped = result.selectedCounters.map(row => ({
@@ -643,6 +772,136 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
         }
       });
     });
+  }
+
+  addConditionTableData() {
+    this.addNewChannelForm.markAsDirty();
+    this.transactionTypeService.getConditions().subscribe((response: any[]) => {
+      const dialogTableMetadata: BodTableMetadata = {
+        ...this.conditionsTableMetadata,
+        datasource: new MatTableDataSource<ConditionTable>(
+          response.map((condition, idx) => ({
+            id: idx + 1,
+            code: condition.cdarValue,
+            identifier: condition.identifier,
+            relationshipType: ''
+          }))
+        )
+      };
+  
+      // Use the conditions for the current row
+      const selectedConditions = this.conditionMap[this.currentChannelRowId!] || [];
+  
+      const dialogRef = this.dialog.open(ConditionsMultiselectDialogComponent, {
+        width: '1000px',
+        height: '600px',
+        data: {
+          conditionsDataSingleSelect: dialogTableMetadata,
+          selectedRowSingleSelect: selectedConditions
+        }
+      });
+  
+      dialogRef.afterClosed().subscribe(result => {
+        if (result?.selectedConditions) {
+          const mapped = result.selectedConditions.map(row => ({
+            id: row.id,
+            code: row.code,
+            identifier: row.identifier,
+            relationshipType: row.relationshipType
+          }));
+          // Store conditions for this channel row only
+          this.conditionMap[this.currentChannelRowId!] = mapped;
+          // Update the UI for the current row
+          this.dataWithSimpleCondition = mapped;
+          this.tableWithSimpleCondition.datasource.data = [...mapped];
+          // Optionally update the row in dataWithSimpleEdit
+          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
+          if (idx !== -1) {
+            this.dataWithSimpleEdit[idx].conditions = mapped;
+          }
+          this.conditionDetails.emit(mapped);
+        }
+      });
+    });
+  }
+
+   // Add this method
+   handleConditionRowLevelActions($event: any, index: number) {
+    if ($event === 'trash') {
+      // Remove the row from your data array
+      this.dataWithSimpleCondition.splice(index, 1);
+      // Update the table datasource
+      this.tableWithSimpleCondition.datasource.data = [...this.dataWithSimpleCondition];
+      // Emit the updated data if needed
+      this.conditionDetails.emit(this.dataWithSimpleCondition);
+    }
+    this.addNewChannelForm.markAsDirty();
+    // You can add 'edit' or 'save' logic here if needed
+  }
+
+  addRestrictionTableData() {
+    this.addNewChannelForm.markAsDirty();
+    this.transactionTypeService.getRestrictions().subscribe((response: any[]) => {
+      const dialogTableMetadata: BodTableMetadata = {
+        ...this.restrictionsTableMetadata,
+        datasource: new MatTableDataSource<RestrictionTable>(
+          response.map((restriction, idx) => ({
+            id: idx + 1,
+            code: restriction.code,
+            identifier: restriction.identifier,
+            type: 'ERROR'
+          }))
+        )
+      };
+  
+      // Use the restrictions for the current row
+      const selectedRestrictions = this.restrictionMap[this.currentChannelRowId!] || [];
+  
+      const dialogRef = this.dialog.open(RestrictionsMultiselectDialogComponent, {
+        width: '1000px',
+        height: '600px',
+        data: {
+          restrictionsDataSingleSelect: dialogTableMetadata,
+          selectedRowSingleSelect: selectedRestrictions
+        }
+      });
+  
+      dialogRef.afterClosed().subscribe(result => {
+        if (result?.selectedRestrictions) {
+          const mapped = result.selectedRestrictions.map(row => ({
+            id: row.id,
+            code: row.code,
+            identifier: row.identifier,
+            type: row.type
+          }));
+          // Store restrictions for this channel row only
+          this.restrictionMap[this.currentChannelRowId!] = mapped;
+          // Update the UI for the current row
+          this.dataWithSimpleRestriction = mapped;
+          this.tableWithSimpleRestriction.datasource.data = [...mapped];
+          // Optionally update the row in dataWithSimpleEdit
+          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
+          if (idx !== -1) {
+            this.dataWithSimpleEdit[idx].restrictions = mapped;
+          }
+          this.restrictionDetails.emit(mapped);
+        }
+      });
+    });
+  }
+
+  // Add this method
+  handleRestrictionRowLevelActions($event: any, index: number) {
+    if ($event === 'trash') {
+      // Remove the row from your data array
+      this.dataWithSimpleRestriction.splice(index, 1);
+      // Update the table datasource
+      this.tableWithSimpleRestriction.datasource.data = [...this.dataWithSimpleRestriction];
+      // Emit the updated data if needed
+      this.restrictionDetails.emit(this.dataWithSimpleRestriction);
+    }
+    this.addNewChannelForm.markAsDirty();
+    // You can add 'edit' or 'save' logic here if needed
   }
 
   public channelObject: any = {};
@@ -807,46 +1066,82 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
 
 
   public editIndex = -1;
-public editRowElement: any;
+  public editRowElement: any;
 
-public currentChannelRowId: number | null = null;
+  public currentChannelRowId: number | null = null;
 
-inlineEditRowActionClick(
-  inlineEditOutput: InlineEditOutput,
-  index: number,
-  template?: any
-) {
-  const element = (this.editRowElement = inlineEditOutput.editRowElement);
+  inlineEditRowActionClick(
+    inlineEditOutput: InlineEditOutput,
+    index: number,
+    template?: any
+  ) {
+    const element = (this.editRowElement = inlineEditOutput.editRowElement);
 
-  if (element && element.id) {
-    this.addNewChannelForm.reset();
-    this.addNewChannelForm.patchValue(element);
-    this.currentChannelRowId = element.id; // Track the channel row being edited
+    if (element && element.id) {
+      this.addNewChannelForm.reset();
+      this.addNewChannelForm.patchValue(element);
+      this.currentChannelRowId = element.id; // Track the channel row being edited
+    }
+
+    this.editIndex = inlineEditOutput.editRowIndex ?? index;
+
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: this.editIndex
+    };
+
+    // Load counters for this channel row if you have them stored
+    this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
+    this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
+
+     // Load conditions for this channel row if you have them stored
+     this.dataWithSimpleCondition = this.conditionMap?.[element.id] ? [...this.conditionMap[element.id]] : [];
+     this.tableWithSimpleCondition.datasource.data = this.dataWithSimpleCondition;
+
+      // Load restrictions for this channel row if you have them stored
+    this.dataWithSimpleRestriction = this.restrictionMap?.[element.id] ? [...this.restrictionMap[element.id]] : [];
+    this.tableWithSimpleRestriction.datasource.data = this.dataWithSimpleRestriction;
+  }
+  public getAllCountersWithChannelIdentifier(): any[] {
+    // Flatten all counters from all channels, adding channelidentifier to each
+    return (this.dataWithSimpleEdit || [])
+      .filter(channel => Array.isArray(channel.counters))
+      .map(channel =>
+        (channel.counters ?? []).map(counter => ({
+          ...counter,
+          channelidentifier: channel.identifier
+        }))
+      )
+      .reduce((acc, val) => acc.concat(val), []);
   }
 
-  this.editIndex = inlineEditOutput.editRowIndex ?? index;
+  // Update the getAllCountersWithChannelIdentifier method to include conditions
+  public getAllConditionsWithChannelIdentifier(): any[] {
+    // Flatten all conditions from all channels, adding channelidentifier to each
+    return (this.dataWithSimpleEdit || [])
+      .filter(channel => Array.isArray(channel.conditions))
+      .map(channel =>
+        (channel.conditions ?? []).map(condition => ({
+          ...condition,
+          channelidentifier: channel.identifier
+        }))
+      )
+      .reduce((acc, val) => acc.concat(val), []);
+  }
 
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: this.editIndex
-  };
-
-  // Load counters for this channel row if you have them stored
-  this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
-  this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
-}
-public getAllCountersWithChannelIdentifier(): any[] {
-  // Flatten all counters from all channels, adding channelidentifier to each
-  return (this.dataWithSimpleEdit || [])
-    .filter(channel => Array.isArray(channel.counters))
-    .map(channel =>
-      (channel.counters ?? []).map(counter => ({
-        ...counter,
-        channelidentifier: channel.identifier
-      }))
-    )
-    .reduce((acc, val) => acc.concat(val), []);
-}
+  // Update the getAllCountersWithChannelIdentifier method to include restrictions
+  public getAllRestrictionsWithChannelIdentifier(): any[] {
+    // Flatten all restrictions from all channels, adding channelidentifier to each
+    return (this.dataWithSimpleEdit || [])
+      .filter(channel => Array.isArray(channel.restrictions))
+      .map(channel =>
+        (channel.restrictions ?? []).map(restriction => ({
+          ...restriction,
+          channelidentifier: channel.identifier
+        }))
+      )
+      .reduce((acc, val) => acc.concat(val), []);
+  }
   public countersTableColumns = [
     { name: 'counter', title: 'Counter' },
     { name: 'classificationType', title: 'Classification Type' },
