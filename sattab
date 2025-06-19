@@ -235,6 +235,70 @@ export class TransactionTypeService {
     }
   ];
 
+  public conditions: Column[] = [
+    {
+      name: 'code',
+      title: 'Conditions',
+      width: 2,
+      truncate: true,
+      noOverflow: true,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'relationshipType',
+      title: 'Relationship Type',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: [
+          { label: 'Locked', value: 'Locked' },
+          { label: 'Mandatory', value: 'Mandatory' },
+          { label: 'Optional', value: 'Optional' },
+          { label: 'Proposed', value: 'Proposed' },
+        ],
+        validators: {
+          required: true
+        }
+      }
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+
+  public restrictions: Column[] = [
+    {
+      name: 'code',
+      title: 'Restrictions',
+      width: 2,
+      truncate: true,
+      noOverflow: true,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'type',
+      title: 'Type',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: [
+          { label: 'ERROR', value: 'ERROR' }
+        ],
+        validators: {
+          required: true
+        }
+      }
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+
+
   private eventUrl = '';
   private channelUrl = '';
   private localeUrl = '';
@@ -247,7 +311,7 @@ export class TransactionTypeService {
   private retrieveUrl = '';
   private deleteUrl = '';
   private counterUrl = '';
-
+  private restrictionUrl = '';
   private pstgCtgUrl = '';
   private psamUrl = '';
   private exstTransTypeUrl = '';
@@ -325,6 +389,8 @@ export class TransactionTypeService {
         this.pstgCtgUrl = url + '/basedata/postingcategory';
         this.psamUrl = url + '/basedata/postingapplmethoddetails';
         this.exstTransTypeUrl = url + '/basedata/pstgstd';
+        this.restrictionUrl = url + '/basedata/restrictionbyprodtypeids' + '?product-type-idfr-list=1110101';
+        
       }
     });
   }
@@ -558,4 +624,9 @@ export class TransactionTypeService {
 
     return $groups;
   }
+
+  getRestrictions(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get(`${this.restrictionUrl}`, { headers });
+  }  
 }
