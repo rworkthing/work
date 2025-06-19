@@ -1,47 +1,36 @@
 <form [formGroup]="formGroup">
     <bod-table
-      #countersMultiselectTable
-      [data]="countersDataSingleSelect"
+      #restrictionsMultiselectTable
+      [data]="restrictionsDataSingleSelect"
       (onRowSelect)="rowSelection($event)"
       [rowSelectionStrategy]="rowSelectionStrategy"
       [allowSelectAll]="allowRowSelection"
       [alignContent]="'top'"
       [customColumnTemplates]="[
-        { columnName: 'operatorType', templateName: operatorTypeTemplate }
+        { columnName: 'type', templateName: typeTemplate }
       ]"
       [modeOptions]="{selection: true }"
     >
     
-      <ng-template
-        #operatorTypeTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
-        <mat-select
-          [formControlName]="'operatorType_' + (element.id ?? index)"
-          (selectionChange)="onOperatorTypeChange(element, $event.value)"
-          panelClass="fis-style"
-          name="operatorType"
-          (click)="$event.stopPropagation()"
-        >
-            <mat-option *ngFor="let option of operatorTypeOptions" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-template>
+    <ng-template
+    #typeTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <!-- Show as readonly text instead of dropdown -->
+    <span style="padding-left: 8px; font-weight: 500;">
+      {{ element.type || 'ERROR' }}
+    </span>
+  </ng-template>
     </bod-table>
-    </form>
-
-
+</form>
 
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
 import { TransactionTypeService } from '../../transaction-type.service';
-import { Counters } from '../../transaction-type.model';
+import { Restrictions } from '../../transaction-type.model';
 import {
   BOD_DATE_RANGE,
   BodAutoCompleteModule,
@@ -96,7 +85,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
-  selector: 'bod-counters-multiselect-table',
+  selector: 'bod-restrictions-multiselect-table',
   standalone: true,
   imports: [
     CommonModule,
@@ -137,52 +126,45 @@ import { MatTableDataSource } from '@angular/material/table';
     BodCurrencyControlModule,
     BodCommonModule
   ],
-  templateUrl: './counters-multiselect-table.component.html',
-  styleUrl: './counters-multiselect-table.component.scss'
+  templateUrl: './restrictions-multiselect-table.component.html',
+  styleUrl: './restrictions-multiselect-table.component.scss'
 })
-export class CountersMultiselectTableComponent implements OnInit, OnChanges {
+export class RestrictionsMultiselectTableComponent implements OnInit, OnChanges {
 
   public modeOptions: ModeOptions = { input: false, reset: false };
   public modeOptionsSimple = this.modeOptions;
 
-  @Input() countersDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Counters[] = [];
-  @Output() rowSelected = new EventEmitter<Counters[]>();
+  @Input() restrictionsDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Restrictions[] = [];
+  @Output() rowSelected = new EventEmitter<Restrictions[]>();
   @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
   @Output() dirtyChange = new EventEmitter<boolean>();
   @Input() formGroup: UntypedFormGroup;
 
-  @ViewChild('countersMultiselectTable', { static: false })
-  countersTable: BodTableComponent;
+  @ViewChild('restrictionsMultiselectTable', { static: false })
+  restrictionsTable: BodTableComponent;
 
   private isDirty = false;
 
-  classificationTypeOptions = [
-    { label: 'Internal', value: 'Internal' },
-    { label: 'External', value: 'External' },
-    { label: 'Mixed', value: 'Mixed' }
-  ];
-
-  operatorTypeOptions = [
-    { label: 'Increment', value: 'Increment' },
-    { label: 'Decrement', value: 'Decrement' },
-    { label: 'Reset', value: 'Reset' }
+  typeOptions = [
+    { label: 'ERROR', value: 'ERROR' }, 
+    { label: ' ', value: ' ' }
   ];
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.selectCountersRows(), 0);
+    setTimeout(() => this.selectRestrictionsRows(), 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
       console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectCountersRows(), 0);
+      setTimeout(() => this.selectRestrictionsRows(), 0);
     }
   }
 
-  private selectCountersRows(): void {
-    const tableData = this.countersDataSingleSelect?.datasource?.data || [];
-    const selection = this.countersTable?.selection;
+  private selectRestrictionsRows(): void {
+    const tableData = this.restrictionsDataSingleSelect?.datasource?.data || [];
+    const selection = this.restrictionsTable?.selection;
 
     if (!selection || tableData.length === 0) {
       return;
@@ -214,44 +196,38 @@ export class CountersMultiselectTableComponent implements OnInit, OnChanges {
     this.defaultForm = this.fb.group({});
   }
 
-  public onClassificationTypeChange(element: any, value: string) {
-    element.classificationType = value;
+  public onTypeChange(element: any, value: string) {
+    element.type = value;
     this.setDirty(true);
   }
 
-  public onOperatorTypeChange(element: any, value: string) {
-    element.operatorType = value;
-    this.setDirty(true);
-  }
-
-  private loadCounterData() {
-    this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
-      this.countersDataSingleSelect.datasource.data = counters.map((item: any, index: number) => ({
+  private loadRestrictionData() {
+    this.transactionTypeService.getRestrictions().subscribe((restrictions: any[]) => {
+      this.restrictionsDataSingleSelect.datasource.data = restrictions.map((item: any, index: number) => ({
         id: index + 1,
         code: item.code,
-        classificationType: '',
-        operatorType: '',
+        type: 'ERROR', // Default to ERROR
         default: false
       }));
     });
   }
 
   public resetSelection() {
-    if (this.countersTable?.selection) {
-      this.countersTable.selection.clear();
+    if (this.restrictionsTable?.selection) {
+      this.restrictionsTable.selection.clear();
     }
     this.selectedRowSingleSelect = [];
     this.setDirty(false);
   }
 
-  public rowSelectionSingleSelect(element: Counters[]) {
+  public rowSelectionSingleSelect(element: Restrictions[]) {
     console.log('rowSelectionSingleSelect called with:', element);
     this.selectedRowSingleSelect = element;
     this.rowSelected.emit(this.selectedRowSingleSelect);
     this.setDirty(true);
   }
 
-  public rowSelection(element: Counters[]) {
+  public rowSelection(element: Restrictions[]) {
     console.log('rowSelection called with:', element);
     if (element.length !== 0) {
       this.selectedRowSingleSelect = element;
@@ -260,11 +236,11 @@ export class CountersMultiselectTableComponent implements OnInit, OnChanges {
     }
     this.rowSelected.emit(this.selectedRowSingleSelect);
     this.setDirty(true);
-    console.log('Counters selectedRowSingleSelect:', this.selectedRowSingleSelect);
+    console.log('Restrictions selectedRowSingleSelect:', this.selectedRowSingleSelect);
   }
 
   public onDefaultToggleChange(event: any, rowIndex: number) {
-    const data = [...this.countersDataSingleSelect.datasource.data];
+    const data = [...this.restrictionsDataSingleSelect.datasource.data];
     const row = data.find(r => r.index === rowIndex);
 
     if (!row) return;
@@ -277,7 +253,7 @@ export class CountersMultiselectTableComponent implements OnInit, OnChanges {
       row.default = false;
     }
 
-    this.countersDataSingleSelect.datasource.data = data;
+    this.restrictionsDataSingleSelect.datasource.data = data;
 
     this.defaultChanged.emit({
       rowIndex: rowIndex,
