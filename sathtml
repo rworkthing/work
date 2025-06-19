@@ -1,25 +1,24 @@
 <bod-form
-  [formGroup]="addCountersFormGroup"
+  [formGroup]="addRestrictionsFormGroup"
   rufId
   [type]="formType"
   (onSubmit)="onSubmit()"
   (onReset)="onReset()"
   fisStyle
 >
-  <bod-counters-multiselect-table
-    #countersTable
-    [countersDataSingleSelect]="data.countersDataSingleSelect"
+  <bod-restrictions-multiselect-table
+    #restrictionsTable
+    [restrictionsDataSingleSelect]="data.restrictionsDataSingleSelect"
     [selectedRowSingleSelect]="data.selectedRowSingleSelect"
     (rowSelected)="onRowSelected($event)"
     (tableDirty)="onTableDirty()"
-    [formGroup]="addCountersFormGroup"
-  ></bod-counters-multiselect-table>
+    [formGroup]="addRestrictionsFormGroup"
+  ></bod-restrictions-multiselect-table>
 </bod-form>
-
 
 import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CountersMultiselectTableComponent } from '../counters-multiselect-table/counters-multiselect-table.component';
+import { RestrictionsMultiselectTableComponent } from '../restrictions-multiselect-table/restrictions-multiselect-table.component';
 import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
 import { CommonModule } from '@angular/common';
@@ -35,13 +34,13 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 import { RufIconModule } from '@ruf/shell/icon';
 import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { Counters, CounterTable } from '../../transaction-type.model';
+import { Restrictions, RestrictionTable } from '../../transaction-type.model';
 
 @Component({
-  selector: 'bod-counters-multiselect-dialog',
+  selector: 'bod-restrictions-multiselect-dialog',
   standalone: true,
   imports: [
-    CountersMultiselectTableComponent,
+    RestrictionsMultiselectTableComponent,
     ReactiveFormsModule,
     BodFormModule,
     FormsModule,
@@ -77,22 +76,22 @@ import { Counters, CounterTable } from '../../transaction-type.model';
     BodCurrencyControlModule,
     BodCommonModule
   ],
-  templateUrl: './counters-multiselect-dialog.component.html',
-  styleUrls: ['./counters-multiselect-dialog.component.scss']
+  templateUrl: './restrictions-multiselect-dialog.component.html',
+  styleUrls: ['./restrictions-multiselect-dialog.component.scss']
 })
-export class CountersMultiselectDialogComponent {
+export class RestrictionsMultiselectDialogComponent {
   public translationKey = TranslationKey;
 
   formType: BodFormTypes = BodFormTypes.FORM;
-  @ViewChild('countersTable', { static: false }) countersTable: CountersMultiselectTableComponent;
-  @Output() rowSelected = new EventEmitter<CounterTable[]>();
+  @ViewChild('restrictionsTable', { static: false }) restrictionsTable: RestrictionsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<RestrictionTable[]>();
 
-  selectedRows: Counters[] = [];
-  public addCountersFormGroup: UntypedFormGroup;
+  selectedRows: Restrictions[] = [];
+  public addRestrictionsFormGroup: UntypedFormGroup;
   isDirty = false;
 
   constructor(
-    public dialogRef: MatDialogRef<CountersMultiselectDialogComponent>,
+    public dialogRef: MatDialogRef<RestrictionsMultiselectDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
     private fb: UntypedFormBuilder
   ) {
@@ -102,17 +101,17 @@ export class CountersMultiselectDialogComponent {
   private initForm(): void {
     const controls: { [key: string]: any } = {};
     // Always get the latest data
-    const allRows = this.data?.countersDataSingleSelect?.datasource?.data || [];
+    const allRows = this.data?.restrictionsDataSingleSelect?.datasource?.data || [];
     allRows.forEach((row: any, idx: number) => {
      
-      controls['operatorType_' + row.id] = [row.operatorType || null];
+      controls['type_' + row.id] = [row.type || 'ERROR'];
     });
-    this.addCountersFormGroup = this.fb.group(controls);
+    this.addRestrictionsFormGroup = this.fb.group(controls);
     console.log('Dialog initForm - Form controls:', Object.keys(controls));
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] || changes['counterData']) {
+    if (changes['data'] || changes['restrictionData']) {
       this.initForm();
     }
   }
@@ -120,7 +119,7 @@ export class CountersMultiselectDialogComponent {
   onTableDirtyChange(dirty: boolean) {
     this.isDirty = dirty;
     if (dirty) {
-      this.addCountersFormGroup.markAsDirty();
+      this.addRestrictionsFormGroup.markAsDirty();
     }
   }
 
@@ -128,19 +127,20 @@ export class CountersMultiselectDialogComponent {
 
   public onTableDirty(): void {
     this.isTableDirty = true;
-    this.addCountersFormGroup.markAsDirty();
+    this.addRestrictionsFormGroup.markAsDirty();
   }
 
-  onRowSelected(selectedRows: Counters[]) {
+  onRowSelected(selectedRows: Restrictions[]) {
     console.log('onRowSelected called with:', selectedRows);
     this.selectedRows = selectedRows;
     this.isDirty = true;
-    this.initForm();
+    this.addRestrictionsFormGroup.markAsDirty();
+    // this.initForm();
   }
 
   onSubmit() {
     // Pass the selectedRows object when closing the dialog
-    this.dialogRef.close({ selectedCounters: this.selectedRows });
+    this.dialogRef.close({ selectedRestrictions: this.selectedRows });
   }
 
   onReset() {
