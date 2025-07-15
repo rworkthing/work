@@ -7,7 +7,7 @@
   (onSubmit)="onExistingBalanceType(isAdd)"
   (onReset)="onReset(isAdd)"
   fisStyle
->
+> 
   <bod-page-container title="Product Type Relationships"></bod-page-container>
   <bod-input-layout col="2">
     <bod-control-group
