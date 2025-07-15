@@ -1,155 +1,62 @@
-<bod-form
-  [formGroup]="addChannelsFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onSubmit()"
-  (onReset)="onReset()"
-  fisStyle
->
-  <bod-channels-multiselect-table
-    #channelsTable
-    [channelsDataSingleSelect]="data.channelsDataSingleSelect"
-    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
-    (rowSelected)="onRowSelected($event)"
-    (tableDirty)="onTableDirty()"
-    [formGroup]="addChannelsFormGroup"
-  ></bod-channels-multiselect-table>
-</bod-form>
+import { BodTableAction, BodTableActionType } from '@bod/common';
 
-
-
-
-import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ChannelsMultiselectTableComponent } from '../channels-multiselect-table/channels-multiselect-table.component';
-import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
-import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
-import { RufIconModule } from '@ruf/shell/icon';
-import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { Channels, ChannelTable } from '../../transaction-type.model';
-// If you want to use bod-form, also import BodFormModule
-// import { BodFormModule } from '@bod/common';
-
-@Component({
-  selector: 'bod-channels-multiselect-dialog',
-  standalone: true,
-  imports: [
-    ChannelsMultiselectTableComponent,
-    ReactiveFormsModule,
-    BodFormModule,
-    FormsModule,
-    BodAutoCompleteModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    TranslateModule,
-    BodTableActionsModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatInputModule,
-    TranslateModule,
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    BodCommonModule
-  ],
-  templateUrl: './channels-multiselect-dialog.component.html',
-  styleUrls: ['./channels-multiselect-dialog.component.scss']
-})
-export class ChannelsMultiselectDialogComponent {
-  public translationKey = TranslationKey;
-
-  formType: BodFormTypes = BodFormTypes.FORM;
-  @ViewChild('channelsTable', { static: false }) channelsTable: ChannelsMultiselectTableComponent;
-  @Output() rowSelected = new EventEmitter<ChannelTable[]>();
-  @Output() tableDirty = new EventEmitter<void>();
-
-  selectedRows: Channels[] = [];
-  public addChannelsFormGroup: UntypedFormGroup;
-  isDirty = false;
-
-  constructor(
-    public dialogRef: MatDialogRef<ChannelsMultiselectDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private fb: UntypedFormBuilder
-  ) {
-    this.initForm();
-
+export const BalanceTypeTableLevelActions: BodTableAction[] = [
+  {
+    id: BodTableActionType.ADD,
+    icon: 'add',
+    label: 'add',
+    mostCommon: true,
+    child: [
+      {
+        id: 12,
+        seperator: true,
+        label: 'Add New Balance Type',
+        icon: ''
+      },
+      {
+        id: 13,
+        seperator: true,
+        label: 'Relate Existing Balace Type',
+        icon: ''
+      }
+    ]
+  },
+  {
+    id: BodTableActionType.FILTER,
+    icon: 'filter',
+    label: 'Filter',
+    mostCommon: true
   }
-  private initForm(): void {
-    const controls: { [key: string]: any } = {};
-    // Always get the latest data
-    const allRows = this.data?.channelsDataSingleSelect?.datasource?.data || [];
-    allRows.forEach((row: any, idx: number) => {
-      controls['option_' + row.id] = [row.option || null];
-    });
-    this.addChannelsFormGroup = this.fb.group(controls);
-    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+];
 
+export const roletypeaction: BodTableAction[] = [
+  {
+    id: 2,
+    icon: 'add',
+    label: 'add',
+    mostCommon: true
   }
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] || changes['channelData']) {
-      this.initForm();
-    }
+];
+export const roletypeactionDelete: BodTableAction[] = [
+  {
+    id: 1,
+    icon: 'trash',
+    label: 'delete',
+    mostCommon: true
   }
-
-  onTableDirtyChange(dirty: boolean) {
-    this.isDirty = dirty;
-    if (dirty) {
-      this.addChannelsFormGroup.markAsDirty();
-    }
-  } public isTableDirty = false;
-
-  public onTableDirty(): void {
-    this.isTableDirty = true;
-    this.addChannelsFormGroup.markAsDirty();
-
+];
+export const editDeleteActions: BodTableAction[] = [
+  {
+    id: 4,
+    icon: 'edit',
+    label: 'Edit',
+    mostCommon: true
+  },
+  {
+    id: 1,
+    icon: 'trash',
+    label: 'delete',
+    mostCommon: true
   }
+];
 
-
-  onRowSelected(selectedRows: Channels[]) {
-    console.log('onRowSelected called with:', selectedRows);
-    this.selectedRows = selectedRows;
-    this.isDirty = true;
-    this.addChannelsFormGroup.markAsDirty(); // <-- Mark the form as dirty
-    this.tableDirty.emit();
-    // this.initForm();
-  }
-  
-
-  onSubmit() {
-    // Pass the selectedRows object when closing the dialog
-    this.dialogRef.close({ selectedChannels: this.selectedRows });
-  }
-  onReset() {
-    this.isDirty = false;
-  }
-}
