@@ -1,149 +1,286 @@
-<bod-form
-  [formGroup]="addRestrictionsFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onSubmit()"
-  (onReset)="onReset()"
-  fisStyle
->
-  <bod-restrictions-multiselect-table
-    #restrictionsTable
-    [restrictionsDataSingleSelect]="data.restrictionsDataSingleSelect"
-    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
-    (rowSelected)="onRowSelected($event)"
-    (tableDirty)="onTableDirty()"
-    [formGroup]="addRestrictionsFormGroup"
-  ></bod-restrictions-multiselect-table>
-</bod-form>
+import { Injectable } from '@angular/core';
+import { Column } from '@bod/common';
 
-import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { RestrictionsMultiselectTableComponent } from '../restrictions-multiselect-table/restrictions-multiselect-table.component';
-import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
-import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
-import { RufIconModule } from '@ruf/shell/icon';
-import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { Restrictions, RestrictionTable } from '../../transaction-type.model';
-
-@Component({
-  selector: 'bod-restrictions-multiselect-dialog',
-  standalone: true,
-  imports: [
-    RestrictionsMultiselectTableComponent,
-    ReactiveFormsModule,
-    BodFormModule,
-    FormsModule,
-    BodAutoCompleteModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    TranslateModule,
-    BodTableActionsModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatInputModule,
-    TranslateModule,
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    BodCommonModule
-  ],
-  templateUrl: './restrictions-multiselect-dialog.component.html',
-  styleUrls: ['./restrictions-multiselect-dialog.component.scss']
+@Injectable({
+  providedIn: 'root'
 })
-export class RestrictionsMultiselectDialogComponent {
-  public translationKey = TranslationKey;
-
-  formType: BodFormTypes = BodFormTypes.FORM;
-  @ViewChild('restrictionsTable', { static: false }) restrictionsTable: RestrictionsMultiselectTableComponent;
-  @Output() rowSelected = new EventEmitter<RestrictionTable[]>();
-
-  selectedRows: Restrictions[] = [];
-  public addRestrictionsFormGroup: UntypedFormGroup;
-  isDirty = false;
-
-  constructor(
-    public dialogRef: MatDialogRef<RestrictionsMultiselectDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private fb: UntypedFormBuilder
-  ) {
-    this.initForm();
-  }
-
-  private initForm(): void {
-    const controls: { [key: string]: any } = {};
-    // Always get the latest data
-    const allRows = this.data?.restrictionsDataSingleSelect?.datasource?.data || [];
-    allRows.forEach((row: any, idx: number) => {
-     
-      controls['type_' + row.id] = [row.type || 'ERROR'];
-    });
-    this.addRestrictionsFormGroup = this.fb.group(controls);
-    console.log('Dialog initForm - Form controls:', Object.keys(controls));
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] || changes['restrictionData']) {
-      this.initForm();
+export class AddEditBalanceService {
+  public balsubInquiry: Column[] = [
+    {
+      name: 'code',
+      title: 'Balance Subtype Code',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'name',
+      title: 'Balance Subtype Name',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
     }
-  }
+    // {
+    //   name: 'identifier',
+    //   title: 'Balance Subtype Identifier',
+    //   truncate: true,
+    //   noOverflow: true,
+    //   width: 8,
+    //   widthUnit: 'rem'
+    // }
+  ];
+  //This is related to columns which are inaddtnRelInquiry for multi select input dropdown.
 
-  onTableDirtyChange(dirty: boolean) {
-    this.isDirty = dirty;
-    if (dirty) {
-      this.addRestrictionsFormGroup.markAsDirty();
+  // public addtnRelInquiry: Column[] = [
+  //   {
+  //     name: 'id',
+  //     title: 'ID',
+  //     truncate: true,
+  //     noOverflow: true,
+  //     width: 8,
+  //     widthUnit: 'rem'
+  //   },
+  //   {
+  //     name: 'balanceSubTypeIdentifier',
+  //     title: 'Value',
+  //     truncate: true,
+  //     noOverflow: true,
+  //     width: 8,
+  //     widthUnit: 'rem'
+  //   }
+  // ];
+  public roleTypeInquiry: Column[] = [
+    {
+      name: 'roleType',
+      title: 'Type',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'accountingClassification',
+      title: 'Account Classification',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'payee',
+      title: 'Obligator',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'payer',
+      title: 'Beneficiary',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'visible',
+      title: 'Visibility',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
     }
-  }
+  ];
+  public aggregateInquiry: Column[] = [
+    {
+      name: 'name',
+      title: 'Aggregation Name',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'balanceTypeIdentifier',
+      title: 'Balance Type',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'aggregationLevel',
+      title: 'Aggregation Level',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'relationshipType',
+      title: 'Relationship Type',
+      truncate: true,
+      noOverflow: true,
+      width: 8,
+      widthUnit: 'rem'
+    }
+  ];
+}
 
-  public isTableDirty = false;
 
-  public onTableDirty(): void {
-    this.isTableDirty = true;
-    this.addRestrictionsFormGroup.markAsDirty();
-  }
 
-  onRowSelected(selectedRows: Restrictions[]) {
-    console.log('onRowSelected called with:', selectedRows);
-    this.selectedRows = selectedRows;
-    this.isDirty = true;
-    this.addRestrictionsFormGroup.markAsDirty();
-    // this.initForm();
-  }
 
-  onSubmit() {
-    // Pass the selectedRows object when closing the dialog
-    this.dialogRef.close({ selectedRestrictions: this.selectedRows });
-  }
+export interface BalanceTypeList {
+  identifier: number;
+  code: string;
+  name: string;
+  systemBalance: string;
+  balTypeInquiry: BaltypeInquiry[];
+  aggregateInquiry1: BaltypeInquiry[];
+  //   balanceType: BalanceType;
+  prdtBalSubType: BaltypeInquiry[];
+  prdttpReltnData: BaltypeInquiry[];
+  balanceSubTypeList: BalanceSubType[];
+  balanceAggregationInsertionList: BalanceAggregationInsertion[];
+  productTypeBalanceTypeRelationshipList: ProductTypeBalanceTypeRelationship[];
+  productTypeBalanceSubTypeRelationshipList: ProductTypeBalanceSubTypeRelationship[];
+  productTypeBalanceTypePeriodList: ProductTypeBalanceTypePeriod[];
+  productTypeBalanceTypeRoletypeRelationshipList: ProductTypeBalanceTypeRoletypeRelationship[];
+}
 
-  onReset() {
-    this.isDirty = false;
-  }
+export interface BaltypeInquiry {
+  id: number;
+  label: string;
+  value: string;
+}
+
+export interface BalanceType {
+  identifier: number;
+  code: string;
+  name: string;
+  systemBalance: string;
+  balTypeInquiry: BaltypeInquiry[];
+}
+
+export interface BalanceSubType {
+  identifier: number;
+  code: string;
+  name: string;
+}
+
+export interface BalanceAggregationInsertion {
+  aggregates: BaltypeInquiry[];
+  balancetype: any;
+  aggregationname: any;
+  balanceTypeIdentifier: number;
+  productTypeIdentifier: number;
+  name: string;
+  productTypeAggrIdfr: number;
+  aggrBalanceTypeIdentifier: number;
+  relationshipType: number;
+  aggregationLevel: number;
+  otherCurrencyAggregation: string;
+  reverseAggregation: string;
+  postingStandardIdentifierForDebit: number;
+  postingStandardIdentifierForCredit: number;
+  aggregateInquiry1: BaltypeInquiry[];
+  balanceTypeCode: string;
+  relationshipTypeCode: string;
+}
+
+export interface ProductTypeBalanceTypeRelationship {
+  identifier: number;
+  balanceTypeIdentifier: number;
+  balanceTypeCode: string;
+  persisted: string;
+  calculated: string;
+  autoCreated: string;
+  statementProcess: string;
+  accountingClassification: number;
+  snapshotRequired: string;
+  payerIdentifier: number;
+  payeeIdentifier: number;
+  chargeCalculation: string;
+  logAudit: string;
+  financialResultRequired: string;
+  glRequired: string;
+  dateValue: string;
+  enquiryRequired: string;
+  summaryRequired: string;
+}
+
+export interface ProductTypeBalanceSubTypeRelationship {
+  productTypeIdentifier: number;
+  balanceTypeIdentifier: number;
+  balanceSubTypeIdentifier: string;
+  balanceSubTypeCode: string;
+}
+
+export interface ProductTypeBalanceTypePeriod {
+  productTypeIdentifier: number;
+  balanceTypeIdentifier: number;
+  periodType: string;
+}
+
+export interface ProductTypeBalanceTypeRoletypeRelationship {
+  productTypeIdentifier: number;
+  balanceTypeIdentifier: number;
+  roleType: number;
+  accountingClassification: number;
+  visible: string;
+  payee: string;
+  payer: string;
+  roleTypeCode: string;
+  accountingClassificationCode: string;
+}
+
+
+
+
+export interface AddtRelationTable {
+  relationshipid: string;
+  value: string;
+}
+
+export interface BalSybTypeTable {
+  code: string;
+  name: string;
+  identifier: number;
+}
+
+export interface RoleTypeSampleTable {
+  type: string;
+  accountingClassification?: string;
+  obligator?: string;
+  beneficiary?: string;
+  visibility?: string;
+}
+
+export interface RoleTypeSampleTableForTransaction {
+  type: string;
+  
+}
+export interface AggregateSampleTable {
+  aggregationname: string;
+  balancetype: string;
+  aggregationLevel: string;
+  relationshiptype?: string;
+  aggregates: Aggregates[];
+}
+export interface Aggregates {
+  id: number;
+  label: string;
+  value: string;
+}
+export interface PstgSampleTable {
+  postingapplicationmethod: string;
+  postingapplicationtype: string;
+  customizationtype: string;
+  instructionorder: string;
+}
+
+export interface BalanceTypePeriod {
+  periodType: string;
 }
