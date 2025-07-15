@@ -1,632 +1,1921 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+<bod-message-container [messages]="errorMessages"></bod-message-container>
+
+<bod-form
+  [formGroup]="addExistingBalanceTypeFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onExistingBalanceType(isAdd)"
+  (onReset)="onReset(isAdd)"
+  fisStyle
+>
+  <bod-page-container title="Product Type Relationships"></bod-page-container>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+    <div *ngIf="isEdit">
+      {{ addExistingBalanceTypeFormGroup.get('exstcode')?.value }}
+    </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <mat-select
+          panelClass="fis-style"
+          formControlName="exstcode"
+          name="exstcode"
+        >
+          <mat-option *ngFor="let exstcode of balancetypes" [value]="exstcode.value">
+          {{ exstcode.label }}
+        </mat-option>
+        </mat-select>
+        <mat-error>
+          {{ getError('exstcode',addExistingBalanceTypeFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+  <bod-input-layout col="1">
+    <bod-page-container title="Balance Type"></bod-page-container>
+  </bod-input-layout>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.accountclassification'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="exstaccntclassification"
+          name="exstaccntclassification"
+        >
+          <mat-option *ngFor="let exstaccntclassification of exstaccntclassifications" [value]="exstaccntclassification.value">
+          {{ exstaccntclassification.label }}
+        </mat-option>
+        </mat-select>
+        <mat-error>
+        {{ getError('exstaccntclassification',addExistingBalanceTypeFormGroup) | translate }}
+      </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.datevalue'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="exstdatevalue"
+          name="exstdatevalue"
+        >
+          <mat-option *ngFor="let type of dateValues" [value]="type.value">
+        {{ type.label }}
+      </mat-option>
+        </mat-select>
+        <mat-error>
+      {{ getError('exstdatevalue',addExistingBalanceTypeFormGroup) | translate }}
+    </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.payer'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="exstpayer"
+          name="exstpayer"
+        >
+          <mat-option *ngFor="let type of payers" [value]="type.value">
+      {{ type.label }}
+    </mat-option>
+        </mat-select>
+        <mat-error>
+    {{ getError('exstpayer',addExistingBalanceTypeFormGroup) | translate }}
+  </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.payee'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="exstpayee"
+          name="exstpayee"
+        >
+          <mat-option *ngFor="let type of payees" [value]="type.value">
+    {{ type.label }}
+  </mat-option>
+        </mat-select>
+        <mat-error>
+  {{ getError('exstpayee',addExistingBalanceTypeFormGroup) | translate }}
+</mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.chargebase'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstchargebase"
+        name="exstchargebase"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.statementdisplay'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exststatementdisplay"
+        name="exststatementdisplay"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.persisted'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstpersisted"
+        name="exstpersisted"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.calculated'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstcalculated"
+        name="exstcalculated"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.autocreation'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstautocreation"
+        name="exstautocreation"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <!-- <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.systembalance'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstsystembal"
+        name="exstsystembal"
+      >
+      </mat-slide-toggle>
+    </bod-control-group> -->
+
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.loghistory'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstloghistory"
+        name="exstloghistory"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.dailysnapshot'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstdailysnapshot"
+        name="exstdailysnapshot"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.summaryrequired'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstsummaryrequired"
+        name="exstsummaryrequired"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.inquiryrequired'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstinquiryrequired"
+        name="exstinquiryrequired"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.generatefinancialresults'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstgeneratefinancialresults"
+        name="exstgeneratefinancialresults"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.glmapping'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="exstglmapping"
+        name="exstglmapping"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+  </bod-input-layout>
+  <bod-page-container title="Additional Relationships"></bod-page-container>
+  <bod-input-layout [col]="1" >
+    <bod-control-group label="{{ 'Balance Sub Type' | translate }}" [forTextOnly]="true" [required]="true">
+      <bod-auto-complete 
+      #nameElementRef  
+      formControlName="balsubtype"
+      name="balsubtype"
+    
+        name="autoCompleteFieldMultiConv"
+        [data]="periodData1"
+        *ngIf="periodData1.options.length > 0"
+      >
+    </bod-auto-complete>
+    <mat-error>
+      {{ getError('balsubtype',addExistingBalanceTypeFormGroup) | translate }}
+    </mat-error>
+    </bod-control-group>
+  </bod-input-layout>
+  <bod-input-layout [col]="1">
+    <bod-control-group  label="{{ 'Balance Period Type' | translate }}" [forTextOnly]="true" [required]="false">
+                  <bod-auto-complete 
+      #nameElementRef  
+      formControlName="balperiodtype"
+      name="balperiodtype"
+        name="autoCompleteFieldMultiConv1"
+        [data]="periodData"
+      ></bod-auto-complete>
+    </bod-control-group>
+  </bod-input-layout>
+  <bod-message-container [messages]="errorMessages2"></bod-message-container>
+  <bod-table
+    #exstRoletypetable
+    [data]="exstRoleTypetabledata"
+    [tableActions]="exstRoleTypetableActions"
+    (onTableActionClick)="onValidTableActionClicked($event)"
+    [inlineModal]="{
+      addNewInlineRowTitle: 'New Role Type' | translate,
+      formGroup: exstRoleTypeForm,
+      formTemplateName: exstRoleTypeTemplate
+    }"
+    (onInlineFormAddSubmit)="onAddRoleType(exstRoleTypeForm.value)"
+    (onInlineFormEditSubmit)="onAddRoleType(exstRoleTypeForm.value)"
+    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
+    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
+    [customColumnTemplates]="[
+      {
+        columnName: 'actions',
+        templateName: deleteActionTemplate
+      }
+    ]"
+    [alignContent]="'top'"
+  >
+    <ng-template
+      #deleteActionTemplate
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <bod-table-actions
+        [actions]="rowLevelActionsForBasicEdit"
+        (onActionClick)="handleRowLevelActionsforRoletype($event.icon, index)"
+      >
+      </bod-table-actions>
+    </ng-template>
+  </bod-table>
+  <form [formGroup]="exstRoleTypeForm">
+    <ng-template #exstRoleTypeTemplate>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.roletype'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="exstRoletype"
+              name="exstRoletype"
+            >
+              <mat-option *ngFor="let exstRoletype of roletypes" [value]="exstRoletype.value">
+          {{ exstRoletype.label }}
+        </mat-option>
+            </mat-select>
+            <!-- <mat-error>
+        {{ getError('type') | translate }}
+      </mat-error> -->
+          </mat-form-field>
+        </bod-control-group>
+
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.accountclassification'"
+          [forTextOnly]="true"
+          [required]="false"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="exstRoleaccountclassification"
+              name="exstRoleaccountclassification"
+            >
+              <mat-option 
+              *ngFor="
+              let exstRoleaccountclassification of exstRoleaccountclassifications" 
+              [value]="exstRoleaccountclassification.value">
+        {{ exstRoleaccountclassification.label }}
+      </mat-option>
+            </mat-select>
+            <!-- <mat-error>
+      {{ getError('type') | translate }}
+    </mat-error> -->
+          </mat-form-field>
+        </bod-control-group>
+
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.obligator'"
+          [forTextOnly]="true"
+          [required]="false"
+        >
+          <mat-slide-toggle
+            fisStyle
+            color="primary"
+            formControlName="exstObligator"
+            name="exstObligator"
+          >
+          </mat-slide-toggle>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.beneficiary'"
+          [forTextOnly]="true"
+          [required]="false"
+        >
+          <mat-slide-toggle
+            fisStyle
+            color="primary"
+            formControlName="exstBeneficiary"
+            name="exstBeneficiary"
+          >
+          </mat-slide-toggle>
+        </bod-control-group>
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.isvisible'"
+          [forTextOnly]="true"
+          [required]="false"
+        >
+          <mat-slide-toggle
+            fisStyle
+            color="primary"
+            formControlName="exstIsvisible"
+            name="exstIsvisible"
+          >
+          </mat-slide-toggle>
+        </bod-control-group>
+      </bod-input-layout>
+    </ng-template>
+  </form>
+  <bod-table
+  #exstAggregateTable
+  [data]="exstAggregateTabledata"
+  [tableActions]="exstAggregateTableActions"
+  (onTableActionClick)="onValidTableActionClicked($event)"
+  [expandedRowTemplate]="expandedRowTemplate"
+  [inlineModal]="{
+    addNewInlineRowTitle: 'New Aggregate Value' | translate,
+    formGroup: exstAggregateForm,
+    formTemplateName: exstAggregateTemplate
+  }"
+  (onInlineFormAddSubmit)="onAddExstAggregate(exstAggregateForm.value)"
+  (onInlineFormEditSubmit)="onAddExstAggregate(exstAggregateForm.value)"
+  (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
+  (onInlineAddRowActionClick)="inlineAddRowActionClick()"
+  [customColumnTemplates]="[
+    {
+      columnName: 'actions',
+      templateName: deleteaggegateActionTemplate
+    }
+  ]"
+  [alignContent]="'top'"
+>
+  <ng-template
+    #deleteaggegateActionTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <bod-table-actions
+      [actions]="rowLevelActionsForBasicEdit"
+      (onActionClick)="handleRowLevelActionsforaggergate($event.icon, index)"
+    >
+    </bod-table-actions>
+  </ng-template>
+  <ng-template #expandedRowTemplate let-context="context">
+    <div fullwidth>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="
+          balanceTypeService.getExpandedaggregateData(context.element)
+        "
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
+    </div>
+  </ng-template>
+</bod-table>
+<form [formGroup]="exstAggregateForm">
+  <ng-template #exstAggregateTemplate>
+    <bod-input-layout col="2">
+      <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.aggregationname'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="text"
+              matInput
+              fisStyle
+              formControlName="aggregationname"
+              name="aggregationname"
+              [disabled]="true"
+            />
+          </mat-form-field>
+        </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.producttype'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+          panelClass="fis-style"
+          formControlName="producttype"
+          name="producttype"
+        >
+          <mat-option
+            *ngFor="let producttype of producttypes"
+            [value]="producttype.value"
+          >
+            {{ producttype.label }}
+          </mat-option>
+        </mat-select>
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.balancetype'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="balancetype"
+              name="balancetype"
+            >
+              <mat-option
+                *ngFor="let balancetype of balancetypes"
+                [value]="balancetype.value"
+              >
+                {{ balancetype.label }}
+              </mat-option>
+            </mat-select>
+            <!-- <mat-error>
+        {{ getError('balancetype') | translate }}
+      </mat-error> -->
+          </mat-form-field>
+        </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.relationshiptype'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+            panelClass="fis-style"
+            formControlName="relationshiptype"
+            name="relationshiptype"
+          >
+            <mat-option
+              *ngFor="
+                let relationshiptype of relationshiptypes
+              "
+              [value]="relationshiptype.value"
+            >
+              {{ relationshiptype.label }}
+            </mat-option>
+          </mat-select>
+      </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.aggregationlevel'"
+        [forTextOnly]="true"
+        [required]="true"
+      >
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          type="number"
+          matInput
+          fisStyle
+          formControlName="aggregationlevel"
+          name="aggregationlevel"
+        />
+        <mat-error *ngIf="exstAggregateForm.get('aggregationlevel').hasError('maxValueExceeded')">
+          Exceeds maximum length            
+        </mat-error>
+        <mat-error *ngIf="exstAggregateForm.get('aggregationlevel').hasError('negativeValue')">
+          Aggregation level cannot be negative.
+        </mat-error>
+      </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.debittransactiontype'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="debittransactiontype"
+          name="debittransactiontype"
+        >
+          <mat-option
+            *ngFor="let debittransactiontype of debittransactiontypes"
+            [value]="debittransactiontype.value"
+          >
+            {{ debittransactiontype.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.credittransactiontype'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-form-field appearance="outline" fisStyle>
+          <mat-select
+            panelClass="fis-style"
+            formControlName="credittransactiontype"
+            name="credittransactiontype"
+          >
+          <mat-option
+                *ngFor="let credittransactiontype of debittransactiontypes"
+                [value]="credittransactiontype.value"
+              >
+                {{ credittransactiontype.label }}
+              </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.othercurrency'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="othercurrency"
+          name="othercurrency"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+      <bod-control-group
+        [truncate]="false"
+        [label]="translationKey + 'metadataconfig.reverse'"
+        [forTextOnly]="true"
+        [required]="false"
+      >
+        <mat-slide-toggle
+          fisStyle
+          color="primary"
+          formControlName="reverse"
+          name="reverse"
+        >
+        </mat-slide-toggle>
+      </bod-control-group>
+    </bod-input-layout>
+  </ng-template>
+</form>
+<!--commenting the below table for now but it will be used later on in the coming sprints-->
+<!-- <bod-table
+#postingApplicationTable
+[data]="exstPostingApplicationTabledata"
+[tableActions]="exstPostingAppTableActions"
+(onTableActionClick)="onValidTableActionClicked($event)"
+[inlineModal]="{
+  addNewInlineRowTitle: 'New Posting Application' | translate,
+  formGroup: exstPostingApplicationForm,
+  formTemplateName: exstPostingApplicationTemplate
+}"
+(onInlineFormAddSubmit)="onAdd(exstAggregateForm.value)"
+(onInlineFormEditSubmit)="onAdd(exstAggregateForm.value)"
+(onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
+(onInlineAddRowActionClick)="inlineAddRowActionClick()"
+[customColumnTemplates]="[
+  {
+    columnName: 'actions',
+    templateName: deleteActionTemplate
+  }
+]"
+[alignContent]="'top'"
+>
+<ng-template
+  #deleteActionTemplate
+  let-element="element"
+  let-column="column"
+  let-index="index"
+>
+  <bod-table-actions
+    [actions]="rowLevelActionsForBasicEdit"
+    (onActionClick)="handleRowLevelActions($event.icon, index)"
+  >
+  </bod-table-actions>
+</ng-template>
+</bod-table>
+<form [formGroup]="exstPostingApplicationForm">
+<ng-template #exstPostingApplicationTemplate>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.postingapplicationmethod'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="postingapplicationmethod"
+          name="postingapplicationmethod"
+        >
+        <mat-option
+        *ngFor="
+          let postingapplicationmethod of postingapplicationmethods
+        "
+        [value]="postingapplicationmethod.value"
+      >
+        {{ postingapplicationmethod.label }}
+      </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </bod-control-group>
+
+    <bod-control-group
+    [truncate]="false"
+    [label]="translationKey + 'metadataconfig.postingapplicationapplytypevalue'"
+    [forTextOnly]="true"
+    [required]="true"
+  >
+    <mat-form-field appearance="outline" fisStyle>
+      <mat-select
+        panelClass="fis-style"
+        formControlName="applicationtype"
+        name="applicationtype"
+      >
+      <mat-option
+                *ngFor="let applicationtype of applicationTypes"
+                [value]="applicationtype.value"
+              >
+                {{ applicationtype.label }}
+              </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </bod-control-group>
+  <bod-control-group
+  [truncate]="false"
+  [label]="translationKey + 'metadataconfig.instructionorder'"
+  [forTextOnly]="true"
+  [required]="true"
+>
+  <mat-form-field appearance="outline" fisStyle>
+    <input
+      type="text"
+      matInput
+      fisStyle
+      formControlName="instructionorder"
+      name="instructionorder"
+    />
+    
+  </mat-form-field>
+</bod-control-group>
+<bod-control-group
+    [truncate]="false"
+    [label]="translationKey + 'metadataconfig.instructioncustomizationtypevalue'"
+    [forTextOnly]="true"
+    [required]="true"
+  >
+    <mat-form-field appearance="outline" fisStyle>
+      <mat-select
+        panelClass="fis-style"
+        formControlName="customizationtype"
+        name="customizationtype"
+      >
+      <mat-option
+                *ngFor="let type of customizationTypes"
+                [value]="type.value"
+              >
+                {{ type.label }}
+              </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </bod-control-group>
+  </bod-input-layout>
+</ng-template> 
+</form> -->
+</bod-form>
+
+
+
+
+
+
+
+
+
 import {
-  Column,
-  ColumnType,
-  InquiryLayoutInput,
-  UIContextService
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  NO_ERRORS_SCHEMA,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { BalanceTypeComponent } from '../balance-type.component';
+import {
+  BodAutoCompleteMetadata,
+  BodAutoCompleteModule,
+  BodAutoCompleteOption,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableActionType,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule
 } from '@bod/common';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { DataSharingService } from '../data-sharing-service.service';
-import { TransactionTypeList } from './transaction-type.model';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { BalanceTypeService } from '../balance-type-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { MatTableDataSource } from '@angular/material/table';
+import { BodSampleTable } from '../../bod-table-demo.model';
+import {
+  roletypeaction,
+  roletypeactionDelete
+} from '../balance-type-constants';
+import {
+  AddtRelationTable,
+  AggregateSampleTable,
+  RoleTypeSampleTable
+} from '../add-edit-balancetype/balancetype.model';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { BalanceTypeList, ProductTypeBalanceSubTypeRelationship, ProductTypeBalanceTypePeriod } from '../add-edit-balancetype/add-edit-balancetype.mode';
 
-@Injectable({
-  providedIn: 'root'
+@Component({
+  selector: 'bod-existing-balance-type',
+  standalone: true,
+  imports: [
+    BodAutoCompleteModule,
+    BalanceTypeComponent,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './existing-balance-type.component.html',
+  styleUrl: './existing-balance-type.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
 })
-export class TransactionTypeService {
-  public columns: Column[] = [
-    {
-      name: 'code',
-      title: 'Transaction Type',
-      truncate: true,
-      noOverflow: true,
-      width: 70,
-      widthUnit: 'rem'
-    },
+export class ExistingBalanceTypeComponent implements OnInit {
+  public exstaccntclassifications: any[] = [];
+  public exstRoleaccountclassifications: any[] = [];
+  // public exstRoletypes: any[] = [];
+  public translationKey = TranslationKey;
+  public addExistingBalanceTypeFormGroup: UntypedFormGroup;
+  public exstRoleTypeForm: UntypedFormGroup;
+  public exstAggregateForm: UntypedFormGroup;
+  public exstPostingApplicationForm: UntypedFormGroup | undefined;
+  public balancetypes: any[] = [];
+  public roletypes: any[] = [];
+  public relationshiptypes: any[] = [];
 
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-  public postingTextColumn: Column[] = [
-    {
-      name: 'event',
-      title: 'Event',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'channel',
-      title: 'Channel',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'language',
-      title: 'Language',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'text',
-      title: 'Text',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
+  public payers: any[] = [];
+  public subBalancetypes: any[] = [];
 
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-  public externalTransactionColumn: Column[] = [
-    {
-      name: 'code',
-      title: 'Code',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'type',
-      title: 'Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'subtype',
-      title: 'Sub Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
+  public payees: any[] = [];
+  public producttypes: any[] = [];
+  public debittransactiontypes: any[] = [];
+  public credittransactiontypes: any[] = [];
+  public postingapplicationmethods: any[] = [];
+  public rowLevelActionsForBasicEdit: BodTableAction[] = roletypeactionDelete;
+  public exstAggregateTableActions: BodTableAction[] = roletypeaction;
+  public exstRoleTypetableActions: BodTableAction[] = roletypeaction;
+  public exstPostingAppTableActions: BodTableAction[] = roletypeaction;
 
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
+  public additionalRelationIDForm: UntypedFormGroup = new UntypedFormGroup({});
+  public additionalRelationValueForm: UntypedFormGroup = new UntypedFormGroup(
+    {}
+  );
+  public modeOptions: ModeOptions = { input: false, reset: false };
 
-  public psamCol: Column[] = [
-    {
-      name: 'order',
-      title: 'Order',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'value',
-      title: 'Method',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'balance_type_identifier',
-      title: 'Balance Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'posting_identifier',
-      title: 'Sub Transaction',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'sub_balance_type',
-      title: 'Sub Balance Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'customization_type_value',
-      title: 'Custom Logic',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
+  @ViewChild('additionalRelationships')
+  public addRelationID: BodTableComponent;
+  useExistingFormCtrlKeysId: string[] = [];
+  useExistingFormCtrlKeysValue: string[] = [];
+  private lastModifiedIndex = 0;
+  public additionalRelationActions: BodTableAction[] = roletypeaction;
+  public message: NotificationMessage | undefined;
 
-    {
-      name: 'actions', //customization_type_value
-      title: ' ',
-      hasAction: true
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  @Input() retainedCodeForExt: string = '';
+  @Input() retainedIdentifierForExt: number = 0;
+  @Input() retainedAccountClassificationForExt: number = 0;
+  @Input() retainedDateValueForExt: string = '';
+  @Input() retainedPayerForExt: number = 0;
+  @Input() retainedPayeeForExt: number = 0;
+  @Input() retainedStatementDisplayForExt: boolean = false;
+  @Input() retainedChargeBaseForExt: boolean = false;
+  @Input() retainedPersistedForExt: boolean = false;
+  @Input() retainedCalculatedForExt: boolean = false;
+  @Input() retainedAutoCreationForExt: boolean = false;
+  @Input() retainedLogHistoryForExt: boolean = false;
+  @Input() retainedDailySnapshotForExt: boolean = false;
+  @Input() retainedInquiryRequiredForExt: boolean = false;
+  @Input() retainedGenerateFinancialResultsForExt: boolean = false;
+  @Input() retainedGLMappingForExt: boolean = false;
+  @Input() retainedSummaryRequiredForExt: boolean = false;
+  @Input() retainedBalancePeriodTypeForExt: string[] = [];
+  @Input() retainedBalanceSubTypeDataForExt: string[] = [];
+  
+
+  @Input() editBalanceTypeRow: BalanceTypeList;
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+  public errorMessages: NotificationMessage[] = [];
+  onAdd(formValues: any) { }
+  public onValidTableActionClicked(event: BodTableAction): void { }
+
+  public inlineAddRowActionClick() {
+    this.exstRoleTypeForm.reset();
+    if (this.exstAggregateForm) {
+      // Store the current aggregationname value
+      const currentAggregationName = this.exstAggregateForm.get('aggregationname')?.value;
+
+      // Reset the form
+      this.exstAggregateForm.reset();
+
+      // Set the aggregationname value back
+      this.exstAggregateForm.get('aggregationname')?.setValue(currentAggregationName);
     }
+  }
+  public inlineEditRowActionClick(_event: any) { }
+  public onEditTableAction(event: EditTableEventData) { }
+
+
+
+  dateValues = [
+    { value: 'BookingDate', label: 'Booking Date' },
+    { value: 'EffectiveDate', label: 'Effective Date' },
+    { value: 'ValueDate', label: 'Value Date' }
+
   ];
-  public channels: Column[] = [
-    {
-      name: 'code',
-      title: 'Channel',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'option',
-      title: 'Option',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
-        ],
-        validators: {
-          required: true
-        }
-      }
-    }
+  applicationTypes = [
+    { value: 'MaximumBalance', label: 'Maximum Balance' },
+    { value: 'RemainingAmount', label: 'Remaining Amount' },
+    { value: 'Amount', label: 'Amount' }
   ];
-  public counters: Column[] = [
-    {
-      name: 'code',
-      title: 'Counters',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'classificationType',
-      title: 'Classification Type',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'operatorType',
-      title: 'Operator Type',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
-        ],
-        validators: {
-          required: true
-        }
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
+  customizationTypes = [
+    { value: 'Before', label: 'Before' },
+    { value: 'None', label: 'None' },
+    { value: 'After', label: 'After' },
+    { value: 'CustomOnly', label: 'Custom Only' }
   ];
 
-  public conditions: Column[] = [
-    {
-      name: 'code',
-      title: 'Conditions',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'relationshipType',
-      title: 'Relationship Type',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
-        ],
-        validators: {
-          required: true
-        }
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
+  // additionalRelations = [
+  //   { value: 'BalSubType', label: 'Balance sub Type' },
+  //   { value: 'BalancePeriodType', label: 'Balance Period Type' }
+  // ];
+  public periodTypes: BodAutoCompleteOption[] = [
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'Yearly', label: 'Yearly' },
+    { value: 'Statement', label: 'Statement' },
+    { value: 'LifeToDate', label: 'LifeToDate' }
   ];
 
-  public restrictions: Column[] = [
-    {
-      name: 'code',
-      title: 'Restrictions',
-      width: 2,
-      truncate: true,
-      noOverflow: true,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'type',
-      title: 'Type',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'ERROR', value: 'ERROR' }
-        ],
-        validators: {
-          required: true
-        }
-      }
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-
-
-  private eventUrl = '';
-  private channelUrl = '';
-  private localeUrl = '';
-  private productTypeUrl = '';
-  private condUrl = '';
-  private financeOptypUrl = '';
-  private transTypeUrl = '';
-  private saveUrl = '';
-  private updateUrl = '';
-  private retrieveUrl = '';
-  private deleteUrl = '';
-  private counterUrl = '';
-  private restrictionUrl = '';
-  private pstgCtgUrl = '';
-  private psamUrl = '';
-  private exstTransTypeUrl = '';
-
-
-  businessProductLine: any[] = [];
-  private reqDfnId = '';
-  private clientCode = '';
-  private countryCode = '';
-  private productLines: any[] = [];
-  private productTypes: any[] = [];
-  private productTypesIdfr: any[] = [];
-  private productTypeKeyValueMap: { [key: string]: number } = {};
-  private productTypeKeys: string[] = [];
-  private productTypeValues: number[] = [];
   constructor(
-    private http: HttpClient,
-    private uiContextService: UIContextService,
-    private readonly dataSharingService: DataSharingService
-  ) {
-    let url =
-      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
-        .sdkServiceUrl.value;
+    public balanceTypeService: BalanceTypeService,
+    private fb: FormBuilder,
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService
+  ) { }
+  inputForpreconversionSelect1: BodAutoCompleteMetadata = {
+    options: [],
+    isMultiSelect: true
+  };
+  periodData1 = this.inputForpreconversionSelect1;
 
-    this.dataSharingService.data$.subscribe(data => {
-      if (data) {
-        this.reqDfnId = data.reqDfnId;
-        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
-        this.countryCode = data.countryCode;
-        this.clientCode = data.countryCode;
-        this.productLines = [
-          ...new Set(this.businessProductLine.map(obj => obj.value))
-        ];
-        this.productTypes = [
-          ...new Set(this.businessProductLine.map(obj => obj.type))
-        ];
-        if (data.identifier) {
-          try {
-            const parsedIdentifiers: { key: string; value: number }[] = JSON.parse(data.identifier);
-
-            this.productTypeKeyValueMap = parsedIdentifiers.reduce(
-              (acc: { [key: string]: number }, curr: { key: string; value: number }) => {
-                acc[curr.key] = curr.value;
-                return acc;
-              },
-              {}
-            );
-
-            this.productTypeKeys = parsedIdentifiers.map((item: { key: string; value: number }) => item.key);
-            this.productTypeValues = parsedIdentifiers.map((item: { key: string; value: number }) => item.value);
-          } catch (e) {
-            console.error('Failed to parse identifier JSON:', e);
-          }
+  ngOnInit(): void {
+    this.initForm();
+    this.loadDropdownData();
+    if (this.editBalanceTypeRow) {
+      this.balanceTypeForm(this.editBalanceTypeRow);
+    }
+    this.addExistingBalanceTypeFormGroup
+      .get('exstcode')
+      ?.valueChanges.subscribe(value => {
+        const selectedBalanceType = this.balancetypes.find(
+          item => item.value === value
+        );
+        if (selectedBalanceType) {
+          this.exstAggregateForm
+            .get('aggregationname')
+            ?.setValue(selectedBalanceType.label);
         }
-        this.eventUrl = url + '/basedata/transevtype';
-        this.channelUrl = url + '/basedata/deliverysystem';
-        this.localeUrl = url + '/basedata/multilingualinfo';
-        this.productTypeUrl = url + '/basedata/producttype';
-        this.condUrl = url + '/basedata/condition';
-        this.financeOptypUrl = url + '/basedata/financialoperationtype';
-        this.transTypeUrl = url + '/basedata/pstgstd';
-        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
-        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
-        this.retrieveUrl =
-          url +
-          '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=TransactionType';
-        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
-        this.counterUrl = url + '/basedata/counterbyprodtypeids' + '?product-type-idfr-list=1110101' 
-          '/metadata/retrieve/' +
-          this.reqDfnId +
-          '?metadata-config-type=TransactionType';
-        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
-
-        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
-        this.pstgCtgUrl = url + '/basedata/postingcategory';
-        this.psamUrl = url + '/basedata/postingapplmethoddetails';
-        this.exstTransTypeUrl = url + '/basedata/pstgstd';
-        this.restrictionUrl = url + '/basedata/restrictionbyprodtypeids' + '?product-type-idfr-list=1110101';
-        
-      }
-    });
+      });
   }
 
-  createHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'country-code': this.countryCode,
-      'client-code': this.clientCode,
-      'product-line': this.productLines,
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID(),
-      'requirement-id': this.reqDfnId
+  loadDropdownData(): void {
+    this.balanceTypeService.getPostingSTD().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.debittransactiontypes = mappedData;
+      this.credittransactiontypes = mappedData;
+    });
+    this.balanceTypeService.getProductType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.producttypes = mappedData
+    });
+    this.balanceTypeService.getRelationshipType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.relationshiptypes = mappedData
+    });
+    this.balanceTypeService.getBalanceType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.balancetypes = mappedData
+    });
+    this.balanceTypeService.getAccntClassification().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.exstaccntclassifications = mappedData;
+      this.exstRoleaccountclassifications = mappedData;
+    });
+
+    this.balanceTypeService.getRoletype().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.roletypes = mappedData;
+      this.payers = mappedData;
+      this.payees = mappedData;
+    });
+    this.balanceTypeService.getPostMethod().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.postingapplicationmethods = mappedData;
+    });
+    this.balanceTypeService.getSubBalanceType().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.subBalancetypes = mappedData;
+    });
+    this.balanceTypeService.getSubBalanceType().subscribe(data => {
+      this.inputForpreconversionSelect1 = {
+        options: data.map((item: any) => ({
+          label: item.code,
+          value: item.code
+        })),
+        isMultiSelect: true
+      };
+
+      this.periodData1 = this.inputForpreconversionSelect1;
     });
   }
-  generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0,
-          v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
+  public dataWithRoleTypevalues: RoleTypeSampleTable[] = [];
+  onAddRoleType(formValues: any) {
+    this.errorMessages = [];
+  
+    // Apply validator dynamically
+    this.exstRoleTypeForm.setValidators([
+      this.duplicateRoleTypeValidator(this.dataWithRoleTypevalues, this.roletypes)
+    ]);
+    this.exstRoleTypeForm.updateValueAndValidity();
+  
+    if (this.exstRoleTypeForm.invalid) {
+      const errors = this.exstRoleTypeForm.errors;
+      const duplicateValue = errors?.['duplicateRoleType'];
+  
+      if (duplicateValue) {
+        this.handleError1({
+          errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
+          status: 400,
+          duplicateValue
+        });
       }
+      return;
+    }
+  
+    const selectedRoleType = this.roletypes.find(
+      item => item.value === formValues.exstRoletype
     );
-  }
-
-  getTransactionEvent(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.eventUrl}`, { headers });
-  }
-  getDeliveryChannel(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.channelUrl}`, { headers });
-  }
-  getCounters(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.counterUrl}`, { headers });
-  }
-  getExstTransactionType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.exstTransTypeUrl}`, { headers });
-  }
-
-  getLocaleCodes(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.localeUrl}`, { headers });
-  }
-  getInternalProdType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.productTypeUrl}`, { headers });
-  }
-  //pstgCtgUrl
-  getConditions(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.condUrl}`, { headers });
-  }
-  getpostingCategory(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.pstgCtgUrl}`, { headers });
-  }
-  getFinancialOperationType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.financeOptypUrl}`, { headers });
-  }
-  getTransactionType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.transTypeUrl}`, { headers });
-  }
-   saveTransactionType(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.post(this.saveUrl, request, { headers });
-  }
-
-  getPsamPstgSTD(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.exstTransTypeUrl}`, { headers });
-  }
-  getPSAMDetails(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.psamUrl}`, { headers });
-  }
-  updateTransactiionType(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.put(this.updateUrl, request, { headers });
-  }
-  deleteTransactionType(
-    metadataConfigType: string,
-    metadataConfigIdfr: number
-  ): Observable<any> {
-    const headers = this.createHeaders();
-    const params = {
-      'metadata-config-type': metadataConfigType,
-      'metadata-config-idfr': metadataConfigIdfr
+    const roleTypeCode = selectedRoleType ? selectedRoleType.label : '';
+  
+    const selectedAccountClassification = this.exstaccntclassifications.find(
+      item => item.value === formValues.exstRoleaccountclassification
+    );
+    const accountClassificationCode = selectedAccountClassification
+      ? selectedAccountClassification.label
+      : '';
+  
+    const newValidValue: RoleTypeSampleTable = {
+      type: roleTypeCode || '',
+      accountingClassification: accountClassificationCode ?? '',
+      obligator: formValues.exstObligator ? 'Y' : 'N',
+      beneficiary: formValues.exstBeneficiary ? 'Y' : 'N',
+      visibility: formValues.exstIsvisible ? 'Y' : 'N'
     };
+  
+    this.dataWithRoleTypevalues.push(newValidValue);
+  
+    if (this.exstRoleTypetabledata && this.exstRoleTypetabledata.datasource) {
+      this.exstRoleTypetabledata.datasource.data = [
+        ...this.dataWithRoleTypevalues
+      ];
+    }
+  
+    this.changeDetectorRef.detectChanges();
+    this.exstRoleTypeForm.reset();
+    this.addExistingBalanceTypeFormGroup.markAsDirty();
+  }
+  
+  private handleError1(error: any) {
+    let errorMsg = '';
+    switch (error.errorCode) {
+      case 'ROLE_TYPE_ALREADY_EXISTS':
+        errorMsg = `Role type "${error.duplicateValue}" already exists.`;
+        break;
+      default:
+        errorMsg = 'Unknown error occurred.';
+    }
+  
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages2.push(this.message);
+  
+    setTimeout(() => {
+      this.errorMessages2 = this.errorMessages2.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+  
+  initialAggregationName: string | null = null;
+  public dataWithAggregatevalues: AggregateSampleTable[] = [];
+  public errorMessages2: NotificationMessage[] = [];
 
-    return this.http.delete(this.deleteUrl, { headers, params });
-  }
-  public getProductTypeValues(): number[] {
-    return this.productTypeValues;
-  }
-  public getProductTypeKeys(): string[] {
-    return this.productTypeKeys;
+
+
+  onAddExstAggregate(formValues: any) {
+    //convert from idfr to code
+    const selectedBalanceType = this.balancetypes.find(
+      item => item.value === formValues.balancetype
+    );
+    const balTypeName = selectedBalanceType ? selectedBalanceType.label : '';
+    const selectedProductType = this.producttypes.find(
+      item => item.value === formValues.producttype
+    );
+    const prdtTypeName = selectedProductType ? selectedProductType.label : '';
+    const selecteDebitType = this.debittransactiontypes.find(
+      item => item.value === formValues.debittransactiontype
+    );
+    const debitTransType = selecteDebitType ? selecteDebitType.label : '';
+    const selecteCreditType = this.credittransactiontypes.find(
+      item => item.value === formValues.credittransactiontype
+    );
+    const creditTransType = selecteCreditType ? selecteCreditType.label : '';
+    const selecteRltnpType = this.relationshiptypes.find(
+      item => item.value === formValues.relationshiptype
+    );
+    const rltnType = selecteRltnpType ? selecteRltnpType.label : '';
+    if (!this.initialAggregationName) {
+      this.initialAggregationName =
+        this.exstAggregateForm.get('aggregationname')?.value || '';
+    }
+    if (this.exstAggregateForm.invalid) {
+      // alert('Please fill all the required fields.');
+      return;
+    }
+    this.dataWithAggregatevalues = this.dataWithAggregatevalues || [];
+    const newValidValue: AggregateSampleTable = {
+      aggregationname: this.initialAggregationName || '',
+      balancetype: balTypeName || '',
+      aggregationLevel:
+        formValues.aggregationlevel !== undefined
+          ? formValues.aggregationlevel
+          : '',
+      relationshiptype: rltnType || '',
+      aggregates: [
+        {
+          id: 0,
+          label: 'Product Type',
+          value: prdtTypeName
+        },
+        {
+          id: 1,
+          label: 'Debit Transaction Type',
+          value: debitTransType
+        },
+        {
+          id: 2,
+          label: 'Credit Transaction Type',
+          value: creditTransType
+        },
+        {
+          id: 3,
+          label: 'Other Currency',
+          value: formValues.othercurrency ? 'Y' : 'N'
+        },
+        {
+          id: 4,
+          label: 'Reverse',
+          value: formValues.reverse ? 'Y' : 'N'
+        }
+      ]
+    };
+    this.dataWithAggregatevalues.push(newValidValue);
+    if (this.exstAggregateTabledata && this.exstAggregateTabledata.datasource) {
+      this.exstAggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
+      ];
+    }
+    if (this.exstAggregateForm) {
+      // Reset the form but keep the aggregationname value
+      const currentAggregationName =
+        this.exstAggregateForm.get('aggregationname')?.value;
+      this.exstAggregateForm.reset();
+      this.exstAggregateForm
+        .get('aggregationname')
+        ?.setValue(currentAggregationName);
+    }
+    this.addExistingBalanceTypeFormGroup.markAsDirty();
   }
 
-  retrieveTransactionType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<TransactionTypeList[]>(this.retrieveUrl, { headers });
+  public exstRoleTypetabledata: BodTableMetadata = {
+    title: 'Role Type Details (mandatory)',
+    columns: [...this.balanceTypeService.roletypecolumns],
+    // enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      // pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Role Types Data Defined'
+  };
+  public exstAggregateTabledata: BodTableMetadata = {
+    title: 'Aggregate Details',
+    columns: [...this.balanceTypeService.aggregatecolmn],
+    rowLeftAction: RowLeftAction.expandableRows,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      // pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<AggregateSampleTable>(
+      this.dataWithAggregatevalues
+    ),
+    noRecordsMessage: 'No Aggregate Data Defined'
+  };
+  public exstPostingApplicationTabledata: BodTableMetadata = {
+    title: 'Posting Application Instruction',
+    columns: [...this.balanceTypeService.postingAppcolumn],
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No data Defined'
+  };
+  nonNegativeValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const value = control.value;
+      return value < 0 ? { negativeValue: { value: value } } : null;
+    };
   }
-  //
-  public getTransactionTypeData(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.transactionTypeInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.transactionTypeInquiry[i].id,
-        label: element.transactionTypeInquiry[i].label,
-        value: element.transactionTypeInquiry[i].value,
-        isLink: setIsLink
+  duplicateRoleTypeValidator(existingValues: any[], roletypes: any[]): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const roleTypeControl = group.get('exstRoletype');
+      if (!roleTypeControl) return null;
+  
+      const selectedRoleType = roletypes.find(
+        item => item.value === roleTypeControl.value
+      );
+      const roleTypeLabel = selectedRoleType ? selectedRoleType.label : '';
+  
+      const isDuplicate = existingValues.some(item => item.type === roleTypeLabel);
+  
+      if (isDuplicate) {
+        roleTypeControl.setErrors({ duplicateRoleType: roleTypeLabel });
+        return { duplicateRoleType: roleTypeLabel };
+      } else {
+        if (roleTypeControl.hasError('duplicateRoleType')) {
+          const errors = { ...roleTypeControl.errors };
+          delete errors['duplicateRoleType'];
+          roleTypeControl.setErrors(Object.keys(errors).length ? errors : null);
+        }
+        return null;
+      }
+    };
+  }
+  
+  maxValueValidator(maxValue: number): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const value = control.value;
+      return value > maxValue ? { maxValueExceeded: { value: value } } : null;
+    };
+  }
+
+  private initForm(): void {
+    this.addExistingBalanceTypeFormGroup = this.fb.group({
+      exstcode: new UntypedFormControl('', [Validators.required]),
+      exstaccntclassification: new UntypedFormControl('', [
+        Validators.required
+      ]),
+      exstdatevalue: new UntypedFormControl('', [Validators.required]),
+      exstpayer: new UntypedFormControl('', [Validators.required]),
+      exstpayee: new UntypedFormControl('', [Validators.required]),
+      exststatementdisplay: new UntypedFormControl(),
+      exstchargebase: new UntypedFormControl(),
+      exstpersisted: new UntypedFormControl(),
+      exstcalculated: new UntypedFormControl(),
+      exstautocreation: new UntypedFormControl(),
+      exstloghistory: new UntypedFormControl(),
+      exstdailysnapshot: new UntypedFormControl(),
+      exstinquiryrequired: new UntypedFormControl(),
+      exstgeneratefinancialresults: new UntypedFormControl(),
+      exstglmapping: new UntypedFormControl(),
+      exstsummaryrequired: new UntypedFormControl(),
+      balsubtype: new UntypedFormControl('', [Validators.required]),
+      balperiodtype: new UntypedFormControl('')
+    });
+    this.exstRoleTypeForm = this.fb.group({
+      exstRoletype: new UntypedFormControl('', [Validators.required]),
+      exstRoleaccountclassification: new UntypedFormControl(''),
+      exstObligator: new UntypedFormControl(),
+      exstBeneficiary: new UntypedFormControl(),
+      exstIsvisible: new UntypedFormControl()
+    });
+
+    this.exstAggregateForm = this.fb.group({
+      aggregationname: new UntypedFormControl({ value: '', disabled: true }),
+      producttype: new UntypedFormControl(''),
+      balancetype: new UntypedFormControl('', [Validators.required]),
+      relationshiptype: new UntypedFormControl(),
+      aggregationlevel: new UntypedFormControl('', [
+        Validators.required,
+        this.nonNegativeValidator(),
+        this.maxValueValidator(999999)
+      ]),
+      // aggregationlevel: new UntypedFormControl('', [Validators.required]),
+      debittransactiontype: new UntypedFormControl(''),
+      credittransactiontype: new UntypedFormControl(''),
+      othercurrency: new UntypedFormControl(''),
+      reverse: new UntypedFormControl('')
+    });
+    this.exstPostingApplicationForm = this.fb.group({
+      postingapplicationmethod: new UntypedFormControl('', [
+        Validators.required
+      ]),
+      applicationtype: new UntypedFormControl('', [Validators.required]),
+      instructionorder: new UntypedFormControl('', [Validators.required]),
+      customizationtype: new UntypedFormControl('', [Validators.required])
+    });
+  }
+  handleRowLevelActionsforaggergate(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteAggregateRow(index);
+    }
+  }
+  handleRowLevelActionsforRoletype(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRow(index);
+    }
+  }
+
+  deleteAggregateRow(index: number): void {
+    this.dataWithAggregatevalues.splice(index, 1);
+    if (this.exstAggregateTabledata && this.exstAggregateTabledata.datasource) {
+      this.exstAggregateTabledata.datasource.data = [
+        ...this.dataWithAggregatevalues
+      ];
+      this.addExistingBalanceTypeFormGroup.markAsDirty();
+    }
+  }
+  deleteRow(index: number) {
+    this.dataWithRoleTypevalues.splice(index, 1);
+    this.exstRoleTypetabledata.datasource.data = [
+      ...this.dataWithRoleTypevalues
+    ];
+    this.addExistingBalanceTypeFormGroup.markAsDirty();
+  }
+  inputForpreconversionSelect: BodAutoCompleteMetadata = {
+    options: this.periodTypes,
+    isMultiSelect: true
+  };
+  periodData = this.inputForpreconversionSelect;
+
+  onExistingBalanceType(isAdd: boolean) {
+    // this.isAdd = true;
+    if (this.addExistingBalanceTypeFormGroup.invalid) {
+      return;
+    }
+    const formValue = this.addExistingBalanceTypeFormGroup.getRawValue();
+    const selectedBalanceCode = formValue.exstcode;
+    const selectedBalance = this.balancetypes.find(
+      item =>
+        item.label === selectedBalanceCode || item.value === selectedBalanceCode
+    );
+    const balTypeIdentifier = selectedBalance?.value || selectedBalanceCode;
+    const balTypeLabel = selectedBalance?.label || selectedBalanceCode;
+    const productTypeIdentifiers = this.metadataService.getProductTypeValues();
+
+// 1. balanceAggregationInsertionList
+const balanceAggregationInsertionList =
+  this.dataWithAggregatevalues.length > 0
+    ? this.dataWithAggregatevalues.map((item, index) => {
+        const productType = this.producttypes.find(
+          pt =>
+            pt.label ===
+            item.aggregates.find(aggregate => aggregate.label === 'Product Type')?.value
+        )?.value;
+        const debitTransactionType = this.debittransactiontypes.find(
+          dt =>
+            dt.label ===
+            item.aggregates.find(aggregate => aggregate.label === 'Debit Transaction Type')?.value
+        )?.value;
+        const creditTransactionType = this.credittransactiontypes.find(
+          ct =>
+            ct.label ===
+            item.aggregates.find(aggregate => aggregate.label === 'Credit Transaction Type')?.value
+        )?.value;
+        const otherCurrency = item.aggregates.find(aggregate => aggregate.label === 'Other Currency')?.value;
+        const reverse = item.aggregates.find(aggregate => aggregate.label === 'Reverse')?.value;
+        const balanceTypeIdentifier = this.balancetypes.find(bt => bt.label === item.balancetype)?.value;
+
+        return {
+          balanceTypeIdentifier: balanceTypeIdentifier || null,
+          productTypeIdentifier: productTypeIdentifiers[index] ?? null,
+          name: item.aggregationname,
+          productTypeAggrIdfr: productType || null,
+          aggrBalanceTypeIdentifier: balanceTypeIdentifier || null,
+          relationshipType: this.relationshiptypes.find(rt => rt.label === item.relationshiptype)?.value || null,
+          relationshipTypeCode: item.relationshiptype,
+          aggregationLevel: item.aggregationLevel ?? null,
+          balanceTypeCode: item.balancetype,
+          otherCurrencyAggregation: otherCurrency === 'Y' ? 'Y' : 'N',
+          reverseAggregation: reverse === 'Y' ? 'Y' : 'N',
+          postingStandardIdentifierForDebit: debitTransactionType || null,
+          postingStandardIdentifierForCredit: creditTransactionType || null
+        };
+      })
+    : [];
+
+// 2. productTypeBalanceTypeRelationshipList
+const productTypeBalanceTypeRelationshipList = productTypeIdentifiers.map(id => ({
+  identifier: id,
+  balanceTypeIdentifier: balTypeIdentifier,
+  balanceTypeCode: balTypeLabel,
+  persisted: formValue.exstpersisted ? 'Y' : 'N',
+  calculated: formValue.exstcalculated ? 'Y' : 'N',
+  autoCreated: formValue.exstautocreation ? 'Y' : 'N',
+  statementProcess: formValue.exststatementdisplay ? 'Y' : 'N',
+  accountingClassification: formValue.exstaccntclassification,
+  snapshotRequired: formValue.exstdailysnapshot ? 'Y' : 'N',
+  payerIdentifier: formValue.exstpayer,
+  payeeIdentifier: formValue.exstpayee,
+  chargeCalculation: formValue.exstchargebase ? 'Y' : 'N',
+  logAudit: formValue.exstloghistory ? 'Y' : 'N',
+  financialResultRequired: formValue.exstgeneratefinancialresults ? 'Y' : 'N',
+  glRequired: formValue.exstglmapping ? 'Y' : 'N',
+  dateValue: formValue.exstdatevalue,
+  enquiryRequired: formValue.exstinquiryrequired ? 'Y' : 'N',
+  summaryRequired: formValue.exstsummaryrequired ? 'Y' : 'N'
+}));
+
+
+ // 3. productTypeBalanceSubTypeRelationshipList
+
+
+    const productTypeBalanceSubTypeRelationshipList: ProductTypeBalanceSubTypeRelationship[] = [];
+
+    formValue.balsubtype.forEach((subtype: string) => {
+      const selectedBalanceType = this.subBalancetypes.find(item => item.label === subtype);
+
+      productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
+        productTypeBalanceSubTypeRelationshipList.push({
+          productTypeIdentifier: productTypeIdentifier ?? null,
+          balanceTypeIdentifier: balTypeIdentifier,
+          balanceSubTypeIdentifier: selectedBalanceType?.value ?? null,
+          balanceSubTypeCode: selectedBalanceType?.label ?? null
+        });
+      });
+    });
+
+    // 4. productTypeBalanceTypePeriodList
+
+    let productTypeBalanceTypePeriodList: ProductTypeBalanceTypePeriod[] = [];
+
+    if (formValue.balperiodtype && formValue.balperiodtype.length > 0) {
+      productTypeBalanceTypePeriodList = [];
+      formValue.balperiodtype.forEach((periodType: string) => {
+        productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
+          productTypeBalanceTypePeriodList.push({
+            productTypeIdentifier: productTypeIdentifier ?? null,
+            balanceTypeIdentifier: balTypeIdentifier,
+            periodType: periodType
+          });
+        });
       });
     }
+    
+// 5. productTypeBalanceTypeRoletypeRelationshipList
+const productTypeBalanceTypeRoletypeRelationshipList =
+  this.dataWithRoleTypevalues.length > 0
+    ? this.dataWithRoleTypevalues.map((roleType, index) => ({
+        productTypeIdentifier: productTypeIdentifiers[index] ?? null,
+        balanceTypeIdentifier: balTypeIdentifier,
+        roleType: this.roletypes.find(rt => rt.label === roleType.type)?.value,
+        roleTypeCode: roleType.type,
+        accountingClassification: this.exstaccntclassifications.find(
+          ac => ac.label === roleType.accountingClassification
+        )?.value,
+        accountingClassificationCode: roleType.accountingClassification,
+        visible: roleType.visibility === 'Y' ? 'Y' : 'N',
+        payee: roleType.beneficiary === 'Y' ? 'Y' : 'N',
+        payer: roleType.obligator === 'Y' ? 'Y' : 'N'
+      }))
+    : [];
 
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  //getPostingDetails
-
-  public getPostingDetails(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.contraPostInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.contraPostInquiry[i].id,
-        label: element.contraPostInquiry[i].label,
-        value: element.contraPostInquiry[i].value,
-        isLink: setIsLink
-      });
+// 6. productTypeList
+const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+// 7. Final balanceTypeData
+const balanceTypeData = {
+  metadataType: 'BalanceType',
+  balanceTypeList: [
+    {
+      balanceAggregationInsertionList,
+      productTypeBalanceTypeRelationshipList,
+      productTypeBalanceSubTypeRelationshipList,
+      productTypeBalanceTypePeriodList,
+      productTypeBalanceTypeRoletypeRelationshipList
     }
+  ],
+  productTypeList: productTypeKeys.map((code, index) => ({
+    identifier: productTypeValues[index],
+    code: code
+  }))
+};
 
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-  //additionDetails
-
-  public additionDetails(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.additionalDetialinquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.additionalDetialinquiry[i].id,
-        label: element.additionalDetialinquiry[i].label,
-        value: element.additionalDetialinquiry[i].value,
-        isLink: setIsLink
-      });
+    if (productTypeBalanceTypeRoletypeRelationshipList.length === 0) {
+      this.handleError(
+        {
+          errorCode: 'ROLE_TABLE_EMPTY',
+          status: 409
+        },
+        isAdd
+      );
+      return;
     }
+    console.log('balance Data:', JSON.stringify(balanceTypeData, null, 2));
+    const serviceCall = isAdd
+      ? this.balanceTypeService.saveBalanceType(balanceTypeData)
+      : this.balanceTypeService.updateBalanceType(balanceTypeData);
 
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, balanceTypeData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+    // this.addNewBalanceTypeFormGroup.controls['balTypeIdentifier'].disable();
   }
-  //productTypeRelInquiry
-  public prdtTypeRelationshipInquiry(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.prdtTypeRelInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.prdtTypeRelInquiry[i].id,
-        label: element.prdtTypeRelInquiry[i].label,
-        value: element.prdtTypeRelInquiry[i].value,
-        isLink: setIsLink
-      });
+  private successResponse(resp, _balanceTypeData, isAdd) {
+    const balanceTypeCode =
+      _balanceTypeData.balanceTypeList[0]
+        .productTypeBalanceTypeRelationshipList[0].balanceTypeCode;
+    const SuccessMsg = isAdd
+      ? `${balanceTypeCode} Added successfully`
+      : `${balanceTypeCode} Updated successfully`;
+    this.apiResponse.emit({ ..._balanceTypeData, SuccessMsg });
+  }
+  private handleError(error: any, isAdd: boolean) {
+    let errorMsg = 'Balance Type Code already exists.';
+    if (error.errorCode === 'MBP_SDK_BUS_ERR_005') {
+      errorMsg = 'Code already exists.';
+    }else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Code already exists.';
+    } else if (error.status === 400) {
+      errorMsg = 'Please fill the Role Type fields.';
+    }else if (error.errorCode === 'ROLE_TABLE_EMPTY') {
+      errorMsg = 'AtLeast One Role Type is required.';
+    }else {
+      errorMsg = 'Unknown error occurred.';
     }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages.push(this.message);
+    // setTimeout(() => {
+    //   this.errorMessages = this.errorMessages.filter(
+    //     msg => msg.text !== errorMsg
+    //   );
+    // }, 20000);
   }
-  //Relationships
-  public relationshipInquiry(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.relInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.relInquiry[i].id,
-        label: element.relInquiry[i].label,
-        value: element.relInquiry[i].value,
-        isLink: setIsLink
-      });
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+
+
+    if (isEditMode) {
+      // Restore 'code' value and keep it disabled
+      this.addExistingBalanceTypeFormGroup.get('exstcode')?.setValue(this.retainedCodeForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstcode')?.disable();
+      this.addExistingBalanceTypeFormGroup.get('roleTypeIdentifier')?.setValue(this.retainedIdentifierForExt);
+      this.addExistingBalanceTypeFormGroup.get('roleTypeIdentifier')?.disable();
+      this.addExistingBalanceTypeFormGroup.get('exstaccntclassification')?.setValue(this.retainedAccountClassificationForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstdatevalue')?.setValue(this.retainedDateValueForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstpayer')?.setValue(this.retainedPayerForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstpayee')?.setValue(this.retainedPayeeForExt);
+      this.addExistingBalanceTypeFormGroup.get('exststatementdisplay')?.setValue(this.retainedStatementDisplayForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstchargebase')?.setValue(this.retainedChargeBaseForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstpersisted')?.setValue(this.retainedPersistedForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstcalculated')?.setValue(this.retainedCalculatedForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstautocreation')?.setValue(this.retainedAutoCreationForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstloghistory')?.setValue(this.retainedLogHistoryForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstdailysnapshot')?.setValue(this.retainedDailySnapshotForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstinquiryrequired')?.setValue(this.retainedInquiryRequiredForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstgeneratefinancialresults')?.setValue(this.retainedGenerateFinancialResultsForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstglmapping')?.setValue(this.retainedGLMappingForExt);
+      this.addExistingBalanceTypeFormGroup.get('exstsummaryrequired')?.setValue(this.retainedSummaryRequiredForExt);
+      this.addExistingBalanceTypeFormGroup.get('balsubtype')?.setValue(this.retainedBalanceSubTypeDataForExt);
+      this.addExistingBalanceTypeFormGroup.get('balperiodtype')?.setValue(this.retainedBalancePeriodTypeForExt);
+
+    } else {
+      this.addExistingBalanceTypeFormGroup.get('exstcode')?.enable();
+      this.addExistingBalanceTypeFormGroup.get('roleTypeIdentifier')?.enable();
+
     }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
+    this.changeDetectorRef.detectChanges();
   }
 
-  //psam
-
-  public getPSAM(
-    element: TransactionTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.psamInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.psamInquiry[i].id,
-        label: element.psamInquiry[i].label,
-        value: element.psamInquiry[i].value,
-        isLink: setIsLink
-      });
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
     }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
   }
 
-  getRestrictions(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.restrictionUrl}`, { headers });
-  }  
+  isAdd = true;
+  isEdit = false;
+  private balanceTypeForm(element: BalanceTypeList): void {
+    this.isAdd = false;
+     // Deduplicate balance subtypes
+     const balanceSubTypes =
+     element.productTypeBalanceSubTypeRelationshipList
+       ?.filter(
+         item =>
+           item.balanceTypeIdentifier ===
+           element.productTypeBalanceSubTypeRelationshipList?.[0]
+             .balanceTypeIdentifier
+       )
+       .map(item => item.balanceSubTypeCode) || [];
+   const periodTypes =
+     element.productTypeBalanceTypePeriodList
+       ?.filter(
+         item =>
+           item.balanceTypeIdentifier ===
+           element.productTypeBalanceTypePeriodList?.[0].balanceTypeIdentifier
+       )
+       .map(item => item.periodType) || [];
+    const additionalData = element.productTypeBalanceTypeRelationshipList?.[0];
+    this.retainedIdentifierForExt = additionalData?.balanceTypeIdentifier ?? 0;
+    this.retainedCodeForExt = additionalData?.balanceTypeCode || '';
+    this.retainedAccountClassificationForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.accountingClassification ?? 0;
+    this.retainedDateValueForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.dateValue || '';
+    this.retainedPayerForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.payerIdentifier ?? 0;
+    this.retainedPayeeForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.payeeIdentifier ?? 0;
+    this.retainedStatementDisplayForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.statementProcess === 'Y';
+    this.retainedChargeBaseForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.chargeCalculation === 'Y';
+    this.retainedPersistedForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.persisted === 'Y';
+    this.retainedCalculatedForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.calculated === 'Y';
+    this.retainedAutoCreationForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.autoCreated === 'Y';
+    this.retainedLogHistoryForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.logAudit === 'Y';
+    this.retainedDailySnapshotForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.snapshotRequired === 'Y';
+    this.retainedInquiryRequiredForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.enquiryRequired === 'Y';
+    this.retainedGenerateFinancialResultsForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.financialResultRequired === 'Y';
+    this.retainedGLMappingForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.glRequired === 'Y';
+    this.retainedSummaryRequiredForExt = element.productTypeBalanceTypeRelationshipList?.[0]?.summaryRequired === 'Y';
+    this.retainedBalanceSubTypeDataForExt = balanceSubTypes
+    
+    this.retainedBalancePeriodTypeForExt = periodTypes
+
+    
+    this.addExistingBalanceTypeFormGroup.reset();
+
+    
+
+    this.addExistingBalanceTypeFormGroup.patchValue({
+      // exstcode: element.code,
+      exstcode:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.balanceTypeCode ||
+        '',
+      exstaccntclassification:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.accountingClassification || '',
+      exstdatevalue:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.dateValue || '',
+      exstpayer:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.payerIdentifier ||
+        '',
+      exstpayee:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.payeeIdentifier ||
+        '',
+      exstchargebase:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.chargeCalculation === 'Y',
+      exststatementdisplay:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.statementProcess === 'Y',
+      exstpersisted:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.persisted === 'Y',
+      exstcalculated:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.calculated === 'Y',
+      exstautocreation:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.autoCreated === 'Y',
+      exstloghistory:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.logAudit === 'Y',
+      exstdailysnapshot:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.snapshotRequired === 'Y',
+      exstsummaryrequired:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.summaryRequired ===
+        'Y',
+      exstinquiryrequired:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.enquiryRequired ===
+        'Y',
+      exstgeneratefinancialresults:
+        element.productTypeBalanceTypeRelationshipList?.[0]
+          ?.financialResultRequired === 'Y',
+      exstglmapping:
+        element.productTypeBalanceTypeRelationshipList?.[0]?.glRequired === 'Y',
+
+      balsubtype: balanceSubTypes,
+      balperiodtype: periodTypes
+      // element.productTypeBalanceTypePeriodList?.[0]?.periodType || ''
+    });
+    this.exstRoleTypetabledata.datasource.data = [];
+    this.dataWithRoleTypevalues = [];
+    element.productTypeBalanceTypeRoletypeRelationshipList?.forEach(element => {
+      let obj = {} as RoleTypeSampleTable;
+      obj.type = element.roleTypeCode;
+      obj.accountingClassification = element.accountingClassificationCode;
+      obj.beneficiary = element.payer;
+      obj.obligator = element.payee;
+      obj.visibility = element.visible;
+      this.exstRoleTypetabledata.datasource.data.push(obj);
+      this.dataWithRoleTypevalues.push(obj);
+    });
+    this.exstAggregateTabledata.datasource.data = [];
+    this.dataWithAggregatevalues = [];
+    element.balanceAggregationInsertionList?.forEach(element => {
+      let obj = {} as AggregateSampleTable;
+      obj.aggregationname = String(element.name);
+      obj.balancetype = element.balanceTypeCode;
+      obj.aggregationLevel = String(element.aggregationLevel);
+      obj.relationshiptype = element.relationshipTypeCode;
+      obj.aggregates = element.aggregateInquiry1.map(aggr => ({
+        id: aggr.id,
+        label: aggr.label,
+        value: aggr.value
+      }));
+      this.exstAggregateTabledata.datasource.data.push(obj);
+      this.dataWithAggregatevalues.push(obj);
+    });
+    if (this.exstAggregateForm) {
+      // Store the current balanceTypeCode
+      const currentBalanceTypeCode =
+        this.addExistingBalanceTypeFormGroup.get('exstcode')?.value;
+
+      // Reset the form
+      this.exstAggregateForm.reset();
+
+      // Set aggregationname to the stored balanceTypeCode
+      this.exstAggregateForm
+        .get('aggregationname')
+        ?.setValue(currentBalanceTypeCode);
+    }
+    this.isEdit = true;
+  }
 }
