@@ -1,222 +1,387 @@
-export interface PostingTextTable {
-  channel: string;
-  event?: string;
-  language: string;
-  text: string;
-}
-export interface TransactionTypeTable {
-  code: string;
-  description: string;
-  type: string;
-  subtype: string;
-}
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { CounterService } from '../counter-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import {
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableActionType,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { CounterComponent } from '../counter.component';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { MatDialogRef } from '@angular/material/dialog';
+import { CounterList } from './add-edit-counter.mode';
 
-export interface TransactionTypeList {
-  identifier: number;
-  code: string;
-  name: string;
-  description: string;
-  paymentType: string;
-  overridePayment: string;
-  settlementDirection: string;
-  contra: number;
-  contraTemplateIdentifier: number | null;
-  reversibleAllowed: string;
-  reverseCondition: number;
-  classificationType: string;
-  externalSystemCode: string | null;
-  invSystemBalance: string;
-  chargeEligible: string;
-  cashTransactionAllowed: string;
-  financialOperationType: number;
-  optionalityType: string;
-  eventType: number;
-  multiLingualCodeTranslationList: MultiLingualTranslation[];
-  postingRepeatedTextList: any;
-  postingTextLanguageRltnpList: any;
-  postingCategoryList: any[];
-  productTypePostingSTDRltnpList: any[];
-  productTypePostingSTDDSRltnpList: any[];
-  productTypePostingSTDDSCounterRltnp: any[];
-  productTypePostingSTDDSRestrcitionRltnp: any[];
-  productTypePostingSTDDSCDRltnpList: any[];
-  productTypePostingSTDCategoryRltnpList: any[];
-  productTypePostingSTDPAMRltnpList: any;
-  productTypePostingSTDRoletypeRltnpList: any[];
-  productTypeTransEventTypePostingSTDRltnpList: any;
-  externalTransactionTypePostingSTDRltnpDpList: any;
-  transactionTypeInquiry:TransactionTypeInquiry[]
-  contraPostInquiry:TransactionTypeInquiry[],
-  additionalDetialinquiry: TransactionTypeInquiry[],
-  prdtTypeRelInquiry: TransactionTypeInquiry[],
-  relInquiry: TransactionTypeInquiry[],
-  psamInquiry: TransactionTypeInquiry[],
+@Component({
+  selector: 'bod-add-edit-counter',
+  standalone: true,
+  imports: [
+    CounterComponent,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './add-edit-counter.component.html',
+  styleUrl: './add-edit-counter.component.scss'
+})
+export class AddEditCounterComponent implements OnInit {
+  public translationKey = TranslationKey;
+  public addNewCounterFormGroup: UntypedFormGroup;
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+
+  @Input() retainedCode: string = '';
+  @Input() retainedIdentifier: number = 0;
+  @Input() retainedName: string = '';
+  @Input() retainedSystemBalance: boolean = false;
+  @Input() editCounterRow: CounterList;
   
-}
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+  
+  public errorMessages: NotificationMessage[] = [];
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+  
+  public messages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+  
+  statusControl = new FormControl(null);
+  public previousStatus: string | undefined;
+  isAdd = true;
+  isEdit = false;
 
-export interface TransactionTypeInquiry {
-  id: number;
-  label: string;
-  value: string;
-}
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodFormStateService: BodFormStateService,
+    public counterService: CounterService,
+    private fb: FormBuilder,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService
+  ) {}
 
-export interface MultiLingualTranslation {
-  isoCode: string;
-  attributeType: string;
-  neutralCode: string;
-  translationText: string;
-}
-export interface PSAMTable{
-  order: number;
-  value: string;
-  balance_type_identifier: number;
-  sub_balance_type: string;
-  customization_type_value:string
-}
+  ngOnInit() {
+    this.initForm();
+    
+    if (this.editCounterRow) {
+      this.counterForm(this.editCounterRow);
+    }
 
-/**
- * Interface for Channel Table data
- */
-export interface ChannelTable {
-  id: number;
-  code: string;
-  option: string;
-  identifier?: string;
-  attributeForChannel?: string;
-  counters?: CounterTable[];
-  conditions?: ConditionTable[];
-  restrictions?: RestrictionTable[];
-}
+    this.metadataService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW';
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
+    });
+  }
 
-/**
- * Interface for Channel Configuration in API payload
- */
-export interface ChannelConfiguration {
-  channelIdentifier: string;
-  channelCode: string;
-  optionType: string;
-  transactionTypeIdentifier: number;
-}
+  private initForm(): void {
+    this.addNewCounterFormGroup = this.fb.group({
+      counterCode: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(32)
+      ]),
+      counterIdentifier: [{ value: '', disabled: true }],
+      counterName: new UntypedFormControl('', [
+        Validators.required,
+        this.maxLengthValidator(120)
+      ]),
+      systemCounter: new UntypedFormControl(false)
+    });
+  }
 
-/**
- * Interface for Channel Dropdown Options
- */
-export interface ChannelOption {
-  label: string;
-  value: string;
-}
+  noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
+      return forbidden
+        ? { noSpecialCharacters: { value: control.value } }
+        : null;
+    };
+  }
 
-export interface Channels {
-  id: number;
-  code: string;
-  option: string;
-}
+  maxLengthValidator(maxLength: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
 
-/**
- * Interface for Counter Table data
- */
-export interface CounterTable {
-  id: number;
-  code: string;
-  identifier: string | number;
-  classificationType?: string;
-  operatorType?: string;
-  channelidentifier?: string | number; // <-- Add this line
-}
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
 
-/**
- * Interface for Counter Configuration in API payload
- */
-export interface CounterConfiguration {
-  counterIdentifier: string;
-  counterCode: string;
-  classificationType: string;
-  operatorType: string;
-  transactionTypeIdentifier: number;
-}
+      const stringValue = value.toString();
 
-/**
- * Interface for Counter Dropdown Options
- */
-export interface CounterOption {
-  label: string;
-  value: string;
-}
+      return stringValue.length > maxLength
+        ? { maxLength: 'Value exceeds allowed digit limit' }
+        : null;
+    };
+  }
 
-export interface Counters {
-  id: number;
-  code: string;
-  classificationType: string;
-  operatorType: string;
-}
+  identifierSearch(field: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.metadataService.idfrSearch().subscribe(
+        (response: string) => {
+          if (field === 'counterIdentifier') {
+            this.addNewCounterFormGroup.controls['counterIdentifier'].setValue(response);
+          }
+          this.addNewCounterFormGroup.markAsDirty();
+          resolve();
+        },
+        error => {
+          console.error('Error:', error);
+          reject(error);
+        }
+      );
+    });
+  }
 
-/**
- * Interface for Condition Table data
- */
-export interface ConditionTable {
-  id: number;
-  code: string;
-  identifier: string | number;
-  relationshipType?: string;
-  channelidentifier?: string | number;
-}
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
+    }
+  }
 
-/**
- * Interface for Condition Configuration in API payload
- */
-export interface ConditionConfiguration {
-  conditionIdentifier: string;
-  conditionCode: string;
-  relationshipType: string;
-  transactionTypeIdentifier: number;
-}
+  onAddNewCounter(isAdd: boolean) {
+    const promises = [];
 
-/**
- * Interface for Condition Dropdown Options
- */
-export interface ConditionOption {
-  label: string;
-  value: string;
-}
+    if (isAdd) {
+      promises.push(this.identifierSearch('counterIdentifier'));
+    }
 
-export interface Conditions {
-  id: number;
-  code: string;
-  relationshipType: string;
-}
+    Promise.all(promises)
+      .then(() => {
+        this.submitForm(isAdd);
+      })
+      .catch(error => {
+        console.error('Error during identifier search:', error);
+      });
+  }
 
+  submitForm(isAdd: boolean) {
+    if (this.addNewCounterFormGroup.invalid) {
+      this.addNewCounterFormGroup.markAllAsTouched();
+      
+      const missingFields = this.getInvalidRequiredFields(this.addNewCounterFormGroup);
+      console.warn('Missing required fields:', missingFields);
 
-/**
- * Interface for Restriction Table data
- */
-export interface RestrictionTable {
-  id: number;
-  code: string;
-  identifier: string | number;
-  type?: string;
-  channelidentifier?: string | number;
-}
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        },
+        isAdd
+      );
+      return;
+    }
 
-/**
- * Interface for Restriction Configuration in API payload
- */
-export interface RestrictionConfiguration {
-  restrictionIdentifier: string;
-  restrictionCode: string;
-  type: string;
-  transactionTypeIdentifier: number;
-}
+    const formValue = this.addNewCounterFormGroup.getRawValue();
+    this.addNewCounterFormGroup.controls['counterIdentifier'].enable();
 
-/**
- * Interface for Restriction Dropdown Options
- */
-export interface RestrictionOption {
-  label: string;
-  value: string;
-}
+    const counter = {
+      identifier: formValue.counterIdentifier,
+      code: formValue.counterCode,
+      name: formValue.counterName,
+      systemCounter: formValue.systemCounter ? 'Y' : 'N'
+    };
 
-export interface Restrictions {
-  id: number;
-  code: string;
-  type: string;
+    // Get product type data from metadata service
+    const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+
+    const counterData = {
+      metadataType: 'Counter',
+      counterList: [{ counter }],
+      productTypeList: productTypeKeys.map((code, index) => ({
+        identifier: productTypeValues[index],
+        code: code
+      }))
+    };
+
+    const serviceCall = isAdd
+      ? this.counterService.saveCounter(counterData)
+      : this.counterService.updateCounter(counterData);
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, counterData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+    
+    this.addNewCounterFormGroup.controls['counterIdentifier'].disable();
+  }
+
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+    const invalidFields: string[] = [];
+
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control && control.errors?.['required']) {
+        invalidFields.push(key);
+      }
+    });
+
+    return invalidFields;
+  }
+
+  private successResponse(resp, counterData, isAdd) {
+    const counterCode = counterData.counterList[0].counter.code;
+    const SuccessMsg = isAdd
+      ? `${counterCode} Added successfully`
+      : `${counterCode} Updated successfully`;
+    this.apiResponse.emit({ ...counterData, SuccessMsg });
+  }
+
+  private handleError(error: any, isAdd: boolean) {
+    let errorMsg = '';
+
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Code already exists.';
+    } else {
+      errorMsg = 'Unknown error occurred.';
+    }
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages.push(this.message);
+  }
+
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+    this.addNewCounterFormGroup.reset();
+    this.addNewCounterFormGroup.markAsPristine();
+    this.addNewCounterFormGroup.markAsUntouched();
+
+    if (isEditMode) {
+      // Restore retained values for edit mode
+      this.addNewCounterFormGroup.get('counterCode')?.setValue(this.retainedCode);
+      this.addNewCounterFormGroup.get('counterCode')?.disable();
+      this.addNewCounterFormGroup.get('counterIdentifier')?.setValue(this.retainedIdentifier);
+      this.addNewCounterFormGroup.get('counterIdentifier')?.disable();
+      this.addNewCounterFormGroup.get('counterName')?.setValue(this.retainedName);
+      this.addNewCounterFormGroup.get('systemCounter')?.setValue(this.retainedSystemBalance);
+    } else {
+      this.addNewCounterFormGroup.get('counterCode')?.enable();
+      this.addNewCounterFormGroup.get('counterIdentifier')?.enable();
+    }
+
+    this.changeDetectorRef.detectChanges();
+  }
+
+  private counterForm(element: CounterList): void {
+    this.isAdd = false;
+    this.isEdit = true;
+
+    this.addNewCounterFormGroup.patchValue({
+      counterIdentifier: element.identifier,
+      counterCode: element.code,
+      counterName: element.name,
+      systemCounter: element.systemCounter === 'Y'
+    });
+
+    // Disable code field in edit mode
+    this.addNewCounterFormGroup.get('counterCode')?.disable();
+  }
 }
