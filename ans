@@ -1,98 +1,63 @@
-/**
- * Interface for Communication Table data
- */
-export interface CommunicationTable {
-  id: number;
-  serviceElement: string;
-  communicationServices: string;
-  identifier?: string | number;
-  channelidentifier?: string | number;
-}
+<bod-message-container rufId [messages]="messages"></bod-message-container>
+{{ messages }}
 
-/**
- * Interface for Communication Configuration in API payload
- */
-export interface CommunicationConfiguration {
-  communicationIdentifier: string;
-  serviceElement: string;
-  communicationServices: string;
-  transactionTypeIdentifier: number;
-}
-
-/**
- * Interface for Communication Dropdown Options
- */
-export interface CommunicationOption {
-  label: string;
-  value: string;
-}
-
-export interface Communications {
-  id: number;
-  serviceElement: string;
-  communicationServices: string;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-<form [formGroup]="formGroup">
-    <bod-table
-      #communicationsMultiselectTable
-      [data]="communicationsDataSingleSelect"
-      (onRowSelect)="rowSelection($event)"
-      [rowSelectionStrategy]="rowSelectionStrategy"
-      [allowSelectAll]="allowRowSelection"
-      [alignContent]="'top'"
-      [customColumnTemplates]="[
-        { columnName: 'serviceElement', templateName: serviceElementTemplate },
-        { columnName: 'communicationServices', templateName: communicationServicesTemplate }
-      ]"
-      [modeOptions]="{selection: true }"
+<bod-table
+  #customTable
+  [customColumnTemplates]="[
+    {
+      columnName: 'actions',
+      templateName: editActionTemplate
+    }
+  ]"
+  [data]="counterTableMetaData"
+  [tableActions]="isStatusEditable() ? counterTableActions : []"
+  (onTableActionClick)="isStatusEditable() && onTableActionClicked1($event)"
+  [expandedRowTemplate]="expandedRowTemplate"
+  (onRowExpand)="rowExpanded($event)"
+>
+  <ng-template
+    #editActionTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <bod-table-actions
+      sectionActions
+      [actions]="isStatusEditable() ? editactions: []"
+      (onActionClick)="isStatusEditable() && iconActionClicked($event, element)"
     >
-    
-    <ng-template
-      #serviceElementTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <!-- Show as readonly text for Service Element -->
-      <span style="padding-left: 8px; font-weight: 500;">
-        {{ element.serviceElement || 'Blank Alert' }}
-      </span>
-    </ng-template>
+    </bod-table-actions>
+  </ng-template>
+  <ng-template #expandedRowTemplate let-context="context">
+    <div fullwidth>
+      @if(context.element.name){
 
-    <ng-template
-      #communicationServicesTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
-        <mat-select
-          [formControlName]="'communicationServices_' + (element.id ?? index)"
-          (selectionChange)="onCommunicationServicesChange(element, $event.value)"
-          panelClass="fis-style"
-          name="communicationServices"
-          (click)="$event.stopPropagation()"
-        >
-          <mat-option *ngFor="let service of communicationServicesOptions" [value]="service.value">
-            {{ service.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </ng-template>
-    </bod-table>
-</form>
+      <h1>Counter</h1>
+      <bod-inquiry-layout
+        [columns]="2"
+        [groups]="counterService.getCounterData(context.element)"
+        [softSeparator]="false"
+        [direction]="direction"
+        [information]="[]"
+        (linkClick)="commonDataService.inquiryLayoutClick($event)"
+      >
+      </bod-inquiry-layout>
+      }
+    </div>
+  </ng-template>
+</bod-table>
+
+<ng-template #addNewCounterTemplate>
+  <bod-add-edit-counter
+    (apiResponse)="addCounterEvent($event)"
+    [editCounterRow]="editCounter"
+    [retainedCode]="retainedCode"
+    [retainedIdentifier]="retainedIdentifier"
+    [retainedName]="retainedName"
+    [retainedSystemBalance]="retainedSystemBalance"
+  >
+  </bod-add-edit-counter>
+</ng-template>
 
 
 
@@ -102,76 +67,135 @@ export interface Communications {
 
 
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+
+
+
+
+
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
-import { TransactionTypeService } from '../../transaction-type.service';
-import { Communications } from '../../transaction-type.model';
 import {
-  BOD_DATE_RANGE,
-  BodAutoCompleteModule,
-  BodCommonDialogModel,
-  BodCommonDialogService,
-  BodCommonModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BodDynamicFormModule,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Inject,
+  Input,
+  NO_ERRORS_SCHEMA,
+  OnDestroy,
+  OnInit,
+  Output,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+
+import {
+  Amount,
   BodFormModule,
-  BodFormStateService,
-  BodFormTypes,
   BodPageContainerModule,
+  BodPipeName,
   BodTableAction,
-  BodTableActionType,
   BodTableActionsModule,
   BodTableComponent,
-  BodTableFilterType,
+  BodTableDataSource,
+  BodTableFilterCriteria,
+  BodTableFilterUpdateButton,
   BodTableMetadata,
   BodTableModule,
-  CommonDialogComponent,
+  Column,
   ControlGroupModule,
-  DirectivesModule,
+  BodCommonDialogModel,
+  Currency,
   EditTableAction,
   InlineEditOutput,
   InputLayoutModule,
-  InquiryLayoutModule,
   MessageContainerModule,
-  ModeOptions,
   NotificationMessage,
+  SearchFieldModule,
+  DirectivesModule,
+  BodDynamicFormModule,
+  SectionContainerModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BOD_DATE_RANGE,
+  BodCommonModule,
+  BodFormTypes,
+  BodTableActionType,
+  BodTableFilterType,
+  CommonDialogComponent,
+  BodCommonDialogService,
+  ColumnType,
+  BodSearchFieldData,
+  SingleRowEdit,
+  ModeOptions,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel,
   NotificationMessageType,
   RowLeftAction,
-  SearchFieldModule,
-  SectionContainerModule,
-  SelectPageMode
+  InquiryLayoutInput,
+  InquiryLayoutModule,
+  InquiryLayoutComponent
 } from '@bod/common';
-import { MatIconModule } from '@angular/material/icon';
-import { RufIconModule } from '@ruf/shell/icon';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
 import {
-  MatSlideToggle,
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
+
+import {
+  BodEditableSampleTable,
+  BodInlineSampleTable,
+  BodLocaleRangeTable,
+  BodLocaleSetTable,
+  BodLocaleTable,
+  BodSampleTable,
+  BodSampleTable1,
+  BodSampleTableExisting
+} from '../bod-table-demo.model';
+import { MatTabsModule } from '@angular/material/tabs';
+import {
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTableDataSource } from '@angular/material/table';
+
+import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { Observable, Subscription } from 'rxjs';
+import { MatIcon, MatIconModule } from '@angular/material/icon';
+
+import { RufIconModule } from '@ruf/shell/icon';
+
+import { CounterService } from './counter-service';
+import {
+  CounterTableLevelActions,
+  editDeleteActions
+} from './counter-constants';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { TranslationKey } from '../metadat-config/codegen-config.constant';
+import { MetadataService } from '../metadat-config/metada-config.service';
+import { AddEditCounterComponent } from './add-edit-counter/add-edit-counter.component';
+import { CounterList } from './add-edit-counter/add-edit-counter.mode';
+import { forkJoin } from 'rxjs';
 
 @Component({
-  selector: 'bod-communications-multiselect-table',
+  selector: 'bod-counter',
   standalone: true,
   imports: [
-    CommonModule,
-    BodTableModule,
-    BodPageContainerModule,
-    MatSlideToggleModule,
-    ReactiveFormsModule,
-    FormsModule,
-    BodAutoCompleteModule,
     InquiryLayoutModule,
+    AddEditCounterComponent,
     SearchFieldModule,
     MatIconModule,
     RufIconModule,
@@ -197,153 +221,280 @@ import { MatTableDataSource } from '@angular/material/table';
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
+
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
+    MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './communications-multiselect-table.component.html',
-  styleUrl: './communications-multiselect-table.component.scss'
+  templateUrl: './counter.component.html',
+  styleUrl: './counter.component.scss',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
 })
-export class CommunicationsMultiselectTableComponent implements OnInit, OnChanges {
+export class CounterComponent implements OnInit {
+  public translationKey = TranslationKey;
+  public editactions: BodTableAction[] = editDeleteActions;
+  public addNewCounterFormGroup: UntypedFormGroup;
 
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
+  @Input() status: string = '';
 
-  @Input() communicationsDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Communications[] = [];
-  @Output() rowSelected = new EventEmitter<Communications[]>();
-  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
-  @Output() dirtyChange = new EventEmitter<boolean>();
-  @Input() formGroup: UntypedFormGroup;
+  @ViewChild('addNewCounterTemplate')
+  public addNewCounterTemp: TemplateRef<any>;
+  private adminTableRef: BodTableComponent | undefined;
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+  @ViewChild(AddEditCounterComponent)
+  private addEditCounterComponent!: AddEditCounterComponent;
+  public messages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
 
-  @ViewChild('communicationsMultiselectTable', { static: false })
-  communicationsTable: BodTableComponent;
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
 
-  private isDirty = false;
+  constructor(
+    private confirmDialogService: BodConfirmAlertDialogsService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    public counterService: CounterService,
+    private fb: FormBuilder,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService
+  ) { }
 
-  communicationServicesOptions = [
-    { label: 'Email', value: 'Email' },
-    { label: 'SMS', value: 'SMS' },
-    { label: 'Push Notification', value: 'Push Notification' },
-    { label: 'In-App Message', value: 'In-App Message' }
-  ];
-
-  ngAfterViewInit(): void {
-    setTimeout(() => this.selectCommunicationsRows(), 0);
+  ngOnInit() {
+    this.counterService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW';
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
+      this.counterService.updateCurrentStatus(statusToSet);
+    });
+    
+    this.getNewCounter();
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
-      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectCommunicationsRows(), 0);
+  public counterTableActions: BodTableAction[] = CounterTableLevelActions;
+  public counterTableMetaData: BodTableMetadata = {
+    title: 'Counter Details',
+    columns: [...this.counterService.columns],
+    enablePagination: true,
+    paginationOptions: {
+      pageSize: 4,
+      length: 12,
+      pageSizeOptions: [2, 3, 4, 6],
+      showLastButton: true,
+      showPageSizeOptions: true
+    },
+    datasource: new MatTableDataSource<BodSampleTable>(),
+    noRecordsMessage: 'No Counter Data Defined',
+    rowLeftAction: RowLeftAction.expandableRows,
+    enableSorting: true
+  };
+
+  public rowExpanded(element: CounterList) {
+    this.messages = [];
+  }
+
+  public msg: NotificationMessage | undefined;
+
+  isStatusEditable(): boolean {
+    return this.status !== 'READY' && this.status !== 'GENERATED';
+  }
+  statusControl = new FormControl(null);
+  public previousStatus: string | undefined;
+
+  @Output() statusChanged = new EventEmitter<string>();
+  addCounterEvent(event: any) {
+    if (event) {
+      this.getNewCounter();
+
+      this.metadataService.retrieveAll().subscribe((response: any) => {
+        const firstStatus = response?.data?.[0]?.MetadataStatus;
+        const statusToSet = firstStatus || 'NEW';
+        this.statusControl.setValue(statusToSet);
+        this.previousStatus = statusToSet;
+        this.statusChanged.emit(statusToSet);
+        this.counterService.updateCurrentStatus(statusToSet);
+      });
+      const SuccessMsg = event.SuccessMsg;
+      this.msg = {
+        code: '',
+        text: SuccessMsg,
+        type: NotificationMessageType.SUCCESS
+      };
+      this.messages.push(this.msg);
+      setTimeout(() => {
+        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
+      }, 20000);
+    }
+    this.dialogRef$.close();
+  }
+
+  public commonDialogSize: string = 'Large';
+  public closeOnCloseIconClick: boolean = false;
+  private onCloseClick() {
+    this.systemMessage.message = 'Custom Function called on close';
+    this.systemMessage.show();
+    this.dialogRef$.close();
+  }
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+  private openDialog(dialogModel: any) {
+    let onClose = this.closeOnCloseIconClick
+      ? this.onCloseClick.bind(this)
+      : undefined;
+    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
+      dialogModel,
+      onClose,
+      this.commonDialogSize
+    );
+  }
+
+  public onTableActionClicked1(event: BodTableAction) {
+    this.isEdit = false;
+    this.messages = [];
+    if (event.id === 12) {
+      this.addNewCounter();
     }
   }
 
-  private selectCommunicationsRows(): void {
-    const tableData = this.communicationsDataSingleSelect?.datasource?.data || [];
-    const selection = this.communicationsTable?.selection;
+  private addNewCounter() {
+    this.editCounter = undefined;
+    this.messages = [];
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addNewCounterTemp,
+      title: 'Add New Counter'
+    };
+    this.openDialog(dialogModel);
+  }
 
-    if (!selection || tableData.length === 0) {
-      return;
-    }
+  counterData: CounterList[] = [];
+  getNewCounter(): void {
+    this.counterService.retrieveCounter().subscribe(response => {
+      if (response.status === 'SUCCESS' && response.data) {
+        this.counterData = response.data.map((item: any) => {
+          const counter = item.Counter.counter || {};
 
-    selection.clear();
+          const counterData: CounterList = {
+            code: counter.code,
+            counterInquiry: [
+              {
+                id: 0,
+                label: 'Name',
+                value: counter.name
+              },
+              {
+                id: 1,
+                label: 'System Counter',
+                value: counter.systemCounter
+              }
+            ],
+            identifier: counter.identifier,
+            name: counter.name,
+            systemCounter: counter.systemCounter
+          };
 
-    tableData.forEach(dataRow => {
-      const match = this.selectedRowSingleSelect.find(
-        sel => sel.id === dataRow.id
-      );
-      if (match) {
-        selection.select(dataRow);
+          return counterData;
+        });
+
+        this.counterTableMetaData.datasource.data = this.counterData;
       }
     });
   }
 
-  public allowRowSelection = true;
-  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
-  public showEdit = true;
-  public defaultForm: FormGroup;
-
-  constructor(
-    private fb: FormBuilder,
-    private transactionTypeService: TransactionTypeService
-  ) { }
-
-  ngOnInit() {
-    this.defaultForm = this.fb.group({});
-  }
-
-  public onCommunicationServicesChange(element: any, value: string) {
-    element.communicationServices = value;
-    this.setDirty(true);
-  }
-
-  private loadCommunicationData() {
-    // This could be replaced with an actual API call if communication services come from backend
-    // For now, we'll use hardcoded data since Service Element is "Blank Alert"
-    const communicationData = this.communicationServicesOptions.map((service, index) => ({
-      id: index + 1,
-      serviceElement: 'Blank Alert',
-      communicationServices: service.value,
-      default: false
-    }));
-
-    this.communicationsDataSingleSelect.datasource.data = communicationData;
-  }
-
-  public resetSelection() {
-    if (this.communicationsTable?.selection) {
-      this.communicationsTable.selection.clear();
+  isEdit = false;
+  iconActionClicked(event: BodTableAction, element: CounterList) {
+    this.isEdit = true;
+    this.messages = [];
+    if (event.id === BodTableActionType.EDIT) {
+      this.editCounters(element);
+    } else if (event.id === 1) {
+      const confirmDataWithCode: BodConfirmDialogModel = {
+        ...this.ConfirmData,
+        message: `${'Are you sure you want to delete'} ${element.code}`
+      };
+      this.bodConfirmAlertDialogsService
+        .confirm(confirmDataWithCode)
+        .subscribe(val => {
+          if (val) {
+            this.counterDelete(element);
+          }
+        });
     }
-    this.selectedRowSingleSelect = [];
-    this.setDirty(false);
   }
 
-  public rowSelectionSingleSelect(element: Communications[]) {
-    console.log('rowSelectionSingleSelect called with:', element);
-    this.selectedRowSingleSelect = element;
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-    this.setDirty(true);
+  editCounter: CounterList | undefined;
+  retainedCode: string = '';
+  retainedIdentifier: number = 0;
+  retainedName: string = '';
+  retainedSystemBalance: boolean = false;
+
+  private editCounters(element: CounterList) {
+    this.editCounter = element;
+    this.retainedCode = element.code || '';
+    this.retainedIdentifier = element.identifier ?? 0;
+    this.retainedName = element.name || '';
+    this.retainedSystemBalance = element.systemCounter === 'Y';
+
+    const dialogModel: BodCommonDialogModel = {
+      formTemplate: this.addNewCounterTemp,
+      title: 'Edit Counter'
+    };
+    this.openDialog(dialogModel);
   }
 
-  public rowSelection(element: Communications[]) {
-    console.log('rowSelection called with:', element);
-    if (element.length !== 0) {
-      this.selectedRowSingleSelect = element;
-    } else {
-      this.selectedRowSingleSelect = [];
-    }
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-    this.setDirty(true);
-    console.log('Communications selectedRowSingleSelect:', this.selectedRowSingleSelect);
-  }
+  counterDelete(element: CounterList): void {
+    this.counterService
+      .deleteCounter('Counter', element.identifier)
+      .subscribe({
+        next: (response) => {
+          const successMsg = `${element.code} Deleted Successfully`;
+          this.message = {
+            code: '204',
+            text: successMsg,
+            type: NotificationMessageType.SUCCESS
+          };
+          this.messages.push(this.message);
+          setTimeout(() => {
+            this.messages = this.messages.filter(
+              msg => msg.text !== successMsg
+            );
+          }, 20000);
 
-  public onDefaultToggleChange(event: any, rowIndex: number) {
-    const data = [...this.communicationsDataSingleSelect.datasource.data];
-    const row = data.find(r => r.index === rowIndex);
+          this.getNewCounter();
 
-    if (!row) return;
-
-    if (event.checked) {
-      data.forEach(item => {
-        item.default = item.index === rowIndex;
+          this.metadataService.retrieveAll().subscribe((response: any) => {
+            const firstStatus =
+              response?.data &&
+              response.data.length > 0 &&
+              response.data[0]?.MetadataStatus
+                ? response.data[0].MetadataStatus
+                : null;
+            const statusToSet = firstStatus || 'NEW';
+            this.statusControl.setValue(statusToSet);
+            this.previousStatus = statusToSet;
+            this.statusChanged.emit(statusToSet);
+            this.counterService.updateCurrentStatus(statusToSet);
+          });
+        },
+        error: (error) => {
+          const errorMsg = error?.error?.errorDescription || 
+            `Failed to delete ${element.code}. Please try again.`;
+          this.message = {
+            code: error?.error?.errorCode || 'ERROR',
+            text: errorMsg,
+            type: NotificationMessageType.ERROR
+          };
+          this.messages.push(this.message);
+          setTimeout(() => {
+            this.messages = this.messages.filter(
+              msg => msg.text !== errorMsg
+            );
+          }, 20000);
+        }
       });
-    } else {
-      row.default = false;
-    }
-
-    this.communicationsDataSingleSelect.datasource.data = data;
-
-    this.defaultChanged.emit({
-      rowIndex: rowIndex,
-      isDefault: event.checked
-    });
-  }
-
-  private setDirty(dirty: boolean) {
-    this.isDirty = dirty;
-    this.dirtyChange.emit(this.isDirty);
   }
 }
 
@@ -357,22 +508,325 @@ export class CommunicationsMultiselectTableComponent implements OnInit, OnChange
 
 
 
+
+
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import {
+  Column,
+  ColumnType,
+  InquiryLayoutInput,
+  UIContextService
+} from '@bod/common';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { CounterList } from './add-edit-counter/add-edit-counter.mode';
+import { DataSharingService } from '../data-sharing-service.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CounterService {
+  private saveUrl = '';
+  private retrieveUrl = '';
+  private deleteUrl = '';
+  private updateUrl = '';
+  private baseUrl = '';
+  private retrieveAllUrl = '';
+
+  private currentStatus: string = 'NEW';
+
+  businessProductLine: any[] = [];
+  private reqDfnId = '';
+  private clientCode = '';
+  private countryCode = '';
+  private productLines: any[] = [];
+  private productTypes: any[] = [];
+
+  constructor(
+    private http: HttpClient,
+    private uiContextService: UIContextService,
+    private readonly dataSharingService: DataSharingService
+  ) {
+    let url =
+      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
+        .sdkServiceUrl.value;
+
+    this.dataSharingService.data$.subscribe(data => {
+      if (data) {
+        this.reqDfnId = data.reqDfnId;
+        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
+        this.countryCode = data.countryCode;
+        this.clientCode = data.countryCode;
+        this.productLines = [
+          ...new Set(this.businessProductLine.map(obj => obj.value))
+        ];
+        this.productTypes = [
+          ...new Set(this.businessProductLine.map(obj => obj.type))
+        ];
+        
+        this.baseUrl = url ?? '';
+        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
+        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
+
+        this.retrieveUrl =
+          url +
+          '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=Counter';
+        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
+        this.retrieveAllUrl =
+          url +
+          '/metadata/retrieve/' +
+          this.reqDfnId;
+      }
+    });
+  }
+
+  retrieveAll(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get<any[]>(this.retrieveAllUrl, { headers }).pipe(
+      tap((response: any) => {
+        const firstStatus = response?.data && response.data.length > 0 && response.data[0]?.MetadataStatus
+          ? response.data[0].MetadataStatus
+          : 'NEW';
+        this.currentStatus = firstStatus;
+      })
+    );
+  }
+
+  updateCurrentStatus(status: string): void {
+    this.currentStatus = status;
+  }
+
+  createHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'country-code': this.countryCode,
+      'client-code': this.clientCode,
+      'product-line': this.productLines,
+      fe_id: this.uiContextService.getTenantId(),
+      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
+      uuid: this.generateUUID(),
+      'requirement-id': this.reqDfnId
+    });
+  }
+
+  private getCreateUrlWithStatus(status: string): string {
+    return `${this.baseUrl}/metadata/create/${this.reqDfnId}?status=${status}`;
+  }
+
+  saveCounter(request: any, status?: string): Observable<any> {
+    const headers = this.createHeaders();
+    const statusToUse = status || this.currentStatus;
+    const url = this.getCreateUrlWithStatus(statusToUse);
+    return this.http.post(url, request, { headers });
+  }
+
+  retrieveCounter(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get<CounterList[]>(this.retrieveUrl, { headers });
+  }
+
+  deleteCounter(
+    metadataConfigType: string,
+    metadataConfigIdfr: number
+  ): Observable<any> {
+    const headers = this.createHeaders();
+    const params = {
+      'metadata-config-type': metadataConfigType,
+      'metadata-config-idfr': metadataConfigIdfr
+    };
+
+    return this.http.delete(this.deleteUrl, { headers, params });
+  }
+
+  updateCounter(request: any): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.put(this.updateUrl, request, { headers });
+  }
+
+  generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0,
+          v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  }
+
+  public getCounterData(
+    element: CounterList
+  ): Observable<InquiryLayoutInput[]> {
+    const groups: InquiryLayoutInput[] = [];
+    let setIsLink = false;
+    for (let i = 0; i < element.counterInquiry.length; i++) {
+      groups.push({
+        id: element.counterInquiry[i].id,
+        label: element.counterInquiry[i].label,
+        value: element.counterInquiry[i].value,
+        isLink: setIsLink
+      });
+    }
+
+    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
+    return $groups;
+  }
+
+  public columns: Column[] = [
+    {
+      name: 'code',
+      title: 'Counters',
+      truncate: true,
+      noOverflow: true,
+      width: 70,
+      widthUnit: 'rem'
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true
+    }
+  ];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { BodTableAction, BodTableActionType } from '@bod/common';
+
+export const CounterTableLevelActions: BodTableAction[] = [
+  {
+    id: BodTableActionType.ADD,
+    icon: 'add',
+    label: 'add',
+    mostCommon: true,
+    child: [
+      {
+        id: 12,
+        seperator: true,
+        label: 'Add New Counter',
+        icon: ''
+      }
+    ]
+  },
+  {
+    id: BodTableActionType.FILTER,
+    icon: 'filter',
+    label: 'Filter',
+    mostCommon: true
+  }
+];
+
+export const editDeleteActions: BodTableAction[] = [
+  {
+    id: 4,
+    icon: 'edit',
+    label: 'Edit',
+    mostCommon: true
+  },
+  {
+    id: 1,
+    icon: 'trash',
+    label: 'delete',
+    mostCommon: true
+  }
+];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<bod-message-container [messages]="errorMessages"></bod-message-container>
 <bod-form
-  [formGroup]="addCommunicationsFormGroup"
+  [formGroup]="addNewCounterFormGroup"
   rufId
   [type]="formType"
-  (onSubmit)="onSubmit()"
-  (onReset)="onReset()"
+  (onSubmit)="onAddNewCounter(isAdd)"
+  (onReset)="onReset(isAdd)"
   fisStyle
 >
-  <bod-communications-multiselect-table
-    #communicationsTable
-    [communicationsDataSingleSelect]="data.communicationsDataSingleSelect"
-    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
-    (rowSelected)="onRowSelected($event)"
-    (tableDirty)="onTableDirty()"
-    [formGroup]="addCommunicationsFormGroup"
-  ></bod-communications-multiselect-table>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+    <div *ngIf="isEdit">
+      {{ addNewCounterFormGroup.get('counterCode')?.value }}
+    </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="counterCode"
+          name="counterCode"
+        />
+        
+        <mat-error>
+         {{ getError('counterCode', addNewCounterFormGroup) | translate }}
+        </mat-error> 
+        <mat-error *ngIf="addNewCounterFormGroup.get('counterCode').hasError('noSpecialCharacters')">
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+   
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.name'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="counterName"
+          name="counterName"
+        />
+        <mat-error>
+          {{ getError('counterName', addNewCounterFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+  
+  <bod-input-layout col="1">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.systemcounter'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="systemCounter"
+        name="systemCounter"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+  </bod-input-layout>
 </bod-form>
 
 
@@ -386,489 +840,67 @@ export class CommunicationsMultiselectTableComponent implements OnInit, OnChange
 
 
 
-import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CommunicationsMultiselectTableComponent } from '../communications-multiselect-table/communications-multiselect-table.component';
-import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+
+
+
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { CounterService } from '../counter-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import {
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableActionType,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { CounterComponent } from '../counter.component';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
 import { RufIconModule } from '@ruf/shell/icon';
-import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { Communications, CommunicationTable } from '../../transaction-type.model';
-
-@Component({
-  selector: 'bod-communications-multiselect-dialog',
-  standalone: true,
-  imports: [
-    CommunicationsMultiselectTableComponent,
-    ReactiveFormsModule,
-    BodFormModule,
-    FormsModule,
-    BodAutoCompleteModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    TranslateModule,
-    BodTableActionsModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatInputModule,
-    TranslateModule,
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    BodCommonModule
-  ],
-  templateUrl: './communications-multiselect-dialog.component.html',
-  styleUrls: ['./communications-multiselect-dialog.component.scss']
-})
-export class CommunicationsMultiselectDialogComponent {
-  public translationKey = TranslationKey;
-
-  formType: BodFormTypes = BodFormTypes.FORM;
-  @ViewChild('communicationsTable', { static: false }) communicationsTable: CommunicationsMultiselectTableComponent;
-  @Output() rowSelected = new EventEmitter<CommunicationTable[]>();
-
-  selectedRows: Communications[] = [];
-  public addCommunicationsFormGroup: UntypedFormGroup;
-  isDirty = false;
-
-  constructor(
-    public dialogRef: MatDialogRef<CommunicationsMultiselectDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
-    private fb: UntypedFormBuilder
-  ) {
-    this.initForm();
-  }
-
-  private initForm(): void {
-    const controls: { [key: string]: any } = {};
-    // Always get the latest data
-    const allRows = this.data?.communicationsDataSingleSelect?.datasource?.data || [];
-    allRows.forEach((row: any, idx: number) => {
-      controls['communicationServices_' + row.id] = [row.communicationServices || null];
-    });
-    this.addCommunicationsFormGroup = this.fb.group(controls);
-    console.log('Dialog initForm - Form controls:', Object.keys(controls));
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] || changes['communicationData']) {
-      this.initForm();
-    }
-  }
-
-  onTableDirtyChange(dirty: boolean) {
-    this.isDirty = dirty;
-    if (dirty) {
-      this.addCommunicationsFormGroup.markAsDirty();
-    }
-  }
-
-  public isTableDirty = false;
-
-  public onTableDirty(): void {
-    this.isTableDirty = true;
-    this.addCommunicationsFormGroup.markAsDirty();
-  }
-
-  onRowSelected(selectedRows: Communications[]) {
-    console.log('onRowSelected called with:', selectedRows);
-    this.selectedRows = selectedRows;
-    this.isDirty = true;
-    this.addCommunicationsFormGroup.markAsDirty();
-    // this.initForm();
-  }
-
-  onSubmit() {
-    // Pass the selectedRows object when closing the dialog
-    this.dialogRef.close({ selectedCommunications: this.selectedRows });
-  }
-
-  onReset() {
-    this.isDirty = false;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Add this to the TransactionTypeService class
-
-public communications: Column[] = [
-  {
-    name: 'serviceElement',
-    title: 'Service Element',
-    width: 2,
-    truncate: true,
-    noOverflow: true,
-    widthUnit: 'rem'
-  },
-  {
-    name: 'communicationServices',
-    title: 'Communication Services',
-    width: 2,
-    inputModeOptions: {
-      type: ColumnType.select,
-      model: [
-        { label: 'Email', value: 'Email' },
-        { label: 'SMS', value: 'SMS' },
-        { label: 'Push Notification', value: 'Push Notification' },
-        { label: 'In-App Message', value: 'In-App Message' }
-      ],
-      validators: {
-        required: true
-      }
-    }
-  },
-  {
-    name: 'actions',
-    title: ' ',
-    hasAction: true
-  }
-];
-
-// Add this method to get communications data
-getCommunications(): Observable<any> {
-  // Since Service Element is hardcoded as "Blank Alert", we can return static data
-  // or make an API call if communication services are dynamic
-  const communicationServices = [
-    { code: 'Email', identifier: '1', serviceElement: 'Blank Alert' },
-    { code: 'SMS', identifier: '2', serviceElement: 'Blank Alert' },
-    { code: 'Push Notification', identifier: '3', serviceElement: 'Blank Alert' },
-    { code: 'In-App Message', identifier: '4', serviceElement: 'Blank Alert' }
-  ];
-  
-  return new Observable(observer => {
-    observer.next(communicationServices);
-    observer.complete();
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Add these imports to the main channels component
-import { CommunicationsMultiselectTableComponent } from './communications-multiselect-table/communications-multiselect-table.component';
-import { CommunicationsMultiselectDialogComponent } from './communications-multiselect-dialog/communications-multiselect-dialog.component';
-import { CommunicationTable } from '../transaction-type.model';
-
-// Add these to the @Component imports array
-CommunicationsMultiselectTableComponent,
-CommunicationsMultiselectDialogComponent,
-
-// Add these properties to the component class
-public communicationMap: { [key: number]: CommunicationTable[] } = {};
-@Output() communicationDetails = new EventEmitter<any[]>();
-@Input() communicationData: CommunicationTable[] = [];
-
-public dataWithSimpleCommunication: CommunicationTable[] = [];
-
-public tableWithSimpleCommunication: BodTableMetadata = {
-  title: 'Communications',
-  columns: [...this.transactionTypeService.communications],
-  datasource: new MatTableDataSource<CommunicationTable>(this.dataWithSimpleCommunication),
-  noRecordsMessage: 'No Communication defined'
-};
-
-public communicationsTableMetadata: BodTableMetadata = {
-  title: 'Communications',
-  columns: [...this.transactionTypeService.communications],
-  rowLeftAction: RowLeftAction.multipleRowSelection,
-  enablePagination: true,
-  paginationOptions: {
-    pageSize: 5,
-    length: 12,
-    pageSizeOptions: [5, 8, 10],
-    showLastButton: true,
-    showPageSizeOptions: true
-  },
-  datasource: new MatTableDataSource<CommunicationTable>([]),
-  noRecordsMessage: 'No Communication defined'
-};
-
-// Add this method to handle adding communication table data
-addCommunicationTableData() {
-  this.addNewChannelForm.markAsDirty();
-  this.transactionTypeService.getCommunications().subscribe((response: any[]) => {
-    const dialogTableMetadata: BodTableMetadata = {
-      ...this.communicationsTableMetadata,
-      datasource: new MatTableDataSource<CommunicationTable>(
-        response.map((communication, idx) => ({
-          id: idx + 1,
-          serviceElement: communication.serviceElement,
-          communicationServices: communication.code,
-          identifier: communication.identifier
-        }))
-      )
-    };
-
-    // Use the communications for the current row
-    const selectedCommunications = this.communicationMap[this.currentChannelRowId!] || [];
-
-    const dialogRef = this.dialog.open(CommunicationsMultiselectDialogComponent, {
-      width: '1000px',
-      height: '600px',
-      data: {
-        communicationsDataSingleSelect: dialogTableMetadata,
-        selectedRowSingleSelect: selectedCommunications
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.selectedCommunications) {
-        const mapped = result.selectedCommunications.map(row => ({
-          id: row.id,
-          serviceElement: row.serviceElement || 'Blank Alert',
-          communicationServices: row.communicationServices,
-          identifier: row.identifier
-        }));
-        // Store communications for this channel row only
-        this.communicationMap[this.currentChannelRowId!] = mapped;
-        // Update the UI for the current row
-        this.dataWithSimpleCommunication = mapped;
-        this.tableWithSimpleCommunication.datasource.data = [...mapped];
-        // Optionally update the row in dataWithSimpleEdit
-        const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
-        if (idx !== -1) {
-          this.dataWithSimpleEdit[idx].communications = mapped;
-        }
-        this.communicationDetails.emit(mapped);
-      }
-    });
-  });
-}
-
-// Add this method to handle communication row level actions
-handleCommunicationRowLevelActions($event: any, index: number) {
-  if ($event === 'trash') {
-    // Remove the row from your data array
-    this.dataWithSimpleCommunication.splice(index, 1);
-    // Update the table datasource
-    this.tableWithSimpleCommunication.datasource.data = [...this.dataWithSimpleCommunication];
-    // Emit the updated data if needed
-    this.communicationDetails.emit(this.dataWithSimpleCommunication);
-  }
-  this.addNewChannelForm.markAsDirty();
-  // You can add 'edit' or 'save' logic here if needed
-}
-
-// Update the inlineEditRowActionClick method to load communications
-inlineEditRowActionClick(
-  inlineEditOutput: InlineEditOutput,
-  index: number,
-  template?: any
-) {
-  const element = (this.editRowElement = inlineEditOutput.editRowElement);
-
-  if (element && element.id) {
-    this.addNewChannelForm.reset();
-    this.addNewChannelForm.patchValue(element);
-    this.currentChannelRowId = element.id; // Track the channel row being edited
-  }
-
-  this.editIndex = inlineEditOutput.editRowIndex ?? index;
-
-  this.singleRowEdit = {
-    modeOptions: { input: true, reset: false },
-    index: this.editIndex
-  };
-
-  // Load counters for this channel row if you have them stored
-  this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
-  this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
-
-  // Load conditions for this channel row if you have them stored
-  this.dataWithSimpleCondition = this.conditionMap?.[element.id] ? [...this.conditionMap[element.id]] : [];
-  this.tableWithSimpleCondition.datasource.data = this.dataWithSimpleCondition;
-
-  // Load restrictions for this channel row if you have them stored
-  this.dataWithSimpleRestriction = this.restrictionMap?.[element.id] ? [...this.restrictionMap[element.id]] : [];
-  this.tableWithSimpleRestriction.datasource.data = this.dataWithSimpleRestriction;
-
-  // Load communications for this channel row if you have them stored
-  this.dataWithSimpleCommunication = this.communicationMap?.[element.id] ? [...this.communicationMap[element.id]] : [];
-  this.tableWithSimpleCommunication.datasource.data = this.dataWithSimpleCommunication;
-}
-
-// Update the getAllCommunicationsWithChannelIdentifier method
-public getAllCommunicationsWithChannelIdentifier(): any[] {
-  // Flatten all communications from all channels, adding channelidentifier to each
-  return (this.dataWithSimpleEdit || [])
-    .filter(channel => Array.isArray(channel.communications))
-    .map(channel =>
-      (channel.communications ?? []).map(communication => ({
-        ...communication,
-        channelidentifier: channel.identifier
-      }))
-    )
-    .reduce((acc, val) => acc.concat(val), []);
-}
-
-// Update the emitCompleteDelta method to include communications
-emitCompleteDelta() {
-  const currentData = this.getCurrentTableData();
-  const allCounters = this.getAllCountersWithChannelIdentifier();
-  const allConditions = this.getAllConditionsWithChannelIdentifier();
-  const allRestrictions = this.getAllRestrictionsWithChannelIdentifier();
-  const allCommunications = this.getAllCommunicationsWithChannelIdentifier();
-  console.log('[ChannelsMainTableComponent] Emitting CompleteDelta:', {
-    channels: currentData,
-    counters: allCounters,
-    conditions: allConditions,
-    restrictions: allRestrictions,
-    communications: allCommunications
-  });
-  this.completeDeltaChange.emit({
-    channels: currentData,
-    counters: allCounters,
-    conditions: allConditions,
-    restrictions: allRestrictions,
-    communications: allCommunications
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Add this section to the main HTML template after the Restrictions Table section -->
-
-<!-- Communications Table -->
-<bod-table
-  *ngIf="
-    addNewChannelForm.get('attributeForChannel')?.value === 'CommunicationServices'
-  "
-  #communicationTable
-  [data]="tableWithSimpleCommunication"
-  [tableActions]="actionsForChannels"
-  (onTableActionClick)="addCommunicationTableData()"
-  [modeOptions]="modeOptionsSimple"
-  [alignContent]="'top'"
-  [customColumnTemplates]="[
-    { columnName: 'serviceElement', templateName: serviceElementTemplate },
-    { columnName: 'communicationServices', templateName: communicationServicesTemplate },
-    { columnName: 'actions', templateName: editActionsTemplate1 }
-  ]"
->
-  <!-- Service Element column template -->
-  <ng-template
-    #serviceElementTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <span>{{ element.serviceElement || 'Blank Alert' }}</span>
-  </ng-template>
-
-  <!-- Communication Services column template -->
-  <ng-template
-    #communicationServicesTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <span>{{ element.communicationServices }}</span>
-  </ng-template>
-
-  <ng-template
-    #editActionsTemplate1
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <bod-table-actions
-      [actions]="rowLevelActionsForBasicEdit"
-      (onActionClick)="handleCommunicationRowLevelActions($event.icon, index)"
-    >
-    </bod-table-actions>
-  </ng-template>
-</bod-table>
-<!-- End communications table -->
-
-
-
-
-
-
-
-
-
-
-/**
- * Updated Interface for Channel Table data with Communications
- */
-export interface ChannelTable {
-  id: number;
-  code: string;
-  option: string;
-  identifier?: string;
-  attributeForChannel?: string;
-  counters?: CounterTable[];
-  conditions?: ConditionTable[];
-  restrictions?: RestrictionTable[];
-  communications?: CommunicationTable[]; // Add this line
-}
-
-
-
-
-
-
-
-
+import { MatButtonModule } from '@angular/material/button';
