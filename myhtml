@@ -1,312 +1,192 @@
-<bod-message-container rufId [messages]="messages"></bod-message-container>
-{{ messages }}
-
-<bod-table
-  #customTable
-  [customColumnTemplates]="[
-    {
-      columnName: 'actions',
-      templateName: editActionTemplate
-    }
-  ]"
-  [data]="balanceTypeTableMetaData"
-  [tableActions]="isStatusEditable() ? balanceTypeTableActions : []"
-  (onTableActionClick)="isStatusEditable() && onTableActionClicked1($event)"
-  [expandedRowTemplate]="expandedRowTemplate"
-  (onRowExpand)="rowExpanded($event)"
+<bod-message-container [messages]="errorMessages"></bod-message-container>
+<bod-form
+  [formGroup]="addNewCounterFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onAddNewCounter(isAdd)"
+  (onReset)="onReset(isAdd)"
+  fisStyle
 >
-  <ng-template
-    #editActionTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <bod-table-actions
-      sectionActions
-      [actions]="isStatusEditable() ? editactions: []"
-      (onActionClick)="isStatusEditable() && iconActionClicked($event, element)"
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
     >
-    </bod-table-actions>
-  </ng-template>
-  <ng-template #expandedRowTemplate let-context="context">
-    <div fullwidth>
-      @if(context.element.name){
-
-      <!-- {{context |json}} -->
-      <h1>Balance Type</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="balanceTypeService.getBalanceTypeData(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-
-      <bod-table
-        [data]="balSubTypeTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      }
-
-      <h1>Product Type Relationshp</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="
-          balanceTypeService.getBalanceTypePrdtReltnData(context.element)
-        "
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-
-      <h1>Additional Relationshps</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="balanceTypeService.getAddtnlReltns(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-
-      <!-- <bod-table
-          [data]="addtnlRltnTable"
-          [alignContent]="'top'"
-          [innerTableContext]="context"
-          [expandedRowTemplate]="expandedRowTemplateTable"
-        >
-        </bod-table> -->
-      <bod-table
-        [data]="roleTypeTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      >
-      </bod-table>
-      <bod-table
-        [data]="aggregateTable"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplate"
-      >
-        <ng-template #expandedRowTemplate let-context="context">
-          <bod-inquiry-layout
-            [columns]="2"
-            [groups]="balanceTypeService.getAggregateData(context.element)"
-            [softSeparator]="false"
-            [direction]="direction"
-            [information]="[]"
-            (linkClick)="commonDataService.inquiryLayoutClick($event)"
-          >
-          </bod-inquiry-layout>
-        </ng-template>
-      </bod-table>
+    <div *ngIf="isEdit">
+      {{ addNewCounterFormGroup.get('counterCode')?.value }}
     </div>
-  </ng-template>
-</bod-table>
-<ng-template #addNewBalaceTypeTemplate>
-  <bod-add-edit-balancetype
-    (apiResponse)="addBalanceTypeEvent($event)"
-    [editBalanceTypeRow]="editBalanceType"
-    [retainedCode]="retainedCode"
-    [retainedIdentifier]="retainedIdentifier"
-    [retainedName]="retainedName"
-    [retainedSystemBalance]="retainedSystemBalance"
-    [retainedAccountClassification]="retainedAccountClassification"
-    [retainedDateValue]="retainedDateValue"
-    [retainedPayer]="retainedPayer"
-    [retainedPayee]="retainedPayee"
-    [retainedStatementDisplay]="retainedStatementDisplay"
-    [retainedChargeBase]="retainedChargeBase"
-    [retainedPersisted]="retainedPersisted"
-    [retainedCalculated]="retainedCalculated"
-    [retainedAutoCreation]="retainedAutoCreation"
-    [retainedLogHistory]="retainedLogHistory"
-    [retainedDailySnapshot]="retainedDailySnapshot"
-    [retainedInquiryRequired]="retainedInquiryRequired"
-    [retainedGenerateFinancialResults]="retainedGenerateFinancialResults"
-    [retainedGLMapping]="retainedGLMapping"
-    [retainedSummaryRequired]="retainedSummaryRequired"
-    [retainedBalanceSubType]="retainedBalanceSubType"
-    [retainedBalancePeriodType]="retainedBalancePeriodType"
-    [retainedBalanceSubTypeData] = "retainedBalanceSubTypeData"
-    [retainedRoleTypeData]="retainedRoleTypeData"
-    [retainedAggregateDetailsData]="retainedAggregateDetailsData"
-  >
-  </bod-add-edit-balancetype>
-</ng-template>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="counterCode"
+          name="counterCode"
+        />
+        
+        <mat-error>
+         {{ getError('counterCode', addNewCounterFormGroup) | translate }}
+        </mat-error> 
+        <mat-error *ngIf="addNewCounterFormGroup.get('counterCode').hasError('noSpecialCharacters')">
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+   
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.name'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="counterName"
+          name="counterName"
+        />
+        <mat-error>
+          {{ getError('counterName', addNewCounterFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+  
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.classificationtype'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="classificationtype"
+          name="classificationtype"
+        >
+          <mat-option
+            *ngFor="let classificationtype of classificationtypes"
+            [value]="classificationtype.value"
+          >
+            {{ classificationtype.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+<h1>Product Type Relationship</h1>
+<bod-input-layout col="1">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.rulecheck'"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <mat-slide-toggle
+        fisStyle
+        color="primary"
+        formControlName="rulecheck"
+        name="rulecheck"
+      >
+      </mat-slide-toggle>
+    </bod-control-group>
+  </bod-input-layout>
 
-<ng-template #addExistingBalaceTypeTemplate>
-  <bod-existing-balance-type
-    (apiResponse)="addBalanceTypeEvent1($event)"
-    [editBalanceTypeRow]="editBalanceType"
-    [retainedCodeForExt]="retainedCodeForExt"
-    [retainedIdentifierForExt]="retainedIdentifierForExt"
-    [retainedAccountClassificationForExt]="retainedAccountClassificationForExt"
-    [retainedDateValueForExt]="retainedDateValueForExt"
-    [retainedPayerForExt]="retainedPayerForExt"
-    [retainedPayeeForExt]="retainedPayeeForExt"
-    [retainedStatementDisplayForExt]="retainedStatementDisplayForExt"
-    [retainedChargeBaseForExt]="retainedChargeBaseForExt"
-    [retainedPersistedForExt]="retainedPersistedForExt"
-    [retainedCalculatedForExt]="retainedCalculatedForExt"
-    [retainedAutoCreationForExt]="retainedAutoCreationForExt"
-    [retainedLogHistoryForExt]="retainedLogHistoryForExt"
-    [retainedDailySnapshotForExt]="retainedDailySnapshotForExt"
-    [retainedInquiryRequiredForExt]="retainedInquiryRequiredForExt"
-    [retainedGenerateFinancialResultsForExt]="retainedGenerateFinancialResultsForExt"
-    [retainedGLMappingForExt]="retainedGLMappingForExt"
-    [retainedSummaryRequiredForExt]="retainedSummaryRequiredForExt"
-    [retainedBalanceSubTypeDataForExt] = "retainedBalanceSubTypeDataForExt"
-    [retainedRoleTypeDataForExt]="retainedRoleTypeDataForExt"
-  >
-  </bod-existing-balance-type>
-</ng-template>
+</bod-form>
 
 
 
 
 
 
-import { CommonModule } from '@angular/common';
+
+
+
+
 import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
-  Inject,
   Input,
-  NO_ERRORS_SCHEMA,
-  OnDestroy,
   OnInit,
   Output,
-  TemplateRef,
   ViewChild
 } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-
-import {
-  Amount,
-  BodFormModule,
-  BodPageContainerModule,
-  BodPipeName,
-  BodTableAction,
-  BodTableActionsModule,
-  BodTableComponent,
-  BodTableDataSource,
-  BodTableFilterCriteria,
-  BodTableFilterUpdateButton,
-  BodTableMetadata,
-  BodTableModule,
-  Column,
-  ControlGroupModule,
-  BodCommonDialogModel,
-  Currency,
-  EditTableAction,
-  InlineEditOutput,
-  InputLayoutModule,
-  MessageContainerModule,
-  NotificationMessage,
-  SearchFieldModule,
-  DirectivesModule,
-  BodDynamicFormModule,
-  SectionContainerModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BOD_DATE_RANGE,
-  BodCommonModule,
-  BodFormTypes,
-  BodTableActionType,
-  BodTableFilterType,
-  CommonDialogComponent,
-  BodCommonDialogService,
-  ColumnType,
-  BodSearchFieldData,
-  SingleRowEdit,
-  ModeOptions,
-  PageMode,
-  BodConfirmAlertDialogsService,
-  BodConfirmDialogModel,
-  NotificationMessageType,
-  RowLeftAction,
-  InquiryLayoutInput,
-  InquiryLayoutModule,
-  InquiryLayoutComponent
-} from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
   FormBuilder,
   FormControl,
+  FormGroup,
   FormsModule,
   ReactiveFormsModule,
   UntypedFormControl,
   UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { CounterService } from '../counters-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import {
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableActionType,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { CounterComponent } from '../counters.component';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-
-import {
-  BodEditableSampleTable,
-  BodInlineSampleTable,
-  BodLocaleRangeTable,
-  BodLocaleSetTable,
-  BodLocaleTable,
-  BodSampleTable,
-  BodSampleTable1,
-  BodSampleTableExisting
-} from '../bod-table-demo.model';
-import { MatTabsModule } from '@angular/material/tabs';
-import {
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-
-import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-// import { getFormValidationErrors } from './inline-modal-validators';
-// import { FormUtilityService } from './form-utility.service';
-import { Observable, Subscription } from 'rxjs';
-import { MatIcon, MatIconModule } from '@angular/material/icon';
-
-import { RufIconModule } from '@ruf/shell/icon';
-
-import { BalanceTypeService } from '../balance-type/balance-type-service';
-import {
-  BalanceTypeTableLevelActions,
-  editDeleteActions,
-  roletypeaction,
-  roletypeactionDelete
-} from '../balance-type/balance-type-constants';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { TranslationKey } from '../metadat-config/codegen-config.constant';
-import { MetadataService } from '../metadat-config/metada-config.service';
-import { AddEditBalancetypeComponent } from './add-edit-balancetype/add-edit-balancetype.component';
-import { ExistingBalanceTypeComponent } from './existing balnce type/existing-balance-type.component';
-import { BalanceTypeList } from './add-edit-balancetype/add-edit-balancetype.mode';
-import { AddEditBalanceService } from './add-edit-balancetype/add-edit-balance-service';
-import { forkJoin } from 'rxjs';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { MatDialogRef } from '@angular/material/dialog';
+import { CounterList } from './add-edit-counters.mode';
 
 @Component({
-  selector: 'bod-balance-type',
+  selector: 'bod-add-edit-counter',
   standalone: true,
   imports: [
+    CounterComponent,
     InquiryLayoutModule,
-    ExistingBalanceTypeComponent,
-    AddEditBalancetypeComponent,
     SearchFieldModule,
     MatIconModule,
     RufIconModule,
@@ -332,930 +212,342 @@ import { forkJoin } from 'rxjs';
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
-
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
     MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './balance-type.component.html',
-  styleUrl: './balance-type.component.scss',
-  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
+  templateUrl: './add-edit-counters.component.html',
+  styleUrl: './add-edit-counters.component.scss'
 })
-export class BalanceTypeComponent implements OnInit {
+export class AddEditCounterComponent implements OnInit {
   public translationKey = TranslationKey;
-  public editactions: BodTableAction[] = editDeleteActions;
-  public addNewBalanceTypeFormGroup: UntypedFormGroup;
-  public addExistingBalanceTypeFormGroup: UntypedFormGroup | undefined;
+  public addNewCounterFormGroup: UntypedFormGroup;
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
 
-  @Input() status: string = '';
-
-  @ViewChild('addNewBalaceTypeTemplate')
-  public addNewBalanceTypeTemp: TemplateRef<any>;
-  @ViewChild('addExistingBalaceTypeTemplate')
-  public addExstBalanceTypeTemp: TemplateRef<any>;
-  private adminTableRef: BodTableComponent | undefined;
+  @Input() retainedCode: string = '';
+  @Input() retainedIdentifier: number = 0;
+  @Input() retainedName: string = '';
+  @Input() retainedSystemBalance: boolean = false;
+  @Input() editCounterRow: CounterList;
+  
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+  
+  public errorMessages: NotificationMessage[] = [];
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  
   @ViewChild('systemMessage', { static: true }) systemMessage: any;
-  @ViewChild(AddEditBalancetypeComponent)
-  private addEditBalancetypeComponent!: AddEditBalancetypeComponent;
+  
   public messages: NotificationMessage[] = [];
   public message: NotificationMessage | undefined;
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
 
-  public ConfirmData: BodConfirmDialogModel = {
-    title: 'BOD.metadataconfig.title',
-    message: 'BOD.metadataconfig.message',
-    confirm: 'BOD.metadataconfig.delete',
-    dismiss: 'BOD.metadataconfig.cancel'
-  };
+  classificationtypes = [
+    { label: 'Extrenal', value: 'External' },
+    { label: 'Internal', value: 'Internal' },
+    { label: 'HoldFunds', value: 'HoldFunds' }
+  ];
+  
+  statusControl = new FormControl(null);
+  public previousStatus: string | undefined;
+  isAdd = true;
+  isEdit = false;
 
   constructor(
-    private confirmDialogService: BodConfirmAlertDialogsService,
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    public balanceTypeService: BalanceTypeService,
-    public addEditBalanceService: AddEditBalanceService,
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodFormStateService: BodFormStateService,
+    public counterService: CounterService,
     private fb: FormBuilder,
     private bodCommonDialogService: BodCommonDialogService,
     private metadataService: MetadataService
-  ) { }
-  public payers: any[] = [];
-  public payees: any[] = [];
-  public subBalancetypes: any[] = [];
-  public balancetypes: any[] = [];
+  ) {}
 
   ngOnInit() {
-    this.balanceTypeService.retrieveAll().subscribe((response: any) => {
-      const firstStatus = response?.data?.[0]?.MetadataStatus;
-      const statusToSet = firstStatus || 'NEW';
-      this.statusControl.setValue(statusToSet);
-      this.previousStatus = statusToSet;
-      // Update the balance type service's current status
-      this.balanceTypeService.updateCurrentStatus(statusToSet);
-    });
-    forkJoin([
-      this.balanceTypeService.getAccntClassification(),
-      this.balanceTypeService.getRelationshipType(),
-      this.balanceTypeService.getProductType(),
-      this.balanceTypeService.getRoletype(),
-      this.balanceTypeService.getSubBalanceType(),
-      this.balanceTypeService.getPostingSTD(),
-      this.balanceTypeService.getBalanceType()
-    ]).subscribe(
-      ([
-        accntClass,
-        relType,
-        prodType,
-        roleType,
-        subBalType,
-        postingSTD,
-        balType
-      ]) => {
-        this.accountclassifications = accntClass.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        this.roleaccountclassifications = this.accountclassifications;
-        this.relationshiptypes = relType.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        this.producttypes = prodType.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        const mappedRoleType = roleType.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        this.roletypes = mappedRoleType;
-        this.payers = mappedRoleType;
-        this.payees = mappedRoleType;
-        this.subBalancetypes = subBalType.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        const mappedPostingSTD = postingSTD.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        this.debittransactiontypes = mappedPostingSTD;
-        this.credittransactiontypes = mappedPostingSTD;
-        this.balancetypes = balType.map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }));
-        // Now load main data
-        this.getNewBalanceType();
-      }
-    );
-  }
-
-  public balanceTypeTableActions: BodTableAction[] =
-    BalanceTypeTableLevelActions;
-  public balanceTypeTableMetaData: BodTableMetadata = {
-    title: 'Balance Type Details',
-    columns: [...this.balanceTypeService.columns],
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 4,
-      length: 12,
-      pageSizeOptions: [2, 3, 4, 6],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Balance Type Data Defined',
-    rowLeftAction: RowLeftAction.expandableRows,
-    enableSorting: true
-  };
-
-  public balSubTypeTable: BodTableMetadata = {
-    title: 'Balance Sub Type Details',
-    columns: [...this.addEditBalanceService.balsubInquiry],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Balance Sub Type Data Defined'
-  };
-  //multi select input dropdown
-  // public addtnlRltnTable: BodTableMetadata = {
-  //   title: 'Additional Relationships',
-  //   columns: [...this.addEditBalanceService.addtnRelInquiry],
-  //   enablePagination: false,
-  //   datasource: new MatTableDataSource<BodSampleTable>(),
-  //   noRecordsMessage: 'No data Defined'
-  // };
-  public roleTypeTable: BodTableMetadata = {
-    title: 'Role Type Details (mandatory)',
-    columns: [...this.addEditBalanceService.roleTypeInquiry],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Role Type Data Defined'
-  };
-  public aggregateTable: BodTableMetadata = {
-    title: 'Aggregate Details',
-    columns: [...this.addEditBalanceService.aggregateInquiry],
-    rowLeftAction: RowLeftAction.expandableRows,
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Aggregate Data Defined'
-  };
-  public rowExpanded(element: BalanceTypeList) {
-    this.messages = [];
-    this.balSubTypeTable.datasource.data = element.balanceSubTypeList || [];
-    //multi select input dropdown
-    // this.addtnlRltnTable.datasource.data =
-    //   element.productTypeBalanceSubTypeRelationshipList || [];
-    // this.balSubTypeTable.datasource.data = element.balanceSubTypeList || [];
-    // this.roleTypeTable.datasource.data =
-    //   element.productTypeBalanceTypeRoletypeRelationshipList || [];
-    this.aggregateTable.datasource.data =
-      // element.balanceAggregationInsertionList || [];
-      element.balanceAggregationInsertionList.map((aggregateTable: any) => ({
-        ...aggregateTable,
-        balanceTypeIdentifier: this.convertBalTypeIdfrToCode(
-          aggregateTable.balanceTypeIdentifier
-        ),
-        relationshipType: this.convertrltnTypeIdfrToCode(
-          aggregateTable.relationshipType
-        )
-      }));
-    this.roleTypeTable.datasource.data =
-      element.productTypeBalanceTypeRoletypeRelationshipList.map(
-        (roleTypeRelationship: any) => ({
-          ...roleTypeRelationship,
-          roleType: this.convertRoleTypeIdfrToCode(
-            roleTypeRelationship.roleType
-          ),
-          accountingClassification: this.convertAccntClassIdfrToCode(
-            roleTypeRelationship.accountingClassification
-          )
-        })
-      );
-  }
-  public roletypes: any[] = [];
-  public accountclassifications: any[] = [];
-  public roleaccountclassifications: any[] = [];
-  public debittransactiontypes: any[] = [];
-  public credittransactiontypes: any[] = [];
-  public relationshiptypes: any[] = [];
-  public producttypes: any[] = [];
-
-  public msg: NotificationMessage | undefined;
-
-  isStatusEditable(): boolean {
-    return this.status !== 'READY' && this.status !== 'GENERATED';
-  }
-  statusControl = new FormControl(null);
-  public previousStatus: string | undefined;
-
-  @Output() statusChanged = new EventEmitter<string>();
-  addBalanceTypeEvent(event: any) {
-    if (event) {
-      this.getNewBalanceType();
-
-      this.metadataService.retrieveAll().subscribe((response: any) => {
-        const firstStatus = response?.data?.[0]?.MetadataStatus;
-        const statusToSet = firstStatus || 'NEW';
-        this.statusControl.setValue(statusToSet);
-        this.previousStatus = statusToSet;
-        this.statusChanged.emit(statusToSet);
-        this.balanceTypeService.updateCurrentStatus(statusToSet);
-
-      });
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 20000);
+    this.initForm();
+    
+    if (this.editCounterRow) {
+      this.counterForm(this.editCounterRow);
     }
-    this.dialogRef$.close();
-  }
-  addBalanceTypeEvent1(event: any) {
-    if (event) {
-      this.getNewBalanceType();
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 20000);
-    }
-    this.dialogRef$.close();
 
     this.metadataService.retrieveAll().subscribe((response: any) => {
       const firstStatus = response?.data?.[0]?.MetadataStatus;
       const statusToSet = firstStatus || 'NEW';
       this.statusControl.setValue(statusToSet);
       this.previousStatus = statusToSet;
-      this.statusChanged.emit(statusToSet);
-      this.balanceTypeService.updateCurrentStatus(statusToSet);
-
     });
   }
 
-  adDropdownData(): void {
-    this.balanceTypeService.getAccntClassification().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      this.accountclassifications = mappedData;
-      this.roleaccountclassifications = mappedData;
+  private initForm(): void {
+    this.addNewCounterFormGroup = this.fb.group({
+      counterCode: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(32)
+      ]),
+      counterIdentifier: [{ value: '', disabled: true }],
+      counterName: new UntypedFormControl('', [
+        Validators.required,
+        this.maxLengthValidator(120)
+      ]),
+      systemCounter: new UntypedFormControl(false)
     });
-    this.balanceTypeService.getRelationshipType().subscribe(data => {
-      this.relationshiptypes = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-    });
-    this.balanceTypeService.getProductType().subscribe(data => {
-      this.producttypes = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-    });
-    this.balanceTypeService.getRoletype().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      this.roletypes = mappedData;
-      this.payers = mappedData;
-      this.payees = mappedData;
-    });
-    this.balanceTypeService.getSubBalanceType().subscribe(data => {
-      this.subBalancetypes = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-    });
-    this.balanceTypeService.getPostingSTD().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      this.debittransactiontypes = mappedData;
-      this.credittransactiontypes = mappedData;
-    });
-    this.balanceTypeService.getBalanceType().subscribe(data => {
-      this.balancetypes = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-    });
-  }
-  private convertBalTypeIdfrToCode(identifier: any): string | undefined {
-    const item = this.balancetypes.find(item => item.value === identifier);
-    return item ? item.label : undefined;
-  }
-  private convertrltnTypeIdfrToCode(identifier: any): string | undefined {
-    const item = this.relationshiptypes.find(item => item.value === identifier);
-    return item ? item.label : undefined;
-  }
-  private convertRoleTypeIdfrToCode(identifier: any): string | undefined {
-    const item = this.roletypes.find(item => item.value === identifier);
-    return item ? item.label : undefined;
   }
 
-  // Method to convert accountingClassification identifier to code
-  private convertAccntClassIdfrToCode(identifier: any): string | undefined {
-    const item = this.roleaccountclassifications.find(
-      item => item.value === identifier
-    );
-    return item ? item.label : undefined;
+  noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
+      return forbidden
+        ? { noSpecialCharacters: { value: control.value } }
+        : null;
+    };
   }
 
-  public commonDialogSize: string = 'Large';
-  public closeOnCloseIconClick: boolean = false;
-  private onCloseClick() {
-    this.systemMessage.message = 'Custom Function called on close';
-    this.systemMessage.show();
-    this.dialogRef$.close();
-  }
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-  private openDialog(dialogModel: any) {
-    let onClose = this.closeOnCloseIconClick
-      ? this.onCloseClick.bind(this)
-      : undefined;
-    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
-      dialogModel,
-      onClose,
-      this.commonDialogSize
-    );
+  maxLengthValidator(maxLength: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+
+      const stringValue = value.toString();
+
+      return stringValue.length > maxLength
+        ? { maxLength: 'Value exceeds allowed digit limit' }
+        : null;
+    };
   }
 
-  public onTableActionClicked1(event: BodTableAction) {
-    this.isEdit = false;
-    this.messages = [];
-    if (event.id === 12) {
-      this.addNewBalanceType();
-    } else if (event.id === 13) {
-      this.addExistingBalanceType();
+  identifierSearch(field: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.metadataService.idfrSearch().subscribe(
+        (response: string) => {
+          if (field === 'counterIdentifier') {
+            this.addNewCounterFormGroup.controls['counterIdentifier'].setValue(response);
+          }
+          this.addNewCounterFormGroup.markAsDirty();
+          resolve();
+        },
+        error => {
+          console.error('Error:', error);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
     }
   }
-  private addNewBalanceType() {
-    // this.isAdd = true;
-    this.editBalanceType = undefined; // Clear the editBalanceType to reset the form
-    this.messages = [];
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addNewBalanceTypeTemp,
-      title: 'Add New Balance Type'
-    };
-    this.openDialog(dialogModel);
+
+  onAddNewCounter(isAdd: boolean) {
+    const promises = [];
+
+    if (isAdd) {
+      promises.push(this.identifierSearch('counterIdentifier'));
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        this.submitForm(isAdd);
+      })
+      .catch(error => {
+        console.error('Error during identifier search:', error);
+      });
   }
-  private addExistingBalanceType() {
-    // this.editAttribute = null;
-    this.editBalanceType = undefined;
-    this.messages = [];
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addExstBalanceTypeTemp,
-      title: 'Relate Existing Balance'
+
+  submitForm(isAdd: boolean) {
+    if (this.addNewCounterFormGroup.invalid) {
+      this.addNewCounterFormGroup.markAllAsTouched();
+      
+      const missingFields = this.getInvalidRequiredFields(this.addNewCounterFormGroup);
+      console.warn('Missing required fields:', missingFields);
+
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        },
+        isAdd
+      );
+      return;
+    }
+
+    const formValue = this.addNewCounterFormGroup.getRawValue();
+    this.addNewCounterFormGroup.controls['counterIdentifier'].enable();
+
+    const counter = {
+      identifier: formValue.counterIdentifier,
+      code: formValue.counterCode,
+      name: formValue.counterName,
+      systemCounter: formValue.systemCounter ? 'Y' : 'N'
     };
-    this.openDialog(dialogModel);
+
+    // Get product type data from metadata service
+    const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+
+    const counterData = {
+      metadataType: 'Counter',
+      counterList: [{ counter }],
+      productTypeList: productTypeKeys.map((code, index) => ({
+        identifier: productTypeValues[index],
+        code: code
+      }))
+    };
+
+    const serviceCall = isAdd
+      ? this.counterService.saveCounter(counterData)
+      : this.counterService.updateCounter(counterData);
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, counterData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+    
+    this.addNewCounterFormGroup.controls['counterIdentifier'].disable();
   }
-  balanceTypeData: BalanceTypeList[] = [];
-  getNewBalanceType(): void {
-    this.balanceTypeService.retrieveBalanceType().subscribe(response => {
-      if (response.status === 'SUCCESS' && response.data) {
-        this.balanceTypeData = response.data.map((item: any) => {
-          const balanceType = item.BalanceType.balanceType || {};
-          const balanceSubTypeList = item.BalanceType.balanceSubTypeList || [];
-          const balanceAggregationInsertionList =
-            item.BalanceType.balanceAggregationInsertionList || [];
-          const productTypeBalanceTypeRelationshipList =
-            item.BalanceType.productTypeBalanceTypeRelationshipList || [];
-          const productTypeBalanceSubTypeRelationshipList =
-            item.BalanceType.productTypeBalanceSubTypeRelationshipList || [];
-          const productTypeBalanceTypePeriodList =
-            item.BalanceType.productTypeBalanceTypePeriodList || [];
-          const productTypeBalanceTypeRoletypeRelationshipList =
-            item.BalanceType.productTypeBalanceTypeRoletypeRelationshipList ||
-            [];
 
-          let balanceSubTypeListMapped = null;
-          if (balanceSubTypeList.length > 0) {
-            balanceSubTypeListMapped = balanceSubTypeList.map(
-              (subType: any) => ({
-                identifier: subType.identifier,
-                code: subType.code,
-                name: subType.name
-              })
-            );
-          }
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+    const invalidFields: string[] = [];
 
-          // if(balanceAggregationInsertionList.length > 0){
-          const balanceAggregationInsertionListMapped =
-            balanceAggregationInsertionList.map((aggregation: any) => {
-              const aggregateInquiry1 = [
-                {
-                  id: 0,
-                  label: 'Product Type',
-                  value: this.convertPrdttypeidfrtoCde(
-                    aggregation.productTypeAggrIdfr
-                  )
-                },
-                {
-                  id: 1,
-                  label: 'Debit Transaction Type',
-                  value: this.convertDbtidfrtoCde(
-                    aggregation.postingStandardIdentifierForDebit
-                  )
-                },
-                {
-                  id: 2,
-                  label: 'Credit Transaction Type',
-                  value: this.convertCrdtidfrtoCde(
-                    aggregation.postingStandardIdentifierForCredit
-                  )
-                },
-                {
-                  id: 3,
-                  label: 'Other Currency',
-                  value: aggregation.otherCurrencyAggregation
-                },
-                {
-                  id: 4,
-                  label: 'Reverse Aggregation',
-                  value: aggregation.reverseAggregation
-                }
-              ];
-              return {
-                balanceTypeIdentifier: aggregation.balanceTypeIdentifier,
-                productTypeIdentifier: aggregation.productTypeIdentifier,
-                name: aggregation.name,
-                productTypeAggrIdfr: aggregation.productTypeAggrIdfr,
-                aggrBalanceTypeIdentifier:
-                  aggregation.aggrBalanceTypeIdentifier,
-                balanceTypeCode: aggregation.balanceTypeCode,
-                relationshipType: aggregation.relationshipType,
-                relationshipTypeCode: aggregation.relationshipTypeCode,
-                aggregationLevel: aggregation.aggregationLevel,
-                otherCurrencyAggregation: aggregation.otherCurrencyAggregation,
-                reverseAggregation: aggregation.reverseAggregation,
-                postingStandardIdentifierForDebit:
-                  aggregation.postingStandardIdentifierForDebit,
-                postingStandardIdentifierForCredit:
-                  aggregation.postingStandardIdentifierForCredit,
-                aggregateInquiry1: aggregateInquiry1
-              };
-            });
-          // }
-
-          let productTypeBalanceTypeRelationshipListMapped = null;
-          if (productTypeBalanceTypeRelationshipList.length > 0) {
-            productTypeBalanceTypeRelationshipListMapped =
-              productTypeBalanceTypeRelationshipList.map(
-                (relationship: any) => ({
-                  identifier: relationship.identifier,
-                  balanceTypeIdentifier: relationship.balanceTypeIdentifier,
-                  balanceTypeCode: relationship.balanceTypeCode,
-                  persisted: relationship.persisted,
-                  calculated: relationship.calculated,
-                  autoCreated: relationship.autoCreated,
-                  statementProcess: relationship.statementProcess,
-                  accountingClassification:
-                    relationship.accountingClassification,
-                  snapshotRequired: relationship.snapshotRequired,
-                  payerIdentifier: relationship.payerIdentifier,
-                  payeeIdentifier: relationship.payeeIdentifier,
-                  chargeCalculation: relationship.chargeCalculation,
-                  logAudit: relationship.logAudit,
-                  financialResultRequired: relationship.financialResultRequired,
-                  glRequired: relationship.glRequired,
-                  dateValue: relationship.dateValue,
-                  enquiryRequired: relationship.enquiryRequired,
-                  summaryRequired: relationship.summaryRequired
-                })
-              );
-          }
-
-          let productTypeBalanceSubTypeRelationshipListMapped = null;
-          if (productTypeBalanceSubTypeRelationshipList.length > 0) {
-            // Map first
-            const mappedList = productTypeBalanceSubTypeRelationshipList.map(
-              (subTypeRelationship: any) => ({
-                productTypeIdentifier:
-                  subTypeRelationship.productTypeIdentifier,
-                balanceTypeIdentifier:
-                  subTypeRelationship.balanceTypeIdentifier,
-                balanceSubTypeIdentifier:
-                  subTypeRelationship.balanceSubTypeIdentifier,
-                balanceSubTypeCode: subTypeRelationship.balanceSubTypeCode
-              })
-            );
-            // Filter for unique balanceSubTypeCode
-            const seen = new Set();
-            productTypeBalanceSubTypeRelationshipListMapped = mappedList.filter(
-              item => {
-                if (seen.has(item.balanceSubTypeCode)) {
-                  return false;
-                }
-                seen.add(item.balanceSubTypeCode);
-                return true;
-              }
-            );
-            // Print the filtered list to the console
-            // console.log('Filtered productTypeBalanceSubTypeRelationshipListMapped:', productTypeBalanceSubTypeRelationshipListMapped);
-          }
-
-          let productTypeBalanceTypePeriodListMapped = null;
-          if (productTypeBalanceTypePeriodList.length > 0) {
-            // Map first
-            const mappedPeriodList = productTypeBalanceTypePeriodList.map(
-              (period: any) => ({
-                productTypeIdentifier: period.productTypeIdentifier,
-                balanceTypeIdentifier: period.balanceTypeIdentifier,
-                periodType: period.periodType
-              })
-            );
-            // Filter for unique periodType
-            const seenPeriods = new Set();
-            productTypeBalanceTypePeriodListMapped = mappedPeriodList.filter(
-              item => {
-                if (seenPeriods.has(item.periodType)) {
-                  return false;
-                }
-                seenPeriods.add(item.periodType);
-                return true;
-              }
-            );
-            // Print the filtered list to the console
-            // console.log('Filtered productTypeBalanceTypePeriodListMapped:', productTypeBalanceTypePeriodListMapped);
-          }
-
-          let productTypeBalanceTypeRoletypeRelationshipListMapped = null;
-          if (productTypeBalanceTypeRoletypeRelationshipList.length > 0) {
-            productTypeBalanceTypeRoletypeRelationshipListMapped =
-              productTypeBalanceTypeRoletypeRelationshipList.map(
-                (roleTypeRelationship: any) => ({
-                  productTypeIdentifier:
-                    roleTypeRelationship.productTypeIdentifier,
-                  balanceTypeIdentifier:
-                    roleTypeRelationship.balanceTypeIdentifier,
-                  roleType: roleTypeRelationship.roleType,
-                  roleTypeCode: roleTypeRelationship.roleTypeCode,
-                  accountingClassification:
-                    roleTypeRelationship.accountingClassification,
-                  accountingClassificationCode:
-                    roleTypeRelationship.accountingClassificationCode,
-                  visible: roleTypeRelationship.visible,
-                  payee: roleTypeRelationship.payee,
-                  payer: roleTypeRelationship.payer
-                })
-              );
-          }
-
-          const balanceTypeData: BalanceTypeList = {
-            code: balanceType.code
-              ? balanceType.code
-              : productTypeBalanceTypeRelationshipList[0].balanceTypeCode,
-            // code: balanceType.code
-            // ?
-            balTypeInquiry: [
-              {
-                id: 0,
-                label: 'Name',
-                value: balanceType.name
-              },
-
-              {
-                id: 2,
-                label: 'System Balance',
-                value: balanceType.systemBalance
-              }
-            ],
-            identifier: balanceType.identifier,
-            name: balanceType.name,
-            systemBalance: balanceType.systemBalance,
-            // },
-            balanceSubTypeList: balanceSubTypeListMapped,
-            balanceAggregationInsertionList:
-              balanceAggregationInsertionListMapped,
-
-            productTypeBalanceTypeRelationshipList:
-              productTypeBalanceTypeRelationshipListMapped,
-            prdttpReltnData: [
-              {
-                id: 0,
-                label: 'Accounting Classification',
-                value: this.convertAccntclassIdfrToCode(
-                  productTypeBalanceTypeRelationshipList[0]
-                    .accountingClassification
-                )
-              },
-              {
-                id: 1,
-                label: 'Date Value',
-                value: productTypeBalanceTypeRelationshipList[0].dateValue
-              },
-              {
-                id: 2,
-                label: 'Payer',
-                value: this.convertPayerIdfrToCode(
-                  productTypeBalanceTypeRelationshipList[0].payerIdentifier
-                )
-              },
-
-              {
-                id: 3,
-                label: 'Payee',
-                value: this.convertPayeeIdfrToCode(
-                  productTypeBalanceTypeRelationshipList[0].payeeIdentifier
-                )
-              },
-              {
-                id: 4,
-                label: 'Charge Base',
-                value:
-                  productTypeBalanceTypeRelationshipList[0].chargeCalculation
-              },
-              {
-                id: 5,
-                label: 'Statement Display',
-                value:
-                  productTypeBalanceTypeRelationshipList[0].statementProcess
-              },
-              {
-                id: 6,
-                label: 'Persisted',
-                value: productTypeBalanceTypeRelationshipList[0].persisted
-              },
-              {
-                id: 7,
-                label: 'Calculated',
-                value: productTypeBalanceTypeRelationshipList[0].calculated
-              },
-              {
-                id: 8,
-                label: 'Auto Creation',
-                value: productTypeBalanceTypeRelationshipList[0].autoCreated
-              },
-              {
-                id: 9,
-                label: 'Log History',
-                value: productTypeBalanceTypeRelationshipList[0].logAudit
-              },
-              {
-                id: 10,
-                label: 'Daily Snapshot',
-                value:
-                  productTypeBalanceTypeRelationshipList[0].snapshotRequired
-              },
-              {
-                id: 11,
-                label: 'Summary Required',
-                value: productTypeBalanceTypeRelationshipList[0].summaryRequired
-              },
-              {
-                id: 12,
-                label: 'Inquiry Required',
-                value: productTypeBalanceTypeRelationshipList[0].enquiryRequired
-              },
-              {
-                id: 13,
-                label: 'Generate Financial Resuts',
-                value:
-                  productTypeBalanceTypeRelationshipList[0]
-                    .financialResultRequired
-              },
-              {
-                id: 14,
-                label: 'GL Mapping',
-                value: productTypeBalanceTypeRelationshipList[0].glRequired
-              }
-            ],
-
-            productTypeBalanceSubTypeRelationshipList:
-              productTypeBalanceSubTypeRelationshipListMapped,
-
-            prdtBalSubType: [
-              {
-                id: 0,
-                label: 'Balance Sub Type',
-                value: (productTypeBalanceSubTypeRelationshipListMapped || [])
-                  .map(item =>
-                    this.convertBalsubTypeIdfrToCode(
-                      item.balanceSubTypeIdentifier
-                    )
-                  )
-                  .filter(v => v !== undefined && v !== null)
-              },
-              {
-                id: 1,
-                label: 'Periodic BalanceType',
-                value: (productTypeBalanceTypePeriodListMapped || [])
-                  .map(item => item.periodType)
-                  .filter(v => v !== undefined && v !== null)
-              }
-            ],
-
-            productTypeBalanceTypePeriodList:
-              productTypeBalanceTypePeriodListMapped,
-            productTypeBalanceTypeRoletypeRelationshipList:
-              productTypeBalanceTypeRoletypeRelationshipListMapped,
-            aggregateInquiry1: []
-          };
-
-          return balanceTypeData;
-        });
-        // this.balanceTypeDataEvent.emit(this.balanceTypeData);
-
-        this.balanceTypeTableMetaData.datasource.data = this.balanceTypeData;
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control && control.errors?.['required']) {
+        invalidFields.push(key);
       }
     });
-  }
-  private convertAccntclassIdfrToCode(identifier: any): string | undefined {
-    const item = this.accountclassifications.find(
-      item => item.value === identifier
-    );
-    return item ? item.label : undefined;
-  }
-  private convertPayerIdfrToCode(identifier: any): string | undefined {
-    const item = this.payers.find(item => item.value === identifier);
-    return item ? item.label : undefined;
-  }
-  private convertPayeeIdfrToCode(identifier: any): string | undefined {
-    const item = this.payees.find(item => item.value === identifier);
-    return item ? item.label : undefined;
-  }
-  private convertBalsubTypeIdfrToCode(identifier: any): string | undefined {
-    const item = this.subBalancetypes.find(item => item.value === identifier);
-    return item ? item.label : undefined;
-  }
-  private convertDbtidfrtoCde(identifier: any): string | undefined {
-    const item = this.debittransactiontypes.find(
-      item => item.value === identifier
-    );
-    return item ? item.label : undefined;
-  }
-  private convertCrdtidfrtoCde(identifier: any): string | undefined {
-    const item = this.credittransactiontypes.find(
-      item => item.value === identifier
-    );
-    return item ? item.label : undefined;
-  }
-  private convertPrdttypeidfrtoCde(identifier: any): string | undefined {
-    const item = this.producttypes.find(item => item.value === identifier);
-    return item ? item.label : undefined;
+
+    return invalidFields;
   }
 
-  isEdit = false;
-  iconActionClicked(event: BodTableAction, element: BalanceTypeList) {
-    this.isEdit = true;
-    this.messages = [];
-    if (event.id === BodTableActionType.EDIT) {
-      // this.editAttributes(element);
-      this.editBalanceTypes(element);
-    } else if (event.id === 1) {
-      const confirmDataWithCode: BodConfirmDialogModel = {
-        ...this.ConfirmData,
-        message: `${'Are you sure you want to delete'} ${element.code}`
-      };
-      this.bodConfirmAlertDialogsService
-        .confirm(confirmDataWithCode)
-        .subscribe(val => {
-          if (val) {
-            this.balanceTypeDelete(element);
-          }
-        });
-    }
+  private successResponse(resp, counterData, isAdd) {
+    const counterCode = counterData.counterList[0].counter.code;
+    const SuccessMsg = isAdd
+      ? `${counterCode} Added successfully`
+      : `${counterCode} Updated successfully`;
+    this.apiResponse.emit({ ...counterData, SuccessMsg });
   }
-  editBalanceType: BalanceTypeList | undefined;
-  private editBalanceTypes(element: BalanceTypeList) {
-    this.editBalanceType = element;
-    let selectedTemplate: TemplateRef<any>;
-    let dialogTitle: string;
-    if (element.name) {
-      selectedTemplate = this.addNewBalanceTypeTemp;
-      dialogTitle = 'Edit Balance Type';
+
+  private handleError(error: any, isAdd: boolean) {
+    let errorMsg = '';
+
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Code already exists.';
     } else {
-      selectedTemplate = this.addExstBalanceTypeTemp;
-      dialogTitle = 'Edit Existing Balance Type';
+      errorMsg = 'Unknown error occurred.';
     }
-    const dialogModel: BodCommonDialogModel = {
-      formTemplate: selectedTemplate,
-      title: dialogTitle
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
     };
-    this.openDialog(dialogModel);
+    this.errorMessages.push(this.message);
   }
-  balanceTypeDelete(element: BalanceTypeList): void {
-    if (
-      element.code ===
-      element.productTypeBalanceTypeRelationshipList[0].balanceTypeCode
-    ) {
-      this.balanceTypeService
-        .deleteBalanceType(
-          'BalanceType',
-          element.productTypeBalanceTypeRelationshipList[0]
-            .balanceTypeIdentifier
-        )
-        .subscribe({
-          next: (response) => {
-            const successMsg = `${element.code} Deleted Successfully`;
-            this.message = {
-              code: '204',
-              text: successMsg,
-              type: NotificationMessageType.SUCCESS
-            };
-            this.messages.push(this.message);
-            setTimeout(() => {
-              this.messages = this.messages.filter(
-                msg => msg.text !== successMsg
-              );
-            }, 20000);
 
-            this.getNewBalanceType();
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+    this.addNewCounterFormGroup.reset();
+    this.addNewCounterFormGroup.markAsPristine();
+    this.addNewCounterFormGroup.markAsUntouched();
 
-            this.metadataService.retrieveAll().subscribe((response: any) => {
-              const firstStatus =
-                response?.data &&
-                response.data.length > 0 &&
-                response.data[0]?.MetadataStatus
-                  ? response.data[0].MetadataStatus
-                  : null;
-              const statusToSet = firstStatus || 'NEW';
-              this.statusControl.setValue(statusToSet);
-              this.previousStatus = statusToSet;
-              this.statusChanged.emit(statusToSet);
-              this.balanceTypeService.updateCurrentStatus(statusToSet);
-            });
-          },
-          error: (error) => {
-            const errorMsg = error?.error?.errorDescription || 
-              `Failed to delete ${element.code}. Please try again.`;
-            this.message = {
-              code: error?.error?.errorCode || 'ERROR',
-              text: errorMsg,
-              type: NotificationMessageType.ERROR
-            };
-            this.messages.push(this.message);
-            setTimeout(() => {
-              this.messages = this.messages.filter(
-                msg => msg.text !== errorMsg
-              );
-            }, 20000);
-          }
-        });
+    if (isEditMode) {
+      // Restore retained values for edit mode
+      this.addNewCounterFormGroup.get('counterCode')?.setValue(this.retainedCode);
+      this.addNewCounterFormGroup.get('counterCode')?.disable();
+      this.addNewCounterFormGroup.get('counterIdentifier')?.setValue(this.retainedIdentifier);
+      this.addNewCounterFormGroup.get('counterIdentifier')?.disable();
+      this.addNewCounterFormGroup.get('counterName')?.setValue(this.retainedName);
+      this.addNewCounterFormGroup.get('systemCounter')?.setValue(this.retainedSystemBalance);
     } else {
-      this.balanceTypeService
-        .deleteBalanceType('BalanceType', element.identifier)
-        .subscribe({
-          next: (response) => {
-            const successMsg = `${element.code} Deleted Successfully`;
-            this.message = {
-              code: '204',
-              text: successMsg,
-              type: NotificationMessageType.SUCCESS
-            };
-            this.messages.push(this.message);
-            setTimeout(() => {
-              this.messages = this.messages.filter(
-                msg => msg.text !== successMsg
-              );
-            }, 20000);
-            this.getNewBalanceType();
-
-            this.metadataService.retrieveAll().subscribe((response: any) => {
-              const firstStatus =
-                response?.data &&
-                response.data.length > 0 &&
-                response.data[0]?.MetadataStatus
-                  ? response.data[0].MetadataStatus
-                  : null;
-              const statusToSet = firstStatus || 'NEW';
-              this.statusControl.setValue(statusToSet);
-              this.previousStatus = statusToSet;
-              this.statusChanged.emit(statusToSet);
-            });
-          },
-          error: (error) => {
-            const errorMsg = error?.error?.errorDescription || 
-              `Failed to delete ${element.code}. Please try again.`;
-            this.message = {
-              code: error?.error?.errorCode || 'ERROR',
-              text: errorMsg,
-              type: NotificationMessageType.ERROR
-            };
-            this.messages.push(this.message);
-            setTimeout(() => {
-              this.messages = this.messages.filter(
-                msg => msg.text !== errorMsg
-              );
-            }, 20000);
-          }
-        });
+      this.addNewCounterFormGroup.get('counterCode')?.enable();
+      this.addNewCounterFormGroup.get('counterIdentifier')?.enable();
     }
+
+    this.changeDetectorRef.detectChanges();
+  }
+
+  private counterForm(element: CounterList): void {
+    this.isAdd = false;
+    this.isEdit = true;
+
+    this.addNewCounterFormGroup.patchValue({
+      counterIdentifier: element.identifier,
+      counterCode: element.code,
+      counterName: element.name,
+      systemCounter: element.systemCounter === 'Y'
+    });
+
+    // Disable code field in edit mode
+    this.addNewCounterFormGroup.get('counterCode')?.disable();
   }
 }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+export interface CounterList {
+  identifier?: number;
+  code?: string;
+  name?: string;
+  systemCounter?: string;
+  counterInquiry?: CounterInquiry[];
+}
+
+export interface CounterInquiry {
+  id: number;
+  label: string;
+  value: string;
+}
+
+export interface CounterData {
+  metadataType: string;
+  counterList: CounterListItem[];
+  productTypeList: ProductType[];
+}
+
+export interface CounterListItem {
+  counter: Counter;
+}
+
+export interface Counter {
+  identifier: number;
+  code: string;
+  name: string;
+  systemCounter: string;
+}
+
+export interface ProductType {
+  identifier: number;
+  code: string;
+}
