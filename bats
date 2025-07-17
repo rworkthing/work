@@ -1,294 +1,517 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      {
+        columnName: 'primaryfrequency',
+        templateName: primaryFrequencyTemplate
+      },
+      { columnName: 'actions', templateName: editActionsTemplate1 },
+      { columnName: 'value', templateName: valueColumnTemplate }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="sm" fisIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+  </bod-table>
+
+  <ng-template
+    #primaryFrequencyTemplate
+    let-element="element"
+    let-column="column"
+  >
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select
+        panelClass="fis-style"
+        [(ngModel)]="element.primaryfrequency"
+        [errorStateMatcher]="matcher"
+        #primaryFreqModel="ngModel"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        (ngModelChange)="onFrequencyChange123(element)"
+        required
+      >
+        <mat-option *ngFor="let val of frequencyOptions" [value]="val.value">
+          {{ val.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          primaryFreqModel.invalid &&
+          (primaryFreqModel.touched || primaryFreqModel.dirty)
+        "
+      >
+        Required field
+      </mat-error>
+    </mat-form-field>
+  </ng-template>
+
+  <ng-template #valueColumnTemplate let-element="element">
+    <mat-form-field appearance="outline" fisStyle>
+      <input
+        matInput
+        fisStyle
+        type="number"
+        [ngModel]="element.value"
+        #valueModel="ngModel"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        [errorStateMatcher]="matcher"
+        (ngModelChange)="onValueChange()"
+        [disabled]="disabledFrequencies.includes(element.primaryfrequency)"
+        required
+        min="1"
+        (input)="onInputLimit($event, element)"
+      />
+
+      <!-- Required Field Error -->
+      <mat-error
+        *ngIf="valueModel.errors?.['required'] && (valueModel.touched || valueModel.dirty)"
+      >
+        Required field
+      </mat-error>
+      <!-- Min Value Error -->
+      <mat-error
+        *ngIf="valueModel.errors?.['min'] && (valueModel.touched || valueModel.dirty)"
+        >Value cannot be negative or zero
+      </mat-error>
+    </mat-form-field>
+  </ng-template>
+
+  <!-- <div *ngIf="modeOptionsSimple.input" class="editPageOptions">
+            <button
+              mat-raised-button
+              fisStyle
+              type="button"
+              color="primary"
+              (click)="saveTableData()"
+              [disabled]="!simpleEditTableRef.tableFormGroup.dirty"
+            >
+              {{ 'mbpBod.demo.microsite.buttons.save' | translate }}
+            </button>
+            <button mat-stroked-button fisStyle type="button" (click)="reset()">
+              {{ 'mbpBod.demo.microsite.buttons.reset' | translate }}
+            </button>
+          </div> -->
+</bod-page-container>
+
+
+
+
+
+
+
+
+
+
+
+
+import { CommonModule } from '@angular/common';
 import {
-  BodAutoCompleteModule,
-  BodCommonModule,
-  BodConfirmAlertDialogsService,
-  BodConfirmDialogModel,
-  BodCurrencyControlModule,
-  BodDynamicFormModule,
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Inject,
+  Input,
+  NO_ERRORS_SCHEMA,
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
+import {
+  Amount,
   BodFormModule,
-  BodFormStateService,
   BodPageContainerModule,
-  BodSearchFieldData,
+  BodPipeName,
   BodTableAction,
   BodTableActionsModule,
-  BodTableActionType,
   BodTableComponent,
+  BodTableDataSource,
+  BodTableFilterCriteria,
+  BodTableFilterUpdateButton,
   BodTableMetadata,
   BodTableModule,
   Column,
-  ColumnType,
   ControlGroupModule,
-  DirectivesModule,
+  BodCommonDialogModel,
+  Currency,
+  EditTableAction,
   InlineEditOutput,
   InputLayoutModule,
-  InquiryLayoutModule,
-  MaxLengthStrategy,
   MessageContainerModule,
-  ModeOptions,
   NotificationMessage,
-  NotificationMessageType,
-  PageAction,
-  PageMode,
-  RowLeftAction,
   SearchFieldModule,
+  DirectivesModule,
+  BodDynamicFormModule,
   SectionContainerModule,
-  SingleRowEdit
+  BodCurrencyControlModule,
+  BodDateRange,
+  BOD_DATE_RANGE,
+  BodCommonModule,
+  ColumnType,
+  SingleRowEdit,
+  ModeOptions,
+  BodKeyValuePairMetadata,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  ListType,
+  BodAutoCompleteMetadata,
+  BodConfirmDialogModel,
+  MaxLengthStrategy,
+  RowLeftAction,
+  InquiryLayoutInput,
+  NotificationMessageType,
+  SearchFieldComponent,
+  PageAction,
+  BodAutoCompleteOption,
+  BodFormStateService
 } from '@bod/common';
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { CommonModule } from '@angular/common';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroupDirective,
+  FormsModule,
+  NgForm,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+// import {
+//   BodEditableSampleTable,
+//   BodLocaleTable,
+//   BodSampleTable,
+//   SearchFieldInputData
+// } from '../bod-table-demo.model';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { RufIconModule } from '@ruf/shell/icon';
-import { Subscription, take } from 'rxjs';
-import { TranslationKey } from '../../metadat-config/codegen-config.constant';
-import { TransactionTypeService } from '../transaction-type.service';
-import { MatDialog } from '@angular/material/dialog';
-import { ChannelsMultiselectTableComponent } from './channels-multiselect-table/channels-multiselect-table.component';
-import { ChannelTable, CounterTable } from '../transaction-type.model';
-import { ChannelsMultiselectDialogComponent } from './channels-multiselect-dialog/channels-multiselect-dialog.component';
-import { CountersMultiselectTableComponent } from './counters-multiselect-table/counters-multiselect-table.component';
-import { CountersMultiselectDialogComponent } from './counters-multiselect-dialog/counters-multiselect-dialog.component';
-import { ConditionsMultiselectTableComponent } from './conditions-multiselect-table/conditions-multiselect-table.component';
-import { ConditionsMultiselectDialogComponent } from './conditions-multiselect-dialog/conditions-multiselect-dialog.component';
-import { ConditionTable } from '../transaction-type.model';
-import { RestrictionsMultiselectTableComponent } from './restrictions-multiselect-table/restrictions-multiselect-table.component';
-import { RestrictionsMultiselectDialogComponent } from './restrictions-multiselect-dialog/restrictions-multiselect-dialog.component';
-import { RestrictionTable } from '../transaction-type.model';
+import moment from 'moment';
+import { HttpClient } from '@angular/common/http';
 
+import { BehaviorSubject, Subscription, take } from 'rxjs';
+import { RufDropdownType } from '@ruf/shell/dropdown-panel';
+import { ConditionDetailService } from '../condition-detail.service';
+import { SystemMessageService } from '../../system-message.service';
+import { BodTableDemoCommonDataService } from '../../bod-table-demo-common-data.service';
+import {
+  BodEditableSampleTable,
+  BodLocaleTable,
+  CondTable,
+  primaFreq,
+  SearchFieldInputData,
+  textNumCond
+} from '../../bod-table-demo.model';
+import { DemoTableDataService, SampleEC } from '../../bod-table-demo.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ErrorStateMatcher } from '@angular/material/core';
 
+export class ShowOnTouchedErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(
+    control: FormControl | null,
+    form: FormGroupDirective | NgForm | null
+  ): boolean {
+    return !!(control && control.invalid && (control.touched || control.dirty));
+  }
+}
 
 @Component({
-  selector: 'bod-channels-main-table',
+  selector: 'bod-primary-frequency-condition',
   standalone: true,
   imports: [
-    RestrictionsMultiselectTableComponent,
-    RestrictionsMultiselectDialogComponent,
-    ConditionsMultiselectTableComponent,
-    ConditionsMultiselectDialogComponent,
-    CountersMultiselectTableComponent,
-    CountersMultiselectDialogComponent,
-    ChannelsMultiselectTableComponent,
-    ChannelsMultiselectDialogComponent,
-    BodTableModule,
-    TranslateModule,
-    MatTableModule,
-    MatTabsModule,
-    BodTableActionsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    CommonModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    ControlGroupModule,
-    ReactiveFormsModule,
-    MessageContainerModule,
     DirectivesModule,
     MatButtonModule,
     MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
     BodPageContainerModule,
+    BodTableModule,
+    BodFormModule,
+    BodTableActionsModule,
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    TranslateModule,
+    BodFormModule,
+    BodTableActionsModule,
     FormsModule,
     InputLayoutModule,
     BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
     BodDynamicFormModule,
     SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    SearchFieldModule,
+    MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
     MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './channels-main-table.component.html',
-  styleUrl: './channels-main-table.component.scss'
+  templateUrl: './primary-frequency-condition.component.html',
+  styleUrl: './primary-frequency-condition.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
 })
-export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
-  public counterMap: { [key: number]: CounterTable[] } = {}; // Add this line
-  public conditionMap: { [key: number]: ConditionTable[] } = {};
-  public restrictionMap: { [key: number]: RestrictionTable[] } = {}; // Add this line
-
+export class PrimaryFrequencyConditionComponent
+  implements OnInit, OnDestroy, AfterViewInit
+{
+  public matcher = new ShowOnTouchedErrorStateMatcher();
   private subscriptions: Subscription = new Subscription();
   public messages: NotificationMessage[] = [];
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  public modeOptionsSimple = this.modeOptions;
-  selectedTabIndex = 0;
-  showEdit = true;
+  public panel = {
+    type: RufDropdownType.PopoverMenu
+  };
+  defaultValueForm: UntypedFormGroup = new UntypedFormGroup({});
+
+  public disabledFrequencies = [
+    'OnlyOnce',
+    'EndOfEveryMonth',
+    'EndOfEveryYear'
+  ];
+
+  onInputLimit(event: any, element: any): void {
+    let inputValue = event.target.value;
+
+    if (inputValue.length > 3) {
+      inputValue = inputValue.slice(0, 3);
+      event.target.value = inputValue;
+    }
+
+    const numericValue = parseInt(inputValue, 10);
+    element.value = isNaN(numericValue) ? null : numericValue;
+  }
+
+  onFrequencyChange123(element: any): void {
+    if (this.disabledFrequencies.includes(element.primaryfrequency)) {
+      element.value = null; // or '' if you prefer empty string
+    }
+    this.tableDirty.emit(true);
+  }
+
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public searchFieldColumnForm: UntypedFormGroup;
+  public useExistingColForm: UntypedFormGroup;
+  public overrideDefaultColumnForm: UntypedFormGroup;
+  public requiredColumnForm: UntypedFormGroup;
+  public searchFieldFormCtrlKeys: string[] = [];
+  public useExistingFormCtrlKeys: string[] = [];
+  public useExistingArr: string[] = ['Yes', 'No'];
+  public overrideDefaultColFormCtrKeys: string[] = [];
+  public requiredColFormCtrKeys: string[] = [];
   public lastModifiedIndex: number;
-  public tableRefArray: any[] = [];
-  public showChannelSearchForm = false;
-  public formStatus = false;
-
-
-  @ViewChild('simpleEditTableRef', { static: false })
-  simpleEditTableRef: BodTableComponent;
-
   public pageMode = PageMode.INQUIRY;
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public tableRefArray: any[] = [];
+  disableEditForInput = false;
+  existingDataNotEditable = false;
+
   public pageModeSimple = this.pageMode;
-  private dataForReset: ChannelTable[] = [];
-  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
-  public translationKey = TranslationKey;
-  public showActionsForSimple: boolean = false;
-
-  @Output() tableDirty = new EventEmitter<boolean>();
-  @Output() completeDeltaChange = new EventEmitter<any>();
-  @Output() channelDetails = new EventEmitter<any>();
-  @Input() channelData: ChannelTable[] = [];
-  // Counter-related properties
-  @Output() counterDetails = new EventEmitter<any[]>(); // Add this line
-  @Input() counterData: CounterTable[] = [];
-  @Output() conditionDetails = new EventEmitter<any[]>(); // Add this line
-  @Input() conditionData: ConditionTable[] = [];
-  @Output() restrictionDetails = new EventEmitter<any[]>(); // Add this line
-  @Input() restrictionData: RestrictionTable[] = [];
-
-
-  emitCompleteDelta() {
-    const currentData = this.getCurrentTableData();
-    const allCounters = this.getAllCountersWithChannelIdentifier();
-    const allConditions = this.getAllConditionsWithChannelIdentifier();
-    const allRestrictions = this.getAllRestrictionsWithChannelIdentifier();
-    console.log('[ChannelsMainTableComponent] Emitting CompleteDelta:', {
-      channels: currentData,
-      counters: allCounters,
-      conditions: allConditions,
-      restrictions: allRestrictions
-    });
-    this.completeDeltaChange.emit({
-      channels: currentData,
-      counters: allCounters,
-      conditions: allConditions,
-      restrictions: allRestrictions
-    });
-  }
-
-
-
-  // @Input() set channelData(data: ChannelTable[]) {
-  //   this.dataWithSimpleEdit = data || [];
-  //   this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
-  //   console.log("dataWithSimpleEdit: ", this.dataWithSimpleEdit);
-  // }
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['channelData']) {
-      // Update your table data source
-      this.dataWithSimpleEdit = this.channelData || [];
-      this.tableWithSimpleEdit.datasource.data = [...(this.channelData || [])];
+  public modeOptionsSimple = this.modeOptions;
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'add',
+      mostCommon: false
     }
-  }
-  public selectedRowCounters: CounterTable[] = [];
-  public selectedCounterData: any[] = [];
-
-  public selectedRowConditions: ConditionTable[] = [];
-  public selectedConditionData: any[] = [];
-
-  public selectedRowRestrictions: RestrictionTable[] = [];
-  public selectedRestrictionData: any[] = [];
-
-  public restrictionsTableMetadata: BodTableMetadata = {
-    title: 'Restrictions',
-    columns: [...this.transactionTypeService.restrictions],
-    rowLeftAction: RowLeftAction.multipleRowSelection,
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 5,
-      length: 12,
-      pageSizeOptions: [5, 8, 10],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<RestrictionTable>([]), // EMPTY ARRAY
-    noRecordsMessage: 'No Restriction defined'
-  };
-
-
-  public conditionsTableMetadata: BodTableMetadata = {
-    title: 'Conditions',
-    columns: [...this.transactionTypeService.conditions],
-    rowLeftAction: RowLeftAction.multipleRowSelection,
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 5,
-      length: 12,
-      pageSizeOptions: [5, 8, 10],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<ConditionTable>([]), // EMPTY ARRAY
-    noRecordsMessage: 'No Condition defined'
-  };
-
-  public countersTableMetadata: BodTableMetadata = {
-    title: 'Counters',
-    columns: [...this.transactionTypeService.counters],
-    rowLeftAction: RowLeftAction.multipleRowSelection,
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 5,
-      length: 12,
-      pageSizeOptions: [5, 8, 10],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<CounterTable>([]), // EMPTY ARRAY
-    noRecordsMessage: 'No Counter defined'
-  };
-
-  public selectedRowSingleSelect: ChannelTable[] = [];
-
-  public channelsDataSingleSelect: BodTableMetadata = {
-    title: 'Channels',
-    columns: [...this.transactionTypeService.channels], // uses the correct columns
-    rowLeftAction: RowLeftAction.multipleRowSelection,
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 5,
-      length: 12,
-      pageSizeOptions: [5, 8, 10],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<ChannelTable>(this.selectedRowSingleSelect),
-    noRecordsMessage: 'No Currency defined'
-  };
-
-
-
-
-  public onPageAction(event) {
-    if (event === PageAction.EDIT) {
-      this.messages = [];
-      this.modeOptionsSimple = { input: true, reset: false };
-      this.pageModeSimple = PageMode.INPUT;
-      this.showActionsForSimple = true;
-    } else {
-      this.checkStatus(false);
-      this.modeOptionsSimple = { input: false, reset: true };
-      this.pageModeSimple = PageMode.INQUIRY;
-      this.rowLevelActionsForBasicEdit[0].disabled = false;
-      this.showActionsForSimple = false;
-    }
-  }
-  public checkStatus(status) {
-    this.formStatus = status;
-  }
-
+  ];
   public ConfirmData: BodConfirmDialogModel = {
     title: 'BOD.metadataconfig.title',
     message: 'BOD.metadataconfig.message',
     confirm: 'BOD.metadataconfig.delete',
     dismiss: 'BOD.metadataconfig.cancel'
   };
+
+  public pageModeExpand = this.pageMode;
+  public modeOptionsExpand = this.modeOptions;
+  public actionsForExpand = [];
+
+  public pageModeSingle = this.pageMode;
+  public modeOptionsSingle = this.modeOptions;
+  public actionsForSingle = [];
+
+  public pageModeMulti = this.pageMode;
+  public modeOptionsMulti = this.modeOptions;
+  public actionsForMulti = [];
+
+  public pageModeExpandSingle = this.pageMode;
+  public modeOptionsExpandSingle = this.modeOptions;
+  public actionsForExpandSingle = [];
+
+  public pageModeExpandMulti = this.pageMode;
+  public modeOptionsExpandMulti = this.modeOptions;
+  public actionsForExpandMulti = [];
+
+  maxLengthStrategy: MaxLengthStrategy[] = [
+    MaxLengthStrategy.exceedWithError,
+    MaxLengthStrategy.restrict
+  ];
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public maxLength = 5;
+  public minAmount = 2;
+  public maxAmount = 9999;
+  public minNumber = 1;
+  public maxNumber = 1000;
+  public formStatus = false;
+  public precision = 0;
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+  public resetMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+
+  public currencies: Currency[] = [
+    new Currency('USD', 'United States Dollar', 2, ''),
+    new Currency('EUR', 'EURO', 2, ''),
+    new Currency('CRC', 'Costa Rican Colón', 2, ''),
+    new Currency('GBP', 'Pound Sterling', 2, ''),
+    new Currency('KWD', 'Kuwaiti dinar', 3, ''),
+    new Currency('JPY', 'Japanese Yen', 0, ''),
+    new Currency('CNY', 'Chinese Yuan', 2, '')
+  ];
+  public inputForSingleSelectWithFlagIcon: BodAutoCompleteMetadata = {
+    options: [
+      {
+        value: 'MX',
+        label: 'Mexico'
+      },
+      {
+        value: 'IN',
+        label: 'India'
+      },
+      {
+        value: 'US',
+        label: 'California United States of America USA '
+      }
+    ],
+    type: ListType.COUNTRY,
+    required: true
+  };
+  public inputForSlideToggleValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Y'
+      },
+      {
+        value: false,
+        label: 'N'
+      }
+    ]
+  };
+  public inputForSelectKeyValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: '1',
+        label: 'Primary Shipping'
+      },
+      {
+        value: '2',
+        label: 'Primary Billing'
+      }
+    ]
+  };
+
+  public rowLevelEditActions: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
+    }
+  ];
 
   public rowLevelActionsForBasicEdit: BodTableAction[] = [
     {
@@ -299,72 +522,103 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
     }
   ];
 
-  getRowLevelActionsForBasicEdit(row: any): BodTableAction[] {
-    return [
+  public inputForCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
       {
-        id: 1,
-        icon: 'trash',
-        label: 'mbpBod.demo.microsite.tableActions.labels.delete',
-        mostCommon: false,
-        disabled: row?.code === 'All'
+        value: true,
+        label: 'Active'
+      },
+      {
+        value: false,
+        label: 'Inactive'
       }
-    ];
-  }
+    ]
+  };
 
-  public actionsForSimple: BodTableAction[] = [
+  public inputForAuthorizeCheckboxValue: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: true,
+        label: 'Yes'
+      },
+      {
+        value: false,
+        label: 'No'
+      }
+    ]
+  };
+  public inputForSelectKeyValue1: BodKeyValuePairMetadata = {
+    options: [
+      {
+        value: '1',
+        label: 'Primary Shipping'
+      },
+      {
+        value: '2',
+        label: 'Primary Billing'
+      }
+    ]
+  };
 
-    { id: 'edit', icon: 'edit', label: 'Edit' }
+  frequencyOptions = [
+    { value: 'DaysBetween', label: 'Days Between' },
+    { value: 'MonthsBetween', label: 'Months Between' },
+    { value: 'WeeksBetween', label: 'Weeks Between' },
+    { value: 'YearsBetween', label: 'Years Between' },
+    { value: 'EveryMonth', label: 'Every Month' },
+    { value: 'EndOfEveryMonth', label: 'End Of Every Month' },
+    { value: 'EndOfEveryYear', label: 'End Of Every Year' },
+    { value: 'OnlyOnce', label: 'Only Once' }
   ];
-  public actionsForChannels: BodTableAction[] = [
-    {
-      id: BodTableActionType.ADD, // or id: 2, or id: 'add'
-      icon: 'add',
-      label: 'add',
-      mostCommon: false,
-      disabled: false // explicitly set
-
-    }
-  ];
-
-
-  attributeForChannels = [
-    { label: 'Counters', value: 'Counters' },
-    { label: 'Restrictions', value: 'Restrictions' },
-    { label: 'Communication Services', value: 'CommunicationServices' },
-    { label: 'Conditions', value: 'Conditions' },
-  ];
-
-  public channels: any[] = [];
-
 
   public columns: Column[] = [
     {
-      name: 'channel',
-      title: 'Channel',
-      width: 2,
+      name: 'primaryfrequency',
+      title: 'Frequency ',
       inputModeOptions: {
         type: ColumnType.select,
-        model: [],
+        model: this.frequencyOptions,
         validators: {
           required: true,
-          max: 50,
+          max: 20,
           maxLengthStrategy: this.selectedStrategy
         }
       }
-    },
-    {
-      name: 'option',
-      title: 'Option',
-      width: 2,
-      inputModeOptions: {
-        type: ColumnType.select,
-        model: [
-          { label: 'Locked', value: 'Locked' },
-          { label: 'Mandatory', value: 'Mandatory' },
-          { label: 'Optional', value: 'Optional' },
-          { label: 'Proposed', value: 'Proposed' },
 
-        ],
+      // truncate: true,
+      // noOverflow: true,
+      // width: 10,
+      // widthUnit: 'rem',
+      // inputModeOptions: {
+      //   type: ColumnType.select,
+      //   model: [
+      //     'DaysBetween',
+      //     'MonthsBetween',
+      //     'WeeksBetween',
+      //     'YearsBetween',
+      //     'EveryMonth',
+      //     'EndOfEveryMonth',
+      //     'EndOfEveryYear',
+      //     'OnlyOnce'
+      //   ],
+      //   validators: {
+      //     required: true,
+      //     max: 20,
+      //     maxLengthStrategy: this.selectedStrategy
+      //   }
+      // }
+    },
+
+    {
+      name: 'value',
+      title: 'Value',
+      truncate: true,
+      noOverflow: true,
+      width: 10,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input,
+        model: null,
         validators: {
           required: true,
           max: 20,
@@ -373,87 +627,107 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
       }
     },
     {
-      name: 'inlineRowEditAction',
-      title: ' ',
-      disableSorting: true,
-      disableFiltering: true,
-      hasAction: true,
-      width: 3
+      name: 'default',
+      title: 'Default',
+      inputModeOptions: {
+        type: ColumnType.slideToggle,
+        model: {
+          data: this.inputForSlideToggleValue
+        },
+        validators: {
+          required: true,
+          max: 20,
+          maxLengthStrategy: this.selectedStrategy
+        },
+        isNotEditable: false,
+        existingDataNotEditable: false
+      }
     },
+
     {
       name: 'actions',
       title: ' ',
       hasAction: true,
-      width: 3
+      width: 7
     }
   ];
 
+  onFrequencyChange(element: any): void {
+    if (this.disabledFrequencies.includes(element.primaryfrequency)) {
+      element.value = null; // or '' or 0 depending on your use case
+    }
+  }
 
   public columnSimpleEdit = this.columns;
 
-  public getCurrentTableData(): ChannelTable[] {
-    return this.tableWithSimpleEdit?.datasource?.data || [];
+  maxLengthHandler(event) {
+    this.columns.map(col => {
+      if (col?.inputModeOptions?.type === ColumnType.input) {
+        col.inputModeOptions.validators.max = this.maxLength;
+      }
+    });
+    this.columnSimpleEdit = [...this.columns];
   }
 
-  public successMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant(
-      'mbpBod.demo.microsite.table.messages.success'
-    ),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
+  public dataWithSimpleEdit: primaFreq[] = [];
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'Primary Frequency(Mandatory)',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<primaFreq>(this.dataWithSimpleEdit),
+    noRecordsMessage: 'No primary frequency value defined'
   };
 
-  public resetMsg: NotificationMessage = {
-    code: '200',
-    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
-    type: NotificationMessageType.SUCCESS,
-    closeable: true,
-    expandable: false
-  };
+  private dataForReset: BodEditableSampleTable[] = [];
 
-  public addNewChannelForm: UntypedFormGroup;
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+  @ViewChildren(SearchFieldComponent)
+  searchFieldComponent: QueryList<SearchFieldComponent>;
+
+  public groups: InquiryLayoutInput[] = [
+    {
+      id: 0,
+      label: 'mbpBod.demo.microsite.label.firstName',
+      value: 'John',
+      isLink: false
+    },
+    {
+      id: 1,
+      label: 'mbpBod.demo.microsite.label.lastName',
+      value: 'Smith',
+      isLink: false
+    }
+  ];
+
+  public $groups = new BehaviorSubject<InquiryLayoutInput[]>(this.groups);
+
+  selectedTabIndex = 0;
+  showEdit = true;
+  showExpandEdit = false;
+  showSingleSelect = false;
+  showMultiSelect = false;
+  showExpandSingleSelect = false;
+  showExpandMultiSelect = false;
 
   constructor(
-    private transactionTypeService: TransactionTypeService,
+    private snackBar: MatSnackBar,
+    public commonDataService: BodTableDemoCommonDataService,
     private http: HttpClient,
     private formBuilder: UntypedFormBuilder,
     private translate: TranslateService,
+    private systemMessage: SystemMessageService,
     private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    private formStateService: BodFormStateService,
-    private dialog: MatDialog
+    private conditionService: ConditionDetailService,
+    private formStateService: BodFormStateService
   ) {
-    this.selectedChannelData = [];
-    this.addNewChannelForm = this.formBuilder.group({
-      id: [''],
-      relationshipType: [''],
-      condition: [''],
-      attributeForChannel: [''],
-      // Add other required fields here
-    });
+    this.selectedConditionData = [];
   }
 
   ngOnInit(): void {
-    this.loadDropdownData();
-    this.loadChannelSearchTable();
-    this.onPageAction("");
+    // this.loadDropdownData();
+    this.onPageAction('');
+
     this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
-
-    if (!this.dataWithSimpleEdit.some(row => row.code === 'All')) {
-      const allRow = {
-        id: -1, // Use 0 or another unique value that won't clash with real channels
-        code: 'All',
-        channel: 'All', 
-        option: '',
-        identifier: '0',
-        attributeForChannel: '',
-        // Add any other required fields here
-      };
-      this.dataWithSimpleEdit.unshift(allRow);
-      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
-    }
-
     this.subscriptions.add(
       this.translate.onTranslationChange.subscribe(lang => {
         const keys = [
@@ -470,462 +744,525 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
       })
     );
   }
-  public countersRawData: any[] = [];
-  public conditionsRawData: any[] = []; // Store the raw counters
 
-
-  loadDropdownData(): void {
-    this.transactionTypeService.getDeliveryChannel().subscribe((channels: any[]) => {
-      const channelValues = channels.map(channel => channel.code);
-      this.columns[0].inputModeOptions.model = channelValues;
-      this.channels = channels.map(channel => ({
-        label: channel.code,
-        value: channel.identifier
-      }));
-
-      // --- Ensure dialog table gets the latest data ---
-      // When setting data for the dialog:
-      this.channelsDataSingleSelect.datasource.data = channels.map((channel, idx) => ({
-        id: idx + 1,
-        code: channel.code,      // for the Channel column
-        option: '',               // for the Option column (user will select)
-        identifier: channel.identifier
-      }));
-      // After fetching channels
-      console.log('Fetched channels:', JSON.stringify(channels, null, 2));
-    });
-    this.transactionTypeService.getCounters().subscribe((response: any[]) => {
-      this.countersRawData = response;
-      // Map your response to the table's expected format if needed
-      // this.countersTableMetadata.datasource.data = response.map((counter, idx) => ({
-      //   id: idx + 1,
-      //   code: counter.code,
-      //   identifier: counter.identifier,
-      //   classificationType: '', // or default value
-      //   operatorType: ''        // or default value
-      // }));
-      // Optionally, update selectedRowCounters if you want to preselect
-      // this.selectedRowCounters = [];
-      console.log('Counters response:', JSON.stringify(response, null, 2));
-    });
-    this.transactionTypeService.getConditions().subscribe((response: any[]) => {
-      this.conditionsRawData = response;
-      
-      console.log('conditions response:', JSON.stringify(response, null, 2));
-    });
-    this.transactionTypeService.getRestrictions().subscribe((response: any[]) => {
-      this.conditionsRawData = response;
-      
-      console.log('Restrictions response:', JSON.stringify(response, null, 2));
-    });
-  }
+  // loadDropdownData(): void {
+  //   this.conditionService.getConditions().subscribe((conditions: any[]) => {
+  //     const conditionValues = conditions.map(condition => condition.cdarValue);
+  //     this.columns[0].inputModeOptions.model = conditionValues;
+  //   });
+  // }
 
   ngAfterViewInit() {
     this.tableRefArray = [this.simpleEditTableRef];
   }
 
-  ngOnDestroy() {
-    this.subscriptions.unsubscribe();
+  /**
+   * Method to change pagemode of the table
+   */
+  public showActionsForSimple: boolean = false;
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+      // this.rowLevelActionsForBasicEdit[0].disabled = true;
+      this.showActionsForSimple = true;
+      // this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      //   ...obj
+      // }));
+      // this.setSearchFieldsData(false);
+      // this.setOverrideDefaultFieldsData(false);
+      // this.setRequiredFieldsData(false);
+    } else {
+      this.checkStatus(false);
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.showActionsForSimple = false;
+    }
+  }
+  /**
+   * This method is to set Search Fields input data
+   */
+  public setSearchFieldsData(isReset) {
+    const useExistingFormCtrlObj = {};
+    const searchFieldFormCtrlObj = {};
+    this.searchFieldObjArr = [];
+    let data: any;
+
+    data = isReset
+      ? this.dataForReset
+      : this.tableWithSimpleEdit.datasource.data;
+
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        searchFieldFormCtrlObj['groupId' + ind] = new UntypedFormControl(
+          row.groupId,
+          Validators.required
+        );
+        useExistingFormCtrlObj['useExistingGroupId' + ind] =
+          new UntypedFormControl(row.useExistingGroupId);
+        this.searchFieldObjArr[ind] = {
+          searchFieldData: {
+            label: '',
+            fieldName: 'groupId',
+            descFieldName: 'groupName',
+            required: true,
+            hideLabel: true,
+            hideFilterCriteria: true,
+            disableInput: true,
+            disableSearch: row.useExistingGroupId === 'Yes' ? true : false,
+            hideDescription: false
+          },
+          searchTableData: {
+            columns: this.commonDataService.columnsForDemoService,
+            enablePagination: true,
+            paginationOptions: {
+              pageSize: 5,
+              length: 12
+            },
+            datasource: new BodTableDataSource<SampleEC>(
+              new DemoTableDataService(this.http)
+            ),
+            noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+          }
+        };
+      }
+    });
+
+    this.searchFieldColumnForm = this.formBuilder.group(searchFieldFormCtrlObj);
+    this.useExistingColForm = this.formBuilder.group(useExistingFormCtrlObj);
+    this.searchFieldFormCtrlKeys = Object.keys(
+      this.searchFieldColumnForm.controls
+    );
+    this.useExistingFormCtrlKeys = Object.keys(
+      this.useExistingColForm.controls
+    );
   }
 
-  public singleRowEdit: SingleRowEdit = {
-    modeOptions: { input: false, reset: false },
-    index: 0
-  };
+  public setOverrideDefaultFieldsData(isReset) {
+    const overrideDefaultCtrlObj = {};
+    let data: any;
 
-  public dataWithSimpleEdit: ChannelTable[] = [];
+    data = isReset
+      ? this.dataForReset
+      : this.tableWithSimpleEdit.datasource.data;
 
-  public tableWithSimpleEdit: BodTableMetadata = {
-    title: 'Channel Configuration',
-    columns: this.columnSimpleEdit,
-    datasource: new MatTableDataSource<ChannelTable>(
-      this.dataWithSimpleEdit
-    ),
-    rowLeftAction: RowLeftAction.expandableRows,
-    noRecordsMessage: 'No Channel Configuration Defined'
-  };
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        overrideDefaultCtrlObj['overrideDefault' + ind] =
+          new UntypedFormControl(row.overrideDefault);
+      }
+    });
 
-  public dataWithSimpleCounter: CounterTable[] = [];
+    this.overrideDefaultColumnForm = this.formBuilder.group(
+      overrideDefaultCtrlObj
+    );
+    this.overrideDefaultColFormCtrKeys = Object.keys(
+      this.overrideDefaultColumnForm.controls
+    );
+  }
 
-  public tableWithSimpleCounter: BodTableMetadata = {
-    title: 'Counters',
-    columns: [...this.transactionTypeService.counters],
-    datasource: new MatTableDataSource<CounterTable>(this.dataWithSimpleCounter),
-    // enablePagination: true,
-    // paginationOptions: {
-    //   pageSize: 5,
-    //   length: 12,
-    //   pageSizeOptions: [5, 8, 10],
-    //   showLastButton: true,
-    //   showPageSizeOptions: true
-    // },
-    noRecordsMessage: 'No Counter defined'
-  };
+  public setRequiredFieldsData(isReset) {
+    const requiredCtrlObj = {};
+    let data: any;
 
-  public dataWithSimpleCondition: ConditionTable[] = [];
+    data = isReset
+      ? this.dataForReset
+      : this.tableWithSimpleEdit.datasource.data;
 
-  public tableWithSimpleCondition: BodTableMetadata = {
-    title: 'Conditions',
-    columns: [...this.transactionTypeService.conditions],
-    datasource: new MatTableDataSource<ConditionTable>(this.dataWithSimpleCondition),
-    noRecordsMessage: 'No Condition defined'
-  };
+    data.forEach((row, ind) => {
+      if (
+        this.modeOptionsSimple?.input ||
+        (this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === ind)
+      ) {
+        requiredCtrlObj['required' + ind] = new UntypedFormControl(
+          row.required
+        );
+      }
+    });
 
-  public dataWithSimpleRestriction: RestrictionTable[] = [];
+    this.requiredColumnForm = this.formBuilder.group(requiredCtrlObj);
+    this.requiredColFormCtrKeys = Object.keys(this.requiredColumnForm.controls);
 
-  public tableWithSimpleRestriction: BodTableMetadata = {
-    title: 'Restrictions',
-    columns: [...this.transactionTypeService.restrictions],
-    datasource: new MatTableDataSource<RestrictionTable>(this.dataWithSimpleRestriction),
-    noRecordsMessage: 'No Restriction defined'
-  };
+    // disable child (required) control based on the parent (overrideDefault) control value
+    if (this.singleRowEdit?.modeOptions?.input) {
+      if (
+        !this.overrideDefaultColumnForm.controls[
+          'overrideDefault' + this.singleRowEdit?.index
+        ].value
+      ) {
+        this.requiredColumnForm.controls[
+          'required' + this.singleRowEdit?.index
+        ].disable({
+          emitEvent: true
+        });
+      }
+    } else {
+      Object.keys(this.overrideDefaultColumnForm.controls).forEach(
+        (key, ind) => {
+          if (!this.overrideDefaultColumnForm.controls[key].value) {
+            this.requiredColumnForm.controls['required' + ind].disable({
+              emitEvent: true
+            });
+          }
+        }
+      );
+    }
+  }
 
+  /**
+   * This method is to update custom column data whenever it gets changed in edit mode
+   */
+  public updateColumnData(columnName, value, index, checkboxRef?, tableName?) {
+    if (tableName === 'simpleEditTable') {
+      const updatedData = this.tableWithSimpleEdit.datasource.data;
+      updatedData[index][columnName] = checkboxRef
+        ? !checkboxRef.checked
+        : value;
+      (
+        this.tableWithSimpleEdit
+          .datasource as MatTableDataSource<BodEditableSampleTable>
+      ).data = updatedData;
+      this.simpleEditTableRef.updateDeltaForCustomColumn(
+        EditTableAction.EDIT,
+        index
+      );
+    }
+  }
 
+  /**
+   * This method is to update search field column form when a new row added to the table
+   */
+  public updateCustomColumnFormFields() {
+    let lastSearchFieldCtrl;
+    let index;
+    this.searchFieldObjArr.push({
+      searchFieldData: {
+        label: '',
+        fieldName: 'groupId',
+        descFieldName: 'groupName',
+        required: true,
+        hideLabel: true,
+        hideFilterCriteria: true,
+        disableInput: true,
+        hideDescription: false
+      },
+      searchTableData: {
+        columns: this.commonDataService.columnsForDemoService,
+        enablePagination: true,
+        paginationOptions: {
+          pageSize: 5,
+          length: 12
+        },
+        datasource: new BodTableDataSource<SampleEC>(
+          new DemoTableDataService(this.http)
+        ),
+        noRecordsMessage: 'mbpBod.demo.microsite.table.noRecordsMsg'
+      }
+    });
+
+    // logic to get index from last search field control key and create new search field control
+    switch (this.selectedTabIndex) {
+      case 0: {
+        const dataLength =
+          this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+
+        if (dataLength > 1 && this.searchFieldFormCtrlKeys.length > 0) {
+          const lastKey =
+            this.searchFieldFormCtrlKeys[
+              this.searchFieldFormCtrlKeys.length - 1
+            ];
+          const match = lastKey?.match(/\d+$/); // Extract the number at the end of the key (e.g., groupId_3)
+          index = match ? parseInt(match[0], 10) + 1 : 0;
+        } else {
+          index = 0;
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    this.searchFieldFormCtrlKeys = this.addFormControl(
+      this.searchFieldColumnForm,
+      'groupId',
+      index,
+      true,
+      ''
+    );
+    this.useExistingFormCtrlKeys = this.addFormControl(
+      this.useExistingColForm,
+      'useExisting',
+      index,
+      false,
+      'No'
+    );
+
+    this.overrideDefaultColFormCtrKeys = this.addFormControl(
+      this.overrideDefaultColumnForm,
+      'overrideDefault',
+      index,
+      false,
+      'true'
+    );
+
+    this.requiredColFormCtrKeys = this.addFormControl(
+      this.requiredColumnForm,
+      'required',
+      index,
+      false,
+      'true'
+    );
+  }
+
+  public dependentColChange(event, idx) {
+    if (!event.checked) {
+      this.requiredColumnForm.controls['required' + idx].disable({
+        emitEvent: true
+      });
+    } else {
+      this.requiredColumnForm.controls['required' + idx].enable({
+        emitEvent: true
+      });
+    }
+  }
+
+  /**
+   * This method is to add control to form when new row is added to table
+   */
+  public addFormControl(form, columnName, index, isRequired, defaultValue) {
+    isRequired
+      ? form.addControl(
+          columnName + index,
+          new UntypedFormControl(defaultValue, Validators.required)
+        )
+      : form.addControl(
+          columnName + index,
+          new UntypedFormControl(defaultValue)
+        );
+    return Object.keys(form.controls);
+  }
+
+  /**
+   * This method is to remove form control from form and return formcontrol Keys array when a row is deleted
+   */
+  public removeFormControl(form, formControlKeys, index) {
+    form.removeControl(formControlKeys[index]);
+    return Object.keys(form.controls);
+  }
+  translationObject = {};
+
+  @Output() tableDirty = new EventEmitter<boolean>();
+  @Output() completeDeltaChangefrequency = new EventEmitter<any>();
+  @Input() set primFreData(data: primaFreq[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log('dataWithSimpleEdit123: ', this.dataWithSimpleEdit);
+  }
+  public getCurrentTablePrimFreq(): primaFreq[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
+
+  // Call tableDirty.emit(true) when frequency or value changes
+  public onFrequencyChange1234(element: any) {
+    if (this.disabledFrequencies.includes(element.primaryfrequency)) {
+      element.value = null; // or '' if you prefer empty string
+    }
+    this.tableDirty.emit(true);
+  }
+
+  public onValueChange() {
+    this.tableDirty.emit(true);
+  }
+
+  public onEditTableAction(event) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
+
+    if (event.currentChanges) {
+      const editedIndex = event.currentChanges.rowIndex;
+
+      const currentRow = this.tableWithSimpleEdit.datasource.data[editedIndex];
+
+      if (currentRow.default) {
+        this.tableWithSimpleEdit.datasource.data.forEach((r, i) => {
+          r.default = i === editedIndex;
+        });
+      }
+      this.completeDeltaChangefrequency.emit(
+        this.tableWithSimpleEdit.datasource.data
+      );
+    }
+
+    this.tableDirty.emit(true);
+  }
+
+  // Method to mark tableFormGroup of EditTable as touched
+  public markTouched() {
+    this.simpleEditTableRef.markTableFormAsTouched();
+    this.searchFieldColumnForm.markAllAsTouched();
+    this.markAllSearchFieldsAsTouched();
+  }
+
+  // Method to mark all searchfields as touched in edit table
+  public markAllSearchFieldsAsTouched() {
+    this.searchFieldComponent.forEach(element => {
+      element.getFormControl().markAsTouched();
+    });
+  }
+
+  /**
+   * Method to update formstatus
+   */
+  public checkStatus(status) {
+    this.formStatus = status;
+  }
+
+  /**
+   * Method to add a new row
+   */
+
+  public selectedConditionData: any[] = [];
+  public addTableData() {
+    console.log("Validator11",this.modeOptionsSimple)
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    console.log('valid Value Data', this.tableWithSimpleEdit.datasource);
+
+    const updatedData = {
+      id: ++this.lastModifiedIndex,
+      useExistingGroupId: 'Yes',
+      mailingType: this.inputForSelectKeyValue.options[0].value,
+      activeStatus: Boolean(this.inputForCheckboxValue.options[0].value),
+      verifiedAddress: true,
+      groupId: '123',
+      groupName: 'Insurance',
+      amount: new Amount(this.currencies[0], 1200),
+      country: this.inputForSingleSelectWithFlagIcon.options[2].value,
+      analyzedOn: new Date('Sep 10 2018'),
+      updatedOn: new Date('Sep 12 2018'),
+      deliveryMethod: 'email',
+      pointOfContact: 'Home',
+      authorizeCheckbox: Boolean(
+        this.inputForAuthorizeCheckboxValue.options[0].value
+      ),
+      usePreferred: 'No',
+      address: 'emily.daily@xyz.com',
+      time: moment(new Date()),
+      dateTime: new Date(),
+      addressOrder: Number('1'),
+      overrideDefault: Boolean(this.inputForSlideToggleValue.options[0].value),
+      required: Boolean(this.inputForAuthorizeCheckboxValue.options[0].value)
+    };
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input) {
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setSearchFieldsData(false);
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+
+  /**
+   * Method to change pagemode to enquiry on save of table data
+   */
+  public saveTableData() {
+    this.markTouched();
+    if (this.formStatus && this.searchFieldColumnForm.valid) {
+      switch (this.selectedTabIndex) {
+        case 0: {
+          this.modeOptionsSimple = { input: false, reset: false };
+          this.pageModeSimple = PageMode.INQUIRY;
+          this.rowLevelActionsForBasicEdit[0].disabled = false;
+          break;
+        }
+        case 1: {
+          this.modeOptionsExpand = { input: false, reset: false };
+          this.pageModeExpand = PageMode.INQUIRY;
+          this.actionsForExpand = [];
+          break;
+        }
+        case 2: {
+          this.modeOptionsSingle = { input: false, reset: false };
+          this.pageModeSingle = PageMode.INQUIRY;
+          this.actionsForSingle = [];
+          break;
+        }
+        case 3: {
+          this.modeOptionsMulti = { input: false, reset: false };
+          this.pageModeMulti = PageMode.INQUIRY;
+          this.actionsForMulti = [];
+          break;
+        }
+        case 4: {
+          this.modeOptionsExpandSingle = { input: false, reset: false };
+          this.pageModeExpandSingle = PageMode.INQUIRY;
+          this.actionsForExpandSingle = [];
+          break;
+        }
+        case 5: {
+          this.modeOptionsExpandMulti = { input: false, reset: false };
+          this.pageModeExpandMulti = PageMode.INQUIRY;
+          this.actionsForExpandMulti = [];
+          break;
+        }
+        default:
+          break;
+      }
+      this.updateMsgArr(this.successMsg);
+    }
+  }
+
+  /**
+   * Method to reset edit table data
+   */
   public reset() {
+    this.setSearchFieldsData(true);
+    this.setOverrideDefaultFieldsData(true);
+    this.setRequiredFieldsData(true);
+
     this.modeOptionsSimple = { input: true, reset: true };
+
     this.updateMsgArr(this.resetMsg);
   }
 
-  updateMsgArr(resetMsg: NotificationMessage) {
-    // Implementation for updating message array
-  }
-
-  public selectedChannelData: any[] = [];
-
-  generateUniqueId(array: { id: number }[]): number {
-    const existingIds = array.map(item => item.id);
-    let newId = 1;
-    while (existingIds.includes(newId)) {
-      newId++;
-    }
-    return newId;
-  }
-  onAttributeForChannelChange(event: any) {
-    this.addNewChannelForm.markAsDirty();
-  }
-  // channels-main-table.component.ts
-
-  public newId = this.generateUniqueId(this.tableWithSimpleEdit.datasource.data);
-
-  // Initialize all required fields for the new row
-  newRow = {
-    id: this.newId,
-    relationshipType: '', // or default value
-    condition: '',        // or default value
-    // ...add all other required fields here
-  };
-
-  setDataForSingleLineEditMode(editIndex: number) {
-    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
-      ...obj
-    }));
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: editIndex
-    };
-    this.pageModeSimple = PageMode.NONE;
-  }
-
-  public onAddChannel(formValue: any) {
-    // Update the selected row in your dataWithSimpleEdit array
-    const index = this.dataWithSimpleEdit.findIndex(row => row.id === formValue.id);
-    if (index !== -1) {
-      this.dataWithSimpleEdit[index] = { ...formValue };
-      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
-    }
-  }
-
-  public onSaveChannelRow(_: any) {
-    const formValue = this.addNewChannelForm.value;
-    const rowId = formValue.id;
-    const index = this.dataWithSimpleEdit.findIndex(row => row.id === rowId);
-
-    // Validation example for counters (if needed)
-    if (this.addNewChannelForm.get('attributeForChannel')?.value === 'Counters') {
-      // Example: check for empty counters
-      if (!this.dataWithSimpleCounter || this.dataWithSimpleCounter.length === 0) {
-        // Handle error (show message, etc.)
-        console.error('No counters selected!');
-        return;
-      }
-    }
-
-    // Update the row with form and counters data
-    if (index !== -1) {
-      const savedRow = {
-        ...this.dataWithSimpleEdit[index],
-        ...formValue,
-        attributeForChannel: this.addNewChannelForm.get('attributeForChannel')?.value,
-        counters: [...this.dataWithSimpleCounter]
-      };
-      // Print/log what you are saving
-      console.log('Saving row:', savedRow);
-
-      this.dataWithSimpleEdit[index] = savedRow;
-      this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
-    }
-
-    // Optionally reset edit mode or close modal
-    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-    this.emitCompleteDelta();
-  }
-
-
-
-
-  public addTableData() {
-    const dialogRef = this.dialog.open(ChannelsMultiselectDialogComponent, {
-      width: '900px',
-      height: '600px',
-      data: {
-        channelsDataSingleSelect: this.channelsDataSingleSelect,
-        selectedRowSingleSelect: this.selectedRowSingleSelect // pass current selection if needed
-      }
-    });
-    dialogRef.componentInstance.tableDirty.subscribe(() => {
-      this.addNewChannelForm.markAsDirty();
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.selectedChannels) {
-        const currentAttr = this.addNewChannelForm.get('attributeForChannel')?.value || '';
-        const mapped = result.selectedChannels.map(row => ({
-          id: row.id,
-          option: row.option,
-          channel: row.code,
-          identifier: row.identifier,
-          attributeForChannel: currentAttr
-        }));
-  
-        // --- Ensure "All" row is always present at the top ---
-        const allRow = this.dataWithSimpleEdit.find(row => row.code === 'All' );
-        let newData: any[] = [];
-        if (allRow) {
-          newData = [allRow, ...mapped.filter(row => (row.code ?? row.channel) !== 'All')];
-        } else {
-          // fallback: create a new "All" row if not present
-          newData = [{
-            id: -1,
-            code: 'All',
-            channel: 'All',
-            option: '',
-            identifier: '0',
-            attributeForChannel: currentAttr
-          }, ...mapped.filter(row => (row.code ?? row.channel) !== 'All')];
-        }
-  
-        this.dataWithSimpleEdit = newData;
-        this.tableWithSimpleEdit.datasource.data = [...newData];
-        this.channelData = [...newData];
-        this.emitCompleteDelta();
-      }
-    });
-  }
-
-  addCounterTableData() {
-    this.addNewChannelForm.markAsDirty();
-    this.transactionTypeService.getCounters().subscribe((response: any[]) => {
-      const dialogTableMetadata: BodTableMetadata = {
-        ...this.countersTableMetadata,
-        datasource: new MatTableDataSource<CounterTable>(
-          response.map((counter, idx) => ({
-            id: idx + 1,
-            code: counter.code,
-            identifier: counter.identifier,
-            classificationType: counter.classificationType,
-            operatorType: ''
-          }))
-        )
-      };
-
-      // Use the counters for the current row
-      const selectedCounters = this.counterMap[this.currentChannelRowId!] || [];
-
-      const dialogRef = this.dialog.open(CountersMultiselectDialogComponent, {
-        width: '1000px',
-        height: '600px',
-        data: {
-          countersDataSingleSelect: dialogTableMetadata,
-          selectedRowSingleSelect: selectedCounters
-        }
-      });
-
-      dialogRef.afterClosed().subscribe(result => {
-        if (result?.selectedCounters) {
-          const mapped = result.selectedCounters.map(row => ({
-            id: row.id,
-            code: row.code,
-            identifier: row.identifier,
-            classificationType: row.classificationType,
-            operatorType: row.operatorType
-          }));
-          // Store counters for this channel row only
-          this.counterMap[this.currentChannelRowId!] = mapped;
-          // Update the UI for the current row
-          this.dataWithSimpleCounter = mapped;
-          this.tableWithSimpleCounter.datasource.data = [...mapped];
-          // Optionally update the row in dataWithSimpleEdit
-          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
-          if (idx !== -1) {
-            this.dataWithSimpleEdit[idx].counters = mapped;
-          }
-          this.counterDetails.emit(mapped);
-        }
-      });
-    });
-  }
-
-  addConditionTableData() {
-    this.addNewChannelForm.markAsDirty();
-    this.transactionTypeService.getConditions().subscribe((response: any[]) => {
-      const dialogTableMetadata: BodTableMetadata = {
-        ...this.conditionsTableMetadata,
-        datasource: new MatTableDataSource<ConditionTable>(
-          response.map((condition, idx) => ({
-            id: idx + 1,
-            code: condition.cdarValue,
-            identifier: condition.identifier,
-            relationshipType: ''
-          }))
-        )
-      };
-  
-      // Use the conditions for the current row
-      const selectedConditions = this.conditionMap[this.currentChannelRowId!] || [];
-  
-      const dialogRef = this.dialog.open(ConditionsMultiselectDialogComponent, {
-        width: '1000px',
-        height: '600px',
-        data: {
-          conditionsDataSingleSelect: dialogTableMetadata,
-          selectedRowSingleSelect: selectedConditions
-        }
-      });
-  
-      dialogRef.afterClosed().subscribe(result => {
-        if (result?.selectedConditions) {
-          const mapped = result.selectedConditions.map(row => ({
-            id: row.id,
-            code: row.code,
-            identifier: row.identifier,
-            relationshipType: row.relationshipType
-          }));
-          // Store conditions for this channel row only
-          this.conditionMap[this.currentChannelRowId!] = mapped;
-          // Update the UI for the current row
-          this.dataWithSimpleCondition = mapped;
-          this.tableWithSimpleCondition.datasource.data = [...mapped];
-          // Optionally update the row in dataWithSimpleEdit
-          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
-          if (idx !== -1) {
-            this.dataWithSimpleEdit[idx].conditions = mapped;
-          }
-          this.conditionDetails.emit(mapped);
-        }
-      });
-    });
-  }
-
-   // Add this method
-   handleConditionRowLevelActions($event: any, index: number) {
-    if ($event === 'trash') {
-      // Remove the row from your data array
-      this.dataWithSimpleCondition.splice(index, 1);
-      // Update the table datasource
-      this.tableWithSimpleCondition.datasource.data = [...this.dataWithSimpleCondition];
-      // Emit the updated data if needed
-      this.conditionDetails.emit(this.dataWithSimpleCondition);
-    }
-    this.addNewChannelForm.markAsDirty();
-    // You can add 'edit' or 'save' logic here if needed
-  }
-
-  addRestrictionTableData() {
-    this.addNewChannelForm.markAsDirty();
-    this.transactionTypeService.getRestrictions().subscribe((response: any[]) => {
-      const dialogTableMetadata: BodTableMetadata = {
-        ...this.restrictionsTableMetadata,
-        datasource: new MatTableDataSource<RestrictionTable>(
-          response.map((restriction, idx) => ({
-            id: idx + 1,
-            code: restriction.code,
-            identifier: restriction.identifier,
-            type: 'ERROR'
-          }))
-        )
-      };
-  
-      // Use the restrictions for the current row
-      const selectedRestrictions = this.restrictionMap[this.currentChannelRowId!] || [];
-  
-      const dialogRef = this.dialog.open(RestrictionsMultiselectDialogComponent, {
-        width: '1000px',
-        height: '600px',
-        data: {
-          restrictionsDataSingleSelect: dialogTableMetadata,
-          selectedRowSingleSelect: selectedRestrictions
-        }
-      });
-  
-      dialogRef.afterClosed().subscribe(result => {
-        if (result?.selectedRestrictions) {
-          const mapped = result.selectedRestrictions.map(row => ({
-            id: row.id,
-            code: row.code,
-            identifier: row.identifier,
-            type: row.type
-          }));
-          // Store restrictions for this channel row only
-          this.restrictionMap[this.currentChannelRowId!] = mapped;
-          // Update the UI for the current row
-          this.dataWithSimpleRestriction = mapped;
-          this.tableWithSimpleRestriction.datasource.data = [...mapped];
-          // Optionally update the row in dataWithSimpleEdit
-          const idx = this.dataWithSimpleEdit.findIndex(r => r.id === this.currentChannelRowId);
-          if (idx !== -1) {
-            this.dataWithSimpleEdit[idx].restrictions = mapped;
-          }
-          this.restrictionDetails.emit(mapped);
-        }
-      });
-    });
-  }
-
-  // Add this method
-  handleRestrictionRowLevelActions($event: any, index: number) {
-    if ($event === 'trash') {
-      // Remove the row from your data array
-      this.dataWithSimpleRestriction.splice(index, 1);
-      // Update the table datasource
-      this.tableWithSimpleRestriction.datasource.data = [...this.dataWithSimpleRestriction];
-      // Emit the updated data if needed
-      this.restrictionDetails.emit(this.dataWithSimpleRestriction);
-    }
-    this.addNewChannelForm.markAsDirty();
-    // You can add 'edit' or 'save' logic here if needed
-  }
-
-  public channelObject: any = {};
-  public channelObjectsArray: any[] = [];
-
-  public resetTableForm() {
-    this.channelObject = {};
-    this.channelObjectsArray = [];
-    this.dataWithSimpleEdit = [];
-    this.tableWithSimpleEdit.datasource.data = [];
-
+  /**
+   * Method to update messages in page container
+   */
+  public updateMsgArr(msg) {
+    this.messages = [msg];
     setTimeout(() => {
-      this.simpleEditTableRef?.tableFormGroup.reset();
-      this.formStateService.formState$.next(false);
-    });
-    console.log("resetting channel table");
+      this.messages = [];
+    }, 10000);
   }
 
+  /**
+   * Method to handle row level actions for basic edit table
+   */
+  @Output() translationDetails1 = new EventEmitter<any>();
 
-
-  handleRowLevelActions($event: any, index: any) {
+  handleRowLevelActions($event, index) {
     if ($event === 'edit') {
-      const row = this.dataWithSimpleEdit[index];
-      this.addNewChannelForm.patchValue(row);
+      this.setDataForSingleLineEditMode(index);
     } else if ($event === 'trash') {
       if (this.modeOptionsSimple?.input) {
         this.deleteTableData(index);
@@ -947,46 +1284,18 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
       };
       this.pageModeSimple = PageMode.INQUIRY;
       this.rowLevelActionsForBasicEdit[0].disabled = false;
-
-      const updatedRow = this.channelObject as ChannelTable;
-      const allRows = this.tableWithSimpleEdit.datasource.data as ChannelTable[];
-
-      console.log('%c📝 DEBUG: channelObject:', 'color: cyan', updatedRow);
-      console.log('%c📋 DEBUG: All Rows Before Update:', 'color: orange', [...allRows]);
-
-      const existingIndex = allRows.findIndex(row => row.id === updatedRow.id);
-
-      if (existingIndex !== -1) {
-        console.log(`🔄 Updating row at index ${existingIndex}`);
-        allRows[existingIndex] = { ...updatedRow };
-      } else {
-        console.warn('⚠️ Row not found, pushing new one:', updatedRow);
-        allRows.push(updatedRow);
-      }
-
-      this.channelObjectsArray = [...allRows];
-
-      console.log('%c✅ DEBUG: Final channelObjectsArray to emit:', 'color: green', this.channelObjectsArray);
-
-      this.channelDetails.emit(this.channelObjectsArray);
-
+      console.log('translationObject after save = ', this.translationObject);
+      this.translationDetails1.emit(this.translationObject);
       this.updateFormStateAsPristine();
+    } else if ($event === 'reset') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: true },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
     }
   }
-
-  handleCounterRowLevelActions($event: any, index: number) {
-    if ($event === 'trash') {
-      // Remove the row from your data array
-      this.dataWithSimpleCounter.splice(index, 1);
-      // Update the table datasource
-      this.tableWithSimpleCounter.datasource.data = [...this.dataWithSimpleCounter];
-      // Emit the updated data if needed
-      this.counterDetails.emit(this.dataWithSimpleCounter);
-    }
-    this.addNewChannelForm.markAsDirty();
-    // You can add 'edit' or 'save' logic here if needed
-  }
-
   private updateFormStateAsPristine() {
     switch (this.selectedTabIndex) {
       case 0: {
@@ -996,159 +1305,261 @@ export class ChannelsMainTableComponent implements OnInit, OnDestroy, OnChanges,
         );
         break;
       }
+      // case 1: {
+      //   this.expandEditTableRef?.tableFormGroup.markAsPristine();
+      //   this.formStateService.formState$.next(
+      //     this.expandEditTableRef.tableFormGroup.dirty
+      //   );
+      //   break;
+      // }
+      // case 2: {
+      //   this.singleSelectEditTableRef?.tableFormGroup.markAsPristine();
+      //   this.formStateService.formState$.next(
+      //     this.singleSelectEditTableRef.tableFormGroup.dirty
+      //   );
+      //   break;
+      // }
+      // case 3: {
+      //   this.multiSelectEditTableRef?.tableFormGroup.markAsPristine();
+      //   this.formStateService.formState$.next(
+      //     this.multiSelectEditTableRef.tableFormGroup.dirty
+      //   );
+      //   break;
+      // }
+      // case 4: {
+      //   this.expandSingleSelectEditTableRef?.tableFormGroup.markAsPristine();
+      //   this.formStateService.formState$.next(
+      //     this.expandSingleSelectEditTableRef.tableFormGroup.dirty
+      //   );
+      //   break;
+      // }
+      // case 5: {
+      //   this.expandMultiSelectEditTableRef?.tableFormGroup.markAsPristine();
+      //   this.formStateService.formState$.next(
+      //     this.expandMultiSelectEditTableRef.tableFormGroup.dirty
+      //   );
+      //   break;
+      // }
       default:
         break;
     }
   }
 
+  /**
+   * Method to set data for single line edit mode
+   */
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+    this.setSearchFieldsData(false);
+    this.setOverrideDefaultFieldsData(false);
+    this.setRequiredFieldsData(false);
+  }
+
+  /**
+   * Method to delete row of a table
+   */
   public deleteTableData(index) {
-    switch (this.selectedTabIndex) {
-      case 0: {
-        this.simpleEditTableRef.deleteRow(index);
+    this.simpleEditTableRef.deleteRow(index);
+
+    if (this.searchFieldColumnForm) {
+      this.searchFieldFormCtrlKeys = this.removeFormControl(
+        this.searchFieldColumnForm,
+        this.searchFieldFormCtrlKeys,
+        index
+      );
+      this.searchFieldObjArr.splice(index, 1);
+      this.useExistingFormCtrlKeys = this.removeFormControl(
+        this.useExistingColForm,
+        this.useExistingFormCtrlKeys,
+        index
+      );
+    }
+    this.tableDirty.emit(true);
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  /**
+   * Method to update message in system message service
+   */
+  public updateMessage(key, text) {
+    const message = this.translate.instant(key) + text;
+    this.systemMessage.updateSystemMessage(message);
+  }
+
+  showMessage(key, event) {
+    switch (key) {
+      case 'expand': {
+        this.updateMessage('Row Expanded', JSON.stringify(event));
+        break;
+      }
+      case 'expandInput': {
+        this.updateMessage('Row Expanded in Input Mode', JSON.stringify(event));
+        break;
+      }
+      case 'collapse': {
+        this.updateMessage('Row Collapsed', JSON.stringify(event));
+        break;
+      }
+      case 'collapseInput': {
+        this.updateMessage(
+          'Row Collapsed in Input Mode',
+          JSON.stringify(event)
+        );
+        break;
+      }
+      case 'select': {
+        this.updateMessage('Row Selected', JSON.stringify(event));
+        break;
+      }
+      case 'selectInput': {
+        this.updateMessage('Row Selected in Input Mode', JSON.stringify(event));
         break;
       }
       default:
         break;
     }
-    this.emitCompleteDelta();
   }
 
-  public searchChannelInput = '';
-  public searchFieldDataForChannel: BodSearchFieldData = {
-    label: 'Channel',
-    fieldName: 'code',
-    descFieldName: '',
-    required: true,
-    allowOtherInputs: false,
-    hideFilterCriteria: false,
-    disableInput: false
-  };
-  public tableDataForChannel: BodTableMetadata = {
-    columns: [{ name: 'code' }],
-    datasource: new MatTableDataSource<any>([]), // Will be filled with channel data
-  };
+  updateTemplate(index) {
+    this.disableEditForInput = false;
+    this.existingDataNotEditable = false;
+    this.selectedTabIndex = index;
+    this.checkStatus(false);
+    this.pageModeSimple = this.pageMode;
+    this.modeOptionsSimple = this.modeOptions;
 
-  private loadChannelSearchTable() {
-    this.transactionTypeService.getDeliveryChannel().subscribe((channels: any[]) => {
-      this.tableDataForChannel.datasource.data = channels;
+    this.pageModeExpand = this.pageMode;
+    this.modeOptionsExpand = this.modeOptions;
+    this.actionsForExpand = [];
+
+    this.pageModeSingle = this.pageMode;
+    this.modeOptionsSingle = this.modeOptions;
+    this.actionsForSingle = [];
+
+    this.pageModeMulti = this.pageMode;
+    this.modeOptionsMulti = this.modeOptions;
+    this.actionsForMulti = [];
+
+    this.pageModeExpandSingle = this.pageMode;
+    this.modeOptionsExpandSingle = this.modeOptions;
+    this.actionsForExpandSingle = [];
+
+    this.pageModeExpandMulti = this.pageMode;
+    this.modeOptionsExpandMulti = this.modeOptions;
+    this.actionsForExpandMulti = [];
+    switch (this.selectedTabIndex) {
+      case 0: {
+        this.showEdit = true;
+        this.showExpandEdit = false;
+        this.showSingleSelect = false;
+        this.showMultiSelect = false;
+        this.showExpandSingleSelect = false;
+        this.showExpandMultiSelect = false;
+        break;
+      }
+      case 1: {
+        this.showEdit = false;
+        this.showExpandEdit = true;
+        this.showSingleSelect = false;
+        this.showMultiSelect = false;
+        this.showExpandSingleSelect = false;
+        this.showExpandMultiSelect = false;
+        break;
+      }
+      case 2: {
+        this.showEdit = false;
+        this.showExpandEdit = false;
+        this.showSingleSelect = true;
+        this.showMultiSelect = false;
+        this.showExpandSingleSelect = false;
+        this.showExpandMultiSelect = false;
+        break;
+      }
+      case 3: {
+        this.showEdit = false;
+        this.showExpandEdit = false;
+        this.showSingleSelect = false;
+        this.showMultiSelect = true;
+        this.showExpandSingleSelect = false;
+        this.showExpandMultiSelect = false;
+        break;
+      }
+      case 4: {
+        this.showEdit = false;
+        this.showExpandEdit = false;
+        this.showSingleSelect = false;
+        this.showMultiSelect = false;
+        this.showExpandSingleSelect = true;
+        this.showExpandMultiSelect = false;
+        break;
+      }
+      case 5: {
+        this.showEdit = false;
+        this.showExpandEdit = false;
+        this.showSingleSelect = false;
+        this.showMultiSelect = false;
+        this.showExpandSingleSelect = false;
+        this.showExpandMultiSelect = true;
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  toggleEditableInput(event) {
+    this.disableEditForInput = event.checked;
+    if (this.disableEditForInput) {
+      this.existingDataNotEditable = false;
+    }
+    this.setEditableAndDisabledInputs();
+  }
+  toggleDisabledInput(event) {
+    this.existingDataNotEditable = event.checked;
+    this.setEditableAndDisabledInputs();
+  }
+
+  setEditableAndDisabledInputs() {
+    this.tableRefArray[this.selectedTabIndex]?.data?.columns.forEach(col => {
+      if (col.inputModeOptions) {
+        col.inputModeOptions.isNotEditable = this.disableEditForInput;
+        col.inputModeOptions.existingDataNotEditable =
+          this.existingDataNotEditable;
+      }
     });
   }
 
-  // Called when a channel is selected from the search field
-  public onChannelSearchChange(selectedCode: string) {
-    const selected = this.tableDataForChannel.datasource.data.find(
-      (item: any) => item.code === selectedCode
-    );
-    if (selected) {
-      // Add to your table (avoid duplicates if needed)
-      const exists = this.dataWithSimpleEdit.some(row => row.code === selected.code);
-      if (!exists) {
-        this.dataWithSimpleEdit.push({
-          id: this.generateUniqueId(this.dataWithSimpleEdit),
-          code: selected.code,
-          option: '',
-          attributeForChannel: this.addNewChannelForm.get('attributeForChannel')?.value || ''
-        });
-        this.tableWithSimpleEdit.datasource.data = [...this.dataWithSimpleEdit];
+  updateMaxLength() {
+    this.tableWithSimpleEdit.columns.forEach(col => {
+      if (
+        col.inputModeOptions &&
+        col.inputModeOptions.validators &&
+        col.inputModeOptions.validators.max
+      ) {
+        col.inputModeOptions.validators.max = this.maxLength;
       }
-      this.searchChannelInput = ''; // Reset input after add
-    }
+    });
   }
 
-  public onCancelChannelRow() {
-    // Close the inline modal
-    this.singleRowEdit = { modeOptions: { input: false, reset: false }, index: -1 };
-    // Enable all row actions
-    this.rowLevelActionsForBasicEdit.forEach(action => action.disabled = false);
-    // Optionally reset the form if needed
-    this.addNewChannelForm.reset();
+  updateMaxLengthStrategy() {
+    this.tableWithSimpleEdit.columns.forEach(col => {
+      if (
+        col.inputModeOptions &&
+        col.inputModeOptions.validators &&
+        col.inputModeOptions.validators.maxLengthStrategy
+      ) {
+        col.inputModeOptions.validators.maxLengthStrategy =
+          this.selectedStrategy;
+      }
+    });
   }
-
-
-  public editIndex = -1;
-  public editRowElement: any;
-
-  public currentChannelRowId: number | null = null;
-
-  inlineEditRowActionClick(
-    inlineEditOutput: InlineEditOutput,
-    index: number,
-    template?: any
-  ) {
-    const element = (this.editRowElement = inlineEditOutput.editRowElement);
-
-    if (element && element.id) {
-      this.addNewChannelForm.reset();
-      this.addNewChannelForm.patchValue(element);
-      this.currentChannelRowId = element.id; // Track the channel row being edited
-    }
-
-    this.editIndex = inlineEditOutput.editRowIndex ?? index;
-
-    this.singleRowEdit = {
-      modeOptions: { input: true, reset: false },
-      index: this.editIndex
-    };
-
-    // Load counters for this channel row if you have them stored
-    this.dataWithSimpleCounter = this.counterMap?.[element.id] ? [...this.counterMap[element.id]] : [];
-    this.tableWithSimpleCounter.datasource.data = this.dataWithSimpleCounter;
-
-     // Load conditions for this channel row if you have them stored
-     this.dataWithSimpleCondition = this.conditionMap?.[element.id] ? [...this.conditionMap[element.id]] : [];
-     this.tableWithSimpleCondition.datasource.data = this.dataWithSimpleCondition;
-
-      // Load restrictions for this channel row if you have them stored
-    this.dataWithSimpleRestriction = this.restrictionMap?.[element.id] ? [...this.restrictionMap[element.id]] : [];
-    this.tableWithSimpleRestriction.datasource.data = this.dataWithSimpleRestriction;
-  }
-  public getAllCountersWithChannelIdentifier(): any[] {
-    // Flatten all counters from all channels, adding channelidentifier to each
-    return (this.dataWithSimpleEdit || [])
-      .filter(channel => Array.isArray(channel.counters))
-      .map(channel =>
-        (channel.counters ?? []).map(counter => ({
-          ...counter,
-          channelidentifier: channel.identifier
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
-  }
-
-  // Update the getAllCountersWithChannelIdentifier method to include conditions
-  public getAllConditionsWithChannelIdentifier(): any[] {
-    // Flatten all conditions from all channels, adding channelidentifier to each
-    return (this.dataWithSimpleEdit || [])
-      .filter(channel => Array.isArray(channel.conditions))
-      .map(channel =>
-        (channel.conditions ?? []).map(condition => ({
-          ...condition,
-          channelidentifier: channel.identifier
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
-  }
-
-  // Update the getAllCountersWithChannelIdentifier method to include restrictions
-  public getAllRestrictionsWithChannelIdentifier(): any[] {
-    // Flatten all restrictions from all channels, adding channelidentifier to each
-    return (this.dataWithSimpleEdit || [])
-      .filter(channel => Array.isArray(channel.restrictions))
-      .map(channel =>
-        (channel.restrictions ?? []).map(restriction => ({
-          ...restriction,
-          channelidentifier: channel.identifier
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
-  }
-  public countersTableColumns = [
-    { name: 'counter', title: 'Counter' },
-    { name: 'classificationType', title: 'Classification Type' },
-    { name: 'operatorType', title: 'Operator Type' },
-    { name: 'actions', title: '' }
-  ];
-  public countersTableActions = [
-    { id: 'edit', icon: 'edit', label: 'Edit' }
-  ];
 }
