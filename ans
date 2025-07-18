@@ -1,766 +1,10 @@
-<bod-message-container rufId [messages]="messages"></bod-message-container>
-{{ messages }}
-
-<bod-table
-  #customTable
-  [customColumnTemplates]="[
-    {
-      columnName: 'actions',
-      templateName: editActionTemplate
-    }
-  ]"
-  [data]="counterTableMetaData"
-  [tableActions]="isStatusEditable() ? counterTableActions : []"
-  (onTableActionClick)="isStatusEditable() && onTableActionClicked1($event)"
-  [expandedRowTemplate]="expandedRowTemplate"
-  (onRowExpand)="rowExpanded($event)"
->
-  <ng-template
-    #editActionTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <bod-table-actions
-      sectionActions
-      [actions]="isStatusEditable() ? editactions: []"
-      (onActionClick)="isStatusEditable() && iconActionClicked($event, element)"
-    >
-    </bod-table-actions>
-  </ng-template>
-  <ng-template #expandedRowTemplate let-context="context">
-    <div fullwidth>
-      @if(context.element.name){
-
-      <h1>Counter</h1>
-      <bod-inquiry-layout
-        [columns]="2"
-        [groups]="counterService.getCounterData(context.element)"
-        [softSeparator]="false"
-        [direction]="direction"
-        [information]="[]"
-        (linkClick)="commonDataService.inquiryLayoutClick($event)"
-      >
-      </bod-inquiry-layout>
-      }
-    </div>
-  </ng-template>
-</bod-table>
-
-<ng-template #addNewCounterTemplate>
-  <bod-add-edit-counter
-    (apiResponse)="addCounterEvent($event)"
-    [editCounterRow]="editCounter"
-    [retainedCode]="retainedCode"
-    [retainedIdentifier]="retainedIdentifier"
-    [retainedName]="retainedName"
-    [retainedSystemBalance]="retainedSystemBalance"
-  >
-  </bod-add-edit-counter>
-</ng-template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Inject,
-  Input,
-  NO_ERRORS_SCHEMA,
-  OnDestroy,
-  OnInit,
-  Output,
-  TemplateRef,
-  ViewChild
-} from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-
-import {
-  Amount,
-  BodFormModule,
-  BodPageContainerModule,
-  BodPipeName,
-  BodTableAction,
-  BodTableActionsModule,
-  BodTableComponent,
-  BodTableDataSource,
-  BodTableFilterCriteria,
-  BodTableFilterUpdateButton,
-  BodTableMetadata,
-  BodTableModule,
-  Column,
-  ControlGroupModule,
-  BodCommonDialogModel,
-  Currency,
-  EditTableAction,
-  InlineEditOutput,
-  InputLayoutModule,
-  MessageContainerModule,
-  NotificationMessage,
-  SearchFieldModule,
-  DirectivesModule,
-  BodDynamicFormModule,
-  SectionContainerModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BOD_DATE_RANGE,
-  BodCommonModule,
-  BodFormTypes,
-  BodTableActionType,
-  BodTableFilterType,
-  CommonDialogComponent,
-  BodCommonDialogService,
-  ColumnType,
-  BodSearchFieldData,
-  SingleRowEdit,
-  ModeOptions,
-  PageMode,
-  BodConfirmAlertDialogsService,
-  BodConfirmDialogModel,
-  NotificationMessageType,
-  RowLeftAction,
-  InquiryLayoutInput,
-  InquiryLayoutModule,
-  InquiryLayoutComponent
-} from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import {
-  AbstractControl,
-  FormBuilder,
-  FormControl,
-  FormsModule,
-  ReactiveFormsModule,
-  UntypedFormControl,
-  UntypedFormGroup,
-  Validators
-} from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-
-import {
-  BodEditableSampleTable,
-  BodInlineSampleTable,
-  BodLocaleRangeTable,
-  BodLocaleSetTable,
-  BodLocaleTable,
-  BodSampleTable,
-  BodSampleTable1,
-  BodSampleTableExisting
-} from '../bod-table-demo.model';
-import { MatTabsModule } from '@angular/material/tabs';
-import {
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButton, MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-
-import { BodTableDemoCommonDataService } from '../bod-table-demo-common-data.service';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-import { Observable, Subscription } from 'rxjs';
-import { MatIcon, MatIconModule } from '@angular/material/icon';
-
-import { RufIconModule } from '@ruf/shell/icon';
-
-import { CounterService } from './counter-service';
-import {
-  CounterTableLevelActions,
-  editDeleteActions
-} from './counter-constants';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { TranslationKey } from '../metadat-config/codegen-config.constant';
-import { MetadataService } from '../metadat-config/metada-config.service';
-import { AddEditCounterComponent } from './add-edit-counter/add-edit-counter.component';
-import { CounterList } from './add-edit-counter/add-edit-counter.mode';
-import { forkJoin } from 'rxjs';
-
-@Component({
-  selector: 'bod-counter',
-  standalone: true,
-  imports: [
-    InquiryLayoutModule,
-    AddEditCounterComponent,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    TranslateModule,
-    BodTableActionsModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatInputModule,
-    TranslateModule,
-
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    MatDatepickerModule,
-    BodCommonModule
-  ],
-  templateUrl: './counter.component.html',
-  styleUrl: './counter.component.scss',
-  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-})
-export class CounterComponent implements OnInit {
-  public translationKey = TranslationKey;
-  public editactions: BodTableAction[] = editDeleteActions;
-  public addNewCounterFormGroup: UntypedFormGroup;
-
-  @Input() status: string = '';
-
-  @ViewChild('addNewCounterTemplate')
-  public addNewCounterTemp: TemplateRef<any>;
-  private adminTableRef: BodTableComponent | undefined;
-  @ViewChild('systemMessage', { static: true }) systemMessage: any;
-  @ViewChild(AddEditCounterComponent)
-  private addEditCounterComponent!: AddEditCounterComponent;
-  public messages: NotificationMessage[] = [];
-  public message: NotificationMessage | undefined;
-
-  public ConfirmData: BodConfirmDialogModel = {
-    title: 'BOD.metadataconfig.title',
-    message: 'BOD.metadataconfig.message',
-    confirm: 'BOD.metadataconfig.delete',
-    dismiss: 'BOD.metadataconfig.cancel'
-  };
-
-  constructor(
-    private confirmDialogService: BodConfirmAlertDialogsService,
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    public counterService: CounterService,
-    private fb: FormBuilder,
-    private bodCommonDialogService: BodCommonDialogService,
-    private metadataService: MetadataService
-  ) { }
-
-  ngOnInit() {
-    this.counterService.retrieveAll().subscribe((response: any) => {
-      const firstStatus = response?.data?.[0]?.MetadataStatus;
-      const statusToSet = firstStatus || 'NEW';
-      this.statusControl.setValue(statusToSet);
-      this.previousStatus = statusToSet;
-      this.counterService.updateCurrentStatus(statusToSet);
-    });
-    
-    this.getNewCounter();
-  }
-
-  public counterTableActions: BodTableAction[] = CounterTableLevelActions;
-  public counterTableMetaData: BodTableMetadata = {
-    title: 'Counter Details',
-    columns: [...this.counterService.columns],
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 4,
-      length: 12,
-      pageSizeOptions: [2, 3, 4, 6],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Counter Data Defined',
-    rowLeftAction: RowLeftAction.expandableRows,
-    enableSorting: true
-  };
-
-  public rowExpanded(element: CounterList) {
-    this.messages = [];
-  }
-
-  public msg: NotificationMessage | undefined;
-
-  isStatusEditable(): boolean {
-    return this.status !== 'READY' && this.status !== 'GENERATED';
-  }
-  statusControl = new FormControl(null);
-  public previousStatus: string | undefined;
-
-  @Output() statusChanged = new EventEmitter<string>();
-  addCounterEvent(event: any) {
-    if (event) {
-      this.getNewCounter();
-
-      this.metadataService.retrieveAll().subscribe((response: any) => {
-        const firstStatus = response?.data?.[0]?.MetadataStatus;
-        const statusToSet = firstStatus || 'NEW';
-        this.statusControl.setValue(statusToSet);
-        this.previousStatus = statusToSet;
-        this.statusChanged.emit(statusToSet);
-        this.counterService.updateCurrentStatus(statusToSet);
-      });
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 20000);
-    }
-    this.dialogRef$.close();
-  }
-
-  public commonDialogSize: string = 'Large';
-  public closeOnCloseIconClick: boolean = false;
-  private onCloseClick() {
-    this.systemMessage.message = 'Custom Function called on close';
-    this.systemMessage.show();
-    this.dialogRef$.close();
-  }
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-  private openDialog(dialogModel: any) {
-    let onClose = this.closeOnCloseIconClick
-      ? this.onCloseClick.bind(this)
-      : undefined;
-    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
-      dialogModel,
-      onClose,
-      this.commonDialogSize
-    );
-  }
-
-  public onTableActionClicked1(event: BodTableAction) {
-    this.isEdit = false;
-    this.messages = [];
-    if (event.id === 12) {
-      this.addNewCounter();
-    }
-  }
-
-  private addNewCounter() {
-    this.editCounter = undefined;
-    this.messages = [];
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addNewCounterTemp,
-      title: 'Add New Counter'
-    };
-    this.openDialog(dialogModel);
-  }
-
-  counterData: CounterList[] = [];
-  getNewCounter(): void {
-    this.counterService.retrieveCounter().subscribe(response => {
-      if (response.status === 'SUCCESS' && response.data) {
-        this.counterData = response.data.map((item: any) => {
-          const counter = item.Counter.counter || {};
-
-          const counterData: CounterList = {
-            code: counter.code,
-            counterInquiry: [
-              {
-                id: 0,
-                label: 'Name',
-                value: counter.name
-              },
-              {
-                id: 1,
-                label: 'System Counter',
-                value: counter.systemCounter
-              }
-            ],
-            identifier: counter.identifier,
-            name: counter.name,
-            systemCounter: counter.systemCounter
-          };
-
-          return counterData;
-        });
-
-        this.counterTableMetaData.datasource.data = this.counterData;
-      }
-    });
-  }
-
-  isEdit = false;
-  iconActionClicked(event: BodTableAction, element: CounterList) {
-    this.isEdit = true;
-    this.messages = [];
-    if (event.id === BodTableActionType.EDIT) {
-      this.editCounters(element);
-    } else if (event.id === 1) {
-      const confirmDataWithCode: BodConfirmDialogModel = {
-        ...this.ConfirmData,
-        message: `${'Are you sure you want to delete'} ${element.code}`
-      };
-      this.bodConfirmAlertDialogsService
-        .confirm(confirmDataWithCode)
-        .subscribe(val => {
-          if (val) {
-            this.counterDelete(element);
-          }
-        });
-    }
-  }
-
-  editCounter: CounterList | undefined;
-  retainedCode: string = '';
-  retainedIdentifier: number = 0;
-  retainedName: string = '';
-  retainedSystemBalance: boolean = false;
-
-  private editCounters(element: CounterList) {
-    this.editCounter = element;
-    this.retainedCode = element.code || '';
-    this.retainedIdentifier = element.identifier ?? 0;
-    this.retainedName = element.name || '';
-    this.retainedSystemBalance = element.systemCounter === 'Y';
-
-    const dialogModel: BodCommonDialogModel = {
-      formTemplate: this.addNewCounterTemp,
-      title: 'Edit Counter'
-    };
-    this.openDialog(dialogModel);
-  }
-
-  counterDelete(element: CounterList): void {
-    this.counterService
-      .deleteCounter('Counter', element.identifier)
-      .subscribe({
-        next: (response) => {
-          const successMsg = `${element.code} Deleted Successfully`;
-          this.message = {
-            code: '204',
-            text: successMsg,
-            type: NotificationMessageType.SUCCESS
-          };
-          this.messages.push(this.message);
-          setTimeout(() => {
-            this.messages = this.messages.filter(
-              msg => msg.text !== successMsg
-            );
-          }, 20000);
-
-          this.getNewCounter();
-
-          this.metadataService.retrieveAll().subscribe((response: any) => {
-            const firstStatus =
-              response?.data &&
-              response.data.length > 0 &&
-              response.data[0]?.MetadataStatus
-                ? response.data[0].MetadataStatus
-                : null;
-            const statusToSet = firstStatus || 'NEW';
-            this.statusControl.setValue(statusToSet);
-            this.previousStatus = statusToSet;
-            this.statusChanged.emit(statusToSet);
-            this.counterService.updateCurrentStatus(statusToSet);
-          });
-        },
-        error: (error) => {
-          const errorMsg = error?.error?.errorDescription || 
-            `Failed to delete ${element.code}. Please try again.`;
-          this.message = {
-            code: error?.error?.errorCode || 'ERROR',
-            text: errorMsg,
-            type: NotificationMessageType.ERROR
-          };
-          this.messages.push(this.message);
-          setTimeout(() => {
-            this.messages = this.messages.filter(
-              msg => msg.text !== errorMsg
-            );
-          }, 20000);
-        }
-      });
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import {
-  Column,
-  ColumnType,
-  InquiryLayoutInput,
-  UIContextService
-} from '@bod/common';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { CounterList } from './add-edit-counter/add-edit-counter.mode';
-import { DataSharingService } from '../data-sharing-service.service';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class CounterService {
-  private saveUrl = '';
-  private retrieveUrl = '';
-  private deleteUrl = '';
-  private updateUrl = '';
-  private baseUrl = '';
-  private retrieveAllUrl = '';
-
-  private currentStatus: string = 'NEW';
-
-  businessProductLine: any[] = [];
-  private reqDfnId = '';
-  private clientCode = '';
-  private countryCode = '';
-  private productLines: any[] = [];
-  private productTypes: any[] = [];
-
-  constructor(
-    private http: HttpClient,
-    private uiContextService: UIContextService,
-    private readonly dataSharingService: DataSharingService
-  ) {
-    let url =
-      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
-        .sdkServiceUrl.value;
-
-    this.dataSharingService.data$.subscribe(data => {
-      if (data) {
-        this.reqDfnId = data.reqDfnId;
-        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
-        this.countryCode = data.countryCode;
-        this.clientCode = data.countryCode;
-        this.productLines = [
-          ...new Set(this.businessProductLine.map(obj => obj.value))
-        ];
-        this.productTypes = [
-          ...new Set(this.businessProductLine.map(obj => obj.type))
-        ];
-        
-        this.baseUrl = url ?? '';
-        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
-        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
-
-        this.retrieveUrl =
-          url +
-          '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=Counter';
-        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
-        this.retrieveAllUrl =
-          url +
-          '/metadata/retrieve/' +
-          this.reqDfnId;
-      }
-    });
-  }
-
-  retrieveAll(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<any[]>(this.retrieveAllUrl, { headers }).pipe(
-      tap((response: any) => {
-        const firstStatus = response?.data && response.data.length > 0 && response.data[0]?.MetadataStatus
-          ? response.data[0].MetadataStatus
-          : 'NEW';
-        this.currentStatus = firstStatus;
-      })
-    );
-  }
-
-  updateCurrentStatus(status: string): void {
-    this.currentStatus = status;
-  }
-
-  createHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'country-code': this.countryCode,
-      'client-code': this.clientCode,
-      'product-line': this.productLines,
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID(),
-      'requirement-id': this.reqDfnId
-    });
-  }
-
-  private getCreateUrlWithStatus(status: string): string {
-    return `${this.baseUrl}/metadata/create/${this.reqDfnId}?status=${status}`;
-  }
-
-  saveCounter(request: any, status?: string): Observable<any> {
-    const headers = this.createHeaders();
-    const statusToUse = status || this.currentStatus;
-    const url = this.getCreateUrlWithStatus(statusToUse);
-    return this.http.post(url, request, { headers });
-  }
-
-  retrieveCounter(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<CounterList[]>(this.retrieveUrl, { headers });
-  }
-
-  deleteCounter(
-    metadataConfigType: string,
-    metadataConfigIdfr: number
-  ): Observable<any> {
-    const headers = this.createHeaders();
-    const params = {
-      'metadata-config-type': metadataConfigType,
-      'metadata-config-idfr': metadataConfigIdfr
-    };
-
-    return this.http.delete(this.deleteUrl, { headers, params });
-  }
-
-  updateCounter(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.put(this.updateUrl, request, { headers });
-  }
-
-  generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0,
-          v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }
-    );
-  }
-
-  public getCounterData(
-    element: CounterList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.counterInquiry.length; i++) {
-      groups.push({
-        id: element.counterInquiry[i].id,
-        label: element.counterInquiry[i].label,
-        value: element.counterInquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-    return $groups;
-  }
-
-  public columns: Column[] = [
-    {
-      name: 'code',
-      title: 'Counters',
-      truncate: true,
-      noOverflow: true,
-      width: 70,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-import { BodTableAction, BodTableActionType } from '@bod/common';
-
-export const CounterTableLevelActions: BodTableAction[] = [
-  {
-    id: BodTableActionType.ADD,
-    icon: 'add',
-    label: 'add',
-    mostCommon: true,
-    child: [
-      {
-        id: 12,
-        seperator: true,
-        label: 'Add New Counter',
-        icon: ''
-      }
-    ]
-  },
-  {
-    id: BodTableActionType.FILTER,
-    icon: 'filter',
-    label: 'Filter',
-    mostCommon: true
-  }
-];
-
-export const editDeleteActions: BodTableAction[] = [
-  {
-    id: 4,
-    icon: 'edit',
-    label: 'Edit',
-    mostCommon: true
-  },
-  {
-    id: 1,
-    icon: 'trash',
-    label: 'delete',
-    mostCommon: true
-  }
-];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <bod-message-container [messages]="errorMessages"></bod-message-container>
 <bod-form
-  [formGroup]="addNewCounterFormGroup"
+  [formGroup]="existingCounterFormGroup"
   rufId
   [type]="formType"
-  (onSubmit)="onAddNewCounter(isAdd)"
-  (onReset)="onReset(isAdd)"
+  (onSubmit)="onRelateExistingCounter()"
+  (onReset)="onReset()"
   fisStyle
 >
   <bod-input-layout col="2">
@@ -770,22 +14,22 @@ export const editDeleteActions: BodTableAction[] = [
       [forTextOnly]="true"
       [required]="true"
     >
-    <div *ngIf="isEdit">
-      {{ addNewCounterFormGroup.get('counterCode')?.value }}
-    </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
-        <input
-          type="text"
-          matInput
-          fisStyle
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
           formControlName="counterCode"
           name="counterCode"
-        />
-        
+          (selectionChange)="onCounterCodeChange($event)"
+        >
+          <mat-option
+            *ngFor="let counter of availableCounters"
+            [value]="counter.code"
+          >
+            {{ counter.code }} - {{ counter.name }}
+          </mat-option>
+        </mat-select>
         <mat-error>
-         {{ getError('counterCode', addNewCounterFormGroup) | translate }}
-        </mat-error> 
-        <mat-error *ngIf="addNewCounterFormGroup.get('counterCode').hasError('noSpecialCharacters')">
+         {{ getError('counterCode', existingCounterFormGroup) | translate }}
         </mat-error>
       </mat-form-field>
     </bod-control-group>
@@ -796,38 +40,78 @@ export const editDeleteActions: BodTableAction[] = [
       [forTextOnly]="true"
       [required]="true"
     >
-      <mat-form-field appearance="outline" fisStyle>
+      <div *ngIf="selectedCounterDetails">
+        {{ selectedCounterDetails.name }}
+      </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!selectedCounterDetails">
         <input
           type="text"
           matInput
           fisStyle
           formControlName="counterName"
           name="counterName"
+          readonly
+          placeholder="Select a counter code first"
         />
-        <mat-error>
-          {{ getError('counterName', addNewCounterFormGroup) | translate }}
-        </mat-error>
       </mat-form-field>
     </bod-control-group>
   </bod-input-layout>
   
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.classificationtype'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <div *ngIf="selectedCounterDetails">
+        {{ selectedCounterDetails.classificationType }}
+      </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!selectedCounterDetails">
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="classificationtype"
+          name="classificationtype"
+          readonly
+          placeholder="Select a counter code first"
+        />
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+
+  <h1>Product Type Relationship</h1>
   <bod-input-layout col="1">
     <bod-control-group
       [truncate]="false"
-      [label]="translationKey + 'metadataconfig.systemcounter'"
+      [label]="translationKey + 'metadataconfig.rulecheck'"
       [forTextOnly]="true"
       [required]="false"
     >
       <mat-slide-toggle
         fisStyle
         color="primary"
-        formControlName="systemCounter"
-        name="systemCounter"
+        formControlName="rulecheck"
+        name="rulecheck"
       >
       </mat-slide-toggle>
     </bod-control-group>
   </bod-input-layout>
+
+   <!-- Period Type Section -->
+  <bod-period-type
+    #periodTypeRef
+    [periodTypeData]="periodTypeTableData"
+    (completeDeltaChangePeriodType)="handleCompleteDeltaChangePeriodType($event)"
+    (tableDirty)="onTableDirty()"
+  ></bod-period-type>
+
 </bod-form>
+
+
+
+
 
 
 
@@ -867,7 +151,7 @@ import {
   Validators
 } from '@angular/forms';
 import { TranslationKey } from '../../metadat-config/codegen-config.constant';
-import { CounterService } from '../counter-service';
+import { CounterService } from '../counters-service';
 import { MetadataService } from '../../metadat-config/metada-config.service';
 import {
   BodCommonDialogService,
@@ -900,7 +184,528 @@ import {
   SearchFieldModule,
   SectionContainerModule
 } from '@bod/common';
-import { CounterComponent } from '../counter.component';
+import { CounterComponent } from '../counters.component';
 import { MatIconModule } from '@angular/material/icon';
 import { RufIconModule } from '@ruf/shell/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { MatDialogRef } from '@angular/material/dialog';
+import { CounterList } from '../add-edit-counters/add-edit-counters.mode';
+import { PeriodTypeComponent, PeriodType } from '../add-edit-counters/period-type/period-type.component';
+
+interface ExistingCounter {
+  identifier: number;
+  code: string;
+  name: string;
+  classificationType: string;
+}
+
+@Component({
+  selector: 'bod-existing-counters',
+  standalone: true,
+  imports: [
+    CounterComponent,
+    PeriodTypeComponent,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    MatDatepickerModule,
+    BodCommonModule
+  ],
+  templateUrl: './existing-counters.component.html',
+  styleUrl: './existing-counters.component.scss'
+})
+export class ExistingCountersComponent implements OnInit {
+  public translationKey = TranslationKey;
+  public existingCounterFormGroup: UntypedFormGroup;
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+  
+  public errorMessages: NotificationMessage[] = [];
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+  @ViewChild('periodTypeRef') periodTypeRef: PeriodTypeComponent;
+  
+  public messages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+
+  // Available counters for dropdown
+  public availableCounters: ExistingCounter[] = [];
+  public selectedCounterDetails: ExistingCounter | null = null;
+  
+  statusControl = new FormControl(null); 
+  public previousStatus: string | undefined;
+  public isTableDirty = false;
+
+  // Period Type table data
+  public periodTypeTableData: PeriodType[] = [];
+
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodFormStateService: BodFormStateService,
+    public counterService: CounterService,
+    private fb: FormBuilder,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService
+  ) {}
+
+  ngOnInit() {
+    this.initForm();
+    this.loadAvailableCounters();
+
+    this.metadataService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW';
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
+    });
+  }
+
+  private initForm(): void {
+    this.existingCounterFormGroup = this.fb.group({
+      counterCode: new UntypedFormControl('', [Validators.required]),
+      counterIdentifier: [{ value: '', disabled: true }],
+      counterName: new UntypedFormControl('', [Validators.required]),
+      classificationtype: new UntypedFormControl('', [Validators.required]),
+      rulecheck: new UntypedFormControl(false)
+    });
+  }
+
+  private loadAvailableCounters(): void {
+    // This would typically call a service to get available counters
+    // For now, using mock data - replace with actual service call
+    this.counterService.getAvailableCounters().subscribe({
+      next: (counters) => {
+        this.availableCounters = counters;
+      },
+      error: (error) => {
+        console.error('Error loading available counters:', error);
+        // Fallback to mock data if service fails
+        this.availableCounters = [
+          { identifier: 1, code: 'COUNTER001', name: 'Sample Counter 1', classificationType: 'PostingCounter' },
+          { identifier: 2, code: 'COUNTER002', name: 'Sample Counter 2', classificationType: 'ManualBumpUpCounter' },
+          { identifier: 3, code: 'COUNTER003', name: 'Sample Counter 3', classificationType: 'OverdraftCounter' }
+        ];
+      }
+    });
+  }
+
+  onCounterCodeChange(event: any): void {
+    const selectedCode = event.value;
+    this.selectedCounterDetails = this.availableCounters.find(counter => counter.code === selectedCode) || null;
+    
+    if (this.selectedCounterDetails) {
+      this.existingCounterFormGroup.patchValue({
+        counterIdentifier: this.selectedCounterDetails.identifier,
+        counterName: this.selectedCounterDetails.name,
+        classificationtype: this.selectedCounterDetails.classificationType
+      });
+    } else {
+      this.existingCounterFormGroup.patchValue({
+        counterIdentifier: '',
+        counterName: '',
+        classificationtype: ''
+      });
+    }
+  }
+
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
+    }
+  }
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.existingCounterFormGroup.markAsDirty();
+  }
+
+  // Handle period type table data changes
+  public completeDeltaPeriodTypeData: any;
+  handleCompleteDeltaChangePeriodType(data: any) {
+    this.completeDeltaPeriodTypeData = data;
+    console.log('Received CompleteDelta from period type child:', this.completeDeltaPeriodTypeData);
+  }
+
+  onRelateExistingCounter() {
+    this.submitForm();
+  }
+
+  submitForm() {
+    this.errorMessages = [];
+
+    if (this.existingCounterFormGroup.invalid) {
+      this.existingCounterFormGroup.markAllAsTouched();
+      const missingFields = this.getInvalidRequiredFields(this.existingCounterFormGroup);
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        }
+      );
+      return;
+    }
+
+    if (!this.selectedCounterDetails) {
+      this.handleError({
+        errorCode: 'NO_COUNTER_SELECTED',
+        status: 400
+      });
+      return;
+    }
+
+    const formValue = this.existingCounterFormGroup.getRawValue();
+
+    // Get product type data from metadata service
+    const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+
+    // Build the relationship structure for existing counter
+    const counterRelationshipData = {
+      metadataType: 'CounterRelationship',
+      existingCounterIdentifier: this.selectedCounterDetails.identifier,
+      counterCode: this.selectedCounterDetails.code,
+      productElementCounterTypeRltnpList: productTypeKeys.map((code, index) => ({
+        productTypeIdentifier: productTypeValues[index],
+        counterIdentifier: this.selectedCounterDetails.identifier,
+        counterCode: this.selectedCounterDetails.code,
+        ruleCheck: formValue.rulecheck ? 'Y' : 'N'
+      })),
+      productElementCounterTypePeriodList: (this.periodTypeRef?.getCurrentTablePeriodType() || []).map(period => ({
+        productTypeIdentifier: productTypeValues[0], // or map for each product type if needed
+        counterIdentifier: this.selectedCounterDetails.identifier,
+        periodType: period.periodType,
+        isCalculate: period.isCalculated ? 'Y' : 'N'
+      })),
+      productTypeList: productTypeKeys.map((code, index) => ({
+        identifier: productTypeValues[index],
+        code: code
+      }))
+    };
+
+    console.log('Counter relationship data to be sent:', JSON.stringify(counterRelationshipData, null, 2));
+
+    // Call service to relate existing counter
+    this.counterService.relateExistingCounter(counterRelationshipData).subscribe({
+      next: resp => this.successResponse(resp, counterRelationshipData),
+      error: (err: NotificationMessage[]) => this.handleError(err)
+    });
+  }
+
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+    const invalidFields: string[] = [];
+
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control && control.errors?.['required']) {
+        invalidFields.push(key);
+      }
+    });
+
+    return invalidFields;
+  }
+
+  private successResponse(resp, counterData) {
+    const counterCode = this.selectedCounterDetails?.code;
+    const SuccessMsg = `${counterCode} related successfully`;
+    this.apiResponse.emit({ ...counterData, SuccessMsg });
+  }
+
+  private handleError(error: any) {
+    let errorMsg = '';
+
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.errorCode === 'NO_COUNTER_SELECTED') {
+      errorMsg = 'Please select a counter from the dropdown.';
+    } else if (error.errorCode === 'PERIOD_TYPE_REQUIRED') {
+      errorMsg = 'Period type is required for all rows.';
+    } else if (error.errorCode === 'DUPLICATE_PERIOD_TYPE') {
+      errorMsg = 'Duplicate period types found. Please ensure all period types are unique.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Counter relationship already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Counter relationship already exists.';
+    } else {
+      errorMsg = 'Unknown error occurred.';
+    }
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessages.push(this.message);
+
+    // Auto-remove error messages after 10 seconds
+    setTimeout(() => {
+      this.errorMessages = this.errorMessages.filter(msg => msg.text !== errorMsg);
+    }, 10000);
+  }
+
+  onReset(): void {
+    // Reset error messages
+    this.errorMessages = [];
+    
+    // Reset the form
+    this.existingCounterFormGroup.reset();
+    this.existingCounterFormGroup.markAsPristine();
+    this.existingCounterFormGroup.markAsUntouched();
+
+    // Reset selected counter details
+    this.selectedCounterDetails = null;
+
+    // Reset table dirty state
+    this.isTableDirty = false;
+
+    // Clear period type data
+    this.periodTypeTableData = [];
+    
+    // Reset the period type table if it exists
+    if (this.periodTypeRef) {
+      this.periodTypeRef.reset();
+    }
+
+    this.changeDetectorRef.detectChanges();
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add these imports to the existing counters.component.ts
+
+import { ExistingCountersComponent } from './existing-counters/existing-counters.component';
+
+// Add to the imports array in @Component decorator
+@Component({
+  selector: 'bod-counter',
+  standalone: true,
+  imports: [
+    // ... existing imports
+    ExistingCountersComponent,
+    // ... rest of imports
+  ],
+  // ... rest of component decorator
+})
+
+// Add these properties to the CounterComponent class
+export class CounterComponent implements OnInit {
+  // ... existing properties
+
+  @ViewChild('relateExistingCounterTemplate')
+  public relateExistingCounterTemp: TemplateRef<any>;
+
+  // ... existing methods
+
+  public onTableActionClicked1(event: BodTableAction) {
+    this.isEdit = false;
+    this.messages = [];
+    if (event.id === 12) {
+      this.addNewCounter();
+    } else if (event.id === 13) {
+      this.relateExistingCounter();
+    }
+  }
+
+  private relateExistingCounter() {
+    this.editCounter = undefined;
+    this.messages = [];
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.relateExistingCounterTemp,
+      title: 'Relate Existing Counter'
+    };
+    this.openDialog(dialogModel);
+  }
+
+  // Add method to handle existing counter events
+  relateExistingCounterEvent(event: any) {
+    if (event) {
+      this.getNewCounter();
+
+      this.metadataService.retrieveAll().subscribe((response: any) => {
+        const firstStatus = response?.data?.[0]?.MetadataStatus;
+        const statusToSet = firstStatus || 'NEW';
+        this.statusControl.setValue(statusToSet);
+        this.previousStatus = statusToSet;
+        this.statusChanged.emit(statusToSet);
+        this.counterService.updateCurrentStatus(statusToSet);
+      });
+      
+      const SuccessMsg = event.SuccessMsg;
+      this.msg = {
+        code: '',
+        text: SuccessMsg,
+        type: NotificationMessageType.SUCCESS
+      };
+      this.messages.push(this.msg);
+      setTimeout(() => {
+        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
+      }, 20000);
+    }
+    this.dialogRef$.close();
+  }
+
+  // ... rest of existing methods
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Add this template to the existing counters.component.html -->
+
+<ng-template #relateExistingCounterTemplate>
+  <bod-existing-counters
+    (apiResponse)="relateExistingCounterEvent($event)"
+  >
+  </bod-existing-counters>
+</ng-template>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add these methods to the existing CounterService class
+
+export class CounterService {
+  // ... existing properties and methods
+
+  // Method to get available counters for the dropdown
+  getAvailableCounters(): Observable<any[]> {
+    const headers = this.createHeaders();
+    // This should be a different endpoint that returns all available counters
+    // For now, using the same retrieve endpoint - you may need to adjust this
+    const availableCountersUrl = `${this.baseUrl}/counters/available/${this.reqDfnId}`;
+    
+    return this.http.get<any[]>(availableCountersUrl, { headers }).pipe(
+      // Transform the response to the expected format
+      tap((response: any) => {
+        if (response?.data) {
+          return response.data.map((item: any) => ({
+            identifier: item.identifier || item.Counter?.counterType?.identifier,
+            code: item.code || item.Counter?.counterType?.code,
+            name: item.name || item.Counter?.counterType?.name,
+            classificationType: item.classificationType || item.Counter?.counterType?.classificationType
+          }));
+        }
+        return [];
+      })
+    );
+  }
+
+  // Method to relate an existing counter
+  relateExistingCounter(request: any): Observable<any> {
+    const headers = this.createHeaders();
+    const relateUrl = `${this.baseUrl}/metadata/relate/${this.reqDfnId}`;
+    return this.http.post(relateUrl, request, { headers });
+  }
+
+  // Alternative method if you have a specific endpoint for counter relationships
+  createCounterRelationship(request: any): Observable<any> {
+    const headers = this.createHeaders();
+    const relationshipUrl = `${this.baseUrl}/metadata/counter-relationship/${this.reqDfnId}`;
+    return this.http.post(relationshipUrl, request, { headers });
+  }
+
+  // Method to get counter details by code
+  getCounterByCode(code: string): Observable<any> {
+    const headers = this.createHeaders();
+    const counterByCodeUrl = `${this.baseUrl}/counter/${this.reqDfnId}/${code}`;
+    return this.http.get(counterByCodeUrl, { headers });
+  }
+
+  // ... rest of existing methods
+}
