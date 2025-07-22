@@ -1,104 +1,107 @@
-<form [formGroup]="formGroup">
-    <bod-table
-      #restrictionsMultiselectTable
-      [data]="restrictionsDataSingleSelect"
-      (onRowSelect)="rowSelection($event)"
-      [rowSelectionStrategy]="rowSelectionStrategy"
-      [allowSelectAll]="allowRowSelection"
-      [alignContent]="'top'"
-      [customColumnTemplates]="[
-        { columnName: 'type', templateName: typeTemplate }
-      ]"
-      [modeOptions]="{selection: true }"
-    >
-    
-    <ng-template
-    #typeTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <!-- Show as readonly text instead of dropdown -->
-    <span style="padding-left: 8px; font-weight: 500;">
-      {{ element.type || 'ERROR' }}
-    </span>
-  </ng-template>
-    </bod-table>
-</form>
-
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
-import { TransactionTypeService } from '../../transaction-type.service';
-import { Restrictions } from '../../transaction-type.model';
 import {
-  BOD_DATE_RANGE,
-  BodAutoCompleteModule,
-  BodCommonDialogModel,
-  BodCommonDialogService,
-  BodCommonModule,
-  BodCurrencyControlModule,
-  BodDateRange,
-  BodDynamicFormModule,
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  NO_ERRORS_SCHEMA,
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
+import {
   BodFormModule,
-  BodFormStateService,
-  BodFormTypes,
   BodPageContainerModule,
   BodTableAction,
-  BodTableActionType,
   BodTableActionsModule,
   BodTableComponent,
-  BodTableFilterType,
   BodTableMetadata,
   BodTableModule,
-  CommonDialogComponent,
+  Column,
   ControlGroupModule,
-  DirectivesModule,
   EditTableAction,
-  InlineEditOutput,
   InputLayoutModule,
-  InquiryLayoutModule,
   MessageContainerModule,
-  ModeOptions,
   NotificationMessage,
-  NotificationMessageType,
-  RowLeftAction,
   SearchFieldModule,
+  DirectivesModule,
+  BodDynamicFormModule,
   SectionContainerModule,
-  SelectPageMode
+  BodCurrencyControlModule,
+  BodCommonModule,
+  ColumnType,
+  SingleRowEdit,
+  ModeOptions,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel,
+  MaxLengthStrategy,
+  NotificationMessageType,
+  SearchFieldComponent,
+  PageAction,
+  BodFormStateService
 } from '@bod/common';
-import { MatIconModule } from '@angular/material/icon';
-import { RufIconModule } from '@ruf/shell/icon';
+import { MatTableDataSource } from '@angular/material/table';
 import {
-  MatSlideToggle,
-  MatSlideToggleChange,
-  MatSlideToggleModule
-} from '@angular/material/slide-toggle';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
+  FormControl,
+  FormGroupDirective,
+  FormsModule,
+  NgForm,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTableDataSource } from '@angular/material/table';
+import { HttpClient } from '@angular/common/http';
+
+import { BehaviorSubject, Subscription, take } from 'rxjs';
+import { RufDropdownType } from '@ruf/shell/dropdown-panel';
+
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { SystemMessageService } from '../../../system-message.service';
+import { BodTableDemoCommonDataService } from '../../../bod-table-demo-common-data.service';
+import { BodEditableSampleTable, SearchFieldInputData } from '../../../bod-table-demo.model';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Observable } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { TaxTypeDefinitionDialogComponent } from './tax-type-definition-dialog/tax-type-definition-dialog.component';
+
+export interface TaxType {
+  id: number;
+  taxType: string;
+  businessRule: string;
+}
+
+export class ShowOnTouchedErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(
+    control: FormControl | null,
+    form: FormGroupDirective | NgForm | null
+  ): boolean {
+    return !!(control && control.invalid && (control.touched || control.dirty));
+  }
+}
 
 @Component({
-  selector: 'bod-restrictions-multiselect-table',
+  selector: 'bod-tax-type-table',
   standalone: true,
   imports: [
-    CommonModule,
-    BodTableModule,
-    BodPageContainerModule,
-    MatSlideToggleModule,
-    ReactiveFormsModule,
-    FormsModule,
-    BodAutoCompleteModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
+    TaxTypeDefinitionDialogComponent,
     DirectivesModule,
     MatButtonModule,
     MatSlideToggleModule,
@@ -107,7 +110,13 @@ import { MatTableDataSource } from '@angular/material/table';
     TranslateModule,
     BodPageContainerModule,
     BodTableModule,
+    BodFormModule,
+    BodTableActionsModule,
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
     TranslateModule,
+    BodFormModule,
     BodTableActionsModule,
     FormsModule,
     InputLayoutModule,
@@ -121,148 +130,630 @@ import { MatTableDataSource } from '@angular/material/table';
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
+    SearchFieldModule,
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
+    MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './restrictions-multiselect-table.component.html',
-  styleUrl: './restrictions-multiselect-table.component.scss'
+  templateUrl: './tax-type-table.component.html',
+  styleUrl: './tax-type-table.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
 })
-export class RestrictionsMultiselectTableComponent implements OnInit, OnChanges {
+export class TaxTypeTableComponent
+  implements OnInit, OnDestroy, AfterViewInit
+{
+  public matcher = new ShowOnTouchedErrorStateMatcher();
+  private subscriptions: Subscription = new Subscription();
+  public messages: NotificationMessage[] = [];
+  public panel = {
+    type: RufDropdownType.PopoverMenu
+  };
+  defaultValueForm: UntypedFormGroup = new UntypedFormGroup({});
 
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public searchFieldColumnForm: UntypedFormGroup;
+  public lastModifiedIndex: number;
+  public pageMode = PageMode.INQUIRY;
   public modeOptions: ModeOptions = { input: false, reset: false };
+  public tableRefArray: any[] = [];
+  disableEditForInput = false;
+  existingDataNotEditable = false;
+
+  public pageModeSimple = this.pageMode;
   public modeOptionsSimple = this.modeOptions;
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'add',
+      mostCommon: false
+    }
+  ];
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
 
-  @Input() restrictionsDataSingleSelect: BodTableMetadata;
-  @Input() selectedRowSingleSelect: Restrictions[] = [];
-  @Output() rowSelected = new EventEmitter<Restrictions[]>();
-  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
-  @Output() dirtyChange = new EventEmitter<boolean>();
-  @Input() formGroup: UntypedFormGroup;
+  maxLengthStrategy: MaxLengthStrategy[] = [
+    MaxLengthStrategy.exceedWithError,
+    MaxLengthStrategy.restrict
+  ];
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public maxLength = 5;
+  public formStatus = false;
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
 
-  @ViewChild('restrictionsMultiselectTable', { static: false })
-  restrictionsTable: BodTableComponent;
 
-  private isDirty = false;
 
-  typeOptions = [
-    { label: 'ERROR', value: 'ERROR' }, 
-    { label: ' ', value: ' ' }
+ 
+
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
+    {
+      id: 14,
+      icon: 'information',
+      label: 'information',
+      mostCommon: false
+    },
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
+    }
   ];
 
-  ngAfterViewInit(): void {
-    setTimeout(() => this.selectRestrictionsRows(), 0);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
-      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
-      setTimeout(() => this.selectRestrictionsRows(), 0);
-    }
-  }
-
-  private selectRestrictionsRows(): void {
-    const tableData = this.restrictionsDataSingleSelect?.datasource?.data || [];
-    const selection = this.restrictionsTable?.selection;
-
-    if (!selection || tableData.length === 0) {
-      return;
-    }
-
-    selection.clear();
-
-    tableData.forEach(dataRow => {
-      const match = this.selectedRowSingleSelect.find(
-        sel => sel.id === dataRow.id
-      );
-      if (match) {
-        selection.select(dataRow);
+  public columns: Column[] = [
+    {
+      name: 'taxType',
+      title: 'Tax Type',
+      truncate: true,
+      noOverflow: true,
+      width: 15,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input,
+        model: null,
+        validators: {
+          required: true,
+          max: 50,
+          maxLengthStrategy: this.selectedStrategy
+        }
       }
-    });
-  }
+    },
+    {
+      name: 'businessRule',
+      title: 'Business Rule',
+      truncate: true,
+      noOverflow: true,
+      width: 15,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input,
+        model: null,
+        validators: {
+          required: true,
+          max: 50,
+          maxLengthStrategy: this.selectedStrategy
+        }
+      }
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
+    }
+  ];
 
-  public allowRowSelection = true;
-  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
-  public showEdit = true;
-  public defaultForm: FormGroup;
+  public columnSimpleEdit = this.columns;
+
+  public dataWithSimpleEdit: TaxType[] = [];
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: ' ',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<TaxType>(this.dataWithSimpleEdit),
+    noRecordsMessage: 'No tax type defined'
+  };
+
+  private dataForReset: BodEditableSampleTable[] = [];
+  public taxTypes: { value: string; label: string }[] = [];
+    public businessRules: { value: string; label: string }[] = []; 
+
+
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+  @ViewChildren(SearchFieldComponent)
+  searchFieldComponent: QueryList<SearchFieldComponent>;
+
+  selectedTabIndex = 0;
+  showEdit = true;
 
   constructor(
-    private fb: FormBuilder,
-    private transactionTypeService: TransactionTypeService
-  ) { }
+    private snackBar: MatSnackBar,
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient,
+    private formBuilder: UntypedFormBuilder,
+    private translate: TranslateService,
+    private systemMessage: SystemMessageService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    private formStateService: BodFormStateService,
+    private transactionTypeService: TransactionTypeService,
+    private dialog: MatDialog
+  ) {}
 
-  ngOnInit() {
-    this.defaultForm = this.fb.group({});
-  }
+  ngOnInit(): void {
+    this.onPageAction('');
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    // this.loadTaxTypes();
 
-  public onTypeChange(element: any, value: string) {
-    element.type = value;
-    this.setDirty(true);
-  }
-
-  private loadRestrictionData() {
-    this.transactionTypeService.getRestrictions().subscribe((restrictions: any[]) => {
-      this.restrictionsDataSingleSelect.datasource.data = restrictions.map((item: any, index: number) => ({
-        id: index + 1,
-        code: item.code,
-        type: 'ERROR', // Default to ERROR
-        default: false
+    // Fetch tax types for dropdown
+    this.transactionTypeService.getTaxType().subscribe((data: any[]) => {
+      this.taxTypes = data.map(item => ({
+        value: item.identifier, // keep as value for ngModel
+      label: item.code // or item.name, depending on your API
       }));
     });
+
+    // Fetch business rules for dropdown from getTransactionEvent
+    this.transactionTypeService.getTransactionEvent().subscribe((data: any[]) => {
+      // Adjust mapping as per your API response structure
+      this.businessRules = data.map(item => ({
+        value: item.identifier ?? item.code ?? item.value,
+        label: item.code ?? item.label ?? item.name
+      }));
+    });
+
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
+        ];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+          });
+      })
+    );
   }
 
-  public resetSelection() {
-    if (this.restrictionsTable?.selection) {
-      this.restrictionsTable.selection.clear();
-    }
-    this.selectedRowSingleSelect = [];
-    this.setDirty(false);
+  ngAfterViewInit() {
+    this.tableRefArray = [this.simpleEditTableRef];
   }
 
-  public rowSelectionSingleSelect(element: Restrictions[]) {
-    console.log('rowSelectionSingleSelect called with:', element);
-    this.selectedRowSingleSelect = element;
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-    this.setDirty(true);
-  }
-
-  public rowSelection(element: Restrictions[]) {
-    console.log('rowSelection called with:', element);
-    if (element.length !== 0) {
-      this.selectedRowSingleSelect = element;
+ 
+  /**
+   * Method to change pagemode of the table
+   */
+  public showActionsForSimple: boolean = false;
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+      this.showActionsForSimple = true;
     } else {
-      this.selectedRowSingleSelect = [];
+      this.checkStatus(false);
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.showActionsForSimple = false;
     }
-    this.rowSelected.emit(this.selectedRowSingleSelect);
-    this.setDirty(true);
-    console.log('Restrictions selectedRowSingleSelect:', this.selectedRowSingleSelect);
   }
 
-  public onDefaultToggleChange(event: any, rowIndex: number) {
-    const data = [...this.restrictionsDataSingleSelect.datasource.data];
-    const row = data.find(r => r.index === rowIndex);
+  @Output() tableDirty = new EventEmitter<boolean>();
+  @Output() completeDeltaChangeTaxType = new EventEmitter<any>();
+  @Input() set taxTypeData(data: TaxType[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log('dataWithSimpleEdit: ', this.dataWithSimpleEdit);
+  }
 
-    if (!row) return;
+  public getCurrentTableTaxType(): TaxType[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
 
-    if (event.checked) {
-      data.forEach(item => {
-        item.default = item.index === rowIndex;
-      });
-    } else {
-      row.default = false;
+  public onTaxTypeChange() {
+    this.tableDirty.emit(true);
+    this.completeDeltaChangeTaxType.emit(this.getCurrentTableTaxType());
+  }
+
+  public onBusinessRuleChange() {
+    this.tableDirty.emit(true);
+  }
+
+  public onEditTableAction(event) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
+
+    if (event.currentChanges) {
+      this.completeDeltaChangeTaxType.emit(
+        this.tableWithSimpleEdit.datasource.data
+      );
     }
 
-    this.restrictionsDataSingleSelect.datasource.data = data;
+    this.tableDirty.emit(true);
+  }
 
-    this.defaultChanged.emit({
-      rowIndex: rowIndex,
-      isDefault: event.checked
+  // Method to mark tableFormGroup of EditTable as touched
+  public markTouched() {
+    this.simpleEditTableRef.markTableFormAsTouched();
+    this.searchFieldColumnForm?.markAllAsTouched();
+    this.markAllSearchFieldsAsTouched();
+  }
+
+  // Method to mark all searchfields as touched in edit table
+  public markAllSearchFieldsAsTouched() {
+    this.searchFieldComponent.forEach(element => {
+      element.getFormControl().markAsTouched();
     });
   }
 
-  private setDirty(dirty: boolean) {
-    this.isDirty = dirty;
-    this.dirtyChange.emit(this.isDirty);
+  /**
+   * Method to update formstatus
+   */
+  public checkStatus(status) {
+    this.formStatus = status;
+  }
+
+  /**
+   * Method to add a new row
+   */
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    console.log('Adding new tax type row');
+
+    const updatedData: TaxType = {
+      id: ++this.lastModifiedIndex,
+      taxType: '',
+      businessRule: ''
+    };
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input) {
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+
+  /**
+   * Method to update search field column form when a new row added to the table
+   */
+  public updateCustomColumnFormFields() {
+    let index;
+    const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+    
+    if (dataLength > 1) {
+      index = dataLength - 1;
+    } else {
+      index = 0;
+    }
+  }
+
+  /**
+   * Method to change pagemode to enquiry on save of table data
+   */
+  public saveTableData() {
+    this.markTouched();
+    if (this.formStatus) {
+      this.modeOptionsSimple = { input: false, reset: false };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.updateMsgArr(this.successMsg);
+    }
+  }
+
+  /**
+   * Method to reset edit table data
+   */ 
+  public reset() {
+    this.modeOptionsSimple = { input: true, reset: true };
+  }
+
+  /**
+   * Method to update messages in page container
+   */
+  public updateMsgArr(msg) {
+    this.messages = [msg];
+    setTimeout(() => {
+      this.messages = [];
+    }, 10000);
+  }
+
+  /**
+   * Method to handle row level actions for basic edit table
+   */
+  @Output() translationDetails1 = new EventEmitter<any>();
+
+  handleRowLevelActions($event, index) {
+    if ($event === 'information') {
+      // Call getTaxDefinition and open dialog with result
+      this.transactionTypeService.getTaxDefinition().subscribe(data => {
+        this.dialog.open(TaxTypeDefinitionDialogComponent, {
+          width: '600px',
+          data
+        });
+      });
+    } else if ($event === 'edit') {
+      this.setDataForSingleLineEditMode(index);
+    } else if ($event === 'trash') {
+      if (this.modeOptionsSimple?.input) {
+        this.deleteTableData(index);
+      } else {
+        this.subscriptions.add(
+          this.bodConfirmAlertDialogsService
+            .confirm(this.ConfirmData)
+            .subscribe(val => {
+              if (val) {
+                this.deleteTableData(index);
+              }
+            })
+        );
+      }
+    } else if ($event === 'save') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.updateFormStateAsPristine();
+    } else if ($event === 'reset') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: true },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+    }
+  }
+
+  private updateFormStateAsPristine() {
+    this.simpleEditTableRef?.tableFormGroup.markAsPristine();
+    this.formStateService.formState$.next(
+      this.simpleEditTableRef.tableFormGroup.dirty
+    );
+  }
+
+  /**
+   * Method to set data for single line edit mode
+   */
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+  }
+
+  /**
+   * Method to delete row of a table
+   */
+  public deleteTableData(index) {
+    this.simpleEditTableRef.deleteRow(index);
+    this.tableDirty.emit(true);
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  /**
+   * Method to update message in system message service
+   */
+  public updateMessage(key, text) {
+    const message = this.translate.instant(key) + text;
+    this.systemMessage.updateSystemMessage(message);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      {
+        columnName: 'taxType',
+        templateName: taxTypeTemplate
+      },
+      {
+        columnName: 'businessRule',
+        templateName: businessRuleTemplate
+      },
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+      </div>
+    </ng-template>
+  </bod-table>
+
+  <ng-template
+    #taxTypeTemplate
+    let-element="element"
+    let-column="column"
+  >
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select
+        panelClass="fis-style"
+        [(ngModel)]="element.taxType"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        (ngModelChange)="onTaxTypeChange()"
+        required
+        #taxTypeModel="ngModel"
+        [errorStateMatcher]="matcher"
+      >
+        <mat-option
+          *ngFor="let taxType of taxTypes"
+          [value]="taxType.value"
+        >
+          {{ taxType.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          taxTypeModel.invalid &&
+          (taxTypeModel.touched || taxTypeModel.dirty)
+        "
+      >
+        Tax Type is required
+      </mat-error>
+    </mat-form-field>
+  </ng-template>
+<ng-template
+    #businessRuleTemplate
+    let-element="element"
+    let-column="column"
+  >
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select
+        panelClass="fis-style"
+        [(ngModel)]="element.businessRule"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        (ngModelChange)="onBusinessRuleChange()"
+        required
+        #businessRuleModel="ngModel"
+        [errorStateMatcher]="matcher"
+      >
+        <mat-option
+          *ngFor="let businessRule of businessRules"
+          [value]="businessRule.value"
+        >
+          {{ businessRule.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          businessRuleModel.invalid &&
+          (businessRuleModel.touched || businessRuleModel.dirty)
+        "
+      >
+        Business Rule is required
+      </mat-error>
+    </mat-form-field>
+  </ng-template>
+ 
+</bod-page-container>
+
+
+
+
+
+
+
+
+
+
+
+
+<h2 mat-dialog-title>Tax Definition</h2>
+
+
+
+
+
+
+
+
+
+import { Component, Inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { TransactionTypeService } from '../../../transaction-type.service';
+
+@Component({
+  selector: 'bod-tax-type-definition-dialog',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './tax-type-definition-dialog.component.html',
+  styleUrl: './tax-type-definition-dialog.component.scss'
+})
+export class TaxTypeDefinitionDialogComponent implements OnInit {
+  taxDefinition: any;
+
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private transactionTypeService: TransactionTypeService
+  ) {}
+
+  ngOnInit() {
+    this.transactionTypeService.getTaxDefinition().subscribe(def => {
+      this.taxDefinition = def;
+    });
   }
 }
