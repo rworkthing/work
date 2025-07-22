@@ -1,113 +1,126 @@
-<bod-message-container [messages]="errorMessages"></bod-message-container>
-<bod-form
-  [formGroup]="existingCounterFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onRelateExistingCounter()"
-  (onReset)="onReset()"
-  fisStyle
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
 >
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.code'"
-      [forTextOnly]="true"
-      [required]="true"
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      {
+        columnName: 'taxType',
+        templateName: taxTypeTemplate
+      },
+      {
+        columnName: 'businessRule',
+        templateName: businessRuleTemplate
+      },
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
     >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="counterCode"
-          name="counterCode"
-          (selectionChange)="onCounterCodeChange($event)"
-        >
-          <mat-option
-            *ngFor="let counter of availableCounters"
-            [value]="counter.code"
-          >
-            {{ counter.code }} - {{ counter.name }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-         {{ getError('counterCode', existingCounterFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-   
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <div *ngIf="selectedCounterDetails">
-        {{ selectedCounterDetails.name }}
-      </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!selectedCounterDetails">
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="counterName"
-          name="counterName"
-          readonly
-          placeholder="Select a counter code first"
-        />
-      </mat-form-field>
-    </bod-control-group>
-  </bod-input-layout>
-  
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.classificationtype'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <div *ngIf="selectedCounterDetails">
-        {{ selectedCounterDetails.classificationType }}
-      </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!selectedCounterDetails">
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="classificationtype"
-          name="classificationtype"
-          readonly
-          placeholder="Select a counter code first"
-        />
-      </mat-form-field>
-    </bod-control-group>
-  </bod-input-layout>
-
-  <h1>Product Type Relationship</h1>
-  <bod-input-layout col="1">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.rulecheck'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="rulecheck"
-        name="rulecheck"
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
       >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+      </div>
+    </ng-template>
+  </bod-table>
 
-   <!-- Period Type Section -->
-  <bod-period-type
-    #periodTypeRef
-    [periodTypeData]="periodTypeTableData"
-    (completeDeltaChangePeriodType)="handleCompleteDeltaChangePeriodType($event)"
-    (tableDirty)="onTableDirty()"
-  ></bod-period-type>
+  <ng-template
+    #taxTypeTemplate
+    let-element="element"
+    let-column="column"
+  >
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select
+        panelClass="fis-style"
+        [(ngModel)]="element.taxType"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        (ngModelChange)="onTaxTypeChange()"
+        required
+        #taxTypeModel="ngModel"
+        [errorStateMatcher]="matcher"
+      >
+        <mat-option
+          *ngFor="let taxType of taxTypes"
+          [value]="taxType.value"
+        >
+          {{ taxType.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          taxTypeModel.invalid &&
+          (taxTypeModel.touched || taxTypeModel.dirty)
+        "
+      >
+        Tax Type is required
+      </mat-error>
+    </mat-form-field>
+  </ng-template>
 
-</bod-form>
+  <ng-template
+    #businessRuleTemplate
+    let-element="element"
+    let-column="column"
+  >
+    <mat-form-field appearance="outline" fisStyle style="min-width: 200px">
+      <mat-select
+        panelClass="fis-style"
+        [(ngModel)]="element.businessRule"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        (ngModelChange)="onBusinessRuleChange()"
+        required
+        #businessRuleModel="ngModel"
+        [errorStateMatcher]="matcher"
+      >
+        <mat-option
+          *ngFor="let businessRule of businessRules"
+          [value]="businessRule.value"
+        >
+          {{ businessRule.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          businessRuleModel.invalid &&
+          (businessRuleModel.touched || businessRuleModel.dirty)
+        "
+      >
+        Business Rule is required
+      </mat-error>
+    </mat-form-field>
+  </ng-template>
+</bod-page-container>
 
 
 
@@ -127,98 +140,109 @@
 
 
 
+
+
+
+import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
+  NO_ERRORS_SCHEMA,
+  OnDestroy,
   OnInit,
   Output,
-  ViewChild
+  QueryList,
+  ViewChild,
+  ViewChildren
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
 import {
-  AbstractControl,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  UntypedFormControl,
-  UntypedFormGroup,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
-import { TranslationKey } from '../../metadat-config/codegen-config.constant';
-import { CounterService } from '../counters-service';
-import { MetadataService } from '../../metadat-config/metada-config.service';
-import {
-  BodCommonDialogService,
-  BodCommonModule,
-  BodCurrencyControlModule,
-  BodDynamicFormModule,
   BodFormModule,
-  BodFormStateService,
-  BodFormTypes,
   BodPageContainerModule,
   BodTableAction,
   BodTableActionsModule,
-  BodTableActionType,
   BodTableComponent,
   BodTableMetadata,
   BodTableModule,
-  CommonDialogComponent,
+  Column,
   ControlGroupModule,
-  DirectivesModule,
   EditTableAction,
-  EditTableEventData,
-  InlineEditOutput,
   InputLayoutModule,
-  InquiryLayoutModule,
   MessageContainerModule,
-  ModeOptions,
   NotificationMessage,
-  NotificationMessageType,
-  RowLeftAction,
   SearchFieldModule,
-  SectionContainerModule
+  DirectivesModule,
+  BodDynamicFormModule,
+  SectionContainerModule,
+  BodCurrencyControlModule,
+  BodCommonModule,
+  ColumnType,
+  SingleRowEdit,
+  ModeOptions,
+  PageMode,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel,
+  MaxLengthStrategy,
+  NotificationMessageType,
+  SearchFieldComponent,
+  PageAction,
+  BodFormStateService
 } from '@bod/common';
-import { CounterComponent } from '../counters.component';
-import { MatIconModule } from '@angular/material/icon';
-import { RufIconModule } from '@ruf/shell/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
+import { MatTableDataSource } from '@angular/material/table';
+import {
+  FormControl,
+  FormGroupDirective,
+  FormsModule,
+  NgForm,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTableDataSource } from '@angular/material/table';
-import { FormUtilityService } from '../../metadat-config/form-utility.service';
-import { MatDialogRef } from '@angular/material/dialog';
-import { CounterList } from '../add-edit-counters/add-edit-counters.mode';
-import { PeriodTypeComponent, PeriodType } from '../add-edit-counters/period-type/period-type.component';
+import { HttpClient } from '@angular/common/http';
 
-interface ExistingCounter {
-  identifier: number;
-  code: string;
-  name: string;
-  classificationType: string;
+import { BehaviorSubject, Subscription, take } from 'rxjs';
+import { RufDropdownType } from '@ruf/shell/dropdown-panel';
+
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { SystemMessageService } from '../../../system-message.service';
+import { BodTableDemoCommonDataService } from '../../../bod-table-demo-common-data.service';
+import { CounterService } from '../../counters-service';
+import { BodEditableSampleTable, SearchFieldInputData } from '../../../bod-table-demo.model';
+
+export interface TaxType {
+  id: number;
+  taxType: string;
+  businessRule: string;
+}
+
+export class ShowOnTouchedErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(
+    control: FormControl | null,
+    form: FormGroupDirective | NgForm | null
+  ): boolean {
+    return !!(control && control.invalid && (control.touched || control.dirty));
+  }
 }
 
 @Component({
-  selector: 'bod-existing-counters',
+  selector: 'bod-tax-type-table',
   standalone: true,
   imports: [
-    CounterComponent,
-    PeriodTypeComponent,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
     DirectivesModule,
     MatButtonModule,
     MatSlideToggleModule,
@@ -227,7 +251,13 @@ interface ExistingCounter {
     TranslateModule,
     BodPageContainerModule,
     BodTableModule,
+    BodFormModule,
+    BodTableActionsModule,
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
     TranslateModule,
+    BodFormModule,
     BodTableActionsModule,
     FormsModule,
     InputLayoutModule,
@@ -241,471 +271,485 @@ interface ExistingCounter {
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
+    SearchFieldModule,
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
     MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './existing-counters.component.html',
-  styleUrl: './existing-counters.component.scss'
+  templateUrl: './tax-type-table.component.html',
+  styleUrl: './tax-type-table.component.scss',
+  schemas: [NO_ERRORS_SCHEMA]
 })
-export class ExistingCountersComponent implements OnInit {
-  public translationKey = TranslationKey;
-  public existingCounterFormGroup: UntypedFormGroup;
-  formType: BodFormTypes = BodFormTypes.SUBMIT;
-
-  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
-    NotificationMessage[]
-  >();
-  
-  public errorMessages: NotificationMessage[] = [];
-  public modeOptions: ModeOptions = { input: false, reset: false };
-  
-  @ViewChild('systemMessage', { static: true }) systemMessage: any;
-  @ViewChild('periodTypeRef') periodTypeRef: PeriodTypeComponent;
-  
+export class TaxTypeTableComponent
+  implements OnInit, OnDestroy, AfterViewInit
+{
+  public matcher = new ShowOnTouchedErrorStateMatcher();
+  private subscriptions: Subscription = new Subscription();
   public messages: NotificationMessage[] = [];
-  public message: NotificationMessage | undefined;
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+  public panel = {
+    type: RufDropdownType.PopoverMenu
+  };
+  defaultValueForm: UntypedFormGroup = new UntypedFormGroup({});
 
-  // Available counters for dropdown
-  public availableCounters: ExistingCounter[] = [];
-  public selectedCounterDetails: ExistingCounter | null = null;
-  
-  statusControl = new FormControl(null); 
-  public previousStatus: string | undefined;
-  public isTableDirty = false;
+  public searchFieldObjArr: SearchFieldInputData[] = [];
+  public searchFieldColumnForm: UntypedFormGroup;
+  public lastModifiedIndex: number;
+  public pageMode = PageMode.INQUIRY;
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public tableRefArray: any[] = [];
+  disableEditForInput = false;
+  existingDataNotEditable = false;
 
-  // Period Type table data
-  public periodTypeTableData: PeriodType[] = [];
+  public pageModeSimple = this.pageMode;
+  public modeOptionsSimple = this.modeOptions;
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'add',
+      mostCommon: false
+    }
+  ];
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+  maxLengthStrategy: MaxLengthStrategy[] = [
+    MaxLengthStrategy.exceedWithError,
+    MaxLengthStrategy.restrict
+  ];
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public maxLength = 5;
+  public formStatus = false;
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+
+  // Tax Types dropdown options
+  taxTypes = [
+    { label: 'VAT', value: 'VAT' },
+    { label: 'GST', value: 'GST' },
+    { label: 'Sales Tax', value: 'SALES_TAX' },
+    { label: 'Income Tax', value: 'INCOME_TAX' },
+    { label: 'Corporate Tax', value: 'CORPORATE_TAX' },
+    { label: 'Property Tax', value: 'PROPERTY_TAX' },
+    { label: 'Withholding Tax', value: 'WITHHOLDING_TAX' },
+    { label: 'Capital Gains Tax', value: 'CAPITAL_GAINS_TAX' }
+  ];
+
+  // Business Rules dropdown options
+  businessRules = [
+    { label: 'Standard Rate', value: 'STANDARD_RATE' },
+    { label: 'Reduced Rate', value: 'REDUCED_RATE' },
+    { label: 'Zero Rate', value: 'ZERO_RATE' },
+    { label: 'Exempt', value: 'EXEMPT' },
+    { label: 'Progressive', value: 'PROGRESSIVE' },
+    { label: 'Flat Rate', value: 'FLAT_RATE' },
+    { label: 'Marginal', value: 'MARGINAL' },
+    { label: 'Threshold Based', value: 'THRESHOLD_BASED' }
+  ];
+
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
+    }
+  ];
+
+  public columns: Column[] = [
+    {
+      name: 'taxType',
+      title: 'Tax Type',
+      truncate: true,
+      noOverflow: true,
+      width: 15,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input,
+        model: null,
+        validators: {
+          required: true,
+          max: 50,
+          maxLengthStrategy: this.selectedStrategy
+        }
+      }
+    },
+    {
+      name: 'businessRule',
+      title: 'Business Rule',
+      truncate: true,
+      noOverflow: true,
+      width: 15,
+      widthUnit: 'rem',
+      inputModeOptions: {
+        type: ColumnType.input,
+        model: null,
+        validators: {
+          required: true,
+          max: 50,
+          maxLengthStrategy: this.selectedStrategy
+        }
+      }
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
+    }
+  ];
+
+  public columnSimpleEdit = this.columns;
+
+  public dataWithSimpleEdit: TaxType[] = [];
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: ' ',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<TaxType>(this.dataWithSimpleEdit),
+    noRecordsMessage: 'No tax type defined'
+  };
+
+  private dataForReset: BodEditableSampleTable[] = [];
+
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+  @ViewChildren(SearchFieldComponent)
+  searchFieldComponent: QueryList<SearchFieldComponent>;
+
+  selectedTabIndex = 0;
+  showEdit = true;
 
   constructor(
-    private changeDetectorRef: ChangeDetectorRef,
-    private bodFormStateService: BodFormStateService,
-    public counterService: CounterService,
-    private fb: FormBuilder,
-    private bodCommonDialogService: BodCommonDialogService,
-    private metadataService: MetadataService
+    private snackBar: MatSnackBar,
+    public commonDataService: BodTableDemoCommonDataService,
+    private http: HttpClient,
+    private formBuilder: UntypedFormBuilder,
+    private translate: TranslateService,
+    private systemMessage: SystemMessageService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    private counterService: CounterService,
+    private formStateService: BodFormStateService
   ) {}
 
-  ngOnInit() {
-    this.initForm();
-    this.loadAvailableCounters();
-
-    this.metadataService.retrieveAll().subscribe((response: any) => {
-      const firstStatus = response?.data?.[0]?.MetadataStatus;
-      const statusToSet = firstStatus || 'NEW';
-      this.statusControl.setValue(statusToSet);
-      this.previousStatus = statusToSet;
-    });
-  }
-
-  private initForm(): void {
-    this.existingCounterFormGroup = this.fb.group({
-      counterCode: new UntypedFormControl('', [Validators.required]),
-      counterIdentifier: [{ value: '', disabled: true }],
-      counterName: new UntypedFormControl('', [Validators.required]),
-      classificationtype: new UntypedFormControl('', [Validators.required]),
-      rulecheck: new UntypedFormControl(false)
-    });
-  }
-
-  private loadAvailableCounters(): void {
-    // This would typically call a service to get available counters
-    // For now, using mock data - replace with actual service call
-    this.counterService.getAvailableCounters().subscribe({
-      next: (counters) => {
-        this.availableCounters = counters;
-      },
-      error: (error) => {
-        console.error('Error loading available counters:', error);
-        // Fallback to mock data if service fails
-        this.availableCounters = [
-          { identifier: 1, code: 'COUNTER001', name: 'Sample Counter 1', classificationType: 'PostingCounter' },
-          { identifier: 2, code: 'COUNTER002', name: 'Sample Counter 2', classificationType: 'ManualBumpUpCounter' },
-          { identifier: 3, code: 'COUNTER003', name: 'Sample Counter 3', classificationType: 'OverdraftCounter' }
+  ngOnInit(): void {
+    this.onPageAction('');
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
         ];
-      }
-    });
-  }
-
-  onCounterCodeChange(event: any): void {
-    const selectedCode = event.value;
-    this.selectedCounterDetails = this.availableCounters.find(counter => counter.code === selectedCode) || null;
-    
-    if (this.selectedCounterDetails) {
-      this.existingCounterFormGroup.patchValue({
-        counterIdentifier: this.selectedCounterDetails.identifier,
-        counterName: this.selectedCounterDetails.name,
-        classificationtype: this.selectedCounterDetails.classificationType
-      });
-    } else {
-      this.existingCounterFormGroup.patchValue({
-        counterIdentifier: '',
-        counterName: '',
-        classificationtype: ''
-      });
-    }
-  }
-
-  public getError(control: string, formGroup: UntypedFormGroup): string {
-    if (formGroup) {
-      const fc: AbstractControl = formGroup.get(control);
-      if (fc && fc.errors && fc.touched) {
-        return FormUtilityService.getCommonFCErrorMsg(fc);
-      }
-    }
-  }
-
-  public onTableDirty(): void {
-    this.isTableDirty = true;
-    this.existingCounterFormGroup.markAsDirty();
-  }
-
-  // Handle period type table data changes
-  public completeDeltaPeriodTypeData: any;
-  handleCompleteDeltaChangePeriodType(data: any) {
-    this.completeDeltaPeriodTypeData = data;
-    console.log('Received CompleteDelta from period type child:', this.completeDeltaPeriodTypeData);
-  }
-
-  onRelateExistingCounter() {
-    this.submitForm();
-  }
-
-  submitForm() {
-    this.errorMessages = [];
-
-    if (this.existingCounterFormGroup.invalid) {
-      this.existingCounterFormGroup.markAllAsTouched();
-      const missingFields = this.getInvalidRequiredFields(this.existingCounterFormGroup);
-      this.handleError(
-        {
-          errorCode: 'FORM_INVALID',
-          status: 400,
-          missingFields
-        }
-      );
-      return;
-    }
-
-    if (!this.selectedCounterDetails) {
-      this.handleError({
-        errorCode: 'NO_COUNTER_SELECTED',
-        status: 400
-      });
-      return;
-    }
-
-    const formValue = this.existingCounterFormGroup.getRawValue();
-
-    // Get product type data from metadata service
-    const productTypeKeys = this.metadataService.getProductTypeKeys();
-    const productTypeValues = this.metadataService.getProductTypeValues();
-
-    // Build the relationship structure for existing counter
-    const counterRelationshipData = {
-      metadataType: 'CounterRelationship',
-      existingCounterIdentifier: this.selectedCounterDetails.identifier,
-      counterCode: this.selectedCounterDetails.code,
-      productElementCounterTypeRltnpList: productTypeKeys.map((code, index) => ({
-        productTypeIdentifier: productTypeValues[index],
-        counterIdentifier: this.selectedCounterDetails.identifier,
-        counterCode: this.selectedCounterDetails.code,
-        ruleCheck: formValue.rulecheck ? 'Y' : 'N'
-      })),
-      productElementCounterTypePeriodList: (this.periodTypeRef?.getCurrentTablePeriodType() || []).map(period => ({
-        productTypeIdentifier: productTypeValues[0], // or map for each product type if needed
-        counterIdentifier: this.selectedCounterDetails.identifier,
-        periodType: period.periodType,
-        isCalculate: period.isCalculated ? 'Y' : 'N'
-      })),
-      productTypeList: productTypeKeys.map((code, index) => ({
-        identifier: productTypeValues[index],
-        code: code
-      }))
-    };
-
-    console.log('Counter relationship data to be sent:', JSON.stringify(counterRelationshipData, null, 2));
-
-    // Call service to relate existing counter
-    this.counterService.relateExistingCounter(counterRelationshipData).subscribe({
-      next: resp => this.successResponse(resp, counterRelationshipData),
-      error: (err: NotificationMessage[]) => this.handleError(err)
-    });
-  }
-
-  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
-    const invalidFields: string[] = [];
-
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      if (control && control.errors?.['required']) {
-        invalidFields.push(key);
-      }
-    });
-
-    return invalidFields;
-  }
-
-  private successResponse(resp, counterData) {
-    const counterCode = this.selectedCounterDetails?.code;
-    const SuccessMsg = `${counterCode} related successfully`;
-    this.apiResponse.emit({ ...counterData, SuccessMsg });
-  }
-
-  private handleError(error: any) {
-    let errorMsg = '';
-
-    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
-      if (error.missingFields?.length) {
-        errorMsg = `Please fill the required fields.`;
-      } else {
-        errorMsg = 'Please fill the required fields.';
-      }
-    } else if (error.errorCode === 'NO_COUNTER_SELECTED') {
-      errorMsg = 'Please select a counter from the dropdown.';
-    } else if (error.errorCode === 'PERIOD_TYPE_REQUIRED') {
-      errorMsg = 'Period type is required for all rows.';
-    } else if (error.errorCode === 'DUPLICATE_PERIOD_TYPE') {
-      errorMsg = 'Duplicate period types found. Please ensure all period types are unique.';
-    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
-      errorMsg = 'Counter relationship already exists.';
-    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
-      errorMsg = error.error?.errorDescription || 'Counter relationship already exists.';
-    } else {
-      errorMsg = 'Unknown error occurred.';
-    }
-
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages.push(this.message);
-
-    // Auto-remove error messages after 10 seconds
-    setTimeout(() => {
-      this.errorMessages = this.errorMessages.filter(msg => msg.text !== errorMsg);
-    }, 10000);
-  }
-
-  onReset(): void {
-    // Reset error messages
-    this.errorMessages = [];
-    
-    // Reset the form
-    this.existingCounterFormGroup.reset();
-    this.existingCounterFormGroup.markAsPristine();
-    this.existingCounterFormGroup.markAsUntouched();
-
-    // Reset selected counter details
-    this.selectedCounterDetails = null;
-
-    // Reset table dirty state
-    this.isTableDirty = false;
-
-    // Clear period type data
-    this.periodTypeTableData = [];
-    
-    // Reset the period type table if it exists
-    if (this.periodTypeRef) {
-      this.periodTypeRef.reset();
-    }
-
-    this.changeDetectorRef.detectChanges();
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Add these imports to the existing counters.component.ts
-
-import { ExistingCountersComponent } from './existing-counters/existing-counters.component';
-
-// Add to the imports array in @Component decorator
-@Component({
-  selector: 'bod-counter',
-  standalone: true,
-  imports: [
-    // ... existing imports
-    ExistingCountersComponent,
-    // ... rest of imports
-  ],
-  // ... rest of component decorator
-})
-
-// Add these properties to the CounterComponent class
-export class CounterComponent implements OnInit {
-  // ... existing properties
-
-  @ViewChild('relateExistingCounterTemplate')
-  public relateExistingCounterTemp: TemplateRef<any>;
-
-  // ... existing methods
-
-  public onTableActionClicked1(event: BodTableAction) {
-    this.isEdit = false;
-    this.messages = [];
-    if (event.id === 12) {
-      this.addNewCounter();
-    } else if (event.id === 13) {
-      this.relateExistingCounter();
-    }
-  }
-
-  private relateExistingCounter() {
-    this.editCounter = undefined;
-    this.messages = [];
-    let dialogModel: BodCommonDialogModel = {
-      formTemplate: this.relateExistingCounterTemp,
-      title: 'Relate Existing Counter'
-    };
-    this.openDialog(dialogModel);
-  }
-
-  // Add method to handle existing counter events
-  relateExistingCounterEvent(event: any) {
-    if (event) {
-      this.getNewCounter();
-
-      this.metadataService.retrieveAll().subscribe((response: any) => {
-        const firstStatus = response?.data?.[0]?.MetadataStatus;
-        const statusToSet = firstStatus || 'NEW';
-        this.statusControl.setValue(statusToSet);
-        this.previousStatus = statusToSet;
-        this.statusChanged.emit(statusToSet);
-        this.counterService.updateCurrentStatus(statusToSet);
-      });
-      
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 20000);
-    }
-    this.dialogRef$.close();
-  }
-
-  // ... rest of existing methods
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Add this template to the existing counters.component.html -->
-
-<ng-template #relateExistingCounterTemplate>
-  <bod-existing-counters
-    (apiResponse)="relateExistingCounterEvent($event)"
-  >
-  </bod-existing-counters>
-</ng-template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Add these methods to the existing CounterService class
-
-export class CounterService {
-  // ... existing properties and methods
-
-  // Method to get available counters for the dropdown
-  getAvailableCounters(): Observable<any[]> {
-    const headers = this.createHeaders();
-    // This should be a different endpoint that returns all available counters
-    // For now, using the same retrieve endpoint - you may need to adjust this
-    const availableCountersUrl = `${this.baseUrl}/counters/available/${this.reqDfnId}`;
-    
-    return this.http.get<any[]>(availableCountersUrl, { headers }).pipe(
-      // Transform the response to the expected format
-      tap((response: any) => {
-        if (response?.data) {
-          return response.data.map((item: any) => ({
-            identifier: item.identifier || item.Counter?.counterType?.identifier,
-            code: item.code || item.Counter?.counterType?.code,
-            name: item.name || item.Counter?.counterType?.name,
-            classificationType: item.classificationType || item.Counter?.counterType?.classificationType
-          }));
-        }
-        return [];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+          });
       })
     );
   }
 
-  // Method to relate an existing counter
-  relateExistingCounter(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    const relateUrl = `${this.baseUrl}/metadata/relate/${this.reqDfnId}`;
-    return this.http.post(relateUrl, request, { headers });
+  ngAfterViewInit() {
+    this.tableRefArray = [this.simpleEditTableRef];
   }
 
-  // Alternative method if you have a specific endpoint for counter relationships
-  createCounterRelationship(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    const relationshipUrl = `${this.baseUrl}/metadata/counter-relationship/${this.reqDfnId}`;
-    return this.http.post(relationshipUrl, request, { headers });
+  /**
+   * Method to change pagemode of the table
+   */
+  public showActionsForSimple: boolean = false;
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+      this.showActionsForSimple = true;
+    } else {
+      this.checkStatus(false);
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.showActionsForSimple = false;
+    }
   }
 
-  // Method to get counter details by code
-  getCounterByCode(code: string): Observable<any> {
-    const headers = this.createHeaders();
-    const counterByCodeUrl = `${this.baseUrl}/counter/${this.reqDfnId}/${code}`;
-    return this.http.get(counterByCodeUrl, { headers });
+  @Output() tableDirty = new EventEmitter<boolean>();
+  @Output() completeDeltaChangeTaxType = new EventEmitter<any>();
+  @Input() set taxTypeData(data: TaxType[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log('dataWithSimpleEdit: ', this.dataWithSimpleEdit);
   }
 
-  // ... rest of existing methods
+  public getCurrentTableTaxType(): TaxType[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
+
+  public onTaxTypeChange() {
+    this.tableDirty.emit(true);
+  }
+
+  public onBusinessRuleChange() {
+    this.tableDirty.emit(true);
+  }
+
+  public onEditTableAction(event) {
+    this.commonDataService.updateMessage(
+      'mbpBod.demo.microsite.table.editTableEvent',
+      JSON.stringify(event.currentChanges)
+    );
+    console.log('CompleteDelta::', event.completeDelta);
+
+    if (event.currentChanges) {
+      this.completeDeltaChangeTaxType.emit(
+        this.tableWithSimpleEdit.datasource.data
+      );
+    }
+
+    this.tableDirty.emit(true);
+  }
+
+  // Method to mark tableFormGroup of EditTable as touched
+  public markTouched() {
+    this.simpleEditTableRef.markTableFormAsTouched();
+    this.searchFieldColumnForm?.markAllAsTouched();
+    this.markAllSearchFieldsAsTouched();
+  }
+
+  // Method to mark all searchfields as touched in edit table
+  public markAllSearchFieldsAsTouched() {
+    this.searchFieldComponent.forEach(element => {
+      element.getFormControl().markAsTouched();
+    });
+  }
+
+  /**
+   * Method to update formstatus
+   */
+  public checkStatus(status) {
+    this.formStatus = status;
+  }
+
+  /**
+   * Method to add a new row
+   */
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    console.log('Adding new tax type row');
+
+    const updatedData: TaxType = {
+      id: ++this.lastModifiedIndex,
+      taxType: '',
+      businessRule: ''
+    };
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (this.modeOptionsSimple?.input) {
+      this.updateCustomColumnFormFields();
+    } else {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+
+  /**
+   * Method to update search field column form when a new row added to the table
+   */
+  public updateCustomColumnFormFields() {
+    let index;
+    const dataLength = this.tableWithSimpleEdit?.datasource?.data?.length || 0;
+    
+    if (dataLength > 1) {
+      index = dataLength - 1;
+    } else {
+      index = 0;
+    }
+  }
+
+  /**
+   * Method to change pagemode to enquiry on save of table data
+   */
+  public saveTableData() {
+    this.markTouched();
+    if (this.formStatus) {
+      this.modeOptionsSimple = { input: false, reset: false };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.updateMsgArr(this.successMsg);
+    }
+  }
+
+  /**
+   * Method to reset edit table data
+   */ 
+  public reset() {
+    this.modeOptionsSimple = { input: true, reset: true };
+  }
+
+  /**
+   * Method to update messages in page container
+   */
+  public updateMsgArr(msg) {
+    this.messages = [msg];
+    setTimeout(() => {
+      this.messages = [];
+    }, 10000);
+  }
+
+  /**
+   * Method to handle row level actions for basic edit table
+   */
+  @Output() translationDetails1 = new EventEmitter<any>();
+
+  handleRowLevelActions($event, index) {
+    if ($event === 'edit') {
+      this.setDataForSingleLineEditMode(index);
+    } else if ($event === 'trash') {
+      if (this.modeOptionsSimple?.input) {
+        this.deleteTableData(index);
+      } else {
+        this.subscriptions.add(
+          this.bodConfirmAlertDialogsService
+            .confirm(this.ConfirmData)
+            .subscribe(val => {
+              if (val) {
+                this.deleteTableData(index);
+              }
+            })
+        );
+      }
+    } else if ($event === 'save') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+      this.updateFormStateAsPristine();
+    } else if ($event === 'reset') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: true },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.rowLevelActionsForBasicEdit[0].disabled = false;
+    }
+  }
+
+  private updateFormStateAsPristine() {
+    this.simpleEditTableRef?.tableFormGroup.markAsPristine();
+    this.formStateService.formState$.next(
+      this.simpleEditTableRef.tableFormGroup.dirty
+    );
+  }
+
+  /**
+   * Method to set data for single line edit mode
+   */
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+  }
+
+  /**
+   * Method to delete row of a table
+   */
+  public deleteTableData(index) {
+    this.simpleEditTableRef.deleteRow(index);
+    this.tableDirty.emit(true);
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  /**
+   * Method to update message in system message service
+   */
+  public updateMessage(key, text) {
+    const message = this.translate.instant(key) + text;
+    this.systemMessage.updateSystemMessage(message);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export interface TaxType {
+  id: number;
+  taxType: string;
+  businessRule: string;
+}
+
+
+
+
+
+
+
+
+
+
+<!-- In add-edit-counters.component.html -->
+<bod-tax-type-table
+  #taxTypeRef
+  [taxTypeData]="taxTypeTableData"
+  (completeDeltaChangeTaxType)="handleCompleteDeltaChangeTaxType($event)"
+  (tableDirty)="onTableDirty()"
+></bod-tax-type-table>
+
+
+
+
+
+
+
+
+
+// In add-edit-counters.component.ts
+@ViewChild('taxTypeRef') taxTypeRef: TaxTypeTableComponent;
+public taxTypeTableData: TaxType[] = [];
+
+handleCompleteDeltaChangeTaxType(data: any) {
+  this.completeDeltaTaxTypeData = data;
+  console.log('Received CompleteDelta from tax type child:', this.completeDeltaTaxTypeData);
 }
