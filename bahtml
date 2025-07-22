@@ -42,6 +42,19 @@
         (linkClick)="commonDataService.inquiryLayoutClick($event)"
       >
       </bod-inquiry-layout>
+      <h2 *ngIf="context.element.periodTypeList?.length">Period Types</h2>
+       <bod-table
+        *ngIf="context.element.periodTypeList?.length"
+        [data]="periodTypesTableMetaData"
+        [alignContent]="'top'"
+      [customColumnTemplates]="[
+    { columnName: 'isCalculated', templateName: isCalculatedDisplayTemplate }
+  ]"
+>
+  <ng-template #isCalculatedDisplayTemplate let-element="element">
+    {{ element.isCalculated ? 'Yes' : 'No' }}
+  </ng-template>
+      </bod-table>
       }
     </div>
   </ng-template>
@@ -58,6 +71,20 @@
   >
   </bod-add-edit-counter>
 </ng-template>
+
+<ng-template #relateExistingCounterTemplate>
+  <bod-existing-counters
+    (apiResponse)="relateExistingCounterEvent($event)"
+    [preselectCode]="preselectCode"
+    [counterTableData]="counterTableMetaData.datasource.data"
+    [isAdd]="!isEdit"
+  >
+  </bod-existing-counters>
+</ng-template>
+
+
+
+
 
 
 
@@ -184,12 +211,14 @@ import { MetadataService } from '../metadat-config/metada-config.service';
 import { AddEditCounterComponent } from './add-edit-counters/add-edit-counters.component';
 import { CounterList } from './add-edit-counters/add-edit-counters.mode';
 import { forkJoin } from 'rxjs';
+import { ExistingCountersComponent } from './existing-counters/existing-counters.component';
 
 @Component({
   selector: 'bod-counter',
   standalone: true,
   imports: [
     InquiryLayoutModule,
+    ExistingCountersComponent,
     AddEditCounterComponent,
     SearchFieldModule,
     MatIconModule,
@@ -231,17 +260,30 @@ export class CounterComponent implements OnInit {
   public translationKey = TranslationKey;
   public editactions: BodTableAction[] = editDeleteActions;
   public addNewCounterFormGroup: UntypedFormGroup;
+  private existingCountersMap: { [code: string]: { name: string; classificationType: string } } = {};
+
+  public preselectCode: string | null = null;
+    public availableCounters: CounterList[] = [];
+
 
   @Input() status: string = '';
 
   @ViewChild('addNewCounterTemplate')
   public addNewCounterTemp: TemplateRef<any>;
+  @ViewChild('relateExistingCounterTemplate')
+  public relateExistingCounterTemp: TemplateRef<any>;
   private adminTableRef: BodTableComponent | undefined;
   @ViewChild('systemMessage', { static: true }) systemMessage: any;
   @ViewChild(AddEditCounterComponent)
   private addEditCounterComponent!: AddEditCounterComponent;
+  @ViewChild(ExistingCountersComponent)
+private existingCountersComponent!: ExistingCountersComponent;
   public messages: NotificationMessage[] = [];
   public message: NotificationMessage | undefined;
+  public periodTypeColumns = [
+  { name: 'periodType', title: 'Period Type' },
+  { name: 'isCalculated', title: 'Is Calculated' }
+];
 
   public ConfirmData: BodConfirmDialogModel = {
     title: 'BOD.metadataconfig.title',
@@ -260,6 +302,18 @@ export class CounterComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.counterService.getExstCounters().subscribe((counters: any[]) => {
+      this.existingCountersMap = {};
+      counters.forEach(counter => {
+        this.existingCountersMap[counter.code] = {
+          name: counter.name,
+          classificationType: counter.classificationType
+        };
+      });
+
+      // Now fetch and map the main counters
+      this.getNewCounter();
+    });
     this.counterService.retrieveAll().subscribe((response: any) => {
       const firstStatus = response?.data?.[0]?.MetadataStatus;
       const statusToSet = firstStatus || 'NEW';
@@ -289,8 +343,17 @@ export class CounterComponent implements OnInit {
     enableSorting: true
   };
 
+  public periodTypesTableMetaData: BodTableMetadata = {
+  title: 'Period Types',
+  columns: this.periodTypeColumns,
+  enablePagination: false,
+  datasource: new MatTableDataSource([]),
+  noRecordsMessage: 'No Period Types Defined'
+};
+
   public rowExpanded(element: CounterList) {
     this.messages = [];
+    this.periodTypesTableMetaData.datasource.data = element.periodTypeList || [];
   }
 
   public msg: NotificationMessage | undefined;
@@ -347,13 +410,6 @@ export class CounterComponent implements OnInit {
     );
   }
 
-  public onTableActionClicked1(event: BodTableAction) {
-    this.isEdit = false;
-    this.messages = [];
-    if (event.id === 12) {
-      this.addNewCounter();
-    }
-  }
 
   private addNewCounter() {
     this.editCounter = undefined;
@@ -365,62 +421,125 @@ export class CounterComponent implements OnInit {
     this.openDialog(dialogModel);
   }
 
-  counterData: CounterList[] = [];
-  getNewCounter(): void {
-    this.counterService.retrieveCounter().subscribe(response => {
-      if (response.status === 'SUCCESS' && response.data) {
-        response.data.forEach((item: any, idx: number) => {
-          console.log(`Item ${idx}:`, JSON.stringify(item, null, 2));
-        });
-
-        this.counterData = response.data.map((item: any) => {
-          const counter = item.Counter.counterType || {};
-
-          const counterData: CounterList = {
-            code: counter.code,
-            counterInquiry: [
-              {
-                id: 0,
-                label: 'Name',
-                value: counter.name
-              },
-              {
-                id: 1,
-                label: 'Classification Type',
-                value: counter.classificationType
-              },
-              {
-                id: 2,
-                label: 'Rule Check',
-                value: item.Counter.productElementCounterTypeRltnpList?.[0]?.ruleCheck === 'Y' ? 'Yes' : 'No'
-              }
-            ],
-            identifier: counter.identifier,
-            name: counter.name,
-            classificationType: counter.classificationType,
-            ruleCheck: item.Counter.productElementCounterTypeRltnpList?.[0]?.ruleCheck,
-            periodTypeList: item.Counter.productElementCounterTypePeriodList?.map(pt => ({
-              periodType: pt.periodType,
-              isCalculated: pt.isCalculate === 'Y'
-            })) || []
-          };
-
-          return counterData;
-        });
-
-        this.counterTableMetaData.datasource.data = this.counterData;
-        console.log('Table Data:', JSON.stringify(this.counterTableMetaData.datasource.data, null, 2));
-
-      }
-    });
+  public onTableActionClicked1(event: BodTableAction) {
+    this.isEdit = false;
+    this.messages = [];
+    if (event.id === 12) {
+      this.addNewCounter();
+    } else if (event.id === 13) {
+      this.relateExistingCounter();
+    }
   }
+
+  private relateExistingCounter() {
+    this.editCounter = undefined;
+    this.messages = [];
+    let dialogModel: BodCommonDialogModel = {
+      formTemplate: this.relateExistingCounterTemp,
+      title: 'Relate Existing Counter'
+    };
+    this.openDialog(dialogModel);
+  }
+
+  // Add method to handle existing counter events
+  relateExistingCounterEvent(event: any) {
+    if (event) {
+      this.getNewCounter();
+
+      this.metadataService.retrieveAll().subscribe((response: any) => {
+        const firstStatus = response?.data?.[0]?.MetadataStatus;
+        const statusToSet = firstStatus || 'NEW';
+        this.statusControl.setValue(statusToSet);
+        this.previousStatus = statusToSet;
+        this.statusChanged.emit(statusToSet);
+        this.counterService.updateCurrentStatus(statusToSet);
+      });
+
+      const SuccessMsg = event.SuccessMsg;
+      this.msg = {
+        code: '',
+        text: SuccessMsg,
+        type: NotificationMessageType.SUCCESS
+      };
+      this.messages.push(this.msg);
+      setTimeout(() => {
+        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
+      }, 20000);
+    }
+    this.dialogRef$.close();
+  }
+
+  counterData: CounterList[] = [];
+ getNewCounter(): void {
+  this.counterService.retrieveCounter().subscribe(response => {
+    if (response.status === 'SUCCESS' && response.data) {
+      this.counterData = response.data.map((item: any) => {
+        const counterType = item.Counter.counterType;
+        const rltnpList = item.Counter.productElementCounterTypeRltnpList || [];
+        const code = rltnpList[0]?.counterCode;
+        const identifier =
+          (counterType && counterType.identifier) ||
+          rltnpList[0]?.counterIdentifier ||
+          undefined;
+
+        // Use name/classificationType from getExstCounters if available, else fallback to API response
+        const enrich: { name?: string; classificationType?: string } = this.existingCountersMap[code] || {};
+        const name = enrich.name || counterType?.name || '';
+        const classificationType = enrich.classificationType || counterType?.classificationType || '';
+
+        // Set sourceType based on counterType presence
+        const sourceType = counterType ? 'ADD_EDIT' : 'EXISTING';
+
+        const counterData: CounterList = {
+          code: code,
+          counterInquiry: [
+            {
+              id: 0,
+              label: 'Name',
+              value: name
+            },
+            {
+              id: 1,
+              label: 'Classification Type',
+              value: classificationType
+            },
+            {
+              id: 2,
+              label: 'Rule Check',
+              value: rltnpList[0]?.ruleCheck === 'Y' ? 'Yes' : 'No'
+            }
+          ],
+          identifier: identifier,
+          name: name,
+          classificationType: classificationType,
+          ruleCheck: rltnpList[0]?.ruleCheck,
+          periodTypeList: item.Counter.productElementCounterTypePeriodList?.map(pt => ({
+            periodType: pt.periodType,
+            isCalculated: pt.isCalculate === 'Y'
+          })) || [],
+          sourceType // <-- Add this property
+        };
+
+        return counterData;
+      });
+
+      this.counterTableMetaData.datasource.data = this.counterData;
+      this.availableCounters = this.counterData;
+      console.log('Table Data:', JSON.stringify(this.counterTableMetaData.datasource.data, null, 2));
+    }
+  });
+}
 
   isEdit = false;
   iconActionClicked(event: BodTableAction, element: CounterList) {
     this.isEdit = true;
     this.messages = [];
     if (event.id === BodTableActionType.EDIT) {
-      this.editCounters(element);
+      if (element.sourceType === 'ADD_EDIT') {
+        this.editCounters(element); // open add/edit dialog
+      } else if (element.sourceType === 'EXISTING') {
+        this.openRelateExistingCounterWithCode(element.code); // open relate dialog and pre-select code
+      }
     } else if (event.id === 1) {
       const confirmDataWithCode: BodConfirmDialogModel = {
         ...this.ConfirmData,
@@ -435,6 +554,8 @@ export class CounterComponent implements OnInit {
         });
     }
   }
+
+ 
 
   editCounter: CounterList | undefined;
   retainedCode: string = '';
@@ -453,6 +574,27 @@ export class CounterComponent implements OnInit {
       title: 'Edit Counter'
     };
     this.openDialog(dialogModel);
+  }
+   // Helper to open relate dialog and select code
+  private openRelateExistingCounterWithCode(code: string) {
+    // this.editCounter = element;
+    // this.retainedCode = element.code || '';
+    // this.retainedIdentifier = element.identifier ?? 0;
+    // this.retainedName = element.name || '';
+ this.isEdit = true
+    this.preselectCode = code;
+
+    const dialogModel: BodCommonDialogModel = {
+      formTemplate: this.relateExistingCounterTemp,
+      title: 'Edit Relate Counter'
+    };
+    this.openDialog(dialogModel);
+
+     setTimeout(() => {
+    if (this.existingCountersComponent && this.retainedCode) {
+      this.existingCountersComponent.onCounterCodeChange({ value: this.retainedCode });
+    }
+  }, 0);
   }
 
   counterDelete(element: CounterList): void {
@@ -519,11 +661,6 @@ export class CounterComponent implements OnInit {
 
 
 
-
-
-
-
-
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
@@ -546,6 +683,7 @@ export class CounterService {
   private updateUrl = '';
   private baseUrl = '';
   private retrieveAllUrl = '';
+  private counterexstUrl = '';
 
   private currentStatus: string = 'NEW';
 
@@ -585,6 +723,9 @@ export class CounterService {
         this.retrieveUrl =
           url +
           '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=Counter';
+
+        this.counterexstUrl =
+          url +'/basedata/counter';
         this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
         this.retrieveAllUrl =
           url +
@@ -636,6 +777,11 @@ export class CounterService {
   retrieveCounter(): Observable<any> {
     const headers = this.createHeaders();
     return this.http.get<CounterList[]>(this.retrieveUrl, { headers });
+  }
+
+  getExstCounters(): Observable<any> {
+    const headers = this.createHeaders();
+    return this.http.get(`${this.counterexstUrl}`, { headers });
   }
 
   deleteCounter(
@@ -712,48 +858,5 @@ export class CounterService {
 
 
 
-import { BodTableAction, BodTableActionType } from '@bod/common';
 
-export const CounterTableLevelActions: BodTableAction[] = [
-  {
-    id: BodTableActionType.ADD,
-    icon: 'add',
-    label: 'add',
-    mostCommon: true,
-    child: [
-      {
-        id: 12,
-        seperator: true,
-        label: 'Add New Counter',
-        icon: ''
-      },
-      {
-        id: 13,
-        seperator: true,
-        label: 'Relate Existing Counter',
-        icon: ''
-      }
-    ]
-  },
-  {
-    id: BodTableActionType.FILTER,
-    icon: 'filter',
-    label: 'Filter',
-    mostCommon: true
-  }
-];
 
-export const editDeleteActions: BodTableAction[] = [
-  {
-    id: 4,
-    icon: 'edit',
-    label: 'Edit',
-    mostCommon: true
-  },
-  {
-    id: 1,
-    icon: 'trash',
-    label: 'delete',
-    mostCommon: true
-  }
-];
