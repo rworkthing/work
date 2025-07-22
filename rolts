@@ -1,62 +1,310 @@
-import { BodTableAction, BodTableActionType } from '@bod/common';
-
-export const BalanceTypeTableLevelActions: BodTableAction[] = [
+[
   {
-    id: BodTableActionType.ADD,
-    icon: 'add',
-    label: 'add',
-    mostCommon: true,
-    child: [
-      {
-        id: 12,
-        seperator: true,
-        label: 'Add New Balance Type',
-        icon: ''
-      },
-      {
-        id: 13,
-        seperator: true,
-        label: 'Relate Existing Balace Type',
-        icon: ''
-      }
-    ]
+    "identifier": 99800000002921,
+    "code": "SDKTAX",
+    "taxTypeIdentifier": 110000000001,
+    "region": null,
+    "partyClassification": "Organization",
+    "rate": 10,
+    "taxAmount": 90,
+    "thresholdTaxAmount": 10000,
+    "currencyIdentifier": 100000000001
   },
   {
-    id: BodTableActionType.FILTER,
-    icon: 'filter',
-    label: 'Filter',
-    mostCommon: true
-  }
-];
-
-export const roletypeaction: BodTableAction[] = [
-  {
-    id: 2,
-    icon: 'add',
-    label: 'add',
-    mostCommon: true
-  }
-];
-export const roletypeactionDelete: BodTableAction[] = [
-  {
-    id: 1,
-    icon: 'trash',
-    label: 'delete',
-    mostCommon: true
-  }
-];
-export const editDeleteActions: BodTableAction[] = [
-  {
-    id: 4,
-    icon: 'edit',
-    label: 'Edit',
-    mostCommon: true
+    "identifier": 99800000000002,
+    "code": "CashTransactionTax",
+    "taxTypeIdentifier": 99800000000001,
+    "region": "Wisconsin",
+    "partyClassification": "Individual",
+    "rate": 25,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
   },
   {
-    id: 1,
-    icon: 'trash',
-    label: 'delete',
-    mostCommon: true
+    "identifier": 99800000002402,
+    "code": "TAX23572829",
+    "taxTypeIdentifier": 99800000002401,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002404,
+    "code": "TAX8232054",
+    "taxTypeIdentifier": 99800000002403,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001714,
+    "code": "TAX50504655",
+    "taxTypeIdentifier": 280000000001713,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001718,
+    "code": "TAX0164730",
+    "taxTypeIdentifier": 280000000001717,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 110000000004,
+    "code": "RSPFederalTax",
+    "taxTypeIdentifier": 110000000004,
+    "region": null,
+    "partyClassification": "Federal",
+    "rate": 20,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002513,
+    "code": "FatcaTax27480",
+    "taxTypeIdentifier": 99800000002512,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002522,
+    "code": "FatcaTax68329",
+    "taxTypeIdentifier": 99800000002521,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001703,
+    "code": "TAX22382424",
+    "taxTypeIdentifier": 280000000001702,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001705,
+    "code": "TAX598222",
+    "taxTypeIdentifier": 280000000001704,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002102,
+    "code": "FatcaTax7468",
+    "taxTypeIdentifier": 99800000002101,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002502,
+    "code": "TAX41175657",
+    "taxTypeIdentifier": 99800000002501,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002505,
+    "code": "FatcaTax63791",
+    "taxTypeIdentifier": 99800000002504,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002511,
+    "code": "FatcaTax52178",
+    "taxTypeIdentifier": 99800000002503,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002821,
+    "code": "aaaa",
+    "taxTypeIdentifier": 110000000001,
+    "region": null,
+    "partyClassification": null,
+    "rate": 1,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000002002,
+    "code": "TAX4356389",
+    "taxTypeIdentifier": 280000000002001,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002622,
+    "code": "TAX5538138",
+    "taxTypeIdentifier": 99800000002621,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001712,
+    "code": "TAX4435631",
+    "taxTypeIdentifier": 280000000001711,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001720,
+    "code": "TAX3415141",
+    "taxTypeIdentifier": 280000000001719,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001802,
+    "code": "TAX2446345",
+    "taxTypeIdentifier": 280000000001801,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 280000000001902,
+    "code": "TAX420148",
+    "taxTypeIdentifier": 280000000001901,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 110000000001,
+    "code": "FederalTax",
+    "taxTypeIdentifier": 110000000001,
+    "region": null,
+    "partyClassification": "Federal",
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 110000000003,
+    "code": "FATCATax",
+    "taxTypeIdentifier": 110000000003,
+    "region": null,
+    "partyClassification": "FATCA",
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002104,
+    "code": "FatcaTax83266",
+    "taxTypeIdentifier": 99800000002103,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002106,
+    "code": "FatcaTax7982",
+    "taxTypeIdentifier": 99800000002105,
+    "region": "Arkansas",
+    "partyClassification": null,
+    "rate": 30,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 50,
+    "currencyIdentifier": 0
+  },
+  {
+    "identifier": 99800000002922,
+    "code": "FATCATaxSDK",
+    "taxTypeIdentifier": 110000000003,
+    "region": null,
+    "partyClassification": "Organization",
+    "rate": 1,
+    "taxAmount": 100,
+    "thresholdTaxAmount": 9000,
+    "currencyIdentifier": 100000000001
+  },
+  {
+    "identifier": 280000000001716,
+    "code": "TAX851810",
+    "taxTypeIdentifier": 280000000001715,
+    "region": null,
+    "partyClassification": null,
+    "rate": 24,
+    "taxAmount": 0,
+    "thresholdTaxAmount": 0,
+    "currencyIdentifier": 0
   }
-];
-
+]
