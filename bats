@@ -114,9 +114,6 @@
 
 
 
-
-
-
 import {
   ChangeDetectorRef,
   Component,
@@ -422,6 +419,16 @@ submitForm(isAdd: boolean) {
   const productTypeKeys = this.metadataService.getProductTypeKeys();
   const productTypeValues = this.metadataService.getProductTypeValues();
 
+  // Get period type data
+  const periodTypeList = this.periodTypeRef?.getCurrentTablePeriodType() || [];
+  // Set to null if empty
+  const productElementCounterTypePeriodList = periodTypeList.length === 0 ? null : periodTypeList.map(period => ({
+    productTypeIdentifier: productTypeValues[0], // or map for each product type if needed
+    counterIdentifier: formValue.counterIdentifier,
+    periodType: period.periodType,
+    isCalculate: period.isCalculated ? 'Y' : 'N'
+  }));
+
   // Build the new structure
   const counterDetailList = [{
     counterType: {
@@ -436,12 +443,7 @@ submitForm(isAdd: boolean) {
       counterCode: formValue.counterCode,
       ruleCheck: formValue.rulecheck ? 'Y' : 'N'
     })),
-    productElementCounterTypePeriodList: (this.periodTypeRef?.getCurrentTablePeriodType() || []).map(period => ({
-      productTypeIdentifier: productTypeValues[0], // or map for each product type if needed
-      counterIdentifier: formValue.counterIdentifier,
-      periodType: period.periodType,
-      isCalculate: period.isCalculated ? 'Y' : 'N'
-    }))
+    productElementCounterTypePeriodList // <-- use null if empty
   }];
 
   const counterData = {
@@ -610,7 +612,6 @@ submitForm(isAdd: boolean) {
 
 
 
-
 export interface CounterList {
   identifier?: number;
   code?: string;
@@ -619,6 +620,7 @@ export interface CounterList {
   ruleCheck?: string;
   counterInquiry?: CounterInquiry[];
   periodTypeList?: PeriodTypeItem[];
+  sourceType?: 'ADD_EDIT' | 'EXISTING';
 }
 
 export interface CounterInquiry {
@@ -656,14 +658,3 @@ export interface ProductType {
   identifier: number;
   code: string;
 }
-
-
-
-
-
-
-
-
-
-
-
