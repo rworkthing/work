@@ -1,517 +1,561 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+<form [formGroup]="formGroup">
+    <bod-table
+      #countersMultiselectTable
+      [data]="countersDataSingleSelect"
+      (onRowSelect)="rowSelection($event)"
+      [rowSelectionStrategy]="rowSelectionStrategy"
+      [allowSelectAll]="allowRowSelection"
+      [alignContent]="'top'"
+      [customColumnTemplates]="[
+        { columnName: 'operatorType', templateName: operatorTypeTemplate }
+      ]"
+      [modeOptions]="{selection: true }"
+    >
+    
+      <ng-template
+        #operatorTypeTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
+      >
+      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+        <mat-select
+          [formControlName]="'operatorType_' + (element.id ?? index)"
+          (selectionChange)="onOperatorTypeChange(element, $event.value)"
+          panelClass="fis-style"
+          name="operatorType"
+          (click)="$event.stopPropagation()"
+        >
+            <mat-option *ngFor="let option of operatorTypeOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="formGroup.get('operatorType_' + (element.id ?? index))?.hasError('required') && formGroup.get('operatorType_' + (element.id ?? index))?.touched">
+            Required field
+          </mat-error>
+        </mat-form-field>
+      </ng-template>
+    </bod-table>
+    </form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup, Validators } from '@angular/forms';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Counters } from '../../transaction-type.model';
 import {
-  Column,
-  ColumnType,
-  InquiryLayoutInput,
-  UIContextService
+  BOD_DATE_RANGE,
+  BodAutoCompleteModule,
+  BodCommonDialogModel,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableFilterType,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule,
+  SelectPageMode
 } from '@bod/common';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { AggregateSampleTable } from './add-edit-balancetype/balancetype.model';
-import { BalanceTypeList } from './add-edit-balancetype/add-edit-balancetype.mode';
-import { DataSharingService } from '../data-sharing-service.service';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
 
-@Injectable({
-  providedIn: 'root'
+@Component({
+  selector: 'bod-counters-multiselect-table',
+  standalone: true,
+  imports: [
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './counters-multiselect-table.component.html',
+  styleUrl: './counters-multiselect-table.component.scss'
 })
-export class BalanceTypeService {
-  private accntClssUrl = '';
-  private roleTypeUrl = '';
-  private postmethodUrl = '';
-  private productTypeUrl = '';
-  private balTypeUrl = '';
-  private balSubTypeUrl = '';
-  private pstgSTDUrl = '';
-  private saveUrl = '';
-  private retrieveUrl = '';
-  private deleteUrl = '';
-  private updateUrl = '';
-  private rltnpUrl = '';
-  private baseUrl = '';
-  private retrieveAllUrl = '';
+export class CountersMultiselectTableComponent implements OnInit, OnChanges {
 
-  private currentStatus: string = 'NEW';
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
 
-  businessProductLine: any[] = [];
-  private reqDfnId = '';
-  private clientCode = '';
-  private countryCode = '';
-  private productLines: any[] = [];
-  private productTypes: any[] = [];
+  @Input() countersDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Counters[] = [];
+  @Output() rowSelected = new EventEmitter<Counters[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  @Output() dirtyChange = new EventEmitter<boolean>();
+  @Input() formGroup: UntypedFormGroup;
+
+  @ViewChild('countersMultiselectTable', { static: false })
+  countersTable: BodTableComponent;
+
+  private isDirty = false;
+
+  classificationTypeOptions = [
+    { label: 'Internal', value: 'Internal' },
+    { label: 'External', value: 'External' },
+    { label: 'Mixed', value: 'Mixed' }
+  ];
+
+  operatorTypeOptions = [
+    { label: 'Increment', value: 'Increment' },
+    { label: 'Decrement', value: 'Decrement' },
+    { label: 'Reset', value: 'Reset' }
+  ];
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectCountersRows(), 0);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+      setTimeout(() => this.selectCountersRows(), 0);
+    }
+  }
+
+  public selectCountersRows(): void {
+    const tableData = this.countersDataSingleSelect?.datasource?.data || [];
+    const selection = this.countersTable?.selection;
+
+    if (!selection || tableData.length === 0) {
+      return;
+    }
+
+    selection.clear();
+
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.identifier === dataRow.identifier
+      );
+      if (match) {
+        selection.select(dataRow);
+      }
+    });
+  }
+
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
 
   constructor(
-    private http: HttpClient,
-    private uiContextService: UIContextService,
-    private readonly dataSharingService: DataSharingService
-  ) {
-    let url =
-      this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap
-        .sdkServiceUrl.value;
+    private fb: FormBuilder,
+    private transactionTypeService: TransactionTypeService
+  ) { }
 
-    this.dataSharingService.data$.subscribe(data => {
-      if (data) {
-        this.reqDfnId = data.reqDfnId;
-        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
-        this.countryCode = data.countryCode;
-        this.clientCode = data.countryCode;
-        this.productLines = [
-          ...new Set(this.businessProductLine.map(obj => obj.value))
-        ];
-        this.productTypes = [
-          ...new Set(this.businessProductLine.map(obj => obj.type))
-        ];
-        this.accntClssUrl = url + '/basedata/accountclassification';
-        this.roleTypeUrl = url + '/basedata/roletype';
-        this.postmethodUrl = url + '/basedata/postingapplmethod';
-        this.productTypeUrl = url + '/basedata/producttype';
-        this.balTypeUrl = url + '/basedata/baltype';
-        this.balSubTypeUrl = url + '/basedata/balsubtype';
-        this.pstgSTDUrl = url + '/basedata/pstgstd';
-        this.baseUrl = url ?? '';
-        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
-        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
-        this.rltnpUrl = url + '/basedata/rltnptypebyproducttype/1110101';
+  ngOnInit() {
+    this.defaultForm = this.fb.group({});
+  }
 
-        this.retrieveUrl =
-          url +
-          '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=BalanceType';
-        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
-        this.retrieveAllUrl =
-          url +
-          '/metadata/retrieve/' +
-          this.reqDfnId;
+  public onClassificationTypeChange(element: any, value: string) {
+    element.classificationType = value;
+    this.setDirty(true);
+  }
+
+  public onOperatorTypeChange(element: any, value: string) {
+    element.operatorType = value;
+    this.setDirty(true);
+  }
+
+  private loadCounterData() {
+    this.transactionTypeService.getCounters().subscribe((counters: any[]) => {
+      this.countersDataSingleSelect.datasource.data = counters.map((item: any, index: number) => ({
+        id: index + 1,
+        code: item.code,
+        classificationType: '',
+        operatorType: '',
+        default: false
+      }));
+    });
+  }
+
+  public resetSelection() {
+    if (this.countersTable?.selection) {
+      this.countersTable.selection.clear();
+    }
+    this.selectedRowSingleSelect = [];
+    this.setDirty(false);
+  }
+
+  public rowSelectionSingleSelect(element: Counters[]) {
+    console.log('rowSelectionSingleSelect called with:', element);
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    this.dirtyChange.emit(true);
+  }
+
+  public rowSelection(element: Counters[]) {
+    console.log('rowSelection called with:', element);
+    if (element.length !== 0) {
+      this.selectedRowSingleSelect = element;
+    } else {
+      this.selectedRowSingleSelect = [];
+    }
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    this.dirtyChange.emit(true);
+    console.log('Counters selectedRowSingleSelect:', this.selectedRowSingleSelect);
+
+    // Dynamically update validators for selected rows only
+    this.updateValidatorsForSelectedRows();
+  }
+
+  private updateValidatorsForSelectedRows() {
+    if (!this.formGroup) return;
+    const controls = this.formGroup.controls;
+
+    // Remove required validator from all controls
+    Object.keys(controls).forEach(key => {
+      if (key.startsWith('operatorType_')) {
+        controls[key].clearValidators();
+        controls[key].updateValueAndValidity({ emitEvent: false });
+      }
+    });
+
+    // Add required validator only for selected rows
+    (this.selectedRowSingleSelect || []).forEach(row => {
+      const controlName = 'operatorType_' + (row.id ?? '');
+      if (controls[controlName]) {
+        controls[controlName].setValidators([Validators.required]);
+        controls[controlName].updateValueAndValidity({ emitEvent: false });
       }
     });
   }
 
-   retrieveAll(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<any[]>(this.retrieveAllUrl, { headers }).pipe(
-      tap((response: any) => {
-        // Store the status for later use
-        const firstStatus = response?.data && response.data.length > 0 && response.data[0]?.MetadataStatus
-          ? response.data[0].MetadataStatus
-          : 'NEW';
-        this.currentStatus = firstStatus;
-      })
-    );
-  }
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    const data = [...this.countersDataSingleSelect.datasource.data];
+    const row = data.find(r => r.index === rowIndex);
 
-  updateCurrentStatus(status: string): void {
-    this.currentStatus = status;
-  }
-  createHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'country-code': this.countryCode,
-      'client-code': this.clientCode,
-      'product-line': this.productLines,
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID(),
-      'requirement-id': this.reqDfnId
+    if (!row) return;
+
+    if (event.checked) {
+      data.forEach(item => {
+        item.default = item.index === rowIndex;
+      });
+    } else {
+      row.default = false;
+    }
+
+    this.countersDataSingleSelect.datasource.data = data;
+
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
     });
   }
 
-  private getCreateUrlWithStatus(status: string): string {
-    return `${this.baseUrl}/metadata/create/${this.reqDfnId}?status=${status}`;
+  private setDirty(dirty: boolean) {
+    this.isDirty = dirty;
+    this.dirtyChange.emit(this.isDirty);
   }
-
-  saveBalanceType(request: any, status?: string): Observable<any> {
-    const headers = this.createHeaders();
-    // Use provided status or fall back to stored status
-    const statusToUse = status || this.currentStatus;
-    const url = this.getCreateUrlWithStatus(statusToUse);
-    return this.http.post(url, request, { headers });
-  }
-
-  getAccntClassification(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.accntClssUrl}`, { headers });
-  }
-  getRoletype(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.roleTypeUrl}`, { headers });
-  }
-  getPostMethod(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.postmethodUrl}`, { headers });
-  }
-  getProductType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.productTypeUrl}`, { headers });
-  }
-  getBalanceType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.balTypeUrl}`, { headers });
-  }
-  getSubBalanceType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.balSubTypeUrl}`, { headers });
-  }
-
-  getPostingSTD(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get(`${this.pstgSTDUrl}`, { headers });
-  }
-  getRelationshipType(): Observable<any> {
-    const headers = this.createHeaders();
-
-    return this.http.get(`${this.rltnpUrl}`, { headers });
-  }
-
-  // saveBalanceType(request: any): Observable<any> {
-  //   const headers = this.createHeaders();
-  //   return this.http.post(this.saveUrl, request, { headers });
-  // }
-
-  retrieveBalanceType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<BalanceTypeList[]>(this.retrieveUrl, { headers });
-  }
-  deleteBalanceType(
-    metadataConfigType: string,
-    metadataConfigIdfr: number
-  ): Observable<any> {
-    const headers = this.createHeaders();
-    const params = {
-      'metadata-config-type': metadataConfigType,
-      'metadata-config-idfr': metadataConfigIdfr
-    };
-
-    return this.http.delete(this.deleteUrl, { headers, params });
-  }
-  updateBalanceType(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.put(this.updateUrl, request, { headers });
-  }
-
-  generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0,
-          v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }
-    );
-  }
-
-  public getExpandedaggregateData(
-    element: AggregateSampleTable
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.aggregates.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.aggregates[i].id,
-        label: element.aggregates[i].label,
-        value: element.aggregates[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public getAggregateData(
-    element: BalanceTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.aggregateInquiry1.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.aggregateInquiry1[i].id,
-        label: element.aggregateInquiry1[i].label,
-        value: element.aggregateInquiry1[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public getBalanceTypeData(
-    element: BalanceTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.balTypeInquiry.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.balTypeInquiry[i].id,
-        label: element.balTypeInquiry[i].label,
-        value: element.balTypeInquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public getBalanceTypePrdtReltnData(
-    element: BalanceTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.prdttpReltnData.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.prdttpReltnData[i].id,
-        label: element.prdttpReltnData[i].label,
-        value: element.prdttpReltnData[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-  public getAddtnlReltns(
-    element: BalanceTypeList
-  ): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.prdtBalSubType.length; i++) {
-      //setIsLink = !setIsLink;
-      groups.push({
-        id: element.prdtBalSubType[i].id,
-        label: element.prdtBalSubType[i].label,
-        value: element.prdtBalSubType[i].value,
-        isLink: setIsLink
-      });
-    }
-
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-
-    return $groups;
-  }
-
-  public columns: Column[] = [
-    {
-      name: 'code',
-      title: 'Balance Types',
-      truncate: true,
-      noOverflow: true,
-      width: 70,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-
-  public balanceSubTypeColumn: Column[] = [
-    {
-      name: 'code',
-      title: 'Code',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'name',
-      title: 'Name',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    // {
-    //   name: 'identifier',
-    //   title: 'Identifier',
-    //   truncate: true,
-    //   noOverflow: true,
-    //   width: 10,
-    //   widthUnit: 'rem'
-    // },
-
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-
-  public addtnlRelationColmn: Column[] = [
-    {
-      name: 'id',
-      title: 'ID',
-      truncate: true,
-      noOverflow: true,
-      width: 12,
-      widthUnit: 'rem',
-      inputModeOptions: {
-        type: ColumnType.select
-      }
-    },
-    {
-      name: 'value',
-      title: 'Value',
-      truncate: true,
-      noOverflow: true,
-      width: 12,
-      widthUnit: 'rem',
-      inputModeOptions: {
-        type: ColumnType.select
-      }
-    },
-    { name: 'actionBtns', title: ' ', hasAction: true }
-  ];
-  public roletypecolumns: Column[] = [
-    {
-      name: 'type',
-      title: 'Type',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'accountingClassification',
-      title: 'Accounting Classification',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'obligator',
-      title: 'Obligator',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'beneficiary',
-      title: 'Beneficiary',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'visibility',
-      title: 'Visibility',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-  public roletypecolumns1: Column[] = [
-    {
-      name: 'type',
-      title: 'Type',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-
-  public aggregatecolmn: Column[] = [
-    {
-      name: 'aggregationname',
-      title: 'Aggregation Name',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'balancetype',
-      title: 'Balance Type ',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'aggregationLevel',
-      title: 'Aggregation Level',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'relationshiptype',
-      title: 'Relationship Type',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-  public postingAppcolumn: Column[] = [
-    {
-      name: 'postingapplicationmethod',
-      title: 'Posting Application Method',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'postingapplicationtype',
-      title: 'Posting Application Type',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'customizationtype',
-      title: 'Customization Type',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'instructionorder',
-      title: 'Instruction Order',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
 }
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<bod-form
+  [formGroup]="addCountersFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
+>
+<div
+    style="
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 8px;
+    "
+  >
+    <button
+      mat-icon-button
+      type="button"
+      (click)="dialogRef.close()"
+      aria-label="Close"
+    >
+      <mat-icon>x</mat-icon>
+    </button>
+  </div>
+  <bod-counters-multiselect-table
+    #countersTable
+    [countersDataSingleSelect]="data.countersDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addCountersFormGroup"
+  ></bod-counters-multiselect-table>
+</bod-form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { CountersMultiselectTableComponent } from '../counters-multiselect-table/counters-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Counters, CounterTable } from '../../transaction-type.model';
+
+@Component({
+  selector: 'bod-counters-multiselect-dialog',
+  standalone: true,
+  imports: [
+    CountersMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './counters-multiselect-dialog.component.html',
+  styleUrls: ['./counters-multiselect-dialog.component.scss']
+})
+export class CountersMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('countersTable', { static: false }) countersTable: CountersMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<CounterTable[]>();
+  public initialSelectedRows: Counters[] = [];
+  selectedRows: Counters[] = [];
+  public addCountersFormGroup: UntypedFormGroup;
+  isDirty = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<CountersMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
+    // Store initial selection for reset
+    this.initialSelectedRows = [...(data.selectedRowSingleSelect || [])];
+    this.selectedRows = [...this.initialSelectedRows];
+  }
+
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.countersDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+     
+      controls['operatorType_' + row.id] = [row.operatorType || null];
+    });
+    this.addCountersFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['counterData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isTableDirty = true;
+    this.addCountersFormGroup.markAsDirty();
+  }
+
+  public isTableDirty = false;
+  @Output() tableDirty = new EventEmitter<void>(); // <-- ADD THIS
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addCountersFormGroup.markAsDirty();
+    this.tableDirty.emit();
+  }
+
+  onRowSelected(selectedRows: Counters[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.addCountersFormGroup.markAsDirty(); // <-- Add this line
+    // this.initForm();
+  }
+
+  onSubmit() {
+    if (this.addCountersFormGroup.invalid) {
+      this.addCountersFormGroup.markAllAsTouched();
+      return; // Prevent closing the dialog
+    }
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedCounters: this.selectedRows });
+  }
+
+ onReset() {
+  this.isDirty = false;
+  // Restore to initial selection instead of clearing all
+  this.selectedRows = [...this.initialSelectedRows];
+
+  // Use identifier for matching
+  Object.keys(this.addCountersFormGroup.controls).forEach(key => {
+    const rowId = Number(key.replace('operatorType_', ''));
+    // Find the table row by id
+    const tableRow = this.data.countersDataSingleSelect?.datasource?.data.find(row => row.id === rowId);
+    // Find the initial row by identifier
+    const initialRow = this.initialSelectedRows.find(row => row.identifier === tableRow?.identifier);
+    this.addCountersFormGroup.get(key)?.setValue(initialRow ? initialRow.operatorType : null);
+  });
+
+  // Also clear selection in the child table and re-select initial rows
+  if (this.countersTable) {
+    this.countersTable.resetSelection();
+    setTimeout(() => {
+      this.countersTable.selectedRowSingleSelect = [...this.initialSelectedRows];
+      this.countersTable.selectCountersRows?.();
+    }, 0);
+  }
+}
+}
