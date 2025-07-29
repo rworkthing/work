@@ -1,310 +1,491 @@
-[
-  {
-    "identifier": 99800000002921,
-    "code": "SDKTAX",
-    "taxTypeIdentifier": 110000000001,
-    "region": null,
-    "partyClassification": "Organization",
-    "rate": 10,
-    "taxAmount": 90,
-    "thresholdTaxAmount": 10000,
-    "currencyIdentifier": 100000000001
-  },
-  {
-    "identifier": 99800000000002,
-    "code": "CashTransactionTax",
-    "taxTypeIdentifier": 99800000000001,
-    "region": "Wisconsin",
-    "partyClassification": "Individual",
-    "rate": 25,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002402,
-    "code": "TAX23572829",
-    "taxTypeIdentifier": 99800000002401,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002404,
-    "code": "TAX8232054",
-    "taxTypeIdentifier": 99800000002403,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001714,
-    "code": "TAX50504655",
-    "taxTypeIdentifier": 280000000001713,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001718,
-    "code": "TAX0164730",
-    "taxTypeIdentifier": 280000000001717,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 110000000004,
-    "code": "RSPFederalTax",
-    "taxTypeIdentifier": 110000000004,
-    "region": null,
-    "partyClassification": "Federal",
-    "rate": 20,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002513,
-    "code": "FatcaTax27480",
-    "taxTypeIdentifier": 99800000002512,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002522,
-    "code": "FatcaTax68329",
-    "taxTypeIdentifier": 99800000002521,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001703,
-    "code": "TAX22382424",
-    "taxTypeIdentifier": 280000000001702,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001705,
-    "code": "TAX598222",
-    "taxTypeIdentifier": 280000000001704,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002102,
-    "code": "FatcaTax7468",
-    "taxTypeIdentifier": 99800000002101,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002502,
-    "code": "TAX41175657",
-    "taxTypeIdentifier": 99800000002501,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002505,
-    "code": "FatcaTax63791",
-    "taxTypeIdentifier": 99800000002504,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002511,
-    "code": "FatcaTax52178",
-    "taxTypeIdentifier": 99800000002503,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002821,
-    "code": "aaaa",
-    "taxTypeIdentifier": 110000000001,
-    "region": null,
-    "partyClassification": null,
-    "rate": 1,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000002002,
-    "code": "TAX4356389",
-    "taxTypeIdentifier": 280000000002001,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002622,
-    "code": "TAX5538138",
-    "taxTypeIdentifier": 99800000002621,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001712,
-    "code": "TAX4435631",
-    "taxTypeIdentifier": 280000000001711,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001720,
-    "code": "TAX3415141",
-    "taxTypeIdentifier": 280000000001719,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001802,
-    "code": "TAX2446345",
-    "taxTypeIdentifier": 280000000001801,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 280000000001902,
-    "code": "TAX420148",
-    "taxTypeIdentifier": 280000000001901,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 110000000001,
-    "code": "FederalTax",
-    "taxTypeIdentifier": 110000000001,
-    "region": null,
-    "partyClassification": "Federal",
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 110000000003,
-    "code": "FATCATax",
-    "taxTypeIdentifier": 110000000003,
-    "region": null,
-    "partyClassification": "FATCA",
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002104,
-    "code": "FatcaTax83266",
-    "taxTypeIdentifier": 99800000002103,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002106,
-    "code": "FatcaTax7982",
-    "taxTypeIdentifier": 99800000002105,
-    "region": "Arkansas",
-    "partyClassification": null,
-    "rate": 30,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 50,
-    "currencyIdentifier": 0
-  },
-  {
-    "identifier": 99800000002922,
-    "code": "FATCATaxSDK",
-    "taxTypeIdentifier": 110000000003,
-    "region": null,
-    "partyClassification": "Organization",
-    "rate": 1,
-    "taxAmount": 100,
-    "thresholdTaxAmount": 9000,
-    "currencyIdentifier": 100000000001
-  },
-  {
-    "identifier": 280000000001716,
-    "code": "TAX851810",
-    "taxTypeIdentifier": 280000000001715,
-    "region": null,
-    "partyClassification": null,
-    "rate": 24,
-    "taxAmount": 0,
-    "thresholdTaxAmount": 0,
-    "currencyIdentifier": 0
+<form [formGroup]="formGroup">
+    <bod-table
+      #restrictionsMultiselectTable
+      [data]="restrictionsDataSingleSelect"
+      (onRowSelect)="rowSelection($event)"
+      [rowSelectionStrategy]="rowSelectionStrategy"
+      [allowSelectAll]="allowRowSelection"
+      [alignContent]="'top'"
+      [customColumnTemplates]="[
+        { columnName: 'type', templateName: typeTemplate }
+      ]"
+      [modeOptions]="{selection: true }"
+    >
+    
+    <ng-template
+    #typeTemplate
+    let-element="element"
+    let-column="column"
+    let-index="index"
+  >
+    <!-- Show as readonly text instead of dropdown -->
+    <span style="padding-left: 8px; font-weight: 500;">
+      {{ element.type || 'ERROR' }}
+    </span>
+  </ng-template>
+    </bod-table>
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Restrictions } from '../../transaction-type.model';
+import {
+  BOD_DATE_RANGE,
+  BodAutoCompleteModule,
+  BodCommonDialogModel,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDateRange,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionType,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableFilterType,
+  BodTableMetadata,
+  BodTableModule,
+  CommonDialogComponent,
+  ControlGroupModule,
+  DirectivesModule,
+  EditTableAction,
+  InlineEditOutput,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  RowLeftAction,
+  SearchFieldModule,
+  SectionContainerModule,
+  SelectPageMode
+} from '@bod/common';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
+
+@Component({
+  selector: 'bod-restrictions-multiselect-table',
+  standalone: true,
+  imports: [
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './restrictions-multiselect-table.component.html',
+  styleUrl: './restrictions-multiselect-table.component.scss'
+})
+export class RestrictionsMultiselectTableComponent implements OnInit, OnChanges {
+
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+
+  @Input() restrictionsDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Restrictions[] = [];
+  @Output() rowSelected = new EventEmitter<Restrictions[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  @Output() dirtyChange = new EventEmitter<boolean>();
+  @Input() formGroup: UntypedFormGroup;
+
+  @ViewChild('restrictionsMultiselectTable', { static: false })
+  restrictionsTable: BodTableComponent;
+
+  private isDirty = false;
+
+  typeOptions = [
+    { label: 'ERROR', value: 'ERROR' }, 
+    { label: ' ', value: ' ' }
+  ];
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectRestrictionsRows(), 0);
   }
-]
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+      setTimeout(() => this.selectRestrictionsRows(), 0);
+    }
+  }
+
+  public selectRestrictionsRows(): void {
+  const tableData = this.restrictionsDataSingleSelect?.datasource?.data || [];
+  const selection = this.restrictionsTable?.selection;
+
+  if (!selection || tableData.length === 0) {
+    return;
+  }
+
+  selection.clear();
+
+  tableData.forEach(dataRow => {
+    const match = this.selectedRowSingleSelect.find(
+      sel => sel.identifier === dataRow.identifier // <-- use identifier
+    );
+    if (match) {
+      selection.select(dataRow);
+    }
+  });
+}
+
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
+
+  constructor(
+    private fb: FormBuilder,
+    private transactionTypeService: TransactionTypeService
+  ) { }
+
+  ngOnInit() {
+    this.defaultForm = this.fb.group({});
+  }
+
+  public onTypeChange(element: any, value: string) {
+    element.type = value;
+    this.setDirty(true);
+  }
+
+  private loadRestrictionData() {
+    this.transactionTypeService.getRestrictions().subscribe((restrictions: any[]) => {
+      this.restrictionsDataSingleSelect.datasource.data = restrictions.map((item: any, index: number) => ({
+        id: index + 1,
+        code: item.code,
+        type: 'ERROR', // Default to ERROR
+        default: false
+      }));
+    });
+  }
+
+  public resetSelection() {
+    if (this.restrictionsTable?.selection) {
+      this.restrictionsTable.selection.clear();
+    }
+    this.selectedRowSingleSelect = [];
+    this.setDirty(false);
+  }
+
+  public rowSelectionSingleSelect(element: Restrictions[]) {
+    console.log('rowSelectionSingleSelect called with:', element);
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+  }
+
+  public rowSelection(element: Restrictions[]) {
+    console.log('rowSelection called with:', element);
+    if (element.length !== 0) {
+      this.selectedRowSingleSelect = element;
+    } else {
+      this.selectedRowSingleSelect = [];
+    }
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    console.log('Restrictions selectedRowSingleSelect:', this.selectedRowSingleSelect);
+  }
+
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    const data = [...this.restrictionsDataSingleSelect.datasource.data];
+    const row = data.find(r => r.index === rowIndex);
+
+    if (!row) return;
+
+    if (event.checked) {
+      data.forEach(item => {
+        item.default = item.index === rowIndex;
+      });
+    } else {
+      row.default = false;
+    }
+
+    this.restrictionsDataSingleSelect.datasource.data = data;
+
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
+    });
+  }
+
+  private setDirty(dirty: boolean) {
+    this.isDirty = dirty;
+    this.dirtyChange.emit(this.isDirty);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+<bod-form
+  [formGroup]="addRestrictionsFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
+>
+<div
+    style="
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 8px;
+    "
+  >
+    <button
+      mat-icon-button
+      type="button"
+      (click)="dialogRef.close()"
+      aria-label="Close"
+    >
+      <mat-icon>x</mat-icon>
+    </button>
+  </div>
+  <bod-restrictions-multiselect-table
+    #restrictionsTable
+    [restrictionsDataSingleSelect]="data.restrictionsDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addRestrictionsFormGroup"
+  ></bod-restrictions-multiselect-table>
+</bod-form>
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { RestrictionsMultiselectTableComponent } from '../restrictions-multiselect-table/restrictions-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Restrictions, RestrictionTable } from '../../transaction-type.model';
+
+@Component({
+  selector: 'bod-restrictions-multiselect-dialog',
+  standalone: true,
+  imports: [
+    RestrictionsMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './restrictions-multiselect-dialog.component.html',
+  styleUrls: ['./restrictions-multiselect-dialog.component.scss']
+})
+export class RestrictionsMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('restrictionsTable', { static: false }) restrictionsTable: RestrictionsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<RestrictionTable[]>();
+
+  public initialSelectedRows: Restrictions[] = [];
+  selectedRows: Restrictions[] = [];
+  public addRestrictionsFormGroup: UntypedFormGroup;
+  isDirty = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<RestrictionsMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
+    this.initialSelectedRows = [...(data.selectedRowSingleSelect || [])];
+    this.selectedRows = [...this.initialSelectedRows];
+  }
+
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.restrictionsDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+     
+      controls['type_' + row.id] = [row.type || 'ERROR'];
+    });
+    this.addRestrictionsFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['restrictionData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isDirty = dirty;
+    if (dirty) {
+      this.addRestrictionsFormGroup.markAsDirty();
+    }
+  }
+
+  public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addRestrictionsFormGroup.markAsDirty();
+  }
+
+  onRowSelected(selectedRows: Restrictions[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.addRestrictionsFormGroup.markAsDirty();
+    // this.initForm();
+  }
+
+  onSubmit() {
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedRestrictions: this.selectedRows });
+  }
+
+onReset() {
+    this.isDirty = false;
+    // Restore to initial selection instead of clearing all
+    this.selectedRows = [...this.initialSelectedRows];
+
+    // Reset form controls to initial values
+    Object.keys(this.addRestrictionsFormGroup.controls).forEach(key => {
+      const rowId = Number(key.replace('type_', ''));
+      const initialRow = this.initialSelectedRows.find(row => row.id === rowId);
+      this.addRestrictionsFormGroup.get(key)?.setValue(initialRow ? initialRow.type : 'ERROR');
+    });
+
+    // Also clear selection in the child table and re-select initial rows
+    if (this.restrictionsTable) {
+      this.restrictionsTable.resetSelection();
+      setTimeout(() => {
+        this.restrictionsTable.selectedRowSingleSelect = [...this.initialSelectedRows];
+        this.restrictionsTable.selectRestrictionsRows?.();
+      }, 0);
+    }
+  }
+}
+
