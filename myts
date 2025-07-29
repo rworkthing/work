@@ -1,1060 +1,42 @@
-<bod-message-container [messages]="errorMessages"></bod-message-container>
-<bod-form
-  [formGroup]="addNewBalanceTypeFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onAddNewBalanceType(isAdd)"
-  (onReset)="onReset(isAdd)"
-  fisStyle
->
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.code'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-    <div *ngIf="isEdit">
-      {{ addNewBalanceTypeFormGroup.get('balanceTypeCode')?.value }}
-    </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="balanceTypeCode"
-          name="balanceTypeCode"
-        />
-        
-        <mat-error>
-         {{ getError('balanceTypeCode', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error> 
-        <mat-error *ngIf="addNewBalanceTypeFormGroup.get('balanceTypeCode').hasError('noSpecialCharacters')">
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-   
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="balanceTypeName"
-          name="balanceTypeName"
-        />
-        <mat-error>
-          {{ getError('balanceTypeName', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.systembalance'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="systembalance"
-        name="systembalance"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.balancesubtype'"
-      [forTextOnly]="true"
-      [required]="false"
-      
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="balancesubtype"
-        name="balancesubtype"
-      
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-  <div *ngIf="addNewBalanceTypeFormGroup.get('balancesubtype').value" >
-    <bod-input-layout col="1">
-      <bod-table
-        #balanceSubTypetable
-        [data]="balanceSubTypeData"
-        [tableActions]="balanceSubTypeTableActions"
-        (onTableActionClick)="onValidTableActionClicked($event)"
-        [inlineModal]="{
-          addNewInlineRowTitle: 'New Balance Sub Type' | translate,
-          formGroup: balanceSubtypeForm,
-          formTemplateName: balanceSubtypeTemplate
-        }"
-        (onInlineFormAddSubmit)="onAddBalSubType(balanceSubtypeForm.value)"
-        (onInlineFormEditSubmit)="onAddBalSubType(balanceSubtypeForm.value)"
-        (onInlineEditRowActionClick)="inlineEditRowActionClick($event, 0)"
-        (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-        [customColumnTemplates]="[
-          {
-            columnName: 'actions',
-            templateName: deleteBalSubTypeTemplate
-          }
-        ]"
-        [alignContent]="'top'"
-      >
-        <ng-template
-          #deleteBalSubTypeTemplate
-          let-element="element"
-          let-column="column"
-          let-index="index"
-        >
-          <bod-table-actions
-            [actions]="rowLevelActionsForBasicEdit"
-            (onActionClick)="handleRowLevelActionsforBalSubType($event.icon, index)"
-          >
-          </bod-table-actions>
-        </ng-template>
-      </bod-table>
-      <form [formGroup]="balanceSubtypeForm">
-        <ng-template #balanceSubtypeTemplate>
-          <bod-input-layout col="2">
-            <bod-control-group
-              [truncate]="false"
-              [label]="translationKey + 'metadataconfig.code'"
-              [forTextOnly]="true"
-              [required]="true"
-            >
-              <mat-form-field appearance="outline" fisStyle>
-                <input
-                  type="text"
-                  matInput
-                  fisStyle
-                  formControlName="balancesubtypecode"
-                  name="balancesubtypecode"
-                />
-              </mat-form-field>
-            </bod-control-group>
-          
-            <bod-control-group
-              [truncate]="false"
-              [label]="translationKey + 'metadataconfig.name'"
-              [forTextOnly]="true"
-              [required]="true"
-            >
-              <mat-form-field appearance="outline" fisStyle>
-                <input
-                  type="text"
-                  matInput
-                  fisStyle
-                  formControlName="balancesubtypename"
-                  name="balancesubtypename"
-                />
-              </mat-form-field>
-            </bod-control-group>
-          </bod-input-layout>
-        </ng-template>
-      </form>
-    </bod-input-layout>
-  </div>
-
-
-  <bod-page-container title="Product Type Relationships"></bod-page-container>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.accountclassification'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="accountclassification"
-          name="accountclassification"
-        >
-          <mat-option
-            *ngFor="let accountclassification of accountclassifications"
-            [value]="accountclassification.value"
-          >
-            {{ accountclassification.label }}
-          </mat-option>
-        </mat-select>
-        
-        <mat-error>
-          {{ getError('accountclassification', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.datevalue'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="datevalue"
-          name="datevalue"
-        >
-          <mat-option *ngFor="let date of dateValues" [value]="date.value">
-            {{ date.label }}
-          </mat-option>
-        </mat-select>
-      
-        <mat-error>
-          {{ getError('datevalue', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.payer'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select panelClass="fis-style" formControlName="payer" name="payer">
-          <mat-option *ngFor="let payer of payers" [value]="payer.value">
-            {{ payer.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{ getError('payer', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.payee'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select panelClass="fis-style" formControlName="payee" name="payee">
-          <mat-option *ngFor="let payee of payees" [value]="payee.value">
-            {{ payee.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{ getError('payee', addNewBalanceTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.chargebase'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="chargebase"
-        name="chargebase"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.statementdisplay'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="statementdisplay"
-        name="statementdisplay"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.persisted'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="persisted"
-        name="persisted"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.calculated'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="calculated"
-        name="calculated"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.autocreation'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="autocreation"
-        name="autocreation"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-   
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.loghistory'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="loghistory"
-        name="loghistory"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.dailysnapshot'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="dailysnapshot"
-        name="dailysnapshot"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.summaryrequired'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="summaryrequired"
-        name="summaryrequired"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.inquiryrequired'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="inquiryrequired"
-        name="inquiryrequired"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.generatefinancialresults'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="generatefinancialresults"
-        name="generatefinancialresults"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.glmapping'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="glmapping"
-        name="glmapping"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-
-    <bod-page-container title="Additional Relationships"></bod-page-container>
-    <bod-input-layout [col]="1" >
-      <bod-control-group  label="{{ 'Balance Sub Type' | translate }}" [forTextOnly]="true" [required]="true">
-        <bod-auto-complete 
-        #nameElementRef  
-        formControlName="balsubtype"
-        name="balsubtype"
-          [data]="periodData1"
-          *ngIf="periodData1.options.length > 0"
-        >
-      </bod-auto-complete>
-      <mat-error *ngIf="balancesubtypeerr">
-        {{ getError('balsubtype',addNewBalanceTypeFormGroup) | translate }}
-      </mat-error>
-      </bod-control-group>
-    </bod-input-layout>
-    <bod-input-layout [col]="1">
-      <bod-control-group [truncate]="truncate" label="{{ 'Balance Period Type' | translate }}" [forTextOnly]="true" [required]="false">
-                    <bod-auto-complete 
-        #nameElementRef  
-        formControlName="balperiodtype"
-        name="balperiodtype"
-          name="autoCompleteFieldMultiConv1"
-          [data]="periodData"
-        ></bod-auto-complete>
-      </bod-control-group>
-    </bod-input-layout>
- 
- 
-   
-    <!-- This is related to multi select input dropdown
+<form [formGroup]="formGroup">
     <bod-table
-      #additionalRelationships
-      [data]="additionalRelationData"
-      [modeOptions]="modeOptions"
-      [tableActions]="additionalRelationActions"
-      (onTableActionClick)="onRelationTableActionClicked($event)"
-      [primaryColumnName]="'id'"
-      [truncateAfterLine]="1"
-      (editTableEvent)="onEditTableAction($event)"
+      #conditionsMultiselectTable
+      [data]="conditionsDataSingleSelect"
+      (onRowSelect)="rowSelection($event)"
+      [rowSelectionStrategy]="rowSelectionStrategy"
+      [allowSelectAll]="allowRowSelection"
+      [alignContent]="'top'"
       [customColumnTemplates]="[
-        {
-          columnName: 'id',
-          templateName: additionalRelationTemplate
-        },
-        {
-          columnName: 'value',
-          templateName: valueTemplate
-        },
-        {
-          columnName: 'actionBtns',
-          templateName: actionBtnsTemplate
-        }
+        { columnName: 'relationshipType', templateName: relationshipTypeTemplate }
       ]"
-    > -->
-      <!-- <ng-template
-        #additionalRelationTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-        <form [formGroup]="additionalRelationIDForm">
-          <bod-input-layout col="1">
-            <mat-form-field appearance="outline" fisStyle>
-              <mat-select
-                panelClass="fis-style"
-                [formControl]="
-                  additionalRelationIDForm.controls[
-                    useExistingFormCtrlKeysId[index]
-                  ]
-                "
-                name="relationshipid"
-                (selectionChange)= "this.updateColumnData(
-                  'relationshipid',
-                  $event.value,
-                  index
-                )"
-               
-              >
-                <mat-option
-                  *ngFor="let item of additionalRelations"
-                  value="{{ item.value }}"
-                >
-                  {{ item.label }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </bod-input-layout>
-        </form>
-      </ng-template> -->
-
-      <!-- <ng-template
-        #valueTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      > -->
-     
-      <!-- <form [formGroup]="additionalRelationValueForm">
-        <bod-input-layout col="1">
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              [formControl]="
-                additionalRelationValueForm.controls[
-                  useExistingFormCtrlKeysValue[index]
-                ]
-              "
-              name="value"
-            >
-              <ng-container >
-                <mat-option
-                  *ngFor="let item of subBalancetypes2"
-                  [value]="item.value"
-                >
-                  {{ item.label }}
-                </mat-option>
-              </ng-container> 
-             </mat-select>
-          </mat-form-field>
-        </bod-input-layout>
-      </form> -->
-      <!-- </ng-template> -->
-      <!-- </form> -->
-      <!-- <form [formGroup]="additionalRelationValueForm" >
-        <bod-input-layout [col]="1">
-            <bod-auto-complete 
-            [formControl]="
-                additionalRelationValueForm.controls[
-                  useExistingFormCtrlKeysValue[index]
-                ]
-              "
-            #nameElementRef  
-              name="autoCompleteFieldMultiConv"
-              [data]="periodDataArr[index]"
-            ></bod-auto-complete>
-        </bod-input-layout>
-       
-      </form>   -->
-    <!-- </ng-template> -->
-
-      <!-- <ng-template
-        #actionBtnsTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-        <bod-table-actions
-          [actions]="rowLevelActionsForRelationshipedit"
-          (onActionClick)="deleteAddtnlRltnRow(index, element)"
-        >
-        </bod-table-actions>
-      </ng-template>
-    </bod-table> -->
-  <!-- </bod-input-layout> -->
-  <bod-message-container [messages]="errorMessages2"></bod-message-container>
-  <bod-table
-    #roletypetable
-    [data]="roleTypetabledata"
-    [tableActions]="roleTypetableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Role Type' | translate,
-      formGroup: roleTypeForm,
-      formTemplateName: roleTypeTemplate
-    }"
-    (onInlineFormAddSubmit)="onAdd(roleTypeForm.value)"
-    (onInlineFormEditSubmit)="onAdd(roleTypeForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
+      [modeOptions]="{selection: true }"
     >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforRoletype($event.icon, index)"
+    
+      <ng-template
+        #relationshipTypeTemplate
+        let-element="element"
+        let-column="column"
+        let-index="index"
       >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="roleTypeForm">
-    <ng-template #roleTypeTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.roletype'"
-          [forTextOnly]="true"
-          [required]="true"
+      <mat-form-field appearance="outline" fisStyle style="width: 120px;">
+        <mat-select
+          [formControlName]="'relationshipType_' + (element.id ?? index)"
+          (selectionChange)="onRelationshipTypeChange(element, $event.value)"
+          panelClass="fis-style"
+          name="relationshipType"
+          (click)="$event.stopPropagation()"
         >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="roletype"
-              name="roletype"
-            >
-              <mat-option
-                *ngFor="let roletype of roletypes"
-                [value]="roletype.value"
-              >
-                {{ roletype.label }}
-              </mat-option>
-            </mat-select>
-        
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.accountclassification'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="roleaccountclassification"
-              name="roleaccountclassification"
-            >
-              <mat-option
-                *ngFor="
-                  let roleaccountclassification of roleaccountclassifications
-                "
-                [value]="roleaccountclassification.value"
-              >
-                {{ roleaccountclassification.label }}
-              </mat-option>
-            </mat-select>
-       
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.obligator'"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="obligator"
-            name="obligator"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.beneficiary'"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="beneficiary"
-            name="beneficiary"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.isvisible'"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="isvisible"
-            name="isvisible"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-  <bod-table
-    #aggregateTable
-    [data]="aggregateTabledata"
-    [tableActions]="aggregateTableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [expandedRowTemplate]="expandedRowTemplate"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Aggregate Value' | translate,
-      formGroup: aggregateForm,
-      formTemplateName: aggregateTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddAggregate(aggregateForm.value)"
-    (onInlineFormEditSubmit)="onAddAggregate(aggregateForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteaggegateActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteaggegateActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforaggergate($event.icon, index)"
-      >
-      </bod-table-actions>
-    </ng-template>
-    <ng-template #expandedRowTemplate let-context="context">
-      <div fullwidth>
-        <bod-inquiry-layout
-          [columns]="2"
-          [groups]="
-            balanceTypeService.getExpandedaggregateData(context.element)
-          "
-          [softSeparator]="false"
-          [direction]="direction"
-          [information]="[]"
-          (linkClick)="commonDataService.inquiryLayoutClick($event)"
-        >
-        </bod-inquiry-layout>
-      </div>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="aggregateForm">
-    <ng-template #aggregateTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.aggregationname'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="aggregationname"
-              name="aggregationname"
-              [disabled]="true"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.producttype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="producttype"
-              name="producttype"
-            >
-              <mat-option
-                *ngFor="let producttype of producttypes"
-                [value]="producttype.value"
-              >
-                {{ producttype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.balancetype'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="balancetype"
-              name="balancetype"
-            >
-              <mat-option
-                *ngFor="let balancetype of balancetypes"
-                [value]="balancetype.value"
-              >
-                {{ balancetype.label }}
-              </mat-option>
-            </mat-select>
-            <!-- <mat-error>
-        {{ getError('balancetype') | translate }}
-      </mat-error> -->
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.relationshiptype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-            panelClass="fis-style"
-            formControlName="relationshiptype"
-            name="relationshiptype"
-          >
-            <mat-option
-              *ngFor="
-                let relationshiptype of relationshiptypes
-              "
-              [value]="relationshiptype.value"
-            >
-              {{ relationshiptype.label }}
+            <mat-option *ngFor="let option of relationshipTypeOptions" [value]="option.value">
+              {{ option.label }}
             </mat-option>
           </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.aggregationlevel'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="number"
-              matInput
-              fisStyle
-              formControlName="aggregationlevel"
-              name="aggregationlevel"
-            />
-            <mat-error *ngIf="aggregateForm.get('aggregationlevel').hasError('maxValueExceeded')">
-              Exceeds maximum length            
-            </mat-error>
-            <mat-error *ngIf="aggregateForm.get('aggregationlevel').hasError('negativeValue')">
-              Aggregation level cannot be negative.
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.debittransactiontype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="debittransactiontype"
-              name="debittransactiontype"
-            >
-              <mat-option
-                *ngFor="let debittransactiontype of debittransactiontypes"
-                [value]="debittransactiontype.value"
-              >
-                {{ debittransactiontype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.credittransactiontype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="credittransactiontype"
-              name="credittransactiontype"
-            >
-              <mat-option
-                *ngFor="let credittransactiontype of credittransactiontypes"
-                [value]="credittransactiontype.value"
-              >
-                {{ credittransactiontype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.othercurrency'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="othercurrency"
-            name="othercurrency"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.reverse'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-slide-toggle
-            fisStyle
-            color="primary"
-            formControlName="reverse"
-            name="reverse"
-          >
-          </mat-slide-toggle>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-
-  <!-- <bod-table
-    #postingApplicationTable
-    [data]="postingApplicationTabledata"
-    [tableActions]="postingAppTableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Posting Application' | translate,
-      formGroup: postingApplicationForm,
-      formTemplateName: postingApplicationTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddPstgStd(postingApplicationForm.value)"
-    (onInlineFormEditSubmit)="onAddPstgStd(postingApplicationForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deletePstgStdActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deletePstgStdActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforPstgStd($event.icon, index)"
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="postingApplicationForm">
-    <ng-template #postingApplicationTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.postingapplicationmethod'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="postingapplicationmethod"
-              name="postingapplicationmethod"
-            >
-              <mat-option
-                *ngFor="
-                  let postingapplicationmethod of postingapplicationmethods
-                "
-                [value]="postingapplicationmethod.value"
-              >
-                {{ postingapplicationmethod.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="
-            translationKey + 'metadataconfig.postingapplicationapplytypevalue'
-          "
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="applicationtype"
-              name="applicationtype"
-            >
-              <mat-option
-                *ngFor="let applicationtype of applicationTypes"
-                [value]="applicationtype.value"
-              >
-                {{ applicationtype.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.instructionorder'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="instructionorder"
-              name="instructionorder"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="
-            translationKey + 'metadataconfig.instructioncustomizationtypevalue'
-          "
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="customizationtype"
-              name="customizationtype"
-            >
-              <mat-option
-                *ngFor="let type of customizationTypes"
-                [value]="type.value"
-              >
-                {{ type.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form> -->
-</bod-form>
+          <mat-error *ngIf="formGroup.get('relationshipType_' + (element.id ?? index))?.hasError('required') && formGroup.get('relationshipType_' + (element.id ?? index))?.touched">
+            Required field
+          </mat-error>
+        </mat-form-field>
+      </ng-template>
+    </bod-table>
+</form>
 
 
 
@@ -1066,55 +48,40 @@
 
 
 
-import {
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
+
+
+
+
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, UntypedFormGroup, Validators } from '@angular/forms';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { Conditions } from '../../transaction-type.model';
 import {
-  AbstractControl,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  UntypedFormControl,
-  UntypedFormGroup,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
-import { TranslationKey } from '../../metadat-config/codegen-config.constant';
-import { BalanceTypeService } from '../balance-type-service';
-import { MetadataService } from '../../metadat-config/metada-config.service';
-import {
-  BodAutoCompleteMetadata,
+  BOD_DATE_RANGE,
   BodAutoCompleteModule,
-  BodAutoCompleteOption,
+  BodCommonDialogModel,
   BodCommonDialogService,
   BodCommonModule,
   BodCurrencyControlModule,
+  BodDateRange,
   BodDynamicFormModule,
   BodFormModule,
   BodFormStateService,
   BodFormTypes,
   BodPageContainerModule,
   BodTableAction,
-  BodTableActionsModule,
   BodTableActionType,
+  BodTableActionsModule,
   BodTableComponent,
+  BodTableFilterType,
   BodTableMetadata,
   BodTableModule,
   CommonDialogComponent,
   ControlGroupModule,
   DirectivesModule,
   EditTableAction,
-  EditTableEventData,
   InlineEditOutput,
   InputLayoutModule,
   InquiryLayoutModule,
@@ -1124,45 +91,37 @@ import {
   NotificationMessageType,
   RowLeftAction,
   SearchFieldModule,
-  SectionContainerModule
+  SectionContainerModule,
+  SelectPageMode
 } from '@bod/common';
-import { BalanceTypeComponent } from '../balance-type.component';
 import { MatIconModule } from '@angular/material/icon';
 import { RufIconModule } from '@ruf/shell/icon';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+  MatSlideToggleModule
+} from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import {
-  roletypeaction,
-  roletypeactionDelete
-} from '../balance-type-constants';
 import { MatTableDataSource } from '@angular/material/table';
-import { BodSampleTable } from '../../bod-table-demo.model';
-import {
-  AddtRelationTable,
-  AggregateSampleTable,
-  BalanceTypePeriod,
-  BalSybTypeTable,
-  PstgSampleTable,
-  RoleTypeSampleTable
-} from './balancetype.model';
-import { FormUtilityService } from '../../metadat-config/form-utility.service';
-import { MatDialogRef } from '@angular/material/dialog';
-import { BalanceTypeList, ProductTypeBalanceSubTypeRelationship, ProductTypeBalanceTypePeriod } from './add-edit-balancetype.mode';
-import { elementAt } from 'rxjs';
 
 @Component({
-  selector: 'bod-add-edit-balancetype',
+  selector: 'bod-conditions-multiselect-table',
   standalone: true,
   imports: [
+    CommonModule,
+    BodTableModule,
+    BodPageContainerModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    FormsModule,
     BodAutoCompleteModule,
-    BalanceTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
     MatIconModule,
@@ -1189,1640 +148,392 @@ import { elementAt } from 'rxjs';
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
-
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
-    MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './add-edit-balancetype.component.html',
-  styleUrl: './add-edit-balancetype.component.scss'
+  templateUrl: './conditions-multiselect-table.component.html',
+  styleUrl: './conditions-multiselect-table.component.scss'
 })
-export class AddEditBalancetypeComponent implements OnInit {
-  public translationKey = TranslationKey;
-  public addNewBalanceTypeFormGroup: UntypedFormGroup;
-  public balanceSubtypeForm: UntypedFormGroup;
-  public additionalRelationIDForm: UntypedFormGroup = new UntypedFormGroup({});
-  public additionalRelationValueForm: UntypedFormGroup = new UntypedFormGroup(
-    {}
-  );
-
-  public aggregateForm: UntypedFormGroup;
-  public roleTypeForm: UntypedFormGroup;
-  public postingApplicationForm: UntypedFormGroup;
-  formType: BodFormTypes = BodFormTypes.SUBMIT;
-  public accountclassifications: any[] = [];
-  public roletypes: any[] = [];
-  public relationshiptypes: any[] = [];
-
-  public roleaccountclassifications: any[] = [];
-  public postingapplicationmethods: any[] = [];
-  public producttypes: any[] = [];
-  public balancetypes: any[] = [];
-  public subBalancetypes: any[] = [];
-  public subBalancetypes2: any[] = [];
-  public debittransactiontypes: any[] = [];
-  public credittransactiontypes: any[] = [];
-  public payees: any[] = [];
-  public payers: any[] = [];
-  useExistingFormCtrlKeysId: string[] = [];
-  useExistingFormCtrlKeysValue: string[] = [];
-  private lastModifiedIndex = 0;
-  public additionalRelationActions: BodTableAction[] = roletypeaction;
-  public roleTypetableActions: BodTableAction[] = roletypeaction;
-  public aggregateTableActions: BodTableAction[] = roletypeaction;
-  public postingAppTableActions: BodTableAction[] = roletypeaction;
-  public balanceSubTypeTableActions: BodTableAction[] = roletypeaction;
-  public rowLevelActionsForBasicEdit: BodTableAction[] = roletypeactionDelete;
-  public rowLevelActionsForRelationshipedit: BodTableAction[] =
-    roletypeactionDelete;
-  public isExistingItem: any = true;
-  public balancesubtypeerr: any = false;
-  // @Output() balanceTypeDataEvent = new EventEmitter<any>();
-  @Input() retainedCode: string = '';
-  @Input() retainedIdentifier: number = 0;
-  @Input() retainedName: string = '';
-  @Input() retainedSystemBalance: boolean = false;
-  @Input() retainedAccountClassification: number = 0;
-  @Input() retainedDateValue: string = '';
-  @Input() retainedPayer: number = 0;
-  @Input() retainedPayee: number = 0;
-  @Input() retainedStatementDisplay: boolean = false;
-  @Input() retainedChargeBase: boolean = false;
-  @Input() retainedPersisted: boolean = false;
-  @Input() retainedCalculated: boolean = false;
-  @Input() retainedAutoCreation: boolean = false;
-  @Input() retainedLogHistory: boolean = false;
-  @Input() retainedDailySnapshot: boolean = false;
-  @Input() retainedInquiryRequired: boolean = false;
-  @Input() retainedGenerateFinancialResults: boolean = false;
-  @Input() retainedGLMapping: boolean = false;
-  @Input() retainedSummaryRequired: boolean = false;
-  @Input() retainedBalanceSubType: boolean = false;
-  @Input() retainedBalancePeriodType: string[] = [];
-  @Input() retainedBalanceSubTypeData: string[] = [];
-  @Input() retainedRoleTypeData: RoleTypeSampleTable[] = [];
-  @Input() retainedAggregateDetailsData: AggregateSampleTable[] = [];
-
-
-
-  @Input() editBalanceTypeRow: BalanceTypeList;
-  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
-    NotificationMessage[]
-  >();
-  public errorMessages: NotificationMessage[] = [];
-
-  // @Output() closeDialog: EventEmitter<boolean> = new EventEmitter<boolean>();
+export class ConditionsMultiselectTableComponent implements OnInit, OnChanges {
 
   public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
 
-  @ViewChild('additionalRelationships')
-  public addRelationID: BodTableComponent;
-  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+  @Input() conditionsDataSingleSelect: BodTableMetadata;
+  @Input() selectedRowSingleSelect: Conditions[] = [];
+  @Output() rowSelected = new EventEmitter<Conditions[]>();
+  @Output() defaultChanged = new EventEmitter<{ rowIndex: number, isDefault: boolean }>();
+  @Output() dirtyChange = new EventEmitter<boolean>();
+  @Input() formGroup: UntypedFormGroup;
 
-  public onValidTableActionClicked(event: BodTableAction): void { }
-  public onEditTableAction(event: EditTableEventData) { }
+  @ViewChild('conditionsMultiselectTable', { static: false })
+  conditionsTable: BodTableComponent;
 
-  //This is related to columns which are inaddtnRelInquiry for multi select input dropdown
-  // public updateColumnData(columnName, value, index) {
-  //   const updatedData = this.additionalRelationData.datasource.data;
-  //   updatedData[index][columnName] = value;
-  //   if (value === 'BalancePeriodType') {
-  //     //periodData
-  //     // this.inputForpreconversionSelect.options = this.periodTypes;
-  //     this.periodData = this.inputForpreconversionSelect;
-  // this.periodDataArr[0] = {
-  //   options: [
-  //     { value: 'monthly', label: 'Monthly' },
-  //     { value: 'yearly', label: 'Yearly' },
-  //     { value: 'statement', label: 'Statement' },
-  //     { value: 'lifetodate', label: 'LifeToDate' }
-  //   ],
-  //   isMultiSelect: true
-  // };
-  //  inputForpreconversionSelect: BodAutoCompleteMetadata = {
-  //   options: this.periodTypes,
-  //   isMultiSelect: true
-  // };
-  // this.periodData.options = this.periodDataArr[0];
-  //thi
-  // this.periodDataArr = [
-  //   {
-  //     options: [
-  //       { value: 'monthly', label: 'Monthly' },
-  //       { value: 'yearly', label: 'Yearly' },
-  //       { value: 'statement', label: 'Statement' },
-  //       { value: 'lifetodate', label: 'LifeToDate' }
-  //     ],
-  //     isMultiSelect: true
-  //   },
-  //   {
-  //     options: [
-  //       { value: 'monthly', label: 'Monthly' },
-  //       { value: 'yearly', label: 'Yearly' }
-  //     ],
-  //     isMultiSelect: true
-  //   }
-  // ];
-  //   this.periodData.options = this.periodTypes;
-  //   this.periodDataArr[index] = this.periodData;
-  // } else {
-  // inputForpreconversionSelect: BodAutoCompleteMetadata = {
-  //   options: this.periodTypes,
-  //   isMultiSelect: true
-  // };
-  // this.additionalRelationValueForm.reset();
-  //   this.periodData = this.inputForpreconversionSelect1;
-  // }
+  private isDirty = false;
 
-  //   (
-  //     this.additionalRelationData
-  //       .datasource as MatTableDataSource<AddtRelationTable>
-  //   ).data = updatedData;
-  //   // this.simpleEditTableRef.updateDeltaForCustomColumn(
-  //   //   EditTableAction.EDIT,
-  //   //   index
-  //   // );
-  // }
-  public onRelationTableActionClicked(event: BodTableAction) {
-    if (event.id === BodTableActionType.ADD) {
-      this.addRelationData();
+  relationshipTypeOptions = [
+    { label: 'Locked', value: 'Locked' },
+    { label: 'Mandatory', value: 'Mandatory' },
+    { label: 'Optional', value: 'Optional' },
+    { label: 'Proposed', value: 'Proposed' }
+  ];
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.selectConditionsRows(), 0);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedRowSingleSelect'] && this.selectedRowSingleSelect?.length) {
+      console.log('📥 selectedRowSingleSelect changed:', this.selectedRowSingleSelect);
+      setTimeout(() => this.selectConditionsRows(), 0);
     }
   }
 
-  private addRelationData() {
-    const updatedData = {
-      id: this.lastModifiedIndex,
-      relationshipid: '',
-      action: EditTableAction.ADD,
-      value: ''
-    };
-    this.addRelationID.addRow(updatedData);
-    this.useExistingFormCtrlKeysId = FormUtilityService.addFormControl(
-      this.additionalRelationIDForm,
-      'relationshipid',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
-    this.useExistingFormCtrlKeysValue = FormUtilityService.addFormControl(
-      this.additionalRelationValueForm,
-      'value',
-      this.lastModifiedIndex,
-      true,
-      ''
-    );
+  public selectConditionsRows(): void {
+    const tableData = this.conditionsDataSingleSelect?.datasource?.data || [];
+    const selection = this.conditionsTable?.selection;
 
-    ++this.lastModifiedIndex;
-    //this.addNewAttributeFormGroup.markAsDirty();
-  }
-
-  public inlineAddRowActionClick() {
-    this.balanceSubtypeForm.reset();
-    this.roleTypeForm.reset();
-    this.postingApplicationForm.reset();
-
-    if (this.aggregateForm) {
-      // Store the current aggregationname value
-      const currentAggregationName = this.aggregateForm.get('aggregationname')?.value;
-
-      // Reset the form
-      this.aggregateForm.reset();
-
-      // Set the aggregationname value back
-      this.aggregateForm.get('aggregationname')?.setValue(currentAggregationName);
-    }
-  }
-  public inlineEditRowActionClick(_event: InlineEditOutput) { }
-
-  dateValues = [
-    { value: 'BookingDate', label: 'Booking Date' },
-    { value: 'EffectiveDate', label: 'Effective Date' },
-    { value: 'ValueDate', label: 'Value Date' }
-
-  ];
-  applicationTypes = [
-    { value: 'MaximumBalance', label: 'Maximum Balance' },
-    { value: 'RemainingAmount', label: 'Remaining Amount' },
-    { value: 'Amount', label: 'Amount' }
-  ];
-  customizationTypes = [
-    { value: 'Before', label: 'Before' },
-    { value: 'None', label: 'None' },
-    { value: 'After', label: 'After' },
-    { value: 'CustomOnly', label: 'Custom Only' }
-  ];
-  additionalRelations = [
-    { value: 'BalSubType', label: 'Balance sub Type' },
-    { value: 'BalancePeriodType', label: 'Balance Period Type' }
-  ];
-  // periodTypes = [
-  //   { value: 'monthly', label: 'Monthly' },
-  //   { value: 'yearly', label: 'Yearly' },
-  //   { value: 'statement', label: 'Statement' },
-  //   { value: 'lifetodate', label: 'LifeToDate' }
-  // ];
-  autoCompleteFieldMultiConv: any;
-  autoCompleteFieldMultiConv1: any;
-  public periodTypes: BodAutoCompleteOption[] = [
-    { value: 'Monthly', label: 'Monthly' },
-    { value: 'Yearly', label: 'Yearly' },
-    { value: 'Statement', label: 'Statement' },
-    { value: 'LifeToDate', label: 'LifeToDate' }
-  ];
-  public periodDataArr: BodAutoCompleteMetadata[] = [
-    { options: [], isMultiSelect: true }
-  ];
-  truncate = false;
-
-  // inputForpreconversionSelect: BodAutoCompleteMetadata = {
-  //   options: [],
-  //   isMultiSelect: true
-  // };
-  // periodData = this.inputForpreconversionSelect;
-  inputForpreconversionSelect: BodAutoCompleteMetadata = {
-    options: this.periodTypes,
-    isMultiSelect: true
-  };
-  periodData = this.inputForpreconversionSelect;
-
-  inputForpreconversionSelect1: BodAutoCompleteMetadata = {
-    options: [],
-    isMultiSelect: true
-  };
-  periodData1 = this.inputForpreconversionSelect1;
-
-  // showBalanceSubtype = boolean;
-  // showBalancePeriodType: boolean;
-  // showBalanceSubtype: boolean;
-
-  onSelectionChange(selectedValue: string) {
-    // this.showBalanceSubtype = selectedValue === 'BalSubType';
-    // this.showBalancePeriodType = selectedValue === 'BalancePeriodType';
-    //this.periodData.options = [];
-    // this.periodData = {
-    //   isMultiSelect: true,
-    //   required: false,
-    //   options: []
-    // };
-    if (selectedValue === 'BalancePeriodType') {
-      //periodData
-      // this.inputForpreconversionSelect.options = this.periodTypes;
-      this.periodData = this.inputForpreconversionSelect;
-      this.periodData.options = this.periodTypes;
-    } else {
-      // inputForpreconversionSelect: BodAutoCompleteMetadata = {
-      //   options: this.periodTypes,
-      //   isMultiSelect: true
-      // };
-      // this.additionalRelationValueForm.reset();
-      this.periodData = this.inputForpreconversionSelect1;
+    if (!selection || tableData.length === 0) {
+      return;
     }
 
-    if (selectedValue === 'BalancePeriodType') {
-      this.subBalancetypes2 = this.periodTypes;
-    } else {
-      this.subBalancetypes2 = this.subBalancetypes;
-    }
+    selection.clear();
+
+    tableData.forEach(dataRow => {
+      const match = this.selectedRowSingleSelect.find(
+        sel => sel.identifier === dataRow.identifier
+      );
+      if (match) {
+        selection.select(dataRow);
+      }
+    });
   }
-  // onSelectionChange(value: string) {
-  //   // Update visibility based on the selected value
-  //   if (value === 'Balance Subtype') {
-  //     this.showBalanceSubtype = true;
-  //   } else if (value === 'Balance Period Type') {
-  //     this.showBalancePeriodType = true;
-  //   }
-  // }
+
+  public allowRowSelection = true;
+  public rowSelectionStrategy: SelectPageMode = SelectPageMode.ALL_PAGES;
+  public showEdit = true;
+  public defaultForm: FormGroup;
+
   constructor(
-    private changeDetectorRef: ChangeDetectorRef,
-    private bodFormStateService: BodFormStateService,
-    public balanceTypeService: BalanceTypeService,
     private fb: FormBuilder,
-    private bodCommonDialogService: BodCommonDialogService,
-    private metadataService: MetadataService //roleTypetabledata
-  ) {
-    // this.getNewBalanceType();
-  }
-    statusControl = new FormControl(null);
-    public previousStatus: string | undefined
-
+    private transactionTypeService: TransactionTypeService
+  ) { }
 
   ngOnInit() {
-    this.initForm();
-    // this.getNewBalanceType();
-    this.loadDropdownData();
-    if (this.editBalanceTypeRow) {
-      this.balanceTypeForm(this.editBalanceTypeRow);
-    }
-    this.addNewBalanceTypeFormGroup
-      .get('balanceTypeCode')
-      ?.valueChanges.subscribe(value => {
-        this.aggregateForm.get('aggregationname')?.setValue(value);
-      });
-
-       this.metadataService.retrieveAll().subscribe((response: any) => {
-      const firstStatus = response?.data?.[0]?.MetadataStatus;
-      const statusToSet = firstStatus || 'NEW';
-      this.statusControl.setValue(statusToSet);
-      this.previousStatus = statusToSet;
-    });
+    this.defaultForm = this.fb.group({});
   }
 
-  loadDropdownData(): void {
-    this.balanceTypeService.getAccntClassification().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
+  public onRelationshipTypeChange(element: any, value: string) {
+    element.relationshipType = value;
+    this.setDirty(true);
+  }
+
+  private loadConditionData() {
+    this.transactionTypeService.getConditions().subscribe((conditions: any[]) => {
+      this.conditionsDataSingleSelect.datasource.data = conditions.map((item: any, index: number) => ({
+        id: index + 1,
+        code: item.code,
+        relationshipType: '',
+        default: false
       }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.accountclassifications = mappedData;
-      this.roleaccountclassifications = mappedData;
-    });
-
-    this.balanceTypeService.getRoletype().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.roletypes = mappedData;
-      this.payers = mappedData;
-      this.payees = mappedData;
-    });
-
-    this.balanceTypeService.getPostMethod().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.postingapplicationmethods = mappedData;
-    });
-
-    this.balanceTypeService.getRelationshipType().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.relationshiptypes = mappedData
-    });
-    this.balanceTypeService.getProductType().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.producttypes = mappedData
-    });
-    this.balanceTypeService.getBalanceType().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.balancetypes = mappedData
-    });
-
-    this.balanceTypeService.getSubBalanceType().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.subBalancetypes = mappedData
-    });
-    // this.balanceTypeService.getSubBalanceType().subscribe(data => {
-    //   // this.subBalancetypes = data.map((item: any) => ({
-    //   //   label: item.code,
-    //   //   value: item.identifier
-    //   // }));
-    //   this.inputForpreconversionSelect1 = {
-    //     options: data.map((item: any) => ({
-    //       label: item.code,
-    //       value: item.identifier
-    //     })).sort((a, b) => a.label.localeCompare(b.label))
-    //     isMultiSelect: true
-    //   };
-
-    //   this.periodData1 = this.inputForpreconversionSelect1;
-    // });
-    this.balanceTypeService.getSubBalanceType().subscribe(data => {
-      const sortedOptions = data.map((item: any) => ({
-        label: item.code,
-        value: item.code
-      })).sort((a, b) => a.label.localeCompare(b.label));
-
-      this.inputForpreconversionSelect1 = {
-        options: sortedOptions,
-        isMultiSelect: true
-      };
-
-      this.periodData1 = this.inputForpreconversionSelect1;
-      this.balancesubtypeerr = true
-      // if (this.editBalanceTypeRow) {
-      //   this.balanceTypeForm(this.editBalanceTypeRow);
-      // }
-    });
-
-    this.balanceTypeService.getPostingSTD().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.debittransactiontypes = mappedData;
-      this.credittransactiontypes = mappedData;
-    });
-  }
-  public dataWithBalSubTypevalues: BalSybTypeTable[] = [];
-  onAddBalSubType(formValues: any) {
-    if (this.balanceSubtypeForm.invalid) {
-      // alert('Please fill all the required fields.');
-      return;
-    }
-    this.dataWithBalSubTypevalues = this.dataWithBalSubTypevalues || [];
-    this.balanceSubtypeForm.controls['balsubtypeIdentifier'].enable();
-    const updatedFormValues = this.balanceSubtypeForm.getRawValue();
-    this.balanceSubtypeForm.controls['balsubtypeIdentifier'].disable();
-    const newValidValue: BalSybTypeTable = {
-      code: formValues.balancesubtypename || '',
-      name: formValues.balancesubtypecode || '',
-      identifier: updatedFormValues.balsubtypeIdentifier || ''
-    };
-
-    this.dataWithBalSubTypevalues.push(newValidValue);
-    if (this.balanceSubTypeData && this.balanceSubTypeData.datasource) {
-      this.balanceSubTypeData.datasource.data = [
-        ...this.dataWithBalSubTypevalues
-      ];
-    }
-    if (this.balanceSubtypeForm) {
-      this.balanceSubtypeForm.reset();
-    }
-    this.addNewBalanceTypeFormGroup.markAsDirty();
-  }
-  public dataWithRoleTypevalues: RoleTypeSampleTable[] = [];
-  onAdd(formValues: any) {
-    this.errorMessages = [];
-
-    // Apply validator dynamically
-    this.roleTypeForm.setValidators([
-      this.duplicateRoleTypeValidator(this.dataWithRoleTypevalues)
-    ]);
-    this.roleTypeForm.updateValueAndValidity();
-
-    if (this.roleTypeForm.invalid) {
-      const errors = this.roleTypeForm.errors;
-      const duplicateValue = errors?.['duplicateRoleType'];
-
-      if (duplicateValue) {
-        this.handleError1({
-          errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
-          status: 400,
-          duplicateValue
-        });
-      }
-      return;
-    }
-
-    const selectedRoleType = this.roletypes.find(
-      item => item.value === formValues.roletype
-    );
-    const roleTypeCode = selectedRoleType ? selectedRoleType.label : '';
-
-    const selectedAccountClassification = this.accountclassifications.find(
-      item => item.value === formValues.roleaccountclassification
-    );
-    const accountClassificationCode = selectedAccountClassification
-      ? selectedAccountClassification.label
-      : '';
-
-    const newValidValue: RoleTypeSampleTable = {
-      type: roleTypeCode || '',
-      accountingClassification: accountClassificationCode ?? '',
-      obligator: formValues.obligator ? 'Y' : 'N',
-      beneficiary: formValues.beneficiary ? 'Y' : 'N',
-      visibility: formValues.isvisible ? 'Y' : 'N'
-    };
-
-    this.dataWithRoleTypevalues.push(newValidValue);
-
-    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
-      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
-    }
-
-    if (this.roleTypeForm) {
-      this.roleTypeForm.reset();
-    }
-
-    this.addNewBalanceTypeFormGroup.markAsDirty();
-  }
-
-
-  public errorMessages2: NotificationMessage[] = [];
-  private handleError1(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'ROLE_TYPE_ALREADY_EXISTS':
-        errorMsg = `Role type "${error.duplicateValue}" already exists.`;
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages2.push(this.message);
-  }
-
-  initialAggregationName: string | null = null;
-  public dataWithAggregatevalues: AggregateSampleTable[] = [];
-
-
-  onAddAggregate(formValues: any) {
-    //convert from idfr to code
-    const selectedBalanceType = this.balancetypes.find(
-      item => item.value === formValues.balancetype
-    );
-
-    const balTypeName = selectedBalanceType ? selectedBalanceType.label : '';
-    const selectedProductType = this.producttypes.find(
-      item => item.value === formValues.producttype
-    );
-    const prdtTypeName = selectedProductType ? selectedProductType.label : '';
-    const selecteDebitType = this.debittransactiontypes.find(
-      item => item.value === formValues.debittransactiontype
-    );
-    const debitTransType = selecteDebitType ? selecteDebitType.label : '';
-    const selecteCreditType = this.credittransactiontypes.find(
-      item => item.value === formValues.credittransactiontype
-    );
-    const creditTransType = selecteCreditType ? selecteCreditType.label : '';
-
-    const selecteRltnpType = this.relationshiptypes.find(
-      item => item.value === formValues.relationshiptype
-    );
-    const rltnType = selecteRltnpType ? selecteRltnpType.label : '';
-    if (!this.initialAggregationName) {
-      this.initialAggregationName =
-        this.aggregateForm.get('aggregationname')?.value || '';
-    }
-    if (this.aggregateForm.invalid || !this.initialAggregationName) {
-      // alert('Please fill all the required fields.');
-      return;
-    }
-    this.dataWithAggregatevalues = this.dataWithAggregatevalues || [];
-    const newValidValue: AggregateSampleTable = {
-      aggregationname: this.initialAggregationName || '',
-      balancetype: balTypeName || '',
-      aggregationLevel:
-        formValues.aggregationlevel !== undefined
-          ? formValues.aggregationlevel
-          : '',
-      relationshiptype: rltnType || '',
-      aggregates: [
-        {
-          id: 0,
-          label: 'Product Type',
-          value: prdtTypeName
-        },
-        {
-          id: 1,
-          label: 'Debit Transaction Type',
-          value: debitTransType
-        },
-        {
-          id: 2,
-          label: 'Credit Transaction Type',
-          value: creditTransType
-        },
-        {
-          id: 3,
-          label: 'Other Currency',
-          value: formValues.othercurrency ? 'Y' : 'N'
-        },
-        {
-          id: 4,
-          label: 'Reverse',
-          value: formValues.reverse ? 'Y' : 'N'
-        }
-      ]
-    };
-    this.dataWithAggregatevalues.push(newValidValue);
-    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
-      this.aggregateTabledata.datasource.data = [
-        ...this.dataWithAggregatevalues
-      ];
-    }
-    if (this.aggregateForm) {
-      // Reset the form but keep the aggregationname value
-      const currentAggregationName =
-        this.aggregateForm.get('aggregationname')?.value;
-      this.aggregateForm.reset();
-      this.aggregateForm
-        .get('aggregationname')
-        ?.setValue(currentAggregationName);
-    }
-    this.addNewBalanceTypeFormGroup.markAsDirty();
-  }
-
-  public dataWithPostngStdvalues: PstgSampleTable[] = [];
-  onAddPstgStd(formValues: any) {
-    const selectedPstgStd = this.postingapplicationmethods.find(
-      item => item.value === formValues.postingapplicationmethod
-    );
-    const pstgApplicationName = selectedPstgStd ? selectedPstgStd.label : '';
-
-    this.dataWithPostngStdvalues = this.dataWithPostngStdvalues || [];
-    const newValidValue: PstgSampleTable = {
-      postingapplicationmethod: pstgApplicationName || '',
-      postingapplicationtype: formValues.applicationtype || '',
-      customizationtype: formValues.customizationtype || '',
-      instructionorder: formValues.instructionorder || ''
-    };
-    this.dataWithPostngStdvalues.push(newValidValue);
-    if (
-      this.postingApplicationTabledata &&
-      this.postingApplicationTabledata.datasource
-    ) {
-      this.postingApplicationTabledata.datasource.data = [
-        ...this.dataWithPostngStdvalues
-      ];
-    }
-    if (this.postingApplicationForm) {
-      this.postingApplicationForm.reset();
-    }
-    this.addNewBalanceTypeFormGroup.markAsDirty();
-  }
-  public balanceSubTypeData: BodTableMetadata = {
-    title: 'Balance Sub Type Details',
-    columns: [...this.balanceTypeService.balanceSubTypeColumn],
-    // enablePagination: true,
-
-    datasource: new MatTableDataSource<BalSybTypeTable>(
-      this.dataWithBalSubTypevalues
-    ),
-    noRecordsMessage: 'No Balance Sub Type Data Defined'
-  };
-  public additionalRelationData: BodTableMetadata = {
-    title: 'Additional Relationship',
-    columns: [...this.balanceTypeService.addtnlRelationColmn],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<AddtRelationTable>(),
-    noRecordsMessage: 'No data Defined'
-  };
-
-  public roleTypetabledata: BodTableMetadata = {
-    title: 'Role Type Details (mandatory)',
-    columns: [...this.balanceTypeService.roletypecolumns],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<RoleTypeSampleTable>(
-      this.dataWithRoleTypevalues
-    ),
-    noRecordsMessage: 'No Role Type Data Defined'
-  };
-  public aggregateTabledata: BodTableMetadata = {
-    title: 'Aggregate Details',
-    columns: [...this.balanceTypeService.aggregatecolmn],
-    rowLeftAction: RowLeftAction.expandableRows,
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<AggregateSampleTable>(
-      this.dataWithAggregatevalues
-    ),
-    noRecordsMessage: 'No Aggregate Data Defined'
-  };
-  public postingApplicationTabledata: BodTableMetadata = {
-    title: 'Posting Application Instruction',
-    columns: [...this.balanceTypeService.postingAppcolumn],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<PstgSampleTable>(
-      this.dataWithPostngStdvalues
-    ),
-    noRecordsMessage: 'No Posting Application Instruction Data Defined'
-  };
-  nonNegativeValidator(): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const value = control.value;
-      return value < 0 ? { negativeValue: { value: value } } : null;
-    };
-  }
-  duplicateRoleTypeValidator(existingValues: any[]): ValidatorFn {
-    return (group: AbstractControl): ValidationErrors | null => {
-      const roleTypeControl = group.get('roletype');
-      if (!roleTypeControl) return null;
-
-      const selectedRoleType = this.roletypes.find(
-        item => item.value === roleTypeControl.value
-      );
-      const roleTypeLabel = selectedRoleType ? selectedRoleType.label : '';
-
-      const isDuplicate = existingValues.some(
-        item => item.type === roleTypeLabel
-      );
-
-      if (isDuplicate) {
-        roleTypeControl.setErrors({ duplicateRoleType: roleTypeLabel });
-        return { duplicateRoleType: roleTypeLabel };
-      } else {
-        if (roleTypeControl.hasError('duplicateRoleType')) {
-          const errors = { ...roleTypeControl.errors };
-          delete errors['duplicateRoleType'];
-          roleTypeControl.setErrors(Object.keys(errors).length ? errors : null);
-        }
-        return null;
-      }
-    };
-  }
-
-  noSpecialCharactersValidator(): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
-      return forbidden
-        ? { noSpecialCharacters: { value: control.value } }
-        : null;
-    };
-  }
-  maxLengthValidator(maxLength: number): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-
-      if (value === null || value === undefined || value === '') {
-        return null;
-      }
-
-      const stringValue = value.toString();
-
-      // Reject scientific notation
-      // if (/[eE]/.test(stringValue)) {
-      //   return { maxLength: 'Scientific notation not allowed' };
-      // }
-
-      return stringValue.length > maxLength
-        ? { maxLength: 'Value exceeds allowed digit limit' }
-        : null;
-    };
-  }
-  maxValueValidator(maxValue: number): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-      const value = control.value;
-      return value > maxValue ? { maxValueExceeded: { value: value } } : null;
-    };
-  }
-  private initForm(): void {
-    this.addNewBalanceTypeFormGroup = this.fb.group({
-      // balanceTypeCode: new UntypedFormControl('', [Validators.required]),
-      balanceTypeCode: new UntypedFormControl('', [
-        Validators.required,
-        this.noSpecialCharactersValidator(),
-        this.maxLengthValidator(32)
-      ]),
-      balTypeIdentifier: [{ value: '', disabled: true }],
-      balanceTypeName: new UntypedFormControl('', [Validators.required, this.maxLengthValidator(120)]),
-      balancesubtype: [false],
-
-      systembalance: new UntypedFormControl(),
-      accountclassification: new UntypedFormControl('', [Validators.required]),
-      datevalue: new UntypedFormControl('', [Validators.required]),
-      payer: new UntypedFormControl('', [Validators.required]),
-      payee: new UntypedFormControl('', [Validators.required]),
-      statementdisplay: new UntypedFormControl(),
-      chargebase: new UntypedFormControl(),
-      persisted: new UntypedFormControl(),
-      calculated: new UntypedFormControl(),
-      autocreation: new UntypedFormControl(),
-      // systembal: new UntypedFormControl(),
-      loghistory: new UntypedFormControl(),
-      dailysnapshot: new UntypedFormControl(),
-      inquiryrequired: new UntypedFormControl(),
-      generatefinancialresults: new UntypedFormControl(),
-      glmapping: new UntypedFormControl(),
-      summaryrequired: new UntypedFormControl(),
-      balsubtype: new UntypedFormControl('', [Validators.required]),
-      balperiodtype: [[]]
-    });
-    this.balanceSubtypeForm = this.fb.group({
-      balancesubtypecode: new UntypedFormControl('', [Validators.required]),
-      balsubtypeIdentifier: [{ value: '', disabled: true }],
-      balancesubtypename: new UntypedFormControl('', [Validators.required])
-    });
-
-    this.additionalRelationIDForm = this.fb.group({});
-    this.additionalRelationValueForm = this.fb.group({});
-
-    this.roleTypeForm = this.fb.group({
-      roletype: ['', Validators.required],
-      roleaccountclassification: new UntypedFormControl(''),
-      obligator: new UntypedFormControl(),
-      beneficiary: new UntypedFormControl(),
-      isvisible: new UntypedFormControl()
-    },
-      {
-        validators: [this.duplicateRoleTypeValidator(this.dataWithRoleTypevalues)]
-      }
-    );
-    this.aggregateForm = this.fb.group({
-      aggregationname: new UntypedFormControl({ value: '', disabled: true }, [
-        Validators.required
-      ]),
-      producttype: new UntypedFormControl(''),
-      balancetype: new UntypedFormControl('', [Validators.required]),
-      relationshiptype: new UntypedFormControl(),
-      aggregationlevel: new UntypedFormControl('', [
-        Validators.required,
-        this.nonNegativeValidator(),
-        this.maxValueValidator(999999)
-      ]),
-      debittransactiontype: new UntypedFormControl(''),
-      credittransactiontype: new UntypedFormControl(''),
-      othercurrency: new UntypedFormControl(''),
-      reverse: new UntypedFormControl('')
-    });
-    this.postingApplicationForm = this.fb.group({
-      postingapplicationmethod: new UntypedFormControl('', [
-        Validators.required
-      ]),
-      applicationtype: new UntypedFormControl('', [Validators.required]),
-      instructionorder: new UntypedFormControl('', [Validators.required]),
-      customizationtype: new UntypedFormControl('', [Validators.required])
     });
   }
 
-  identifierSearch(field: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.metadataService.idfrSearch().subscribe(
-        (response: string) => {
-          if (field === 'balTypeIdentifier') {
-            this.addNewBalanceTypeFormGroup.controls[
-              'balTypeIdentifier'
-            ].setValue(response);
-          } else if (field === 'balsubtypeIdentifier') {
-            this.balanceSubtypeForm.controls['balsubtypeIdentifier'].setValue(
-              response
-            );
-          }
-          this.addNewBalanceTypeFormGroup.markAsDirty();
-          resolve();
-        },
-        error => {
-          console.error('Error:', error);
-          reject(error);
-        }
-      );
-    });
-  }
-
-  handleRowLevelActionsforBalSubType(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteBalSubType(index);
+  public resetSelection() {
+    if (this.conditionsTable?.selection) {
+      this.conditionsTable.selection.clear();
     }
-  }
-  handleRowLevelActionsforRoletype(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteRow(index);
-    }
-  }
-  handleRowLevelActionsforaggergate(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteAggregateRow(index);
-    }
-  }
-  handleRowLevelActionsforPstgStd(action: string, index: number) {
-    if (action === 'trash') {
-      this.deletePstStdRow(index);
-    }
-  }
-  deleteRow(index: number) {
-    this.dataWithRoleTypevalues.splice(index, 1);
-    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
-    this.addNewBalanceTypeFormGroup.markAsDirty();
+    this.selectedRowSingleSelect = [];
+    this.setDirty(false);
   }
 
-  deleteBalSubType(index: number) {
-    this.dataWithBalSubTypevalues.splice(index, 1);
-    this.balanceSubTypeData.datasource.data = [
-      ...this.dataWithBalSubTypevalues
-    ];
-    this.addNewBalanceTypeFormGroup.markAsDirty();
-  }
-  deleteAggregateRow(index: number): void {
-    this.dataWithAggregatevalues.splice(index, 1);
-    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
-      this.aggregateTabledata.datasource.data = [
-        ...this.dataWithAggregatevalues
-      ];
-      this.addNewBalanceTypeFormGroup.markAsDirty();
-    }
-  }
-  deletePstStdRow(index: number): void {
-    this.dataWithPostngStdvalues.splice(index, 1);
-    if (
-      this.postingApplicationTabledata &&
-      this.postingApplicationTabledata.datasource
-    ) {
-      this.postingApplicationTabledata.datasource.data = [
-        ...this.dataWithPostngStdvalues
-      ];
-    }
-    this.addNewBalanceTypeFormGroup.markAsDirty();
+  public rowSelectionSingleSelect(element: Conditions[]) {
+    console.log('rowSelectionSingleSelect called with:', element);
+    this.selectedRowSingleSelect = element;
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
   }
 
-  //this method is related to delete the multi select input dropdown
-  // deleteAddtnlRltnRow(index: number, element: Partial<AddtRelationTable>) {
-  //   if (index !== undefined && index >= 0) {
-  //     this.addRelationID.deleteRow(index);
-  //   } else {
-  //     console.error('Invalid index:', index);
-  //   }
-  //   this.useExistingFormCtrlKeysId = FormUtilityService.removeFormControl(
-  //     this.additionalRelationIDForm,
-  //     this.useExistingFormCtrlKeysId,
-  //     index
-  //   );
-  //   this.useExistingFormCtrlKeysValue = FormUtilityService.removeFormControl(
-  //     this.additionalRelationValueForm,
-  //     this.useExistingFormCtrlKeysValue,
-  //     index
-  //   );
-
-  //   // this.addNewAttributeFormGroup.markAsDirty();
-  // }
-
-  public isBalanceSubtypeEnabled = false;
-  toggleBalanceSubtype(event: { checked: boolean }) {
-    this.isBalanceSubtypeEnabled = event.checked;
-  }
-
-  public getError(control: string, formGroup: UntypedFormGroup): string {
-    if (formGroup) {
-      const fc: AbstractControl = formGroup.get(control);
-      if (fc && fc.errors && fc.touched) {
-        return FormUtilityService.getCommonFCErrorMsg(fc);
-      }
-    }
-  }
-
-  public messages: NotificationMessage[] = [];
-  public messages1: NotificationMessage[] = [];
-  public message: NotificationMessage | undefined;
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-  isAdd = true;
-
-  onAddNewBalanceType(isAdd: boolean) {
-    const promises = [];
-
-    if (isAdd) {
-      promises.push(this.identifierSearch('balTypeIdentifier'));
-    }
-
-    if (this.dataWithBalSubTypevalues.length > 0) {
-      promises.push(this.identifierSearch('balsubtypeIdentifier'));
-    }
-
-    Promise.all(promises)
-      .then(() => {
-        this.submitForm(isAdd);
-      })
-      .catch(error => {
-        console.error('Error during identifier search:', error);
-      });
-  }
-
-  submitForm(isAdd: boolean) {
-    if (this.addNewBalanceTypeFormGroup.invalid) {
-      return;
-    }
-    // this.isAdd = true;
-    const formValue = this.addNewBalanceTypeFormGroup.getRawValue();
-    this.addNewBalanceTypeFormGroup.controls['balTypeIdentifier'].enable();
-    const formValue1 = this.balanceSubtypeForm.getRawValue();
-
-    const balanceType = {
-      identifier: formValue.balTypeIdentifier,
-      code: formValue.balanceTypeCode,
-      name: formValue.balanceTypeName,
-      systemBalance: formValue.systembalance ? 'Y' : 'N'
-    };
-    const balanceSubTypeList =
-      this.dataWithBalSubTypevalues.length > 0
-        ? this.dataWithBalSubTypevalues.map(item => ({
-          identifier: formValue1.balsubtypeIdentifier,
-          code: item.code,
-          name: item.name
-        }))
-        : [];
-
-    const productTypeIdentifiers = this.metadataService.getProductTypeValues();
-
-    // 1. balanceAggregationInsertionList
-    const balanceAggregationInsertionList =
-      this.dataWithAggregatevalues.length > 0
-        ? this.dataWithAggregatevalues.map((item, index) => {
-          const productType = this.producttypes.find(
-            pt =>
-              pt.label ===
-              item.aggregates.find(aggregate => aggregate.label === 'Product Type')?.value
-          )?.value;
-          const debitTransactionType = this.debittransactiontypes.find(
-            dt =>
-              dt.label ===
-              item.aggregates.find(aggregate => aggregate.label === 'Debit Transaction Type')?.value
-          )?.value;
-          const creditTransactionType = this.credittransactiontypes.find(
-            ct =>
-              ct.label ===
-              item.aggregates.find(aggregate => aggregate.label === 'Credit Transaction Type')?.value
-          )?.value;
-          const otherCurrency = item.aggregates.find(aggregate => aggregate.label === 'Other Currency')?.value;
-          const reverse = item.aggregates.find(aggregate => aggregate.label === 'Reverse')?.value;
-          const balanceTypeIdentifier = this.balancetypes.find(bt => bt.label === item.balancetype)?.value;
-
-          return {
-            balanceTypeIdentifier: balanceTypeIdentifier || null,
-            productTypeIdentifier: productTypeIdentifiers[index] ?? null,
-            name: item.aggregationname,
-            productTypeAggrIdfr: productType || null,
-            aggrBalanceTypeIdentifier: balanceTypeIdentifier || null,
-            relationshipType: this.relationshiptypes.find(rt => rt.label === item.relationshiptype)?.value || null,
-            relationshipTypeCode: item.relationshiptype,
-            aggregationLevel: item.aggregationLevel ?? null,
-            balanceTypeCode: item.balancetype,
-            otherCurrencyAggregation: otherCurrency === 'Y' ? 'Y' : 'N',
-            reverseAggregation: reverse === 'Y' ? 'Y' : 'N',
-            postingStandardIdentifierForDebit: debitTransactionType || null,
-            postingStandardIdentifierForCredit: creditTransactionType || null
-          };
-        })
-        : [];
-
-    // 2. productTypeBalanceTypeRelationshipList
-    const productTypeBalanceTypeRelationshipList = productTypeIdentifiers.map((id, index) => ({
-      identifier: id,
-      balanceTypeIdentifier: formValue.balTypeIdentifier,
-      balanceTypeCode: formValue.balanceTypeCode,
-      persisted: formValue.persisted ? 'Y' : 'N',
-      calculated: formValue.calculated ? 'Y' : 'N',
-      autoCreated: formValue.autocreation ? 'Y' : 'N',
-      statementProcess: formValue.statementdisplay ? 'Y' : 'N',
-      accountingClassification: formValue.accountclassification,
-      snapshotRequired: formValue.dailysnapshot ? 'Y' : 'N',
-      payerIdentifier: formValue.payer,
-      payeeIdentifier: formValue.payee,
-      chargeCalculation: formValue.chargebase ? 'Y' : 'N',
-      logAudit: formValue.loghistory ? 'Y' : 'N',
-      financialResultRequired: formValue.generatefinancialresults ? 'Y' : 'N',
-      glRequired: formValue.glmapping ? 'Y' : 'N',
-      dateValue: formValue.datevalue,
-      enquiryRequired: formValue.inquiryrequired ? 'Y' : 'N',
-      summaryRequired: formValue.summaryrequired ? 'Y' : 'N'
-    }));
-
-    // 3. productTypeBalanceSubTypeRelationshipList
-
-
-    const productTypeBalanceSubTypeRelationshipList: ProductTypeBalanceSubTypeRelationship[] = [];
-
-    formValue.balsubtype.forEach((subtype: string) => {
-      const selectedBalanceType = this.subBalancetypes.find(item => item.label === subtype);
-
-      productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
-        productTypeBalanceSubTypeRelationshipList.push({
-          productTypeIdentifier: productTypeIdentifier ?? null,
-          balanceTypeIdentifier: formValue.balTypeIdentifier,
-          balanceSubTypeIdentifier: selectedBalanceType?.value ?? null,
-          balanceSubTypeCode: selectedBalanceType?.label ?? null
-        });
-      });
-    });
-
-    // 4. productTypeBalanceTypePeriodList
-
-    let productTypeBalanceTypePeriodList: ProductTypeBalanceTypePeriod[] = [];
-
-    if (formValue.balperiodtype && formValue.balperiodtype.length > 0) {
-      productTypeBalanceTypePeriodList = [];
-      formValue.balperiodtype.forEach((periodType: string) => {
-        productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
-          productTypeBalanceTypePeriodList.push({
-            productTypeIdentifier: productTypeIdentifier ?? null,
-            balanceTypeIdentifier: formValue.balTypeIdentifier,
-            periodType: periodType
-          });
-        });
-      });
-    }
-
-
-    // 5. productTypeBalanceTypeRoletypeRelationshipList
-    const productTypeBalanceTypeRoletypeRelationshipList =
-      this.dataWithRoleTypevalues.length > 0
-        ? this.dataWithRoleTypevalues.map((roleType, index) => ({
-          productTypeIdentifier: productTypeIdentifiers[index] ?? null,
-          balanceTypeIdentifier: formValue.balTypeIdentifier,
-          roleType: this.roletypes.find(rt => rt.label === roleType.type)?.value,
-          accountingClassification: this.accountclassifications.find(
-            ac => ac.label === roleType.accountingClassification
-          )?.value,
-          roleTypeCode: roleType.type,
-          accountingClassificationCode: roleType.accountingClassification,
-          visible: roleType.visibility === 'Y' ? 'Y' : 'N',
-          payee: roleType.beneficiary === 'Y' ? 'Y' : 'N',
-          payer: roleType.obligator === 'Y' ? 'Y' : 'N'
-        }))
-        : [];    // 6. MetadataRequestRltnpList
-    const metadataRequestRltnpList: any[] = [];    // Map BalanceSubType relationships
-    if (this.dataWithBalSubTypevalues.length > 0) {
-      this.dataWithBalSubTypevalues.forEach(() => {
-        metadataRequestRltnpList.push({
-          parentIdentifier: formValue.balTypeIdentifier,
-          parentRequirementId: this.metadataService.getReqDfnId(),
-          parentMetadataType: "BalanceType",
-          childIdentifier: formValue1.balsubtypeIdentifier,
-          childMetadataType: "BalanceSubType"
-        });
-      });
-    }    // Map selected BalanceSubType from dropdown relationships
-    if (formValue.balsubtype && formValue.balsubtype.length > 0) {
-      formValue.balsubtype.forEach((subtype: string) => {
-        const selectedBalanceType = this.subBalancetypes.find(item => item.label === subtype);
-        if (selectedBalanceType) {
-          metadataRequestRltnpList.push({
-            parentIdentifier: formValue.balTypeIdentifier,
-            parentRequirementId: this.metadataService.getReqDfnId(),
-            parentMetadataType: "BalanceType",
-            childIdentifier: selectedBalanceType.value,
-            childMetadataType: "BalanceSubType"
-          });
-        }
-      });
-    }    // Map RoleType relationships
-    if (this.dataWithRoleTypevalues.length > 0) {
-      this.dataWithRoleTypevalues.forEach((roleType) => {
-        const selectedRoleType = this.roletypes.find(rt => rt.label === roleType.type);
-        if (selectedRoleType) {
-          metadataRequestRltnpList.push({
-            parentIdentifier: formValue.balTypeIdentifier,
-            parentRequirementId: this.metadataService.getReqDfnId(),
-            parentMetadataType: "BalanceType",
-            childIdentifier: selectedRoleType.value,
-            childMetadataType: "RoleType"
-          });
-        }
-      });
-    }
-
-    // 7. Final balanceTypeData
-    const productTypeKeys = this.metadataService.getProductTypeKeys();
-    const productTypeValues = this.metadataService.getProductTypeValues();
-    const balanceTypeData = {
-      metadataType: 'BalanceType',
-      balanceTypeList: [
-        {
-          balanceType,
-          balanceSubTypeList,
-          balanceAggregationInsertionList,
-          productTypeBalanceTypeRelationshipList,
-          productTypeBalanceSubTypeRelationshipList,
-          productTypeBalanceTypePeriodList,
-          productTypeBalanceTypeRoletypeRelationshipList
-        }
-      ],
-      productTypeList: productTypeKeys.map((code, index) => ({
-        identifier: productTypeValues[index],
-        code: code
-      })),
-      metadataDependencyRltnpList: metadataRequestRltnpList
-    };
-
-
-    if (productTypeBalanceTypeRoletypeRelationshipList.length === 0) {
-      this.handleError(
-        {
-          errorCode: 'ROLE_TABLE_EMPTY',
-          status: 409
-        },
-        isAdd
-      );
-      return;
-    }
-
-    if (this.addNewBalanceTypeFormGroup.invalid) {
-      this.addNewBalanceTypeFormGroup.markAllAsTouched();
-
-      const missingFields = this.getInvalidRequiredFields(this.addNewBalanceTypeFormGroup);
-      console.warn('Missing required fields:', missingFields);
-
-      this.handleError(
-        {
-          errorCode: 'FORM_INVALID',
-          status: 400,
-          missingFields
-        },
-        isAdd
-      );
-      return;
-    }
-
-    const serviceCall = isAdd
-      ? this.balanceTypeService.saveBalanceType(balanceTypeData)
-      : this.balanceTypeService.updateBalanceType(balanceTypeData);
-
-    serviceCall.subscribe({
-      next: resp => this.successResponse(resp, balanceTypeData, isAdd),
-      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
-    });
-    this.addNewBalanceTypeFormGroup.controls['balTypeIdentifier'].disable();
-  }
-  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
-    const invalidFields: string[] = [];
-
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      if (control && control.errors?.['required']) {
-        invalidFields.push(key);
-      }
-    });
-
-    return invalidFields;
-  }
-
-  private successResponse(resp, _balanceTypeData, isAdd) {
-    const balanceTypeCode =
-      _balanceTypeData.balanceTypeList[0]
-        .productTypeBalanceTypeRelationshipList[0].balanceTypeCode;
-    const SuccessMsg = isAdd
-      ? `${balanceTypeCode} Added successfully`
-      : `${balanceTypeCode} Updated successfully`;
-    this.apiResponse.emit({ ..._balanceTypeData, SuccessMsg });
-  }
-  private handleError(error: any, isAdd: boolean) {
-    let errorMsg = ' ';
-
-    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
-      if (error.missingFields?.length) {
-        errorMsg = `Please fill the required fields.`;
-      } else {
-        errorMsg = 'Please fill the required fields.';
-      }
-    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
-      errorMsg = 'Code already exists.';
-    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
-      errorMsg = error.error?.errorDescription || 'Code already exists.';
-    } else if (error.status === 400) {
-      errorMsg = 'Please fill the Role Type fields.';
-    } else if (error.errorCode === 'ROLE_TABLE_EMPTY') {
-      errorMsg = 'AtLeast One Role Type is required.';
+  public rowSelection(element: Conditions[]) {
+    console.log('rowSelection called with:', element);
+    if (element.length !== 0) {
+      this.selectedRowSingleSelect = element;
     } else {
-      errorMsg = 'Unknown error occurred.';
+      this.selectedRowSingleSelect = [];
     }
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages.push(this.message);
+    this.rowSelected.emit(this.selectedRowSingleSelect);
+    this.setDirty(true);
+    console.log('Conditions selectedRowSingleSelect:', this.selectedRowSingleSelect);
 
-    // if (isAdd) {
-    //   this.errorMessages.push(this.message);
-    // }
-    // setTimeout(() => {
-    //   this.errorMessages = this.errorMessages.filter(
-    //     msg => msg.text !== errorMsg
-    //   );
-    // }, 20000);
+    // Dynamically update validators for selected rows only
+    this.updateValidatorsForSelectedRows();
   }
 
-  onReset(isAdd: boolean): void {
-    const isEditMode = this.isEdit;
-    this.addNewBalanceTypeFormGroup.reset();
-    this.balanceSubtypeForm.reset();
-    this.roleTypeForm.reset();
-    this.aggregateForm.reset();
-    this.postingApplicationForm.reset();
+  private updateValidatorsForSelectedRows() {
+    if (!this.formGroup) return;
+    const controls = this.formGroup.controls;
 
-     this.addNewBalanceTypeFormGroup.markAsPristine();
-  this.addNewBalanceTypeFormGroup.markAsUntouched();
-  this.balanceSubtypeForm.markAsPristine();
-  this.balanceSubtypeForm.markAsUntouched();
-  this.roleTypeForm.markAsPristine();
-  this.roleTypeForm.markAsUntouched();
-  this.aggregateForm.markAsPristine();
-  this.aggregateForm.markAsUntouched();
-  this.postingApplicationForm.markAsPristine();
-  this.postingApplicationForm.markAsUntouched();
+    // Remove required validator from all controls
+    Object.keys(controls).forEach(key => {
+      if (key.startsWith('relationshipType_')) {
+        controls[key].clearValidators();
+        controls[key].updateValueAndValidity({ emitEvent: false });
+      }
+    });
 
+    // Add required validator only for selected rows
+    (this.selectedRowSingleSelect || []).forEach(row => {
+      const controlName = 'relationshipType_' + (row.id ?? '');
+      if (controls[controlName]) {
+        controls[controlName].setValidators([Validators.required]);
+        controls[controlName].updateValueAndValidity({ emitEvent: false });
+      }
+    });
+  }
 
+  public onDefaultToggleChange(event: any, rowIndex: number) {
+    const data = [...this.conditionsDataSingleSelect.datasource.data];
+    const row = data.find(r => r.index === rowIndex);
 
+    if (!row) return;
 
-    this.dataWithBalSubTypevalues = [];
-    this.dataWithRoleTypevalues = [];
-    this.dataWithAggregatevalues = [];
-    this.dataWithPostngStdvalues = [];
-    if (this.balanceSubTypeData && this.balanceSubTypeData.datasource) {
-      this.balanceSubTypeData.datasource.data = [
-        ...this.dataWithBalSubTypevalues
-      ];
-    }
-    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
-      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
-    }
-    if (this.aggregateTabledata && this.aggregateTabledata.datasource) {
-      this.aggregateTabledata.datasource.data = [
-        ...this.dataWithAggregatevalues
-      ];
-    }
-
-    if (
-      this.postingApplicationTabledata &&
-      this.postingApplicationTabledata.datasource
-    ) {
-      this.postingApplicationTabledata.datasource.data = [
-        ...this.dataWithPostngStdvalues
-      ];
-    }
-    if (isEditMode) {
-      // Restore 'code' value and keep it disabled
-      this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.setValue(this.retainedCode);
-      this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.disable();
-      this.addNewBalanceTypeFormGroup.get('balTypeIdentifier')?.setValue(this.retainedIdentifier);
-      this.addNewBalanceTypeFormGroup.get('balTypeIdentifier')?.disable();
-
-      this.addNewBalanceTypeFormGroup.get('balanceTypeName')?.setValue(this.retainedName);
-      this.addNewBalanceTypeFormGroup.get('systembalance')?.setValue(this.retainedSystemBalance);
-      this.addNewBalanceTypeFormGroup.get('accountclassification')?.setValue(this.retainedAccountClassification);
-      this.addNewBalanceTypeFormGroup.get('datevalue')?.setValue(this.retainedDateValue);
-      this.addNewBalanceTypeFormGroup.get('payer')?.setValue(this.retainedPayer);
-      this.addNewBalanceTypeFormGroup.get('payee')?.setValue(this.retainedPayee);
-      this.addNewBalanceTypeFormGroup.get('statementdisplay')?.setValue(this.retainedStatementDisplay);
-      this.addNewBalanceTypeFormGroup.get('chargebase')?.setValue(this.retainedChargeBase);
-      this.addNewBalanceTypeFormGroup.get('persisted')?.setValue(this.retainedPersisted);
-      this.addNewBalanceTypeFormGroup.get('calculated')?.setValue(this.retainedCalculated);
-      this.addNewBalanceTypeFormGroup.get('autocreation')?.setValue(this.retainedAutoCreation);
-      this.addNewBalanceTypeFormGroup.get('loghistory')?.setValue(this.retainedLogHistory);
-      this.addNewBalanceTypeFormGroup.get('dailysnapshot')?.setValue(this.retainedDailySnapshot);
-      this.addNewBalanceTypeFormGroup.get('inquiryrequired')?.setValue(this.retainedInquiryRequired);
-      this.addNewBalanceTypeFormGroup.get('generatefinancialresults')?.setValue(this.retainedGenerateFinancialResults);
-      this.addNewBalanceTypeFormGroup.get('glmapping')?.setValue(this.retainedGLMapping);
-      this.addNewBalanceTypeFormGroup.get('summaryrequired')?.setValue(this.retainedSummaryRequired);
-      this.addNewBalanceTypeFormGroup.get('balsubtype')?.setValue(this.retainedBalanceSubTypeData);
-      this.addNewBalanceTypeFormGroup.get('balperiodtype')?.setValue(this.retainedBalancePeriodType);
-
-
-
-      this.roleTypetabledata.datasource.data = [...this.retainedRoleTypeData];
-      this.dataWithRoleTypevalues = [...this.retainedRoleTypeData];
-
-      this.aggregateTabledata.datasource.data = [...this.retainedAggregateDetailsData];
-      this.dataWithAggregatevalues = [...this.retainedAggregateDetailsData];
-
-
+    if (event.checked) {
+      data.forEach(item => {
+        item.default = item.index === rowIndex;
+      });
     } else {
-      this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.enable();
-      this.addNewBalanceTypeFormGroup.get('balTypeIdentifier')?.enable();
-
+      row.default = false;
     }
 
-    this.changeDetectorRef.detectChanges();
+    this.conditionsDataSingleSelect.datasource.data = data;
+
+    this.defaultChanged.emit({
+      rowIndex: rowIndex,
+      isDefault: event.checked
+    });
   }
 
-  balancesubtype = false;
-  isEdit = false;
-
-  private balanceTypeForm(element: BalanceTypeList): void {
-    console.log(JSON.stringify(element, null, 2));
-    this.isAdd = false;
-
-    // Deduplicate balance subtypes
-    const balanceSubTypes =
-      Array.from(
-        new Set(
-          element.productTypeBalanceSubTypeRelationshipList
-            ?.filter(item => item.balanceTypeIdentifier === element.identifier)
-            .map(item => item.balanceSubTypeCode)
-        )
-      ) || [];
-
-    // Deduplicate period types
-    const periodTypes =
-      Array.from(
-        new Set(
-          element.productTypeBalanceTypePeriodList
-            ?.filter(item => item.balanceTypeIdentifier === element.identifier)
-            .map(item => item.periodType)
-        )
-      ) || [];
-    this.retainedIdentifier = element.identifier ?? 0;
-    this.retainedCode = element.code || '';
-
-    this.retainedName = element.name || '';
-    this.retainedSystemBalance = element.systemBalance === 'Y';
-    this.retainedAccountClassification = element.productTypeBalanceTypeRelationshipList?.[0]?.accountingClassification ?? 0;
-    this.retainedDateValue = element.productTypeBalanceTypeRelationshipList?.[0]?.dateValue || '';
-    this.retainedPayer = element.productTypeBalanceTypeRelationshipList?.[0]?.payerIdentifier ?? 0;
-    this.retainedPayee = element.productTypeBalanceTypeRelationshipList?.[0]?.payeeIdentifier ?? 0;
-    this.retainedStatementDisplay = element.productTypeBalanceTypeRelationshipList?.[0]?.statementProcess === 'Y';
-    this.retainedChargeBase = element.productTypeBalanceTypeRelationshipList?.[0]?.chargeCalculation === 'Y';
-    this.retainedPersisted = element.productTypeBalanceTypeRelationshipList?.[0]?.persisted === 'Y';
-    this.retainedCalculated = element.productTypeBalanceTypeRelationshipList?.[0]?.calculated === 'Y';
-    this.retainedAutoCreation = element.productTypeBalanceTypeRelationshipList?.[0]?.autoCreated === 'Y';
-    this.retainedLogHistory = element.productTypeBalanceTypeRelationshipList?.[0]?.logAudit === 'Y';
-    this.retainedDailySnapshot = element.productTypeBalanceTypeRelationshipList?.[0]?.snapshotRequired === 'Y';
-    this.retainedInquiryRequired = element.productTypeBalanceTypeRelationshipList?.[0]?.enquiryRequired === 'Y';
-    this.retainedGenerateFinancialResults = element.productTypeBalanceTypeRelationshipList?.[0]?.financialResultRequired === 'Y';
-    this.retainedGLMapping = element.productTypeBalanceTypeRelationshipList?.[0]?.glRequired === 'Y';
-    this.retainedSummaryRequired = element.productTypeBalanceTypeRelationshipList?.[0]?.summaryRequired === 'Y';
-    // this.retainedBalanceSubType = element.balanceSubTypeList?.length > 0;
-    // this.retainedBalancePeriodType = element.productTypeBalanceTypePeriodList || [];
-    this.retainedBalanceSubTypeData = balanceSubTypes
-
-    this.retainedBalancePeriodType = periodTypes
-
-
-
-
-    this.retainedRoleTypeData = element.productTypeBalanceTypeRoletypeRelationshipList?.map(element => {
-      let obj = {} as RoleTypeSampleTable;
-      obj.type = element.roleTypeCode;
-      obj.accountingClassification = element.accountingClassificationCode;
-      obj.beneficiary = element.payer;
-      obj.obligator = element.payee;
-      obj.visibility = element.visible;
-      return obj;
-    }) || [];
-
-    this.retainedAggregateDetailsData = element.balanceAggregationInsertionList?.map(element => {
-      let obj = {} as AggregateSampleTable;
-      obj.aggregationname = String(element.name);
-      obj.balancetype = element.balanceTypeCode;
-      obj.aggregationLevel = String(element.aggregationLevel);
-      obj.relationshiptype = element.relationshipTypeCode;
-      obj.aggregates = element.aggregateInquiry1.map(aggr => ({
-        id: aggr.id,
-        label: aggr.label,
-        value: aggr.value
-      }));
-      return obj;
-    }) || [];
-    // this.addNewBalanceTypeFormGroup.reset();
-
-    // this.addNewBalanceTypeFormGroup.removeControl('balancesubtype');
-    //   const balanceSubTypes =
-    // Array.from(
-    //   new Set(
-    //     element.productTypeBalanceSubTypeRelationshipList
-    //       ?.filter(item => item.balanceTypeIdentifier === element.identifier)
-    //       .map(item => item.balanceSubTypeCode)
-    //   )
-    // ) || [];
-    // const periodTypes =
-    // Array.from(
-    //   new Set(
-    //     element.productTypeBalanceTypePeriodList
-    //       ?.filter(item => item.balanceTypeIdentifier === element.identifier)
-    //       .map(item => item.periodType)
-    //   )
-    // ) || [];
-    console.log('balanceSubTypes:', balanceSubTypes);
-    console.log('periodTypes:', periodTypes);
-
-
-
-    this.retainedBalancePeriodType = periodTypes
-
-    this.addNewBalanceTypeFormGroup.reset();
-    this.addNewBalanceTypeFormGroup.removeControl('balancesubtype');
-
-
-
-    this.addNewBalanceTypeFormGroup.patchValue({
-      balTypeIdentifier: element.identifier,
-      balanceTypeCode: element.code,
-      balanceTypeName: element.name,
-      systembalance: element.systemBalance === 'Y',
-      accountclassification:
-        element.productTypeBalanceTypeRelationshipList?.[0]
-          ?.accountingClassification || '',
-      datevalue:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.dateValue || '',
-      payer:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.payerIdentifier ||
-        '',
-      payee:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.payeeIdentifier ||
-        '',
-      chargebase:
-        element.productTypeBalanceTypeRelationshipList?.[0]
-          ?.chargeCalculation === 'Y',
-      statementdisplay:
-        element.productTypeBalanceTypeRelationshipList?.[0]
-          ?.statementProcess === 'Y',
-      persisted:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.persisted === 'Y',
-      calculated:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.calculated === 'Y',
-      autocreation:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.autoCreated === 'Y',
-      loghistory:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.logAudit === 'Y',
-      dailysnapshot:
-        element.productTypeBalanceTypeRelationshipList?.[0]
-          ?.snapshotRequired === 'Y',
-      summaryrequired:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.summaryRequired ===
-        'Y',
-      inquiryrequired:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.enquiryRequired ===
-        'Y',
-      generatefinancialresults:
-        element.productTypeBalanceTypeRelationshipList?.[0]
-          ?.financialResultRequired === 'Y',
-      glmapping:
-        element.productTypeBalanceTypeRelationshipList?.[0]?.glRequired === 'Y',
-      // balsubtype:
-      // element.productTypeBalanceSubTypeRelationshipList?.[0]?.balanceSubTypeIdentifier||''
-      // balsubtype: balanceSubTypes,
-      balsubtype: balanceSubTypes,
-      balperiodtype: periodTypes
-    });
-    this.balancesubtype =
-      element?.balanceSubTypeList?.length > 0 ? true : false;
-    this.addNewBalanceTypeFormGroup.addControl(
-      'balancesubtype',
-      this.fb.control(this.balancesubtype)
-    );
-    this.balanceSubTypeData.datasource.data = [];
-    this.dataWithBalSubTypevalues = [];
-    element.balanceSubTypeList?.forEach(element => {
-      let obj = {} as BalSybTypeTable;
-      obj.identifier = element.identifier;
-      obj.code = element.code;
-      obj.name = element.name;
-      this.balanceSubTypeData.datasource.data.push(obj);
-      this.dataWithBalSubTypevalues.push(obj);
-    });
-    this.roleTypetabledata.datasource.data = [];
-    this.dataWithRoleTypevalues = [];
-    element.productTypeBalanceTypeRoletypeRelationshipList?.forEach(element => {
-      let obj = {} as RoleTypeSampleTable;
-
-      obj.type = element.roleTypeCode;
-      obj.accountingClassification = element.accountingClassificationCode;
-      obj.beneficiary = element.payer;
-      obj.obligator = element.payee;
-      obj.visibility = element.visible;
-      this.roleTypetabledata.datasource.data.push(obj);
-      this.dataWithRoleTypevalues.push(obj);
-    });
-
-    this.aggregateTabledata.datasource.data = [];
-    this.dataWithAggregatevalues = [];
-    element.balanceAggregationInsertionList?.forEach(element => {
-      let obj = {} as AggregateSampleTable;
-      obj.aggregationname = String(element.name);
-      obj.balancetype = element.balanceTypeCode;
-      obj.aggregationLevel = String(element.aggregationLevel);
-      obj.relationshiptype = element.relationshipTypeCode;
-      obj.aggregates = element.aggregateInquiry1.map(aggr => ({
-        id: aggr.id,
-        label: aggr.label,
-        value: aggr.value
-      }));
-      this.aggregateTabledata.datasource.data.push(obj);
-      this.dataWithAggregatevalues.push(obj);
-    });
-
-    if (this.aggregateForm) {
-      // Store the current balanceTypeCode
-      const currentBalanceTypeCode =
-        this.addNewBalanceTypeFormGroup.get('balanceTypeCode')?.value;
-
-      // Reset the form
-      this.aggregateForm.reset();
-
-      // Set aggregationname to the stored balanceTypeCode
-      this.aggregateForm
-        .get('aggregationname')
-        ?.setValue(currentBalanceTypeCode);
-    }
-
-    this.isEdit = true;
-  }
-
-  private convertAccntclassIdfrToCode(identifier: any): string | undefined {
-    const item = this.accountclassifications.find(
-      item => item.value === identifier
-    );
-    return item ? item.label : undefined;
+  private setDirty(dirty: boolean) {
+    this.isDirty = dirty;
+    this.dirtyChange.emit(this.isDirty);
   }
 }
 
 
 
+
+
+
+
+
+
+
+
+
+<bod-form
+  [formGroup]="addConditionsFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onSubmit()"
+  (onReset)="onReset()"
+  fisStyle
+>
+<div
+    style="
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 8px;
+    "
+  >
+    <button
+      mat-icon-button
+      type="button"
+      (click)="dialogRef.close()"
+      aria-label="Close"
+    >
+      <mat-icon>x</mat-icon>
+    </button>
+  </div>
+  <bod-conditions-multiselect-table
+    #conditionsTable
+    [conditionsDataSingleSelect]="data.conditionsDataSingleSelect"
+    [selectedRowSingleSelect]="data.selectedRowSingleSelect"
+    (rowSelected)="onRowSelected($event)"
+    (tableDirty)="onTableDirty()"
+    [formGroup]="addConditionsFormGroup"
+  ></bod-conditions-multiselect-table>
+</bod-form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, EventEmitter, Inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ConditionsMultiselectTableComponent } from '../conditions-multiselect-table/conditions-multiselect-table.component';
+import { UntypedFormGroup, UntypedFormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BodAutoCompleteModule, BodCommonModule, BodCurrencyControlModule, BodDynamicFormModule, BodFormModule, BodFormTypes, BodPageContainerModule, BodTableActionsModule, BodTableModule, ControlGroupModule, DirectivesModule, InputLayoutModule, InquiryLayoutModule, MessageContainerModule, SearchFieldModule, SectionContainerModule } from '@bod/common';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslateModule } from '@ngx-translate/core';
+import { RufIconModule } from '@ruf/shell/icon';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { Conditions, ConditionTable } from '../../transaction-type.model';
+
+@Component({
+  selector: 'bod-conditions-multiselect-dialog',
+  standalone: true,
+  imports: [
+    ConditionsMultiselectTableComponent,
+    ReactiveFormsModule,
+    BodFormModule,
+    FormsModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './conditions-multiselect-dialog.component.html',
+  styleUrls: ['./conditions-multiselect-dialog.component.scss']
+})
+export class ConditionsMultiselectDialogComponent {
+  public translationKey = TranslationKey;
+
+  formType: BodFormTypes = BodFormTypes.FORM;
+  @ViewChild('conditionsTable', { static: false }) conditionsTable: ConditionsMultiselectTableComponent;
+  @Output() rowSelected = new EventEmitter<ConditionTable[]>();
+
+  public initialSelectedRows: Conditions[] = [];
+  selectedRows: Conditions[] = [];
+  public addConditionsFormGroup: UntypedFormGroup;
+  isDirty = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<ConditionsMultiselectDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private fb: UntypedFormBuilder
+  ) {
+    this.initForm();
+    this.initialSelectedRows = [...(data.selectedRowSingleSelect || [])];
+    this.selectedRows = [...this.initialSelectedRows];
+  }
+
+  private initForm(): void {
+    const controls: { [key: string]: any } = {};
+    // Always get the latest data
+    const allRows = this.data?.conditionsDataSingleSelect?.datasource?.data || [];
+    allRows.forEach((row: any, idx: number) => {
+     
+      controls['relationshipType_' + row.id] = [row.relationshipType || null];
+    });
+    this.addConditionsFormGroup = this.fb.group(controls);
+    console.log('Dialog initForm - Form controls:', Object.keys(controls));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['data'] || changes['conditionData']) {
+      this.initForm();
+    }
+  }
+
+  onTableDirtyChange(dirty: boolean) {
+    this.isDirty = dirty;
+    if (dirty) {
+      this.addConditionsFormGroup.markAsDirty();
+    }
+  }
+
+  public isTableDirty = false;
+
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addConditionsFormGroup.markAsDirty();
+  }
+
+  onRowSelected(selectedRows: Conditions[]) {
+    console.log('onRowSelected called with:', selectedRows);
+    this.selectedRows = selectedRows;
+    this.isDirty = true;
+    this.addConditionsFormGroup.markAsDirty();
+    // this.initForm();
+  }
+
+  onSubmit() {
+    if (this.addConditionsFormGroup.invalid) {
+      this.addConditionsFormGroup.markAllAsTouched();
+      return; // Prevent closing the dialog
+    }
+    // Pass the selectedRows object when closing the dialog
+    this.dialogRef.close({ selectedConditions: this.selectedRows });
+  }
+
+ onReset() {
+  this.isDirty = false;
+
+  this.selectedRows = [...this.initialSelectedRows];
+
+  // Use identifier for matching
+  Object.keys(this.addConditionsFormGroup.controls).forEach(key => {
+    const rowId = Number(key.replace('relationshipType_', ''));
+    // Find the table row by id
+    const tableRow = this.data.conditionsDataSingleSelect?.datasource?.data.find(row => row.id === rowId);
+    // Find the initial row by identifier
+    const initialRow = this.initialSelectedRows.find(row => row.identifier === tableRow?.identifier);
+    this.addConditionsFormGroup.get(key)?.setValue(initialRow ? initialRow.relationshipType : null);
+  });
+
+  if (this.conditionsTable) {
+    this.conditionsTable.resetSelection();
+    setTimeout(() => {
+      this.conditionsTable.selectedRowSingleSelect = [...this.initialSelectedRows];
+      this.conditionsTable.selectConditionsRows?.();
+    }, 0);
+  }
+}
+}
