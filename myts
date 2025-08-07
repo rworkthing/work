@@ -1,0 +1,1126 @@
+<bod-message-container [messages]="errorMessages"></bod-message-container>
+
+<bod-form
+  [formGroup]="addNewTransactionCategoryFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onAddNewTransactionCategory(isAdd)"
+  (onReset)="onReset(isAdd)"
+  fisStyle
+>
+  <bod-input-layout col="2">
+    <!-- Code input -->
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <div *ngIf="isEdit">
+        {{ addNewTransactionCategoryFormGroup.get('code')?.value }}
+      </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="code"
+          name="code"
+        />
+        <mat-error>
+          {{ getError('code', addNewTransactionCategoryFormGroup) | translate }}
+        </mat-error>
+        <mat-error
+          *ngIf="addNewTransactionCategoryFormGroup.get('code').hasError('noSpecialCharacters')"
+        >
+          No special characters allowed
+        </mat-error>
+        <mat-error
+          *ngIf="addNewTransactionCategoryFormGroup.get('code').hasError('maxLength')"
+        >
+          Exceeds maximum length
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+
+    <!-- Name input -->
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.name'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="name"
+          name="name"
+        />
+        <mat-error>
+          {{ getError('name', addNewTransactionCategoryFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+
+  </bod-input-layout>
+
+  <!-- Channel Configuration Section -->
+ <bod-category-channels-main-table
+  #channelsMainTable
+  [channelData]="channelData"
+  [counterData]="counterData"
+  [parentFormGroup]="addNewTransactionCategoryFormGroup" 
+  (completeDeltaChange)="handleChannelDataChange($event)"
+  (tableDirty)="onChannelTableDirty()"
+  (channelDetails)="handleChannelDataChange($event)"
+></bod-category-channels-main-table>
+</bod-form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  AbstractControl,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import {
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableMetadata,
+  BodTableModule,
+  ControlGroupModule,
+  DirectivesModule,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  NotificationMessage,
+  NotificationMessageType,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { TranslateModule } from '@ngx-translate/core';
+import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatIconModule } from '@angular/material/icon';
+import { MatRadioModule } from '@angular/material/radio';
+
+import { HttpClient } from '@angular/common/http';
+
+import {
+  TransactionCategoryList,
+  TransactionCategoryChannelTable
+} from '../transaction-category.model';
+import { MatTableDataSource } from '@angular/material/table';
+import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
+import { FormUtilityService } from '../../../metadat-config/form-utility.service';
+import { MetadataService } from '../../../metadat-config/metada-config.service';
+import {
+  ChannelTable,
+  CounterTable,
+  RestrictionTable,
+  ConditionTable,
+  CommunicationTable
+} from '../../transaction-type.model';
+import { TransactionTypeService } from '../../transaction-type.service';
+import { TransactionCategoryService } from '../transaction-category-service';
+import { CategoryChannelsMainTableComponent } from '../category-channels-main-table/category-channels-main-table.component';
+
+@Component({
+  selector: 'bod-add-edit-transactioncategory',
+  standalone: true,
+  imports: [
+    CategoryChannelsMainTableComponent,
+    MatRadioModule,
+    CommonModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './add-edit-transactioncategory.component.html',
+  styleUrl: './add-edit-transactioncategory.component.scss'
+})
+export class AddEditTransactionCategoryComponent implements OnInit {
+  @Input() editTransactionCategoryRow: TransactionCategoryList;
+
+  public translationKey = TranslationKey;
+  public addNewTransactionCategoryFormGroup: UntypedFormGroup;
+
+  public channelData: ChannelTable[] = [];
+  public isChannelTableDirty = false;
+
+  public counterData: CounterTable[] = [];
+  public restrictionData: RestrictionTable[] = [];
+  public conditionData: ConditionTable[] = [];
+  public communicationData: CommunicationTable[] = [];
+
+  public channels: any[] = [];
+  public counters: any[] = [];
+  public restrictions: any[] = [];
+  public conditions: any[] = [];
+  public communications: any[] = [];
+  public communicationsMasterList: any[] = [];
+
+  @ViewChild('channelsMainTable')
+  channelsMainTable: CategoryChannelsMainTableComponent;
+
+  // Retained values for edit mode
+  @Input() retainedCode = '';
+  @Input() retainedTransactionCategoryIdentifier = 0;
+  @Input() retainedName = '';
+  @Input() retainedChannels: any[] = [];
+  @Input() retainedCounters: any[] = [];
+  @Input() retainedRestrictions: any[] = [];
+  @Input() retainedConditions: any[] = [];
+  @Input() retainedCommunicationServices: any[] = [];
+
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+
+  constructor(
+    private metadataService: MetadataService,
+    private cdr: ChangeDetectorRef,
+    private fb: UntypedFormBuilder,
+    private http: HttpClient,
+    private bodCommonDialogService: BodCommonDialogService,
+    private transactionCategoryService: TransactionCategoryService,
+    private transactionTypeService: TransactionTypeService
+  ) {}
+
+ ngOnInit() {
+  this.initForm();
+
+  // Load all dropdowns first, then call transactionCategoryForm
+  const dropdownsLoaded$ = [
+    this.transactionTypeService.getDeliveryChannel(),
+    this.transactionTypeService.getCounters(),
+    this.transactionTypeService.getRestrictions(),
+    this.transactionTypeService.getConditions(),
+    this.transactionTypeService.getCommunicationService()
+  ];
+
+  // Use forkJoin to wait for all dropdowns
+  import('rxjs').then(rxjs => {
+    rxjs.forkJoin(dropdownsLoaded$).subscribe(
+      ([channels, counters, restrictions, conditions, communications]) => {
+        this.channels = channels.map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }));
+        this.counters = counters.map((item: any) => ({
+          identifier: item.identifier,
+          code: item.code,
+          classificationType: item.classificationType
+        }));
+        this.restrictions = restrictions;
+        this.conditions = conditions;
+        this.communications = communications;
+        this.communicationsMasterList = communications;
+
+        // Now safe to call transactionCategoryForm
+        if (this.editTransactionCategoryRow) {
+          this.transactionCategoryForm(this.editTransactionCategoryRow);
+        }
+      }
+    );
+  });
+}
+
+  private initForm(): void {
+    this.addNewTransactionCategoryFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(32)
+      ]),
+      name: new UntypedFormControl('', [
+        Validators.required,
+        this.maxLengthValidator(120)
+      ]),
+      transactionCategoryIdentifier: [{ value: '', disabled: true }]
+    });
+  }
+
+  loadDropdownData(): void {
+    // Load channels
+    this.transactionTypeService.getDeliveryChannel().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      mappedData.sort((a, b) => a.label.localeCompare(b.label));
+      this.channels = mappedData;
+    });
+
+    // Load counters
+    this.transactionTypeService.getCounters().subscribe(data => {
+      const mappedData = data.map((item: any) => ({
+        identifier: item.identifier,
+        code: item.code,
+        classificationType: item.classificationType
+      }));
+      mappedData.sort((a, b) => a.code.localeCompare(b.code));
+      this.counters = mappedData;
+    });
+
+    // Load restrictions
+    this.transactionTypeService.getRestrictions().subscribe(data => {
+      this.restrictions = data;
+    });
+
+    // Load conditions
+    this.transactionTypeService.getConditions().subscribe(data => {
+      this.conditions = data;
+    });
+
+    // Load communications
+    this.transactionTypeService.getCommunicationService().subscribe(data => {
+      this.communications = data;
+      this.communicationsMasterList = data;
+    });
+  }
+
+  /**
+   * Handle channel table dirty state
+   */
+  public onChannelTableDirty(): void {
+    this.isChannelTableDirty = true;
+    this.addNewTransactionCategoryFormGroup.markAsDirty();
+  }
+
+  /**
+   * Handle channel data changes
+   */
+  public handleChannelDataChange(data: any) {
+    this.channelData = data.channels;
+    this.counterData = data.counters;
+    this.restrictionData = data.restrictions;
+    this.conditionData = data.conditions;
+    this.communicationData = data.communications;
+
+     
+    console.log(
+      'Received All Counters with Channel Identifier (JSON):\n',
+      JSON.stringify(this.counterData, null, 2)
+    );
+    console.log(
+      'Received All Restrictions with Channel Identifier (JSON):\n',
+      JSON.stringify(this.restrictionData, null, 2)
+    );
+    console.log(
+      'Received All Conditions with Channel Identifier (JSON):\n',
+      JSON.stringify(this.conditionData, null, 2)
+    );
+    console.log(
+      'Received All Communications with Channel Identifier (JSON):\n',
+      JSON.stringify(this.communicationData, null, 2)
+    );
+  }
+
+  /**
+   * Get current channel table data
+   */
+  public getCurrentChannelData(): ChannelTable[] {
+    return this.channelsMainTable?.getCurrentTableData() || [];
+  }
+
+ onReset(isAdd: boolean): void {
+
+  console.log('retainedCounters:', JSON.stringify(this.retainedCounters, null, 2));
+console.log('retainedRestrictions:', JSON.stringify(this.retainedRestrictions, null, 2));
+console.log('retainedConditions:', JSON.stringify(this.retainedConditions, null, 2));
+console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommunicationServices, null, 2));
+  const isEditMode = this.isEdit;
+
+  this.addNewTransactionCategoryFormGroup.reset();
+  this.channelData = [];
+  this.counterData = [];
+  this.restrictionData = [];
+  this.conditionData = [];
+  this.communicationData = [];
+  this.isChannelTableDirty = false;
+
+  if (this.channelsMainTable) {
+    this.channelsMainTable.resetTableForm();
+  }
+
+  if (isEditMode) {
+    // Enrich retainedCounters
+    function dedupeBy<T>(arr: T[], key: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  return arr.filter(item => {
+    const k = key(item);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+// Enrich and dedupe retainedCounters
+const enrichedRetainedCounters = dedupeBy(
+  (this.retainedCounters || []).map(counter => {
+    const counterObj = this.counters?.find(
+      c => String(c.identifier) === String(counter.counterIdentifier)
+    );
+    return {
+      id: counter.counterIdentifier,
+      code: counterObj ? counterObj.code : String(counter.counterIdentifier),
+      identifier: counter.counterIdentifier,
+      classificationType: counterObj ? counterObj.classificationType : '',
+      operatorType: counter.counterOperationType || '',
+      channelidentifier: counter.resourceItemIdentifier
+    };
+  }),
+  c => `${c.channelidentifier}_${c.identifier}`
+);
+
+// Enrich and dedupe retainedRestrictions
+const enrichedRetainedRestrictions = dedupeBy(
+  (this.retainedRestrictions || []).map(restriction => {
+    const restrictionObj = this.restrictions?.find(
+      r => String(r.identifier) === String(restriction.restrictionIdentifier)
+    );
+    return {
+      id: restriction.restrictionIdentifier,
+      code: restrictionObj ? restrictionObj.code : String(restriction.restrictionIdentifier),
+      identifier: restriction.restrictionIdentifier,
+      type: restriction.restrictionClassificationType || '',
+      channelidentifier: restriction.resourceItemIdentifier
+    };
+  }),
+  r => `${r.channelidentifier}_${r.identifier}`
+);
+
+// Enrich and dedupe retainedConditions
+const enrichedRetainedConditions = dedupeBy(
+  (this.retainedConditions || []).map(condition => {
+    const conditionObj = this.conditions?.find(
+      c => String(c.identifier) === String(condition.conditionIdentifier)
+    );
+    return {
+      id: condition.conditionIdentifier,
+      code: conditionObj ? conditionObj.cdarValue : String(condition.conditionIdentifier),
+      identifier: condition.conditionIdentifier,
+      relationshipType: condition.optionalityType || '',
+      channelidentifier: condition.resourceItemIdentifier
+    };
+  }),
+  c => `${c.channelidentifier}_${c.identifier}`
+);
+
+// Enrich and dedupe retainedCommunicationServices
+const enrichedRetainedCommunicationServices = dedupeBy(
+  (this.retainedCommunicationServices || []).map(comm => {
+    const commObj = this.communications?.find(
+      c => String(c.identifier) === String(comm.commServiceIdentifier)
+    );
+    const commMaster = this.communicationsMasterList?.find(
+      m => String(m.serviceElementIdentifier) === String(comm.serviceElementIdentifier)
+    );
+    return {
+      id: comm.commServiceIdentifier,
+      identifier: comm.commServiceIdentifier,
+      serviceElement: commMaster ? commMaster.serviceElementCode : '',
+      serviceElementCode: comm.serviceElementIdentifier,
+      communicationServices: commObj ? commObj.code : String(comm.commServiceIdentifier),
+      channelidentifier: comm.resourceItemIdentifier
+    };
+  }),
+  c => `${c.channelidentifier}_${c.identifier}`
+);
+
+console.log('enrichedRetainedCounters:', JSON.stringify(enrichedRetainedCounters, null, 2));
+console.log('enrichedRetainedRestrictions:', JSON.stringify(enrichedRetainedRestrictions, null, 2));
+console.log('enrichedRetainedConditions:', JSON.stringify(enrichedRetainedConditions, null, 2));
+console.log('enrichedRetainedCommunicationServices:', JSON.stringify(enrichedRetainedCommunicationServices, null, 2));
+    // Restore retained form values
+    this.addNewTransactionCategoryFormGroup.patchValue({
+      code: this.retainedCode,
+      transactionCategoryIdentifier: this.retainedTransactionCategoryIdentifier,
+      name: this.retainedName
+    });
+
+    // Rebuild channelData and attach retained relations
+    this.channelData = (this.retainedChannels || []).map(retainedChannel => {
+      const channelObj = this.channels?.find(
+        c => String(c.value) === String(retainedChannel.resourceItemIdentifier)
+      );
+      const channelId = retainedChannel.resourceItemIdentifier;
+      const isAllChannel = String(channelId) === '0';
+
+      return {
+        id: channelId,
+        identifier: String(channelId),
+        code: isAllChannel
+          ? 'All'
+          : channelObj
+          ? channelObj.label
+          : String(channelId),
+        channel: isAllChannel
+          ? 'All'
+          : channelObj
+          ? channelObj.label
+          : String(channelId),
+        option: retainedChannel.optionalityType || '',
+        attributeForChannel: '',
+        counters: enrichedRetainedCounters.filter(
+          c => String(c.channelidentifier) === String(channelId)
+        ),
+        restrictions: enrichedRetainedRestrictions.filter(
+          r => String(r.channelidentifier) === String(channelId)
+        ),
+        conditions: enrichedRetainedConditions.filter(
+          c => String(c.channelidentifier) === String(channelId)
+        ),
+        communications: enrichedRetainedCommunicationServices.filter(
+          c => String(c.channelidentifier) === String(channelId)
+        )
+      };
+    });
+
+    // Restore the flat arrays for the tables
+    this.counterData = [];
+    this.restrictionData = [];
+    this.conditionData = [];
+    this.communicationData = [];
+    this.channelData.forEach(channel => {
+      if (channel.counters) this.counterData.push(...channel.counters);
+      if (channel.restrictions) this.restrictionData.push(...channel.restrictions);
+      if (channel.conditions) this.conditionData.push(...channel.conditions);
+      if (channel.communications) this.communicationData.push(...channel.communications);
+    });
+
+    // Update child tables/maps if needed
+    if (this.channelsMainTable && this.channelsMainTable.tableWithSimpleEdit) {
+      this.channelsMainTable.tableWithSimpleEdit.datasource.data = [...this.channelData];
+    }
+
+    // Disable code in edit mode
+    this.addNewTransactionCategoryFormGroup.get('code')?.disable();
+    this.addNewTransactionCategoryFormGroup
+      .get('transactionCategoryIdentifier')
+      ?.disable();
+  } else {
+    // Enable code in add mode
+    this.addNewTransactionCategoryFormGroup.get('code')?.enable();
+    this.addNewTransactionCategoryFormGroup
+      .get('transactionCategoryIdentifier')
+      ?.enable();
+  }
+
+  this.addNewTransactionCategoryFormGroup.markAsPristine();
+  this.addNewTransactionCategoryFormGroup.markAsUntouched();
+}
+
+  private restoreChannelData() {
+    // Similar logic to transaction type component for restoring channel relationships
+    const enrichedRetainedCounters = (this.retainedCounters || []).map(
+      counter => {
+        const counterObj = this.counters?.find(
+          c => String(c.identifier) === String(counter.counterIdentifier)
+        );
+        return {
+          id: counter.counterIdentifier,
+          code: counterObj
+            ? counterObj.code
+            : String(counter.counterIdentifier),
+          identifier: counter.counterIdentifier,
+          classificationType: counterObj ? counterObj.classificationType : '',
+          operatorType: counter.counterOperationType || '',
+          channelidentifier: counter.resourceItemIdentifier
+        };
+      }
+    );
+
+    // Similar for restrictions, conditions, communications...
+    // (Implementation similar to transaction type component)
+
+    this.channelData = (this.retainedChannels || []).map(retainedChannel => {
+      const channelObj = this.channels?.find(
+        c => String(c.value) === String(retainedChannel.resourceItemIdentifier)
+      );
+      const channelId = retainedChannel.resourceItemIdentifier;
+      const isAllChannel = String(channelId) === '0';
+
+      return {
+        id: channelId,
+        identifier: String(channelId),
+        code: isAllChannel
+          ? 'All'
+          : channelObj
+          ? channelObj.label
+          : String(channelId),
+        channel: isAllChannel
+          ? 'All'
+          : channelObj
+          ? channelObj.label
+          : String(channelId),
+        option: retainedChannel.optionalityType || '',
+        attributeForChannel: '',
+        counters: enrichedRetainedCounters.filter(
+          c => String(c.channelidentifier) === String(channelId)
+        ),
+        restrictions: [], // Similar logic
+        conditions: [], // Similar logic
+        communications: [] // Similar logic
+      };
+    });
+
+    // Update the child tables
+    if (this.channelsMainTable && this.channelsMainTable.tableWithSimpleEdit) {
+      this.channelsMainTable.tableWithSimpleEdit.datasource.data = [
+        ...this.channelData
+      ];
+    }
+  }
+
+  identifierSearch(field: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.metadataService.idfrSearch().subscribe(
+        (response: string) => {
+          if (field === 'transactionCategoryIdentifier') {
+            this.addNewTransactionCategoryFormGroup.controls[
+              'transactionCategoryIdentifier'
+            ].setValue(response);
+            this.addNewTransactionCategoryFormGroup.controls[
+              'transactionCategoryIdentifier'
+            ].disable();
+          }
+          resolve();
+        },
+        error => {
+          console.error('Error:', error);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  isAdd = true;
+  isEdit = false;
+
+  onAddNewTransactionCategory(isAdd: boolean) {
+    if (isAdd) {
+      this.identifierSearch('transactionCategoryIdentifier').then(() => {
+        this.submitForm(isAdd);
+      });
+    } else {
+      this.submitForm(isAdd);
+    }
+  }
+
+  submitForm(isAdd: boolean) {
+    // Force the child to emit the latest data
+    this.channelsMainTable?.emitCompleteDelta();
+
+    this.errorMessages = [];
+
+    const requiredFields = ['code', 'name'];
+    let hasError = false;
+
+    requiredFields.forEach(field => {
+      const control = this.addNewTransactionCategoryFormGroup.get(field);
+      if (
+        control?.invalid ||
+        control?.value === '' ||
+        control?.value === null ||
+        control?.value === undefined
+      ) {
+        control?.markAsTouched();
+        hasError = true;
+      }
+    });
+
+    const emptyChannels = (this.channelData || []).filter(channel =>
+    (!channel.counters || channel.counters.length === 0) &&
+    (!channel.conditions || channel.conditions.length === 0) &&
+    (!channel.restrictions || channel.restrictions.length === 0) &&
+    (!channel.communications || channel.communications.length === 0)
+  );
+  if (emptyChannels.length > 0) {
+    this.errorMessages.push({
+      code: 'CHANNEL_RELATIONSHIP_REQUIRED',
+      text: 'Each channel must have at least one Counter, Condition, Restriction, or Communication.',
+      type: NotificationMessageType.ERROR
+    });
+    hasError = true;
+  }
+    
+
+
+    if (hasError) {
+      return;
+    }
+
+    const formValue = this.addNewTransactionCategoryFormGroup.getRawValue();
+    this.addNewTransactionCategoryFormGroup.controls[
+      'transactionCategoryIdentifier'
+    ].enable();
+
+    // Get all relationship data
+    const productTypeIdentifiers = this.metadataService.getProductTypeValues();
+
+    // Flatten all relationship lists, adding productTypeIdentifier to each
+    const buildList = (arr: any[], keyMap: Record<string, any> = {}) =>
+      productTypeIdentifiers
+        .map(productTypeIdentifier =>
+          (arr || []).map(item => ({
+            productTypeIdentifier: productTypeIdentifier ?? null,
+            postingCategoryIdentifier: formValue.transactionCategoryIdentifier,
+            ...item,
+            // Ensure resourceItemIdentifier is always a number
+            resourceItemIdentifier:
+              item.resourceItemIdentifier !== undefined
+                ? Number(item.resourceItemIdentifier)
+                : undefined
+          }))
+        )
+        .reduce((acc, val) => acc.concat(val), []);
+
+    // Prepare the lists
+    const counterList = buildList(
+      this.counterData.map(counter => ({
+        resourceItemIdentifier: counter.channelidentifier,
+        counterIdentifier: counter.identifier,
+        counterOperationType: counter.operatorType
+      }))
+    );
+
+    const restrictionList = buildList(
+      this.restrictionData.map(restriction => ({
+        resourceItemIdentifier: restriction.channelidentifier,
+        restrictionIdentifier: restriction.identifier,
+        restrictionClassificationType: restriction.type
+      }))
+    );
+
+    const conditionList = buildList(
+      this.conditionData.map(condition => ({
+        resourceItemIdentifier: condition.channelidentifier,
+        conditionIdentifier: condition.identifier,
+        cdarValue: condition.code,
+        optionalityType: condition.relationshipType
+      }))
+    );
+
+    const communicationList = buildList(
+      this.communicationData.map(communication => {
+        const master = this.communicationsMasterList.find(
+          m => m.code === communication.communicationServices
+        );
+        return {
+          resourceItemIdentifier: communication.channelidentifier,
+          serviceElementIdentifier: master?.serviceElementIdentifier ?? null,
+          commServiceIdentifier: communication.identifier
+        };
+      })
+    );
+
+    // Build the new payload
+    const postingCategoryData = {
+      metadataType: 'PostingCategory',
+      postingCategoryDetailList: [
+        {
+          postingCategory: {
+            identifier: formValue.transactionCategoryIdentifier,
+            code: formValue.code,
+            name: formValue.name,
+            isExisting: isAdd ? "false" : "true" // or true if editing existing
+          },
+          productTypePostingCategoryDSCDRltnpList: conditionList,
+          productTypePostingCategoryDSComsRltnpList: communicationList,
+          productTypePostingCategoryDSCounterRltnpList: counterList,
+          productTypePostingCategoryDSRestrcitionRltnpList: restrictionList
+        }
+      ]
+    };
+
+    console.log(
+      'postingCategoryData(JSON):\n',
+      JSON.stringify(postingCategoryData, null, 2)
+    );
+
+    const serviceCall = isAdd
+      ? this.transactionCategoryService.saveTransactionCategory(
+          postingCategoryData
+        )
+      : this.transactionCategoryService.updateTransactionCategory(
+          postingCategoryData
+        );
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, postingCategoryData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+
+    this.addNewTransactionCategoryFormGroup.controls[
+      'transactionCategoryIdentifier'
+    ].disable();
+  }
+
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+
+  private successResponse(resp, transactionCategoryData, isAdd) {
+  const transactionCategoryCode =
+    transactionCategoryData.postingCategoryDetailList[0].postingCategory.code;
+  const SuccessMsg = isAdd
+    ? `${transactionCategoryCode} Added successfully`
+    : `${transactionCategoryCode} Updated successfully`;
+  this.apiResponse.emit({ ...transactionCategoryData, SuccessMsg });
+}
+
+  public errorMessages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+
+  private handleError(error: any, isAdd: boolean) {
+    const errorMsg =
+      error?.error?.errorDescription || 'An unexpected error occurred.';
+    this.message = {
+      code: error?.error?.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+
+    if (errorMsg) {
+      this.errorMessages.push(this.message);
+    }
+
+    setTimeout(() => {
+      this.errorMessages = this.errorMessages.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+
+  transactionCategoryForm(element: TransactionCategoryList) {
+  console.log(
+    'transactionCategoryForm element:',
+    JSON.stringify(element, null, 2)
+  );
+  this.isAdd = false;
+
+  // Retain basic fields
+  this.retainedTransactionCategoryIdentifier = element.identifier ?? 0;
+  this.retainedCode = element.code || '';
+  this.retainedName = element.name || '';
+
+  // Retain relationship lists
+  const allResourceItems = [
+  ...(element.productTypePostingCategoryDSCounterRltnp || []),
+  ...(element.productTypePostingCategoryDSRestrcitionRltnp || []),
+  ...(element.productTypePostingCategoryDSCDRltnpList || []),
+  ...(element.productTypePostingCategoryDSComsRltnp || [])
+].map(rel => rel.resourceItemIdentifier);
+
+this.retainedChannels = Array.from(new Set(allResourceItems)).map(id => ({ resourceItemIdentifier: id }));
+
+// Always keep resourceItemIdentifier: 0 at the top
+this.retainedChannels.sort((a, b) => {
+  if (a.resourceItemIdentifier === 0) return -1;
+  if (b.resourceItemIdentifier === 0) return 1;
+  return 0;
+});
+  this.retainedCounters = element.productTypePostingCategoryDSCounterRltnp || [];
+  this.retainedRestrictions = element.productTypePostingCategoryDSRestrcitionRltnp || [];
+  this.retainedConditions = element.productTypePostingCategoryDSCDRltnpList || [];
+  this.retainedCommunicationServices = element.productTypePostingCategoryDSComsRltnp || [];
+
+
+  console.log('retainedChannels:', JSON.stringify(this.retainedChannels, null, 2));
+console.log('retainedCounters:', JSON.stringify(this.retainedCounters, null, 2));
+console.log('retainedRestrictions:', JSON.stringify(this.retainedRestrictions, null, 2));
+console.log('retainedConditions:', JSON.stringify(this.retainedConditions, null, 2));
+console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommunicationServices, null, 2));
+
+  // Patch form values
+  this.addNewTransactionCategoryFormGroup.patchValue({
+    code: element.code,
+    transactionCategoryIdentifier: element.identifier,
+    name: element.name
+  });
+
+  // --- Build channelData with nested relationships ---
+  const channelIds = new Set<string | number>();
+  [
+    ...(element.productTypePostingCategoryDSCounterRltnp || []),
+    ...(element.productTypePostingCategoryDSRestrcitionRltnp || []),
+    ...(element.productTypePostingCategoryDSCDRltnpList || []),
+    ...(element.productTypePostingCategoryDSComsRltnp || [])
+  ].forEach(rel => {
+    if (rel.resourceItemIdentifier !== undefined && rel.resourceItemIdentifier !== null) {
+      channelIds.add(rel.resourceItemIdentifier);
+    }
+  });
+
+  function dedupeBy<T>(arr: T[], key: (item: T) => string | number): T[] {
+  const seen = new Set<string | number>();
+  return arr.filter(item => {
+    const k = key(item);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+  this.channelData = Array.from(channelIds).map(channelIdRaw => {
+  const channelId = typeof channelIdRaw === 'string' ? Number(channelIdRaw) : channelIdRaw;
+  let channelLabel =
+    this.channels.find(c => String(c.value) === String(channelId))?.label ?? channelId;
+  if (channelId === 0) channelLabel = 'All';
+
+  // Map counters (deduplicate by counterIdentifier)
+  const countersForChannel = dedupeBy(
+  (element.productTypePostingCategoryDSCounterRltnp || [])
+    .filter(c => Number(c.resourceItemIdentifier) === channelId)
+    .map(counter => {
+      const counterObj = this.counters?.find(
+        c => String(c.identifier) === String(counter.counterIdentifier)
+      );
+      return {
+        id: Number(counter.counterIdentifier),
+        code: counterObj ? counterObj.code : String(counter.counterIdentifier), // <-- show code
+        identifier: counter.counterIdentifier,
+        classificationType: counterObj ? counterObj.classificationType : '',
+        operatorType: counter.counterOperationType || '',
+        channelidentifier: counter.resourceItemIdentifier
+      };
+    }),
+  c => c.identifier
+);
+
+// Map restrictions (deduplicate by restrictionIdentifier)
+const restrictionsForChannel = dedupeBy(
+  (element.productTypePostingCategoryDSRestrcitionRltnp || [])
+    .filter(r => Number(r.resourceItemIdentifier) === channelId)
+    .map(restriction => {
+      const restrictionObj = this.restrictions?.find(
+        r => String(r.identifier) === String(restriction.restrictionIdentifier)
+      );
+      return {
+        id: Number(restriction.restrictionIdentifier),
+        code: restrictionObj ? restrictionObj.code : String(restriction.restrictionIdentifier), // <-- show code
+        identifier: restriction.restrictionIdentifier,
+        type: restriction.restrictionClassificationType || '',
+        channelidentifier: restriction.resourceItemIdentifier
+      };
+    }),
+  r => r.identifier
+);
+
+// Map conditions (deduplicate by conditionIdentifier)
+const conditionsForChannel = dedupeBy(
+  (element.productTypePostingCategoryDSCDRltnpList || [])
+    .filter(cond => Number(cond.resourceItemIdentifier) === channelId)
+    .map(condition => {
+      const conditionObj = this.conditions?.find(
+        c => String(c.identifier) === String(condition.conditionIdentifier)
+      );
+      return {
+        id: Number(condition.conditionIdentifier),
+        code: conditionObj ? conditionObj.cdarValue : String(condition.conditionIdentifier), // <-- show code (cdarValue)
+        identifier: condition.conditionIdentifier,
+        relationshipType: condition.optionalityType || '',
+        channelidentifier: condition.resourceItemIdentifier
+      };
+    }),
+  c => c.identifier
+);
+
+// Map communications (deduplicate by commServiceIdentifier)
+const communicationsForChannel = dedupeBy(
+  (element.productTypePostingCategoryDSComsRltnp || [])
+    .filter(comm => Number(comm.resourceItemIdentifier) === channelId)
+    .map(comm => {
+      const commObj = this.communications?.find(
+        c => String(c.identifier) === String(comm.commServiceIdentifier)
+      );
+      const commMaster = this.communicationsMasterList?.find(
+        c => String(c.serviceElementIdentifier) === String(comm.serviceElementIdentifier)
+      );
+      return {
+        id: Number(comm.commServiceIdentifier),
+        identifier: comm.commServiceIdentifier,
+        serviceElement: commMaster ? commMaster.serviceElementCode : '',
+        serviceElementCode: comm.serviceElementIdentifier,
+        communicationServices: commObj ? commObj.code : String(comm.commServiceIdentifier), // <-- show code
+        channelidentifier: comm.resourceItemIdentifier
+      };
+    }),
+  c => c.identifier
+);
+
+  return {
+    id: channelId,
+    identifier: String(channelId),
+    code: channelLabel,
+    channel: channelLabel,
+    option: '', // or set to correct value if available
+    attributeForChannel:
+      restrictionsForChannel.length > 0
+        ? 'Restrictions'
+        : countersForChannel.length > 0
+        ? 'Counters'
+        : conditionsForChannel.length > 0
+        ? 'Conditions'
+        : communicationsForChannel.length > 0
+        ? 'CommunicationServices'
+        : '',
+    counters: countersForChannel,
+    restrictions: restrictionsForChannel,
+    conditions: conditionsForChannel,
+    communications: communicationsForChannel
+  } as ChannelTable;
+})
+// Sort so "All" channel is always first
+  .sort((a, b) => {
+    if (String(a.id) === '0') return -1;
+    if (String(b.id) === '0') return 1;
+    return 0;
+  });
+
+  // Populate flat arrays for child tables
+  this.counterData = [];
+  this.restrictionData = [];
+  this.conditionData = [];
+  this.communicationData = [];
+  this.channelData.forEach(channel => {
+    if (channel.counters) this.counterData.push(...channel.counters);
+    if (channel.restrictions) this.restrictionData.push(...channel.restrictions);
+    if (channel.conditions) this.conditionData.push(...channel.conditions);
+    if (channel.communications) this.communicationData.push(...channel.communications);
+  });
+
+  // Update child tables/maps if needed
+  if (this.channelsMainTable) {
+    if (this.channelsMainTable.tableWithSimpleEdit) {
+      this.channelsMainTable.tableWithSimpleEdit.datasource.data = [...this.channelData];
+    }
+    // Optionally, set up maps for nested tables
+    this.channelsMainTable.counterMap = {};
+    this.channelsMainTable.conditionMap = {};
+    this.channelsMainTable.restrictionMap = {};
+    this.channelsMainTable.communicationMap = {};
+    (this.channelData || []).forEach(row => {
+      if (row.id !== undefined && Array.isArray(row.counters)) {
+        this.channelsMainTable.counterMap[row.id] = [...row.counters];
+      }
+      if (row.id !== undefined && Array.isArray(row.conditions)) {
+        this.channelsMainTable.conditionMap[row.id] = [...row.conditions];
+      }
+      if (row.id !== undefined && Array.isArray(row.restrictions)) {
+        this.channelsMainTable.restrictionMap[row.id] = [...row.restrictions];
+      }
+      if (row.id !== undefined && Array.isArray(row.communications)) {
+        this.channelsMainTable.communicationMap[row.id] = [...row.communications];
+      }
+    });
+  }
+
+  // Log for debugging
+  console.log('Updated channelData:', JSON.stringify(this.channelData, null, 2));
+  console.log('Updated counterData:', JSON.stringify(this.counterData, null, 2));
+  console.log('Updated restrictionData:', JSON.stringify(this.restrictionData, null, 2));
+  console.log('Updated conditionData:', JSON.stringify(this.conditionData, null, 2));
+  console.log('Updated communicationData:', JSON.stringify(this.communicationData, null, 2));
+
+  this.isEdit = true;
+}
+
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
+    }
+  }
+
+  noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
+      return forbidden
+        ? { noSpecialCharacters: { value: control.value } }
+        : null;
+    };
+  }
+
+  maxLengthValidator(maxLength: number) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (value == null) return null;
+      const valueStr = value.toString().replace(/^0+/, '');
+      return valueStr.length > maxLength ? { maxLength: true } : null;
+    };
+  }
+}
