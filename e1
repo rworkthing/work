@@ -1,0 +1,1148 @@
+<bod-message-container [messages]="errorMessages"></bod-message-container>
+
+<bod-form
+  [formGroup]="addExistingTransactionTypeFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onAddExitingTransactionType(isAdd)"
+  (onReset)="onReset(isAdd)"
+  fisStyle
+>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <div *ngIf="isEdit">
+        {{ addExistingTransactionTypeFormGroup.get('code')?.value }}
+      </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <mat-select panelClass="fis-style" formControlName="code" name="code">
+          <mat-option
+            *ngFor="let code of exstTypes"
+            [value]="code.value"
+          >
+            {{ code.label }}
+          </mat-option>
+        </mat-select>
+
+        <mat-error>
+          {{
+            getError('code', addExistingTransactionTypeFormGroup) | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+    <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.paymenttype'"
+          [forTextOnly]="true"
+          [required]="false"
+        >
+        
+          <mat-form-field appearance="outline" fisStyle>
+            <input
+              type="text"
+              matInput
+              fisStyle
+              formControlName="paymenttype"
+              name="paymenttype"
+            />
+          </mat-form-field>
+        </bod-control-group>
+  </bod-input-layout>
+
+  <bod-page-container title="Product Type Relationships"></bod-page-container>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.optionalitytype'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="optionalityType"
+          name="optionalityType"
+        >
+          <mat-option
+            *ngFor="let optionalityType of optionalityTypes"
+            [value]="optionalityType.value"
+          >
+            {{ optionalityType.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{
+            getError('optionalityType', addExistingTransactionTypeFormGroup)
+              | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+
+  <bod-page-container title="Relationship Details"></bod-page-container>
+
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.eventtype'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="eventType"
+          name="eventType"
+        >
+          <mat-option
+            *ngFor="let eventType of events"
+            [value]="eventType.value"
+          >
+            {{ eventType.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{
+            getError('eventType', addExistingTransactionTypeFormGroup)
+              | translate
+          }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+
+
+  <!-- Role Type Table and Form -->
+     <div style="height: 32px"></div>
+  <bod-message-container
+    [messages]="errorMessagesRoleType"
+  ></bod-message-container>
+  <bod-table
+    #roletypetable
+    [data]="roleTypetabledata"
+    [tableActions]="roleTypetableActions"
+    [inlineModal]="{
+      addNewInlineRowTitle: 'New Role Type' | translate,
+      formGroup: roleTypeForm,
+      formTemplateName: roleTypeTemplate
+    }"
+    (onInlineFormAddSubmit)="onAddRoleType(roleTypeForm.value)"
+    (onInlineFormEditSubmit)="onAddRoleType(roleTypeForm.value)"
+    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
+    [customColumnTemplates]="[
+      {
+        columnName: 'actions',
+        templateName: deleteActionTemplate
+      }
+    ]"
+    [alignContent]="'top'"
+  >
+    <ng-template
+      #deleteActionTemplate
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <bod-table-actions
+        [actions]="rowLevelActionsForBasicEdit"
+        (onActionClick)="handleRowLevelActionsforRoletype($event.icon, index)"
+      >
+      </bod-table-actions>
+    </ng-template>
+  </bod-table>
+  <form [formGroup]="roleTypeForm">
+    <ng-template #roleTypeTemplate>
+      <bod-input-layout col="2">
+        <bod-control-group
+          [truncate]="false"
+          [label]="translationKey + 'metadataconfig.roletype'"
+          [forTextOnly]="true"
+          [required]="true"
+        >
+          <mat-form-field appearance="outline" fisStyle>
+            <mat-select
+              panelClass="fis-style"
+              formControlName="roletype"
+              name="roletype"
+            >
+              <mat-option
+                *ngFor="let roletype of roletypes"
+                [value]="roletype.value"
+              >
+                {{ roletype.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error>
+              {{ getError('roletype', roleTypeForm) | translate }}
+            </mat-error>
+          </mat-form-field>
+        </bod-control-group>
+      </bod-input-layout>
+    </ng-template>
+  </form>
+   <bod-input-layout [col]="1">
+    <bod-control-group
+      label="{{ 'Transaction category' | translate }}"
+      [forTextOnly]="true"
+      [required]="false"
+    >
+      <div style="margin-top: -15px">
+        <bod-auto-complete
+          #nameElementRef
+          formControlName="postingCategory"
+          name="postingCategory"
+          [data]="postingCategoryData"
+          *ngIf="postingCategoryData.options.length > 0"
+        >
+        </bod-auto-complete>
+      </div>
+      <!-- <mat-error>
+        {{
+          getError('postingCategory', addNewTransactionTypeFormGroup)
+            | translate
+        }}
+      </mat-error> -->
+    </bod-control-group>
+  </bod-input-layout>
+
+   <div style="height: 32px"></div>
+  <bod-page-container title="Posting Application Method"></bod-page-container>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.name'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="psamName"
+          name="psamName"
+          fisStyle
+          (selectionChange)="onPsamNameChange($event.value)"
+        >
+          <mat-option
+            *ngFor="let psamName of psamNames"
+            [value]="psamName.value"
+          >
+            {{ psamName.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{ getError('psamName', addExistingTransactionTypeFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+  <bod-table #psamInstruction [data]="psamInstrData" [alignContent]="'top'">
+  </bod-table>
+
+
+</bod-form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  AbstractControl,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
+import { TranslateModule } from '@ngx-translate/core';
+import {
+  BodAutoCompleteMetadata,
+  BodAutoCompleteModule,
+  BodCommonDialogService,
+  BodCommonModule,
+  BodCurrencyControlModule,
+  BodDynamicFormModule,
+  BodFormModule,
+  BodFormTypes,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableMetadata,
+  BodTableModule,
+  ControlGroupModule,
+  DirectivesModule,
+  InputLayoutModule,
+  InquiryLayoutModule,
+  MessageContainerModule,
+  NotificationMessage,
+  NotificationMessageType,
+  SearchFieldModule,
+  SectionContainerModule
+} from '@bod/common';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatInputModule } from '@angular/material/input';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonModule } from '@angular/material/button';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatIconModule } from '@angular/material/icon';
+import { MatRadioModule } from '@angular/material/radio';
+import { ChannelsMainTableComponent } from '../channels-main-table/channels-main-table.component';
+import { BalanceTypeService } from '../../balance-type/balance-type-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import { TransactionTypeService } from '../transaction-type.service';
+import { HttpClient } from '@angular/common/http';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { MatTableDataSource } from '@angular/material/table';
+import { RoleTypeSampleTableForTransaction } from '../../balance-type/add-edit-balancetype/balancetype.model';
+import { roletypeaction } from '../../role-type/role-type-constants';
+import { PostingTextDelete } from '../transaction-type-constant';
+import { PSAMTable, TransactionTypeList } from '../transaction-type.model';
+import { forkJoin } from 'rxjs';
+
+@Component({
+  selector: 'bod-existing-transactiontype',
+  standalone: true,
+  imports: [
+    BodAutoCompleteModule,
+    ChannelsMainTableComponent,
+    MatRadioModule,
+    CommonModule,
+    BodAutoCompleteModule,
+    InquiryLayoutModule,
+    SearchFieldModule,
+    MatIconModule,
+    RufIconModule,
+    DirectivesModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatTabsModule,
+    CommonModule,
+    TranslateModule,
+    BodPageContainerModule,
+    BodTableModule,
+    TranslateModule,
+    BodTableActionsModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    ControlGroupModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    ReactiveFormsModule,
+    BodDynamicFormModule,
+    SectionContainerModule,
+    MatInputModule,
+    TranslateModule,
+
+    MessageContainerModule,
+    MatButtonToggleModule,
+    BodCurrencyControlModule,
+    BodCommonModule
+  ],
+  templateUrl: './existing-transactiontype.component.html',
+  styleUrl: './existing-transactiontype.component.scss'
+})
+export class ExistingTransactiontypeComponent implements OnInit {
+  public addExistingTransactionTypeFormGroup: UntypedFormGroup;
+  public roleTypeForm: UntypedFormGroup;
+
+  public inlineAddRowActionClick() {
+    this.roleTypeForm.reset();
+  }
+
+  public events: any[] = [];
+  public channels: any[] = [];
+  public languages: any[] = [];
+  public pstgCtgr: any[] = [];
+  public psamNames: any[] = [];
+  public exstTypes: any[] = [];
+  public balanceTypes: any[] = [];
+  transactionTypeList: any[] = [];
+
+  public roletypes: any[] = [];
+  public accountclassifications: any[] = [];
+  isEdit = false;
+  isAdd = true;
+
+  public translationKey = TranslationKey;
+  optionalityTypes = [
+    { label: 'Mandatory', value: 'Mandatory' },
+    { label: 'Proposed', value: 'Proposed' },
+    { label: 'Optional', value: 'Optional' }
+  ];
+  public rowLevelActionsForBasicEdit: BodTableAction[] = PostingTextDelete;
+  @Input() editTransactionTypeRow: TransactionTypeList;
+
+  formType: BodFormTypes = BodFormTypes.SUBMIT;
+  constructor(
+    public balanceTypeService: BalanceTypeService,
+    private metadataService: MetadataService,
+    private cdr: ChangeDetectorRef,
+    private fb: UntypedFormBuilder,
+    private http: HttpClient,
+    private bodCommonDialogService: BodCommonDialogService,
+    private transactionTypeService: TransactionTypeService
+  ) {}
+
+  @Input() retainedCode = '';
+  @Input() retainedTransactionTypeIdentifier = 0;
+  @Input() retainedName = '';
+  @Input() retainedDescription = '';
+  @Input() retainedPaymentType = '';
+  @Input() retainedClassificationType = '';
+  @Input() retainedContra = false;
+  @Input() retainedContraName = '';
+  @Input() retainedContraPaymentType = '';
+  @Input() retainedOveridePaymentType = false;
+  @Input() retainedCashSettle = '';
+  @Input() retainedIsReverse = false;
+  @Input() retainedExternalSysId = '';
+  @Input() retainedBalanceReq = false;
+  @Input() retainedCashTransaction = false;
+  @Input() retainedChargEligible = false;
+  @Input() retainedRoleTypeValues: RoleTypeSampleTableForTransaction[] = [];
+  @Input() retainedSearchFieldInput = '';
+  @Input() retainedSearchFieldInput1 = '';
+  @Input() retainedSearchFieldInput3 = '';
+  @Input() retainedSearchFieldInput4 = '';
+  @Input() reatainedoptionalityType = '';
+  @Input() retainedEventType = '';
+  @Input() retainedpostingCategory: string[] = [];
+  @Input() retainedPSAMName = '';
+  @Input() retainedpaymentype1 = '';
+
+  ngOnInit() {
+    this.initForm();
+    this.loadDropdownData();
+  }
+  inputForPostingCategory: BodAutoCompleteMetadata = {
+    options: [],
+    isMultiSelect: true
+  };
+  postingCategoryData = this.inputForPostingCategory;
+
+  loadDropdownData(): void {
+    forkJoin({
+      events: this.transactionTypeService.getTransactionEvent(),
+      channels: this.transactionTypeService.getDeliveryChannel(),
+      languages: this.transactionTypeService.getLocaleCodes(),
+      postingCategory: this.transactionTypeService.getpostingCategory(),
+      accountclassifications: this.balanceTypeService.getAccntClassification(),
+      roletypes: this.balanceTypeService.getRoletype(),
+      pstgCtgr: this.transactionTypeService.getpostingCategory(),
+      psamNames: this.transactionTypeService.getPSAMDetails(),
+      exstTypes: this.transactionTypeService.getExstTransactionType(),
+      balanceTypes: this.balanceTypeService.getBalanceType()
+    }).subscribe(results => {
+      this.events = results.events
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.channels = results.channels
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.languages = results.languages
+        .map((code: string) => ({
+          label: code,
+          value: code
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      const sortedPostingCategory = results.postingCategory
+        .map((item: any) => ({
+          label: item.code,
+          value: item.code
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+      this.inputForPostingCategory = {
+        options: sortedPostingCategory,
+        isMultiSelect: true
+      };
+      this.postingCategoryData = this.inputForPostingCategory;
+
+      this.accountclassifications = results.accountclassifications
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.roletypes = results.roletypes
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.pstgCtgr = results.pstgCtgr
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.psamNames = results.psamNames
+        .map((item: any) => ({
+          label: item.psam_code,
+          value: item.psam_identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.exstTypes = results.exstTypes
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier,
+          paymentTypeValue: item.paymentTypeValue
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      this.balanceTypes = results.balanceTypes
+        .map((item: any) => ({
+          label: item.code,
+          value: item.identifier
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      // If editing, call transactionTypeForm only after all dropdowns are loaded
+      if (this.editTransactionTypeRow) {
+        this.transactionTypeForm(this.editTransactionTypeRow);
+      }
+    });
+
+    this.addExistingTransactionTypeFormGroup
+      .get('code')
+      ?.valueChanges.subscribe(selectedValue => {
+        if (this.suppressCodeChange) return; // <-- Add this line
+        const selected = this.exstTypes.find(
+          item => item.value === selectedValue
+        );
+        this.addExistingTransactionTypeFormGroup
+          .get('paymenttype')
+          ?.setValue(selected?.paymentTypeValue || '', { emitEvent: false });
+      });
+  }
+  private initForm(): void {
+    this.addExistingTransactionTypeFormGroup = this.fb.group({
+      code: new UntypedFormControl('', [
+        Validators.required
+        // this.noSpecialCharactersValidator(),
+        // this.maxLengthValidator(32)
+      ]),
+      transactionTypeIdentifier: [{ value: '', disabled: true }],
+      postingCategory: new UntypedFormControl(''),
+      optionalityType: new UntypedFormControl('', [Validators.required]),
+      eventType: new UntypedFormControl('', [Validators.required]),
+      psamName: new UntypedFormControl('', [Validators.required]),
+      paymenttype: new UntypedFormControl({ value: '', disabled: true })
+    });
+    this.roleTypeForm = this.fb.group(
+      {
+        roletype: ['', Validators.required]
+      },
+      {
+        validators: [this.duplicateRoleTypeValidator()]
+      }
+    );
+  }
+  private duplicateRoleTypeValidator(): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const roleTypeControl = group.get('roletype');
+      if (!roleTypeControl) return null;
+
+      const selectedRoleType = this.roletypes.find(
+        item => item.value === roleTypeControl.value
+      );
+      const roleTypeLabel = selectedRoleType ? selectedRoleType.label : '';
+
+      // Always use the latest array
+      const isDuplicate = this.dataWithRoleTypevalues.some(
+        item => item.type === roleTypeLabel
+      );
+
+      if (isDuplicate) {
+        roleTypeControl.setErrors({ duplicateRoleType: roleTypeLabel });
+        return { duplicateRoleType: roleTypeLabel };
+      } else {
+        if (roleTypeControl.hasError('duplicateRoleType')) {
+          const errors = { ...roleTypeControl.errors };
+          delete errors['duplicateRoleType'];
+          roleTypeControl.setErrors(Object.keys(errors).length ? errors : null);
+        }
+        return null;
+      }
+    };
+  }
+  private suppressCodeChange = false;
+
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+
+    this.suppressCodeChange = true;
+    this.addExistingTransactionTypeFormGroup.reset();
+    this.roleTypeForm.reset();
+    this.dataWithRoleTypevalues = [];
+    this.psamInstrData.datasource.data = [];
+    this.roleTypetabledata.datasource.data = [];
+
+    if (isEditMode) {
+      // Restore retained form values
+      this.addExistingTransactionTypeFormGroup.patchValue({
+        code: this.retainedCode,
+        transactionTypeIdentifier: this.retainedTransactionTypeIdentifier,
+        optionalityType: this.reatainedoptionalityType,
+        eventType: this.retainedEventType,
+        postingCategory: this.retainedpostingCategory,
+        psamName: this.retainedPSAMName
+        // paymenttype: this.retainedpaymentype1
+
+        // Add other fields as needed
+      });
+
+      const paymentTypeControl =
+        this.addExistingTransactionTypeFormGroup.get('paymenttype');
+      if (paymentTypeControl) {
+        paymentTypeControl.enable();
+        paymentTypeControl.setValue(this.retainedpaymentype1 || '', {
+          emitEvent: false
+        });
+        paymentTypeControl.disable();
+      }
+
+      if (this.retainedPSAMName) {
+        this.onPsamNameChange(Number(this.retainedPSAMName));
+      } else {
+        this.psamInstrData.datasource.data = [];
+      }
+
+      // Restore Role Type Table
+
+      this.dataWithRoleTypevalues = [...this.retainedRoleTypeValues];
+      if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
+        this.roleTypetabledata.datasource.data = [
+          ...this.dataWithRoleTypevalues
+        ];
+      }
+
+      // If you want to keep code and identifier disabled in edit mode:
+      this.addExistingTransactionTypeFormGroup.get('code')?.disable();
+      this.addExistingTransactionTypeFormGroup
+        .get('transactionTypeIdentifier')
+        ?.disable();
+    } else {
+      // Enable code and identifier in add mode
+      this.addExistingTransactionTypeFormGroup.get('code')?.enable();
+      this.addExistingTransactionTypeFormGroup
+        .get('transactionTypeIdentifier')
+        ?.enable();
+    }
+
+    this.addExistingTransactionTypeFormGroup.markAsPristine();
+    this.addExistingTransactionTypeFormGroup.markAsUntouched();
+    this.suppressCodeChange = false;
+  }
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
+    }
+  }
+
+  //role type
+  public errorMessagesRoleType: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+
+  onAddRoleType(formValues: any) {
+    this.errorMessagesRoleType = [];
+    if (this.roleTypeForm.invalid) {
+      const errors = this.roleTypeForm.errors;
+      if (errors?.['duplicateRoleType']) {
+        this.handleErrorforRole({
+          errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
+          status: 400,
+          duplicateValue: errors['duplicateRoleType']
+        });
+      }
+      // Optionally handle other errors (like required fields)
+      return;
+    }
+
+    const selectedRoleType = this.roletypes.find(
+      item => item.value === formValues.roletype
+    );
+    const roleTypeCode = selectedRoleType ? selectedRoleType.label : '';
+
+    // Duplicate check before adding
+    const isDuplicate = this.dataWithRoleTypevalues.some(
+      item => item.type === roleTypeCode
+    );
+
+    if (isDuplicate) {
+      this.handleErrorforRole({
+        errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
+        status: 400,
+        duplicateValue: roleTypeCode
+      });
+      return;
+    }
+
+    const newValidValue: RoleTypeSampleTableForTransaction = {
+      type: roleTypeCode || ''
+    };
+
+    this.dataWithRoleTypevalues.push(newValidValue);
+
+    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
+      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    }
+
+    if (this.roleTypeForm) {
+      this.roleTypeForm.reset();
+    }
+
+    this.addExistingTransactionTypeFormGroup.markAsDirty();
+  }
+  public dataWithRoleTypevalues: any[] = [];
+  public roleTypetableActions: BodTableAction[] = roletypeaction;
+
+  public roleTypetabledata: BodTableMetadata = {
+    title: 'Role Type',
+    columns: [...this.balanceTypeService.roletypecolumns1],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<RoleTypeSampleTableForTransaction>(
+      this.dataWithRoleTypevalues
+    ),
+    noRecordsMessage: 'No Role Type Data Defined'
+  };
+
+  private handleErrorforRole(error: any) {
+    let errorMsg = '';
+    switch (error.errorCode) {
+      case 'ROLE_TYPE_ALREADY_EXISTS':
+        errorMsg = `Role type "${error.duplicateValue}" already exists.`;
+        break;
+      default:
+        errorMsg = 'Unknown error occurred.';
+    }
+
+    this.message = {
+      code: error.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+    this.errorMessagesRoleType.push(this.message);
+    setTimeout(() => {
+      this.errorMessagesRoleType = this.errorMessagesRoleType.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+  handleRowLevelActionsforRoletype(action: string, index: number) {
+    if (action === 'trash') {
+      this.deleteRoleType(index);
+    }
+  }
+  deleteRoleType(index: number) {
+    this.dataWithRoleTypevalues.splice(index, 1);
+    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    this.addExistingTransactionTypeFormGroup.markAsDirty();
+  }
+
+  public psamInstrData: BodTableMetadata = {
+    title: 'Instructions',
+    columns: [...this.transactionTypeService.psamCol],
+    enablePagination: false,
+
+    datasource: new MatTableDataSource<PSAMTable>(this.dataWithRoleTypevalues),
+    noRecordsMessage: 'No Posting Application Method Selected'
+  };
+  onPsamNameChange(psamIdentifier: number) {
+    this.transactionTypeService.getPSAMDetails().subscribe((data: any[]) => {
+      const selectedPsam = data.find(
+        item => item.psam_identifier === psamIdentifier
+      );
+      if (selectedPsam && selectedPsam.postingInstructionList) {
+        this.psamInstrData.datasource.data =
+          selectedPsam.postingInstructionList.map(instr => ({
+            ...instr,
+            balance_type_identifier: this.convertBalanceTypeIdfrToCode(
+              instr.balance_type_identifier
+            ),
+            posting_identifier: this.convertPostingIdentifierToCode(
+              instr.posting_identifier
+            )
+          }));
+      } else {
+        this.psamInstrData.datasource.data = [];
+      }
+    });
+  }
+  private convertBalanceTypeIdfrToCode(identifier: number): string {
+    const item = this.balanceTypes.find(bt => bt.value === identifier);
+    return item ? item.label : '';
+  }
+  private convertPostingIdentifierToCode(identifier: number): string {
+    const item = this.transactionTypeList.find(
+      tt => tt.identifier === identifier
+    );
+    return item ? item.code : '';
+  }
+  public onAddExitingTransactionType(isAdd: boolean) {
+    this.errorMessagesRoleType = [];
+
+    const requiredFields = ['code', 'eventType', 'psamName', 'optionalityType'];
+
+    let hasError = false;
+
+    requiredFields.forEach(field => {
+      const control = this.addExistingTransactionTypeFormGroup.get(field);
+      if (
+        control?.invalid ||
+        control?.value === '' ||
+        control?.value === null ||
+        control?.value === undefined
+      ) {
+        control?.markAsTouched();
+        hasError = true;
+      }
+    });
+
+    if (hasError) {
+      return; // Stop submission if any required field is invalid
+    }
+
+    const formValue = this.addExistingTransactionTypeFormGroup.getRawValue();
+
+    const selectedTransactionCode = formValue.code;
+
+    const selectedTransaction = this.exstTypes.find(
+      item =>
+        item.label === selectedTransactionCode ||
+        item.value === selectedTransactionCode
+    );
+    const transactionTypeIdentifier =
+      selectedTransaction?.value || selectedTransactionCode;
+    const transactionTypeCode =
+      selectedTransaction?.label || selectedTransactionCode;
+
+    //Posting Category
+    const productTypeIdentifiers = this.metadataService.getProductTypeValues();
+    const productTypePostingSTDCategoryRltnpList: any[] = [];
+
+    if (
+      Array.isArray(formValue.postingCategory) &&
+      formValue.postingCategory.length > 0
+    ) {
+      formValue.postingCategory.forEach((categoryLabel: string) => {
+        const selectedCategory = this.pstgCtgr.find(
+          item => item.label === categoryLabel
+        );
+
+        productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
+          productTypePostingSTDCategoryRltnpList.push({
+            productTypeIdentifier: productTypeIdentifier ?? null,
+            postingStdIdentifier: transactionTypeIdentifier,
+            postingCategoryIdentifier: selectedCategory?.value ?? null,
+            postingCategoryCode: selectedCategory?.label ?? null
+          });
+        });
+      });
+    }
+    //product Type Posting STD Relation
+    const productTypePostingSTDRltnpList =
+      productTypeIdentifiers.map(productTypeIdentifier => ({
+        productTypeIdentifier: productTypeIdentifier ?? null,
+        postingStdIdentifier: transactionTypeIdentifier,
+        postingStdCode: transactionTypeCode,
+        optionalityType: formValue.optionalityType
+      })) || [];
+
+    //Role type
+
+    const productTypePostingSTDRoletypeRltnpList =
+      this.dataWithRoleTypevalues.length > 0 &&
+      productTypeIdentifiers.length > 0
+        ? this.dataWithRoleTypevalues.reduce((acc, roleType) => {
+            const mapped = productTypeIdentifiers.map(
+              productTypeIdentifier => ({
+                productTypeIdentifier: productTypeIdentifier ?? null,
+                postingStdIdentifier: transactionTypeIdentifier,
+                roleTypeIdentifier: this.roletypes.find(
+                  rt => rt.label === roleType.type
+                )?.value
+              })
+            );
+            return acc.concat(mapped);
+          }, [])
+        : [];
+
+    //PSAM Relation
+    const productTypePostingSTDPAMRltnpList: any[] = [];
+
+    const selectedName = this.psamNames.find(
+      item =>
+        item.label === formValue.psamName || item.value === formValue.psamName
+    );
+
+    productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
+      productTypePostingSTDPAMRltnpList.push({
+        productTypeIdentifier: productTypeIdentifier ?? null,
+        postingStdIdentifier: transactionTypeIdentifier,
+        postingApplicationMethodIdentifier: selectedName?.value ?? null
+      });
+    });
+
+    //TransEventTypePostingSTDRltnp
+    const productTypeTransEventTypePostingSTDRltnpList: any[] = [];
+
+    const selectedEvent = this.events.find(
+      item =>
+        item.label === formValue.eventType || item.value === formValue.eventType
+    );
+
+    productTypeIdentifiers.forEach((productTypeIdentifier: any) => {
+      productTypeTransEventTypePostingSTDRltnpList.push({
+        productTypeIdentifier: productTypeIdentifier ?? null,
+        transactionEventTypeIdentifier: selectedEvent?.value ?? null,
+        postingStdIdentifier: transactionTypeIdentifier
+      });
+    });
+
+    const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+
+    const transactionTypeData = {
+      metadataType: 'TransactionType',
+      postingStdList: [
+        {
+          productTypePostingSTDRltnpList,
+          productTypePostingSTDDSRltnpList: [
+            {
+              productTypeIdentifier: 0,
+              postingStdIdentifier: transactionTypeIdentifier,
+              resourceItemIdentifier: 0,
+              optionalityType: 'string'
+            }
+          ],
+
+          productTypePostingSTDCategoryRltnpList,
+
+          productTypePostingSTDPAMRltnpList,
+          productTypePostingSTDRoletypeRltnpList,
+          productTypeTransEventTypePostingSTDRltnpList
+        }
+      ],
+
+      productTypeList: productTypeKeys.map((code, index) => ({
+        identifier: productTypeValues[index],
+        code: code
+      }))
+    };
+    const serviceCall = isAdd
+      ? this.transactionTypeService.saveTransactionType(transactionTypeData)
+      : this.transactionTypeService.updateTransactiionType(transactionTypeData);
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, transactionTypeData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+  }
+
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+
+  private successResponse(resp, transactionTypeData, isAdd) {
+    const transactionTypeCode =
+      transactionTypeData.postingStdList?.[0]
+        ?.productTypePostingSTDRltnpList?.[0]?.postingStdCode;
+    const SuccessMsg = isAdd
+      ? `${transactionTypeCode} Added successfully`
+      : `${transactionTypeCode} Updated successfully`;
+    this.apiResponse.emit({ ...transactionTypeData, SuccessMsg });
+  }
+
+  public errorMessages: NotificationMessage[] = [];
+  public errorMessages1: NotificationMessage[] = [];
+
+  private handleError(error: any, isAdd: boolean) {
+    const errorMsg =
+      error?.error?.errorDescription || 'An unexpected error occurred.';
+
+    this.message = {
+      code: error?.error?.errorCode,
+      text: errorMsg,
+      type: NotificationMessageType.ERROR
+    };
+
+    if (errorMsg) {
+      this.errorMessages.push(this.message);
+    }
+
+    setTimeout(() => {
+      this.errorMessages = this.errorMessages.filter(
+        msg => msg.text !== errorMsg
+      );
+    }, 20000);
+  }
+  transactionTypeForm(element: TransactionTypeList) {
+    this.isAdd = false;
+    const postingStdIdentifier =
+      element.productTypePostingSTDRltnpList?.[0]?.postingStdIdentifier ??
+      element.identifier;
+
+    const postingCategories =
+      Array.from(
+        new Set(
+          element.productTypePostingSTDCategoryRltnpList
+            ?.filter(item => item.postingStdIdentifier === postingStdIdentifier)
+            .map(item => item.postingCategoryCode)
+        )
+      ) || [];
+
+    this.retainedTransactionTypeIdentifier =
+      element.productTypePostingSTDRltnpList?.[0]?.postingStdIdentifier;
+    this.retainedCode = element.code || '';
+
+    this.reatainedoptionalityType =
+      element.productTypePostingSTDRltnpList?.[0]?.optionalityType || '';
+    this.retainedEventType =
+      element.productTypeTransEventTypePostingSTDRltnpList?.[0]
+        ?.transactionEventTypeIdentifier || '';
+    this.retainedpostingCategory = postingCategories;
+
+    //paymenmttype
+    const selected = this.exstTypes.find(
+      item =>
+        item.label === this.retainedCode || item.value === this.retainedCode
+    );
+
+    this.retainedpaymentype1 = selected?.paymentTypeValue || '';
+    const paymentTypeControl =
+      this.addExistingTransactionTypeFormGroup.get('paymenttype');
+
+    if (paymentTypeControl) {
+      paymentTypeControl.enable(); // Enable the control first
+      paymentTypeControl.setValue(selected?.paymentTypeValue || '', {
+        emitEvent: false
+      });
+      paymentTypeControl.disable(); // Optionally disable it again if needed
+    }
+
+    // Role type
+    this.retainedRoleTypeValues =
+      element.productTypePostingSTDRoletypeRltnpList?.map(element => {
+        let obj = {} as RoleTypeSampleTableForTransaction;
+        obj.type = element.roleTypeIdentifier
+          ? this.roletypes.find(
+              item => item.value === element.roleTypeIdentifier
+            )?.label || ''
+          : '';
+
+        return obj;
+      }) || [];
+
+    //Psam
+    this.retainedPSAMName =
+      element.productTypePostingSTDPAMRltnpList?.[0]?.postingApplicationMethodIdentifier;
+
+    //setting values while editing
+
+    this.addExistingTransactionTypeFormGroup.patchValue({
+      code: element.code,
+      transactionTypeIdentifier:
+        element.productTypePostingSTDRltnpList?.[0]?.postingStdIdentifier,
+
+      optionalityType:
+        element.productTypePostingSTDRltnpList?.[0]?.optionalityType || '',
+      eventType:
+        element.productTypeTransEventTypePostingSTDRltnpList?.[0]
+          ?.transactionEventTypeIdentifier || '',
+      postingCategory: postingCategories,
+      psamName: element.productTypePostingSTDPAMRltnpList?.[0]
+        ? element.productTypePostingSTDPAMRltnpList[0]
+            .postingApplicationMethodIdentifier
+        : ''
+    });
+
+    //payment type
+    const selectedPaymentType = this.exstTypes.find(
+      item => item.label === element.code
+    );
+    this.retainedpaymentype1 = selectedPaymentType?.paymentTypeValue || ''; // <-- Store value
+    this.addExistingTransactionTypeFormGroup
+      .get('paymenttype')
+      ?.setValue(this.retainedpaymentype1);
+
+    const psamNameValue =
+      element.productTypePostingSTDPAMRltnpList?.[0]
+        ?.postingApplicationMethodIdentifier;
+    if (psamNameValue) {
+      this.onPsamNameChange(psamNameValue);
+    }
+
+    //Role type Table
+    this.roleTypetabledata.datasource.data = [];
+    this.dataWithRoleTypevalues = [];
+    element.productTypePostingSTDRoletypeRltnpList?.forEach(rt => {
+      let obj = {} as RoleTypeSampleTableForTransaction;
+      const roleType = this.roletypes.find(
+        r => r.value === rt.roleTypeIdentifier
+      );
+      obj.type = roleType ? roleType.label : rt.roleTypeIdentifier;
+      this.roleTypetabledata.datasource.data.push(obj);
+      this.dataWithRoleTypevalues.push(obj);
+    });
+
+    // Refresh Role type  table
+    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+
+    this.isEdit = true;
+  }
+}
