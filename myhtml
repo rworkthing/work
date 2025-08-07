@@ -489,104 +489,110 @@ export class TransactionCategoryComponent implements OnInit {
     });
   }
 
-  public rowExpanded(element: TransactionCategoryList) {
-    // 1. Collect all unique resourceItemIdentifiers from all relationship lists
-    const channelIds = new Set<string | number>();
+ public rowExpanded(element: TransactionCategoryList) {
+  // 1. Collect all unique resourceItemIdentifiers from all relationship lists
+  const channelIds = new Set<string | number>();
 
-    [
-      ...(element.productTypePostingCategoryDSCounterRltnp || []),
-      ...(element.productTypePostingCategoryDSRestrcitionRltnp || []),
-      ...(element.productTypePostingCategoryDSCDRltnpList || []),
-      ...(element.productTypePostingCategoryDSComsRltnp || [])
-    ].forEach(rel => {
-      if (
-        rel.resourceItemIdentifier !== undefined &&
-        rel.resourceItemIdentifier !== null
-      ) {
-        channelIds.add(rel.resourceItemIdentifier);
-      }
-    });
+  [
+    ...(element.productTypePostingCategoryDSCounterRltnp || []),
+    ...(element.productTypePostingCategoryDSRestrcitionRltnp || []),
+    ...(element.productTypePostingCategoryDSCDRltnpList || []),
+    ...(element.productTypePostingCategoryDSComsRltnp || [])
+  ].forEach(rel => {
+    if (
+      rel.resourceItemIdentifier !== undefined &&
+      rel.resourceItemIdentifier !== null
+    ) {
+      channelIds.add(rel.resourceItemIdentifier);
+    }
+  });
 
-    // 2. Build channel objects for each unique channelId
-    const mappedChannels = Array.from(channelIds).map(channelId => {
-      // Find label for channel (from this.channels loaded in dropdown)
-      let channelLabel =
-        this.channels.find(c => String(c.value) === String(channelId))?.label ??
-        channelId;
-      if (channelId === 0 || channelId === '0') channelLabel = 'All';
+  // Always add "All" channel id (0) if not present
+  if (![...channelIds].some(id => String(id) === '0')) {
+    channelIds.add('0');
+  }
 
-      // Filter relationships for this channel
-      const countersForChannel = (
-        element.productTypePostingCategoryDSCounterRltnp || []
+  // 2. Build channel objects for each unique channelId
+  const mappedChannels = Array.from(channelIds).map(channelId => {
+    // Find label for channel (from this.channels loaded in dropdown)
+    let channelLabel =
+      this.channels.find(c => String(c.value) === String(channelId))?.label ??
+      channelId;
+    if (channelId === 0 || channelId === '0') channelLabel = 'All';
+
+    // Filter relationships for this channel
+    const countersForChannel = (
+      element.productTypePostingCategoryDSCounterRltnp || []
+    )
+      .filter(c => String(c.resourceItemIdentifier) === String(channelId))
+      .map(counter => ({
+        code: counter.counterIdentifier,
+        classificationType: counter.classificationType || '',
+        operatorType: counter.counterOperationType || ''
+      }));
+
+    const restrictionsForChannel = (
+      element.productTypePostingCategoryDSRestrcitionRltnp || []
+    )
+      .filter(r => String(r.resourceItemIdentifier) === String(channelId))
+      .map(restriction => ({
+        restrictionIdentifier: restriction.restrictionIdentifier,
+        restrictionClassificationType:
+          restriction.restrictionClassificationType || ''
+      }));
+
+    const conditionsForChannel = (
+      element.productTypePostingCategoryDSCDRltnpList || []
+    )
+      .filter(
+        cond => String(cond.resourceItemIdentifier) === String(channelId)
       )
-        .filter(c => String(c.resourceItemIdentifier) === String(channelId))
-        .map(counter => ({
-          code: counter.counterIdentifier,
-          classificationType: counter.classificationType || '',
-          operatorType: counter.counterOperationType || ''
-        }));
+      .map(condition => ({
+        conditionIdentifier: condition.conditionIdentifier,
+        cdarValue: condition.cdarValue || '',
+        optionalityType: condition.optionalityType || ''
+      }));
 
-      const restrictionsForChannel = (
-        element.productTypePostingCategoryDSRestrcitionRltnp || []
+    const communicationsForChannel = (
+      element.productTypePostingCategoryDSComsRltnp || []
+    )
+      .filter(
+        comm => String(comm.resourceItemIdentifier) === String(channelId)
       )
-        .filter(r => String(r.resourceItemIdentifier) === String(channelId))
-        .map(restriction => ({
-          restrictionIdentifier: restriction.restrictionIdentifier,
-          restrictionClassificationType:
-            restriction.restrictionClassificationType || ''
-        }));
+      .map(communication => {
+        const commMaster = this.communications?.find(
+          c =>
+            String(c.serviceElementIdentifier) ===
+            String(communication.serviceElementIdentifier)
+        );
+        return {
+          serviceElementIdentifier: communication.serviceElementIdentifier,
+          commServiceIdentifier: communication.commServiceIdentifier,
+          serviceElementCode: commMaster ? commMaster.serviceElementCode : ''
+        };
+      });
 
-      const conditionsForChannel = (
-        element.productTypePostingCategoryDSCDRltnpList || []
-      )
-        .filter(
-          cond => String(cond.resourceItemIdentifier) === String(channelId)
-        )
-        .map(condition => ({
-          conditionIdentifier: condition.conditionIdentifier,
-          cdarValue: condition.cdarValue || '',
-          optionalityType: condition.optionalityType || ''
-        }));
+    return {
+      channel: channelLabel,
+      option: '', // Option not available, set empty or default
+      counters: countersForChannel,
+      restrictions: restrictionsForChannel,
+      conditions: conditionsForChannel,
+      communications: communicationsForChannel
+    };
+  });
 
-      const communicationsForChannel = (
-        element.productTypePostingCategoryDSComsRltnp || []
-      )
-        .filter(
-          comm => String(comm.resourceItemIdentifier) === String(channelId)
-        )
-        .map(communication => {
-          const commMaster = this.communications?.find(
-            c =>
-              String(c.serviceElementIdentifier) ===
-              String(communication.serviceElementIdentifier)
-          );
-          return {
-            serviceElementIdentifier: communication.serviceElementIdentifier,
-            commServiceIdentifier: communication.commServiceIdentifier,
-            serviceElementCode: commMaster ? commMaster.serviceElementCode : ''
-          };
-        });
-
-      return {
-        channel: channelLabel,
-        option: '', // Option not available, set empty or default
-        counters: countersForChannel,
-        restrictions: restrictionsForChannel,
-        conditions: conditionsForChannel,
-        communications: communicationsForChannel
-      };
-    });
-    const sortedChannels = mappedChannels.sort((a, b) => {
+  const sortedChannels = mappedChannels.sort((a, b) => {
     if (a.channel === 'All') return -1;
     if (b.channel === 'All') return 1;
     return 0;
   });
 
-    // 3. Set channelsTable data
-    this.channelsTable.datasource.data = sortedChannels;
+  // 3. Set channelsTable data
+  this.channelsTable.datasource.data = sortedChannels;
 
-    this.cdr.detectChanges();
-  }
+  this.cdr.detectChanges();
+}
 
   transactionCategoryData: TransactionCategoryList[] = [];
 
@@ -871,6 +877,7 @@ getRestrictionsTableForChannel(channel: any): BodTableMetadata {
 
 
 
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Column, InquiryLayoutInput, UIContextService } from '@bod/common';
@@ -1109,6 +1116,7 @@ export const editDeleteActions: BodTableAction[] = [
     mostCommon: true
   }
 ];
+
 
 
 
