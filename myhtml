@@ -1091,6 +1091,12 @@ export const TransactionCategoryTableActions: BodTableAction[] = [
         seperator: true,
         label: 'Add New Transaction Category',
         icon: ''
+      },
+{
+        id: 15,
+        seperator: true,
+        label: 'Relate Existing Transaction Category',
+        icon: ''
       }
     ]
   },
@@ -1116,6 +1122,7 @@ export const editDeleteActions: BodTableAction[] = [
     mostCommon: true
   }
 ];
+
 
 
 
