@@ -920,6 +920,9 @@
 
 
 
+
+
+
 import {
   ChangeDetectorRef,
   Component,
@@ -3998,10 +4001,6 @@ export class AddEditTransactiontypeComponent implements OnInit {
 
 
 
-
-
-
-
 import { Injectable } from '@angular/core';
 import { Column } from '@bod/common';
 
@@ -4157,6 +4156,17 @@ export class AddEditransactiontypeService {
       widthUnit: 'rem'
     }
   ];
+
+  public categorychannelsTable: Column[] = [
+    {
+      name: 'channel',
+      title: 'Channel',
+      truncate: true,
+      noOverflow: true,
+      width: 7,
+      widthUnit: 'rem'
+    }
+  ];
   public countersTable: Column[] = [
     {
       name: 'code',
@@ -4234,7 +4244,7 @@ public communicationServiceTable: Column[] = [
   },
   {
     name: 'communicationServices',
-    title: 'Communication Service',
+    title: 'Communication Services',
     truncate: true,
     noOverflow: true,
     width: 7,
