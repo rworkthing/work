@@ -510,42 +510,46 @@ console.log('enrichedRetainedCommunicationServices:', JSON.stringify(enrichedRet
     });
 
     // Rebuild channelData and attach retained relations
-    this.channelData = (this.retainedChannels || []).map(retainedChannel => {
-      const channelObj = this.channels?.find(
-        c => String(c.value) === String(retainedChannel.resourceItemIdentifier)
-      );
-      const channelId = retainedChannel.resourceItemIdentifier;
-      const isAllChannel = String(channelId) === '0';
+let channelIds = (this.retainedChannels || []).map(c => c.resourceItemIdentifier);
+// Always ensure "All" channel (id 0) is present
+if (!channelIds.includes(0)) {
+  channelIds.unshift(0);
+}
 
-      return {
-        id: channelId,
-        identifier: String(channelId),
-        code: isAllChannel
-          ? 'All'
-          : channelObj
-          ? channelObj.label
-          : String(channelId),
-        channel: isAllChannel
-          ? 'All'
-          : channelObj
-          ? channelObj.label
-          : String(channelId),
-        option: retainedChannel.optionalityType || '',
-        attributeForChannel: '',
-        counters: enrichedRetainedCounters.filter(
-          c => String(c.channelidentifier) === String(channelId)
-        ),
-        restrictions: enrichedRetainedRestrictions.filter(
-          r => String(r.channelidentifier) === String(channelId)
-        ),
-        conditions: enrichedRetainedConditions.filter(
-          c => String(c.channelidentifier) === String(channelId)
-        ),
-        communications: enrichedRetainedCommunicationServices.filter(
-          c => String(c.channelidentifier) === String(channelId)
-        )
-      };
-    });
+this.channelData = channelIds.map(channelId => {
+  const channelObj = this.channels?.find(
+    c => String(c.value) === String(channelId)
+  );
+  const isAllChannel = String(channelId) === '0';
+  return {
+    id: channelId,
+    identifier: String(channelId),
+    code: isAllChannel
+      ? 'All'
+      : channelObj
+      ? channelObj.label
+      : String(channelId),
+    channel: isAllChannel
+      ? 'All'
+      : channelObj
+      ? channelObj.label
+      : String(channelId),
+    option: '', // or set to correct value if available
+    attributeForChannel: '',
+    counters: enrichedRetainedCounters.filter(
+      c => String(c.channelidentifier) === String(channelId)
+    ),
+    restrictions: enrichedRetainedRestrictions.filter(
+      r => String(r.channelidentifier) === String(channelId)
+    ),
+    conditions: enrichedRetainedConditions.filter(
+      c => String(c.channelidentifier) === String(channelId)
+    ),
+    communications: enrichedRetainedCommunicationServices.filter(
+      c => String(c.channelidentifier) === String(channelId)
+    )
+  };
+});
 
     // Restore the flat arrays for the tables
     this.counterData = [];
@@ -700,26 +704,26 @@ console.log('enrichedRetainedCommunicationServices:', JSON.stringify(enrichedRet
       }
     });
 
-    const emptyChannels = (this.channelData || []).filter(channel =>
+     const emptyNonAllChannels = (this.channelData || []).filter(channel =>
+    (String(channel.id) !== '0' && String(channel.identifier) !== '0') && // Exclude "All"
     (!channel.counters || channel.counters.length === 0) &&
     (!channel.conditions || channel.conditions.length === 0) &&
     (!channel.restrictions || channel.restrictions.length === 0) &&
     (!channel.communications || channel.communications.length === 0)
   );
-  if (emptyChannels.length > 0) {
+
+  if (emptyNonAllChannels.length > 0) {
     this.errorMessages.push({
       code: 'CHANNEL_RELATIONSHIP_REQUIRED',
-      text: 'Each channel must have at least one Counter, Condition, Restriction, or Communication.',
+      text: 'Each channel (other than All) must have at least one Counter, Condition, Restriction, or Communication.',
       type: NotificationMessageType.ERROR
     });
     hasError = true;
   }
-    
 
-
-    if (hasError) {
-      return;
-    }
+  if (hasError) {
+    return;
+  }
 
     const formValue = this.addNewTransactionCategoryFormGroup.getRawValue();
     this.addNewTransactionCategoryFormGroup.controls[
@@ -910,20 +914,22 @@ console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommun
     name: element.name
   });
 
-  // --- Build channelData with nested relationships ---
-  const channelIds = new Set<string | number>();
-  [
-    ...(element.productTypePostingCategoryDSCounterRltnp || []),
-    ...(element.productTypePostingCategoryDSRestrcitionRltnp || []),
-    ...(element.productTypePostingCategoryDSCDRltnpList || []),
-    ...(element.productTypePostingCategoryDSComsRltnp || [])
-  ].forEach(rel => {
-    if (rel.resourceItemIdentifier !== undefined && rel.resourceItemIdentifier !== null) {
-      channelIds.add(rel.resourceItemIdentifier);
-    }
-  });
+ // --- Build channelData with nested relationships ---
+const channelIds = new Set<string | number>();
+[
+  ...(element.productTypePostingCategoryDSCounterRltnp || []),
+  ...(element.productTypePostingCategoryDSRestrcitionRltnp || []),
+  ...(element.productTypePostingCategoryDSCDRltnpList || []),
+  ...(element.productTypePostingCategoryDSComsRltnp || [])
+].forEach(rel => {
+  if (rel.resourceItemIdentifier !== undefined && rel.resourceItemIdentifier !== null) {
+    channelIds.add(rel.resourceItemIdentifier);
+  }
+});
+// Always ensure "All" channel (id 0) is present
+channelIds.add(0);
 
-  function dedupeBy<T>(arr: T[], key: (item: T) => string | number): T[] {
+function dedupeBy<T>(arr: T[], key: (item: T) => string | number): T[] {
   const seen = new Set<string | number>();
   return arr.filter(item => {
     const k = key(item);
@@ -933,7 +939,7 @@ console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommun
   });
 }
 
-  this.channelData = Array.from(channelIds).map(channelIdRaw => {
+this.channelData = Array.from(channelIds).map(channelIdRaw => {
   const channelId = typeof channelIdRaw === 'string' ? Number(channelIdRaw) : channelIdRaw;
   let channelLabel =
     this.channels.find(c => String(c.value) === String(channelId))?.label ?? channelId;
@@ -941,84 +947,84 @@ console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommun
 
   // Map counters (deduplicate by counterIdentifier)
   const countersForChannel = dedupeBy(
-  (element.productTypePostingCategoryDSCounterRltnp || [])
-    .filter(c => Number(c.resourceItemIdentifier) === channelId)
-    .map(counter => {
-      const counterObj = this.counters?.find(
-        c => String(c.identifier) === String(counter.counterIdentifier)
-      );
-      return {
-        id: Number(counter.counterIdentifier),
-        code: counterObj ? counterObj.code : String(counter.counterIdentifier), // <-- show code
-        identifier: counter.counterIdentifier,
-        classificationType: counterObj ? counterObj.classificationType : '',
-        operatorType: counter.counterOperationType || '',
-        channelidentifier: counter.resourceItemIdentifier
-      };
-    }),
-  c => c.identifier
-);
+    (element.productTypePostingCategoryDSCounterRltnp || [])
+      .filter(c => Number(c.resourceItemIdentifier) === channelId)
+      .map(counter => {
+        const counterObj = this.counters?.find(
+          c => String(c.identifier) === String(counter.counterIdentifier)
+        );
+        return {
+          id: Number(counter.counterIdentifier),
+          code: counterObj ? counterObj.code : String(counter.counterIdentifier),
+          identifier: counter.counterIdentifier,
+          classificationType: counterObj ? counterObj.classificationType : '',
+          operatorType: counter.counterOperationType || '',
+          channelidentifier: counter.resourceItemIdentifier
+        };
+      }),
+    c => c.identifier
+  );
 
-// Map restrictions (deduplicate by restrictionIdentifier)
-const restrictionsForChannel = dedupeBy(
-  (element.productTypePostingCategoryDSRestrcitionRltnp || [])
-    .filter(r => Number(r.resourceItemIdentifier) === channelId)
-    .map(restriction => {
-      const restrictionObj = this.restrictions?.find(
-        r => String(r.identifier) === String(restriction.restrictionIdentifier)
-      );
-      return {
-        id: Number(restriction.restrictionIdentifier),
-        code: restrictionObj ? restrictionObj.code : String(restriction.restrictionIdentifier), // <-- show code
-        identifier: restriction.restrictionIdentifier,
-        type: restriction.restrictionClassificationType || '',
-        channelidentifier: restriction.resourceItemIdentifier
-      };
-    }),
-  r => r.identifier
-);
+  // Map restrictions (deduplicate by restrictionIdentifier)
+  const restrictionsForChannel = dedupeBy(
+    (element.productTypePostingCategoryDSRestrcitionRltnp || [])
+      .filter(r => Number(r.resourceItemIdentifier) === channelId)
+      .map(restriction => {
+        const restrictionObj = this.restrictions?.find(
+          r => String(r.identifier) === String(restriction.restrictionIdentifier)
+        );
+        return {
+          id: Number(restriction.restrictionIdentifier),
+          code: restrictionObj ? restrictionObj.code : String(restriction.restrictionIdentifier),
+          identifier: restriction.restrictionIdentifier,
+          type: restriction.restrictionClassificationType || '',
+          channelidentifier: restriction.resourceItemIdentifier
+        };
+      }),
+    r => r.identifier
+  );
 
-// Map conditions (deduplicate by conditionIdentifier)
-const conditionsForChannel = dedupeBy(
-  (element.productTypePostingCategoryDSCDRltnpList || [])
-    .filter(cond => Number(cond.resourceItemIdentifier) === channelId)
-    .map(condition => {
-      const conditionObj = this.conditions?.find(
-        c => String(c.identifier) === String(condition.conditionIdentifier)
-      );
-      return {
-        id: Number(condition.conditionIdentifier),
-        code: conditionObj ? conditionObj.cdarValue : String(condition.conditionIdentifier), // <-- show code (cdarValue)
-        identifier: condition.conditionIdentifier,
-        relationshipType: condition.optionalityType || '',
-        channelidentifier: condition.resourceItemIdentifier
-      };
-    }),
-  c => c.identifier
-);
+  // Map conditions (deduplicate by conditionIdentifier)
+  const conditionsForChannel = dedupeBy(
+    (element.productTypePostingCategoryDSCDRltnpList || [])
+      .filter(cond => Number(cond.resourceItemIdentifier) === channelId)
+      .map(condition => {
+        const conditionObj = this.conditions?.find(
+          c => String(c.identifier) === String(condition.conditionIdentifier)
+        );
+        return {
+          id: Number(condition.conditionIdentifier),
+          code: conditionObj ? conditionObj.cdarValue : String(condition.conditionIdentifier),
+          identifier: condition.conditionIdentifier,
+          relationshipType: condition.optionalityType || '',
+          channelidentifier: condition.resourceItemIdentifier
+        };
+      }),
+    c => c.identifier
+  );
 
-// Map communications (deduplicate by commServiceIdentifier)
-const communicationsForChannel = dedupeBy(
-  (element.productTypePostingCategoryDSComsRltnp || [])
-    .filter(comm => Number(comm.resourceItemIdentifier) === channelId)
-    .map(comm => {
-      const commObj = this.communications?.find(
-        c => String(c.identifier) === String(comm.commServiceIdentifier)
-      );
-      const commMaster = this.communicationsMasterList?.find(
-        c => String(c.serviceElementIdentifier) === String(comm.serviceElementIdentifier)
-      );
-      return {
-        id: Number(comm.commServiceIdentifier),
-        identifier: comm.commServiceIdentifier,
-        serviceElement: commMaster ? commMaster.serviceElementCode : '',
-        serviceElementCode: comm.serviceElementIdentifier,
-        communicationServices: commObj ? commObj.code : String(comm.commServiceIdentifier), // <-- show code
-        channelidentifier: comm.resourceItemIdentifier
-      };
-    }),
-  c => c.identifier
-);
+  // Map communications (deduplicate by commServiceIdentifier)
+  const communicationsForChannel = dedupeBy(
+    (element.productTypePostingCategoryDSComsRltnp || [])
+      .filter(comm => Number(comm.resourceItemIdentifier) === channelId)
+      .map(comm => {
+        const commObj = this.communications?.find(
+          c => String(c.identifier) === String(comm.commServiceIdentifier)
+        );
+        const commMaster = this.communicationsMasterList?.find(
+          c => String(c.serviceElementIdentifier) === String(comm.serviceElementIdentifier)
+        );
+        return {
+          id: Number(comm.commServiceIdentifier),
+          identifier: comm.commServiceIdentifier,
+          serviceElement: commMaster ? commMaster.serviceElementCode : '',
+          serviceElementCode: comm.serviceElementIdentifier,
+          communicationServices: commObj ? commObj.code : String(comm.commServiceIdentifier),
+          channelidentifier: comm.resourceItemIdentifier
+        };
+      }),
+    c => c.identifier
+  );
 
   return {
     id: channelId,
@@ -1124,3 +1130,5 @@ const communicationsForChannel = dedupeBy(
     };
   }
 }
+
+
