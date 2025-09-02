@@ -1,67 +1,39 @@
 <bod-message-container [messages]="errorMessages"></bod-message-container>
-
 <bod-form
-  [formGroup]="addNewTransactionTypeFormGroup"
+  [formGroup]="addNewRestrictionFormGroup"
   rufId
   [type]="formType"
-  (onSubmit)="onAddNewTransactionType(isAdd)"
+  (onSubmit)="onAddNewRestriction(isAdd)"
   (onReset)="onReset(isAdd)"
   fisStyle
 >
   <bod-input-layout col="2">
     <bod-control-group
       [truncate]="false"
-      [label]="translationKey + 'metadataconfig.contra'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="contra"
-        name="contra"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
       [label]="translationKey + 'metadataconfig.code'"
       [forTextOnly]="true"
       [required]="true"
     >
-      <div *ngIf="isEdit">
-        {{ addNewTransactionTypeFormGroup.get('code')?.value }}
-      </div>
+    <div *ngIf="isEdit">
+      {{ addNewRestrictionFormGroup.get('restrictionCode')?.value }}
+    </div>
       <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
         <input
           type="text"
           matInput
           fisStyle
-          formControlName="code"
-          name="code"
+          formControlName="restrictionCode"
+          name="restrictionCode"
         />
-
+        
         <mat-error>
-          {{ getError('code', addNewTransactionTypeFormGroup) | translate }}
-        </mat-error>
-        <mat-error
-          *ngIf="
-            addNewTransactionTypeFormGroup
-              .get('code')
-              .hasError('noSpecialCharacters')
-          "
-        >
-        </mat-error>
-        <mat-error
-          *ngIf="
-            addNewTransactionTypeFormGroup.get('code').hasError('maxLength')
-          "
-        >
+         {{ getError('restrictionCode', addNewRestrictionFormGroup) | translate }}
+        </mat-error> 
+        <mat-error *ngIf="addNewRestrictionFormGroup.get('restrictionCode').hasError('noSpecialCharacters')">
         </mat-error>
       </mat-form-field>
     </bod-control-group>
-
-    <!-- Name input -->
+   
     <bod-control-group
       [truncate]="false"
       [label]="translationKey + 'metadataconfig.name'"
@@ -73,21 +45,21 @@
           type="text"
           matInput
           fisStyle
-          formControlName="name"
-          name="name"
+          formControlName="restrictionName"
+          name="restrictionName"
+          [readonly]="isEdit"
         />
         <mat-error>
-          {{ getError('name', addNewTransactionTypeFormGroup) | translate }}
+          {{ getError('restrictionName', addNewRestrictionFormGroup) | translate }}
         </mat-error>
       </mat-form-field>
     </bod-control-group>
 
-    <!-- Description input -->
-    <bod-control-group
+   <bod-control-group
       [truncate]="false"
       [label]="translationKey + 'metadataconfig.description'"
       [forTextOnly]="true"
-      [required]="false"
+      [required]="true"
     >
       <mat-form-field appearance="outline" fisStyle>
         <input
@@ -96,813 +68,90 @@
           fisStyle
           formControlName="description"
           name="description"
+          [readonly]="isEdit"
         />
-        <mat-error
-          *ngIf="
-            addNewTransactionTypeFormGroup
-              .get('description')
-              .hasError('maxLength')
-          "
-        >
-          Exceeds maximum length
+        <mat-error>
+          {{ getError('description', addNewRestrictionFormGroup) | translate }}
         </mat-error>
       </mat-form-field>
     </bod-control-group>
-
-    <!-- Payment Type dropdown -->
+  
     <bod-control-group
       [truncate]="false"
-      [label]="translationKey + 'metadataconfig.paymenttype'"
+      [label]="translationKey + 'metadataconfig.exceptionValue'"
       [forTextOnly]="true"
       [required]="true"
     >
       <mat-form-field appearance="outline" fisStyle>
         <mat-select
           panelClass="fis-style"
-          formControlName="paymentType"
-          name="paymentType"
-          fisStyle
+          formControlName="exceptionValue"
+          name="exceptionValue"
         >
           <mat-option
-            *ngFor="let option of paymentTypes"
-            [value]="option.value"
+            *ngFor="let exceptionValue of exceptionValues"
+            [value]="exceptionValue.value"
           >
-            {{ option.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{
-            getError('paymentType', addNewTransactionTypeFormGroup) | translate
-          }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <!-- Classification Type dropdown -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.classificationtype'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <div *ngIf="isEdit">
-        {{ addNewTransactionTypeFormGroup.get('classificationType')?.value }}
-      </div>
-      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
-        <mat-select
-          panelClass="fis-style"
-          formControlName="classificationType"
-          name="classificationType"
-          fisStyle
-        >
-          <mat-option
-            *ngFor="let option of classificationTypes"
-            [value]="option.value"
-          >
-            {{ option.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{
-            getError('classificationType', addNewTransactionTypeFormGroup)
-              | translate
-          }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <ng-container *ngIf="addNewTransactionTypeFormGroup.get('contra')?.value">
-      <form searchFieldInput>
-        <bod-search-field
-          [(ngModel)]="searchFieldInput"
-          (ngModelChange)="onInternalProductTypeChange($event)"
-          #searchFieldInputModel="ngModel"
-          [searchFieldData]="searchFieldDataForInputBinding"
-          [searchTableData]="tableDataForInputBinding"
-          [ngModelOptions]="{ standalone: true }"
-          [maxLength]="maxLength"
-          [selectedStrategy]="selectedStrategy"
-          [showConfirmationDialog]="confirmationDialog"
-          [confirmDialogData]="dialogData"
-        >
-        </bod-search-field>
-      </form>
-    </ng-container>
-  </bod-input-layout>
-  <ng-container *ngIf="!addNewTransactionTypeFormGroup.get('contra')?.value">
-    <bod-input-layout col="1">
-      <bod-page-container title="Contra Posting Details"></bod-page-container>
-      <form searchFieldInput>
-        <bod-input-layout [col]="2">
-          <bod-search-field
-            [(ngModel)]="searchFieldInput1"
-            (ngModelChange)="onContraCodeChange($event)"
-            #searchFieldInputModel="ngModel"
-            [searchFieldData]="searchFieldDataForInputBinding1"
-            [searchTableData]="tableDataForInputBinding1"
-            [ngModelOptions]="{ standalone: true }"
-            [maxLength]="maxLength"
-            [selectedStrategy]="selectedStrategy"
-            [showConfirmationDialog]="confirmationDialog"
-            [confirmDialogData]="dialogData"
-          >
-          </bod-search-field>
-        </bod-input-layout>
-      </form>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.name'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="contraname"
-              name="contraname"
-            />
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.paymenttype'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="contrapaymentType"
-              name="contrapaymentType"
-            />
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </bod-input-layout>
-  </ng-container>
-  <bod-page-container title="Additional Details"></bod-page-container>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.overridepaymenttype'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="overidePaymentType"
-        name="overidePaymentType"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.cashsettlementdirection'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="cashSettle"
-          name="cashSettle"
-          fisStyle
-        >
-          <mat-option
-            *ngFor="let option of cashsettlementDirections"
-            [value]="option.value"
-          >
-            {{ option.label }}
+            {{ exceptionValue.label }}
           </mat-option>
         </mat-select>
       </mat-form-field>
     </bod-control-group>
+  
     <bod-control-group
       [truncate]="false"
-      [label]="translationKey + 'metadataconfig.isreversible'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="isReverse"
-        name="isReverse"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.externalsystemid'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <input
-          type="text"
-          matInput
-          fisStyle
-          formControlName="externalSysId"
-          name="externalSysId"
-        />
-
-        <mat-error
-          *ngIf="
-            addNewTransactionTypeFormGroup
-              .get('externalSysId')
-              .hasError('maxLength')
-          "
-        >
-          Exceeds maximum length
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.balancingrequired'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="balanceReq"
-        name="balanceReq"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-
-    <form searchFieldInput>
-      <bod-search-field
-        [(ngModel)]="searchFieldInput3"
-        (ngModelChange)="onReverseConditionChange($event)"
-        #searchFieldInputModel="ngModel"
-        [searchFieldData]="searchFieldDataForReverseCondition"
-        [searchTableData]="tableDataForReverseCondition"
-        [ngModelOptions]="{ standalone: true }"
-        [maxLength]="maxLength"
-        [selectedStrategy]="selectedStrategy"
-        [showConfirmationDialog]="confirmationDialog"
-        [confirmDialogData]="dialogData"
-      >
-      </bod-search-field>
-    </form>
-
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.cashtransaction'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="cashTransaction"
-        name="cashTransaction"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-    <form searchFieldInput>
-      <bod-search-field
-        [(ngModel)]="searchFieldInput4"
-        (ngModelChange)="onFinancialOperationTypeChange($event)"
-        #searchFieldInputModel="ngModel"
-        [searchFieldData]="searchFieldDataFinanciaOprType"
-        [searchTableData]="tableDataForFinancialOprType"
-        [ngModelOptions]="{ standalone: true }"
-        [maxLength]="maxLength"
-        [selectedStrategy]="selectedStrategy"
-        [showConfirmationDialog]="confirmationDialog"
-        [confirmDialogData]="dialogData"
-      >
-      </bod-search-field>
-    </form>
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.chargeeligible'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <mat-slide-toggle
-        fisStyle
-        color="primary"
-        formControlName="chargEligible"
-        name="chargEligible"
-      >
-      </mat-slide-toggle>
-    </bod-control-group>
-  </bod-input-layout>
-  <bod-message-container [messages]="errorMessages1"></bod-message-container>
-  <bod-table
-    #postingText
-    [data]="postingTexttabledata"
-    [tableActions]="postingTexttableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Posting Text' | translate,
-      formGroup: postingTextForm,
-      formTemplateName: postingTextTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddPostingText(postingTextForm.value)"
-    (onInlineFormEditSubmit)="onAddPostingText(postingTextForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplateForPostingText
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteActionTemplateForPostingText
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="
-          handleRowLevelActionsforPostingText($event.icon, index)
-        "
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="postingTextForm">
-    <ng-template #postingTextTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.event'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="event"
-              name="event"
-            >
-              <mat-option *ngFor="let event of events" [value]="event.value">
-                {{ event.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.channel'"
-          [forTextOnly]="true"
-          [required]="false"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="channel"
-              name="channel"
-            >
-              <mat-option
-                *ngFor="let channel of channels"
-                [value]="channel.value"
-              >
-                {{ channel.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.language'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="language"
-              name="language"
-            >
-              <mat-option
-                *ngFor="let language of languages"
-                [value]="language.value"
-              >
-                {{ language.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('language', postingTextForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.text'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="text"
-              name="text"
-            />
-            <mat-error>
-              {{ getError('text', postingTextForm) | translate }}
-            </mat-error>
-            <mat-error
-              *ngIf="postingTextForm.get('text').hasError('maxLength')"
-            >
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-
-  <div style="height: 32px"></div>
-  <bod-message-container
-    [messages]="errorMessagesExternalTransaction"
-  ></bod-message-container>
-
-  <bod-table
-    #externalTransaction
-    [data]="externalTransactiontabledata"
-    [tableActions]="postingTexttableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New External Transaction' | translate,
-      formGroup: externalTransactionForm,
-      formTemplateName: externalTransactionTemplate
-    }"
-    (onInlineFormAddSubmit)="
-      onAddexternalTransaction(externalTransactionForm.value)
-    "
-    (onInlineFormEditSubmit)="
-      onAddexternalTransaction(externalTransactionForm.value)
-    "
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplateForExternalTransaction
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteActionTemplateForExternalTransaction
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="
-          handleRowLevelActionsforExternalTransaction($event.icon, index)
-        "
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="externalTransactionForm">
-    <ng-template #externalTransactionTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.code'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="transactionCode"
-              name="transactionCode"
-            />
-            <mat-error>
-              {{
-                getError('transactionCode', externalTransactionForm) | translate
-              }}
-            </mat-error>
-            <mat-error
-              *ngIf="
-                externalTransactionForm
-                  .get('transactionCode')
-                  .hasError('noSpecialCharacters')
-              "
-            >
-            </mat-error>
-            <mat-error
-              *ngIf="
-                externalTransactionForm
-                  .get('transactionCode')
-                  .hasError('maxLength')
-              "
-            >
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.description'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <input
-              type="text"
-              matInput
-              fisStyle
-              formControlName="transactionDescription"
-              name="transactionDescription"
-            />
-            <mat-error>
-              {{
-                getError('transactionDescription', externalTransactionForm)
-                  | translate
-              }}
-            </mat-error>
-            <mat-error
-              *ngIf="
-                externalTransactionForm
-                  .get('transactionDescription')
-                  .hasError('maxLength')
-              "
-            >
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.type'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="type"
-              name="type"
-            >
-              <mat-option *ngFor="let type of types" [value]="type.value">
-                {{ type.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('type', externalTransactionForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.subtype'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="subtype"
-              name="subtype"
-            >
-              <mat-option
-                *ngFor="let subtype of subtypes"
-                [value]="subtype.value"
-              >
-                {{ subtype.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('subtype', externalTransactionForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-  <bod-page-container title="Product Type Relationships"></bod-page-container>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.optionalitytype'"
+      [label]="translationKey + 'metadataconfig.processMode'"
       [forTextOnly]="true"
       [required]="true"
     >
       <mat-form-field appearance="outline" fisStyle>
         <mat-select
           panelClass="fis-style"
-          formControlName="optionalityType"
-          name="optionalityType"
+          formControlName="processMode"
+          name="processMode"
         >
           <mat-option
-            *ngFor="let optionalityType of optionalityTypes"
-            [value]="optionalityType.value"
+            *ngFor="let processMode of processModes"
+            [value]="processMode.value"
           >
-            {{ optionalityType.label }}
+            {{ processMode.label }}
           </mat-option>
         </mat-select>
-        <mat-error>
-          {{
-            getError('optionalityType', addNewTransactionTypeFormGroup)
-              | translate
-          }}
-        </mat-error>
       </mat-form-field>
     </bod-control-group>
-  </bod-input-layout>
-
-  <bod-page-container title="Relationship Details"></bod-page-container>
-
-  <bod-input-layout col="2">
+ 
     <bod-control-group
       [truncate]="false"
-      [label]="translationKey + 'metadataconfig.eventtype'"
+      [label]="translationKey + 'metadataconfig.activityType'"
       [forTextOnly]="true"
       [required]="true"
     >
       <mat-form-field appearance="outline" fisStyle>
         <mat-select
           panelClass="fis-style"
-          formControlName="eventType"
-          name="eventType"
+          formControlName="activityType"
+          name="activityType"
         >
           <mat-option
-            *ngFor="let eventType of events"
-            [value]="eventType.value"
+            *ngFor="let activityType of activityTypes"
+            [value]="activityType.value"
           >
-            {{ eventType.label }}
+            {{ activityType.label }}
           </mat-option>
         </mat-select>
-        <mat-error>
-          {{
-            getError('eventType', addNewTransactionTypeFormGroup) | translate
-          }}
-        </mat-error>
       </mat-form-field>
     </bod-control-group>
   </bod-input-layout>
+<h1>Restriction Relationship</h1>
 
-  <!-- Role Type Table and Form -->
-  <div style="height: 32px"></div>
-  <bod-message-container
-    [messages]="errorMessagesRoleType"
-  ></bod-message-container>
-  <bod-table
-    #roletypetable
-    [data]="roleTypetabledata"
-    [tableActions]="roleTypetableActions"
-    (onTableActionClick)="onValidTableActionClicked($event)"
-    [inlineModal]="{
-      addNewInlineRowTitle: 'New Role Type' | translate,
-      formGroup: roleTypeForm,
-      formTemplateName: roleTypeTemplate
-    }"
-    (onInlineFormAddSubmit)="onAddRoleType(roleTypeForm.value)"
-    (onInlineFormEditSubmit)="onAddRoleType(roleTypeForm.value)"
-    (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-    (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-    [customColumnTemplates]="[
-      {
-        columnName: 'actions',
-        templateName: deleteActionTemplate
-      }
-    ]"
-    [alignContent]="'top'"
-  >
-    <ng-template
-      #deleteActionTemplate
-      let-element="element"
-      let-column="column"
-      let-index="index"
-    >
-      <bod-table-actions
-        [actions]="rowLevelActionsForBasicEdit"
-        (onActionClick)="handleRowLevelActionsforRoletype($event.icon, index)"
-      >
-      </bod-table-actions>
-    </ng-template>
-  </bod-table>
-  <form [formGroup]="roleTypeForm">
-    <ng-template #roleTypeTemplate>
-      <bod-input-layout col="2">
-        <bod-control-group
-          [truncate]="false"
-          [label]="translationKey + 'metadataconfig.roletype'"
-          [forTextOnly]="true"
-          [required]="true"
-        >
-          <mat-form-field appearance="outline" fisStyle>
-            <mat-select
-              panelClass="fis-style"
-              formControlName="roletype"
-              name="roletype"
-            >
-              <mat-option
-                *ngFor="let roletype of roletypes"
-                [value]="roletype.value"
-              >
-                {{ roletype.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>
-              {{ getError('roletype', roleTypeForm) | translate }}
-            </mat-error>
-          </mat-form-field>
-        </bod-control-group>
-      </bod-input-layout>
-    </ng-template>
-  </form>
-  <bod-input-layout [col]="1">
-    <bod-control-group
-      label="{{ 'Transaction category' | translate }}"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <div style="margin-top: -15px">
-        <bod-auto-complete
-          #nameElementRef
-          formControlName="postingCategory"
-          name="postingCategory"
-          [data]="postingCategoryData"
-          *ngIf="postingCategoryData.options.length > 0"
-        >
-        </bod-auto-complete>
-      </div>
-      <!-- <mat-error>
-        {{
-          getError('postingCategory', addNewTransactionTypeFormGroup)
-            | translate
-        }}
-      </mat-error> -->
-    </bod-control-group>
-  </bod-input-layout>
-  <div style="height: 32px"></div>
-  <bod-page-container
-    title="Posting Standard Application Method"
-  ></bod-page-container>
-  <bod-input-layout col="2">
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="true"
-    >
-      <mat-form-field appearance="outline" fisStyle>
-        <mat-select
-          panelClass="fis-style"
-          formControlName="psamName"
-          name="psamName"
-          fisStyle
-          (selectionChange)="onPsamNameChange($event.value)"
-        >
-          <mat-option
-            *ngFor="let psamName of psamNames"
-            [value]="psamName.value"
-          >
-            {{ psamName.label }}
-          </mat-option>
-        </mat-select>
-        <mat-error>
-          {{ getError('psamName', addNewTransactionTypeFormGroup) | translate }}
-        </mat-error>
-      </mat-form-field>
-    </bod-control-group>
-  </bod-input-layout>
-  <bod-table #psamInstruction [data]="psamInstrData" [alignContent]="'top'">
-  </bod-table>
+   <!-- Period Type Section -->
+  <bod-period-type
+    #periodTypeRef
+    [periodTypeData]="periodTypeTableData"
+    (completeDeltaChangePeriodType)="handleCompleteDeltaChangePeriodType($event)"
+    (tableDirty)="onTableDirty()"
+  ></bod-period-type>
 
-  <bod-channels-main-table
-    #channelsMainTable
-    [channelData]="channelData"
-    [counterData]="counterData"
-    [parentFormGroup]="addNewTransactionTypeFormGroup" 
-    (completeDeltaChange)="handleChannelDataChange($event)"
-    (tableDirty)="onChannelTableDirty()"
-    (channelDetails)="handleChannelDataChange($event)"
-  ></bod-channels-main-table>
-
-  <bod-tax-type-table
-  #taxTypeRef
-  [taxTypeData]="taxTypeTableData"
-  (completeDeltaChangeTaxType)="handleCompleteDeltaChangeTaxType($event)"
-  (tableDirty)="onTaxTableDirty()"
-></bod-tax-type-table>
 </bod-form>
 
 
@@ -935,109 +184,74 @@ import {
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
   FormsModule,
-  NgModel,
   ReactiveFormsModule,
-  UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
   ValidationErrors,
   ValidatorFn,
   Validators
 } from '@angular/forms';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { RestrictionService } from '../restriction-service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
 import {
-  BodAutoCompleteMetadata,
-  BodAutoCompleteModule,
   BodCommonDialogService,
   BodCommonModule,
-  BodConfirmDialogModel,
   BodCurrencyControlModule,
   BodDynamicFormModule,
   BodFormModule,
+  BodFormStateService,
   BodFormTypes,
   BodPageContainerModule,
-  BodPipeName,
-  BodSearchFieldData,
   BodTableAction,
   BodTableActionsModule,
-  BodTableDataSource,
+  BodTableActionType,
+  BodTableComponent,
   BodTableMetadata,
   BodTableModule,
-  Column,
+  CommonDialogComponent,
   ControlGroupModule,
   DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
   InlineEditOutput,
   InputLayoutModule,
   InquiryLayoutModule,
-  MaxLengthStrategy,
   MessageContainerModule,
+  ModeOptions,
   NotificationMessage,
   NotificationMessageType,
+  RowLeftAction,
   SearchFieldModule,
   SectionContainerModule
 } from '@bod/common';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { RestrictionDetailsComponent } from '../restriction-details.component';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
-import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatButtonModule } from '@angular/material/button';
-import { RufIconModule } from '@ruf/shell/icon';
-import { MatIconModule } from '@angular/material/icon';
-import { MatRadioModule } from '@angular/material/radio';
-import { TranslationKey } from '../../metadat-config/codegen-config.constant';
-import {
-  DemoTableDataService,
-  ProductType,
-  SampleEC
-} from '../../bod-table-demo.service';
-import { HttpClient } from '@angular/common/http';
-import {
-  postingTextaction,
-  PostingTextDelete
-} from '../transaction-type-constant';
-import { TransactionTypeService } from '../transaction-type.service';
-import {
-  ChannelTable,
-  CommunicationTable,
-  ConditionTable,
-  CounterTable,
-  PostingTextTable,
-  PSAMTable,
-  RestrictionTable,
-  TaxType,
-  TransactionTypeList,
-  TransactionTypeTable
-} from '../transaction-type.model';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableDataSource } from '@angular/material/table';
-import { MetadataService } from '../../metadat-config/metada-config.service';
-import { forkJoin } from 'rxjs';
 import { FormUtilityService } from '../../metadat-config/form-utility.service';
-import {
-  roletypeaction,
-  roletypeactionDelete
-} from '../../role-type/role-type-constants';
-import { BalanceTypeService } from '../../balance-type/balance-type-service';
-import {
-  RoleTypeSampleTable,
-  RoleTypeSampleTableForTransaction
-} from '../../balance-type/add-edit-balancetype/balancetype.model';
-import { EventType } from '@angular/router';
-import { ChannelsMainTableComponent } from '../channels-main-table/channels-main-table.component';
-import { TaxTypeTableComponent } from './tax-type-table/tax-type-table.component';
+import { MatDialogRef } from '@angular/material/dialog';
+import { ExceptionTrigger, RestrictionList } from './add-edit-restriction.model';
+import { RestrictionRelationship, PeriodTypeComponent } from './period-type/period-type.component';
 
 @Component({
-  selector: 'bod-add-edit-transactiontype',
+  selector: 'bod-add-edit-restriction',
   standalone: true,
   imports: [
-    BodAutoCompleteModule,
-    ChannelsMainTableComponent,
-    TaxTypeTableComponent,
-    MatRadioModule,
-    CommonModule,
+    PeriodTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
     MatIconModule,
@@ -1064,883 +278,134 @@ import { TaxTypeTableComponent } from './tax-type-table/tax-type-table.component
     SectionContainerModule,
     MatInputModule,
     TranslateModule,
-
     MessageContainerModule,
     MatButtonToggleModule,
     BodCurrencyControlModule,
+    MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './add-edit-transactiontype.component.html',
-  styleUrl: './add-edit-transactiontype.component.scss'
+  templateUrl: './add-edit-restriction.component.html',
+  styleUrl: './add-edit-restriction.component.scss'
 })
-export class AddEditTransactiontypeComponent implements OnInit {
-  @Input() editTransactionTypeRow: TransactionTypeList;
-
-  public inlineAddRowActionClick() {
-    this.postingTextForm.reset();
-    this.externalTransactionForm.reset();
-    this.roleTypeForm.reset();
-  }
-
-  transactionTypeList: any[] = [];
-  transactionListPrdTyp: any[] = [];
-  financialOperatType: any[] = [];
-  reverseCondition: any[] = [];
-  public events: any[] = [];
-  public channels: any[] = [];
-  public languages: any[] = [];
-  public pstgCtgr: any[] = [];
-  public psamNames: any[] = [];
-  public balanceTypes: any[] = [];
-  public counters: any[] = [];
-  public restrictions: any[] = [];
-  public conditions: any[] = [];
-  public communications: any[] = [];
-  public communicationsMasterList: any[] = [];
-  public completeDeltaTaxTypeData: any;
-
-  paymentTypes = [
-    { label: 'Credit', value: 'Credit' },
-    { label: 'Debit', value: 'Debit' }
-  ];
-  //optionalityTypes
-  optionalityTypes = [
-    { label: 'Mandatory', value: 'Mandatory' },
-    { label: 'Proposed', value: 'Proposed' },
-    { label: 'Optional', value: 'Optional' }
-  ];
-
-  classificationTypes = [
-    { label: 'Extrenal', value: 'External' },
-    { label: 'Internal', value: 'Internal' },
-    { label: 'HoldFunds', value: 'HoldFunds' }
-  ];
-  cashsettlementDirections = [
-    { label: '', value: '' },
-    { label: 'Incoming', value: 'Incoming' },
-    { label: 'Outgoing', value: 'Outgoing' }
-  ];
-
-  types = [
-    { label: 'AccountClosure', value: 'AccountClosure' },
-    { label: 'ACHOutgoing', value: 'ACHOutgoing' },
-    { label: 'FIP', value: 'FIP' },
-    { label: 'FIPInternalSuspense', value: 'FIPInternalSuspense' },
-    { label: 'FIPOfficialCheck', value: 'FIPOfficialCheck' },
-    { label: 'ISO8583', value: 'ISO8583' },
-    { label: 'PNC', value: 'PNC' },
-    { label: 'XAA', value: 'XAA' }
-  ];
-  subtypes = [
-    { label: '0100', value: '0100' },
-    { label: '0221', value: '0221' },
-    { label: 'AcoountAnalysis', value: 'AcoountAnalysis' },
-    { label: 'ACHIncoming', value: 'ACHIncoming' },
-    { label: 'CertificateOfDeposit', value: 'CertificateOfDeposit' },
-    { label: 'Checking', value: 'Checking' },
-    { label: 'ClearingDeposit', value: 'ClearingDeposit' },
-    { label: 'ClearingReturn', value: 'ClearingReturn' },
-    { label: 'ClearingWithdrawal', value: 'ClearingWithdrawal' },
-    { label: 'OfficialCheck', value: 'OfficialCheck' },
-    { label: 'OnUsDeposit', value: 'OnUsDeposit' },
-    { label: 'OnUsWithdrawal', value: 'OnUsWithdrawal' },
-    { label: 'Origination', value: 'Origination' },
-    { label: 'Savings', value: 'Savings' }
-  ];
-  @ViewChild('channelsMainTable') channelsMainTable: ChannelsMainTableComponent;
-
-  @Input() retainedCode = '';
-  @Input() retainedTransactionTypeIdentifier = 0;
-  @Input() retainedName = '';
-  @Input() retainedDescription = '';
-  @Input() retainedPaymentType = '';
-  @Input() retainedClassificationType = '';
-  @Input() retainedContra = false;
-  @Input() retainedContraName = '';
-  @Input() retainedContraPaymentType = '';
-  @Input() retainedOveridePaymentType = false;
-  @Input() retainedCashSettle = '';
-  @Input() retainedIsReverse = false;
-  @Input() retainedExternalSysId = '';
-  @Input() retainedBalanceReq = false;
-  @Input() retainedCashTransaction = false;
-  @Input() retainedChargEligible = false;
-  @Input() retainedExternalTransactionValues: TransactionTypeTable[] = [];
-  @Input() retainedPostingTextValues: PostingTextTable[] = [];
-  @Input() retainedRoleTypeValues: RoleTypeSampleTableForTransaction[] = [];
-  @Input() retainedSearchFieldInput = '';
-  @Input() retainedSearchFieldInput1 = '';
-  @Input() retainedSearchFieldInput3 = '';
-  @Input() retainedSearchFieldInput4 = '';
-  @Input() retainedChannelValues: ChannelTable[] = [];
-  @Input() reatainedoptionalityType = '';
-  @Input() retainedEventType = '';
-  @Input() retainedpostingCategory: string[] = [];
-  @Input() retainedPSAMName = '';
-  @Input() retainedChannels: any[] = [];
-  @Input() retainedCounters: any[] = [];
-  @Input() retainedRestrictions: any[] = [];
-  @Input() retainedConditions: any[] = [];
-  @Input() retainedCommunicationServices: any[] = [];
-  @Input() retainedTaxType: TaxType[] = [];
-
+export class AddEditRestrictionComponent implements OnInit {
   public translationKey = TranslationKey;
-  public addNewTransactionTypeFormGroup: UntypedFormGroup;
-
-  public taxData: TaxType[] = [];
-  public isTaxTableDirty = false;
-
-  public channelData: ChannelTable[] = [];
-  public isChannelTableDirty = false;
-
-  public counterData: CounterTable[] = [];
-  public isCounterTableDirty = false;
-
-  public restrictionData: RestrictionTable[] = [];
-  public isRestrictionTableDirty = false;
-
-  public conditionData: ConditionTable[] = [];
-  public isConditionTableDirty = false;
-
-  public communicationData: CommunicationTable[] = [];
-  public isCommunicationTableDirty = false;
-
-  /**
-   * Handle channel table dirty state
-   */
-  public onChannelTableDirty(): void {
-    this.isChannelTableDirty = true;
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  public onTaxTableDirty(): void {
-    this.isTaxTableDirty = true;
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  /**
-   * Handle channel data changes
-   */
-  public handleChannelDataChange(data: any) {
-    this.channelData = data.channels;
-    this.counterData = data.counters;
-    this.restrictionData = data.restrictions; // Add this line if restrictions come from the same event
-    this.conditionData = data.conditions;
-    this.communicationData = data.communications; // Add this line if conditions come from the same event
-
-    console.log(
-      'Received Channel Data from child (JSON):\n',
-      JSON.stringify(this.channelData, null, 2)
-    );
-    console.log(
-      'Received All Counters with Channel Identifier (JSON):\n',
-      JSON.stringify(this.counterData, null, 2)
-    );
-    console.log(
-      'Received All Restrictions with Channel Identifier (JSON):\n',
-      JSON.stringify(this.restrictionData, null, 2)
-    );
-    console.log(
-      'Received All Conditions with Channel Identifier (JSON):\n',
-      JSON.stringify(this.conditionData, null, 2)
-    );
-    console.log(
-      'Received All Conditions with Channel Identifier (JSON):\n',
-      JSON.stringify(this.communicationData, null, 2)
-    );
-  }
-
-  public handleCounterDataChange(data: CounterTable[]) {
-    this.counterData = data;
-    console.log('Received Counter Data from child:', this.counterData);
-  }
-
-  public handleRestrictionDataChange(data: any[]) {
-    this.restrictionData = data;
-    console.log('Received Restriction Data from child:', this.restrictionData);
-  }
-
-  public handleConditionDataChange(data: any[]) {
-    this.conditionData = data;
-    console.log('Received Condition Data from child:', this.conditionData);
-  }
-
-  public handleCommunicationDataChange(data: any[]) {
-    this.communicationData = data;
-    console.log(
-      'Received Communication Data from child:',
-      this.communicationData
-    );
-  }
-
-  /**
-   * Get current channel table data
-   */
-  public getCurrentChannelData(): ChannelTable[] {
-    return this.channelsMainTable?.getCurrentTableData() || [];
-  }
-
-  // //
-  // // code to decrypt the above jwt
-  // // Note: JWTs are not "decrypted" but "decoded" (unless encrypted with JWE, which is rare).
-  // // The payload is base64url encoded. This code decodes the payload for inspection.
-
-  // public decodeJwtPayload(token: string): any {
-  //   const parts = token.split('.');
-  //   if (parts.length !== 3) {
-  //     throw new Error('Invalid JWT token');
-  //   }
-  //   // JWT payload is the second part
-  //   const payload = parts[1];
-  //   // Replace URL-safe characters and pad with '=' if needed
-  //   const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-  //   const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
-  //   const decoded = atob(padded);
-  //   try {
-  //     return JSON.parse(decoded);
-  //   } catch (e) {
-  //     throw new Error('Invalid JWT payload');
-  //   }
-  // }
-
-  // ngAfterViewInit() {
-  //   // Example usage: decode the JWT payload and log it
-  //   try {
-  //     const decodedPayload = this.decodeJwtPayload(this.jwt);
-  //     console.log("Decoded JWT payload:", decodedPayload);
-  //   } catch (e) {
-  //     console.error("Failed to decode JWT:", e);
-  //   }
-  // }
-  // // Example usage:
-  // Example usage (move this into ngOnInit or another method if needed):
-  // const decodedPayload = this.decodeJwtPayload(this.jwt);
-  // console.log("Decoded JWT payload:", decodedPayload);
-
-  onReset(isAdd: boolean): void {
-    const isEditMode = this.isEdit;
-
-    this.addNewTransactionTypeFormGroup.reset();
-    this.roleTypeForm.reset();
-    this.dataWithRoleTypevalues = [];
-    this.roleTypetabledata.datasource.data = [];
-    this.postingTextForm.reset();
-    this.externalTransactionForm.reset();
-    this.dataWithPostingTextvalues = [];
-    this.dataWithExternalTransactionValues = [];
-    this.channelData = [];
-    this.counterData = [];
-    this.restrictionData = [];
-    this.conditionData = [];
-    this.communicationData = [];
-    this.isChannelTableDirty = false;
-    if (this.channelsMainTable) {
-      this.channelsMainTable.resetTableForm();
-    }
-    if (this.postingTexttabledata && this.postingTexttabledata.datasource) {
-      this.postingTexttabledata.datasource.data = [
-        ...this.dataWithPostingTextvalues
-      ];
-    }
-    if (
-      this.externalTransactiontabledata &&
-      this.externalTransactiontabledata.datasource
-    ) {
-      this.externalTransactiontabledata.datasource.data = [
-        ...this.dataWithExternalTransactionValues
-      ];
-    }
-    this.psamInstrData.datasource.data = [];
-    this.searchFieldInput4 = '';
-    this.searchFieldInput = '';
-    this.searchFieldInput1 = '';
-    this.searchFieldInput3 = '';
-
-    if (isEditMode) {
-      // Enrich retainedCounters
-
-      const enrichedRetainedCounters = (this.retainedCounters || []).map(
-        counter => {
-          const counterObj = this.counters?.find(
-            c => String(c.identifier) === String(counter.counterIdentifier)
-          );
-          return {
-            id: counter.counterIdentifier,
-            code: counterObj
-              ? counterObj.code
-              : String(counter.counterIdentifier),
-            identifier: counter.counterIdentifier,
-            classificationType: counterObj ? counterObj.classificationType : '', // <-- always from master list
-            operatorType: counter.counterOperationType || '',
-            channelidentifier: counter.resourceItemIdentifier
-          };
-        }
-      );
-
-      console.log(
-        'enrichedRetainedCounters:',
-        JSON.stringify(enrichedRetainedCounters, null, 2)
-      );
-
-      // Enrich retainedRestrictions
-      const enrichedRetainedRestrictions = (
-        this.retainedRestrictions || []
-      ).map(restriction => {
-        const restrictionObj = this.restrictions?.find(
-          r =>
-            String(r.identifier) === String(restriction.restrictionIdentifier)
-        );
-        return {
-          id: restriction.restrictionIdentifier,
-          code: restrictionObj
-            ? restrictionObj.code
-            : String(restriction.restrictionIdentifier),
-          identifier: restriction.restrictionIdentifier,
-          type: restriction.restrictionClassificationType || '',
-          channelidentifier: restriction.resourceItemIdentifier
-        };
-      });
-      console.log(
-        'enrichedRetainedRestrictions:',
-        JSON.stringify(enrichedRetainedRestrictions, null, 2)
-      );
-
-      // Enrich retainedConditions
-      const enrichedRetainedConditions = (this.retainedConditions || []).map(
-        condition => {
-          const conditionObj = this.conditions?.find(
-            c => String(c.identifier) === String(condition.conditionIdentifier)
-          );
-          return {
-            id: condition.conditionIdentifier,
-            code: conditionObj
-              ? conditionObj.cdarValue
-              : String(condition.conditionIdentifier),
-            identifier: condition.conditionIdentifier,
-            relationshipType: condition.optionalityType || '',
-            channelidentifier: condition.resourceItemIdentifier
-          };
-        }
-      );
-      console.log(
-        'enrichedRetainedConditions:',
-        JSON.stringify(enrichedRetainedConditions, null, 2)
-      );
-
-      // Enrich retainedCommunicationServices
-      const enrichedRetainedCommunicationServices = (
-        this.retainedCommunicationServices || []
-      ).map(comm => {
-        const commObj = this.communications?.find(
-          c => String(c.identifier) === String(comm.commServiceIdentifier)
-        );
-        // Find the master entry for serviceElementCode
-        const commMaster = this.communicationsMasterList?.find(
-          m =>
-            String(m.serviceElementIdentifier) ===
-            String(comm.serviceElementIdentifier)
-        );
-        return {
-          id: comm.commServiceIdentifier,
-          identifier: comm.commServiceIdentifier,
-          serviceElement: commMaster ? commMaster.serviceElementCode : '', // <-- label, e.g., "BankAlert"
-          serviceElementCode: comm.serviceElementIdentifier, // <-- id, e.g., 100000000002
-          communicationServices: commObj
-            ? commObj.code
-            : String(comm.commServiceIdentifier),
-          channelidentifier: comm.resourceItemIdentifier
-        };
-      });
-      console.log(
-        'enrichedRetainedCommunicationServices:',
-        JSON.stringify(enrichedRetainedCommunicationServices, null, 2)
-      );
-      console.log(
-        'retainedChannels:toset',
-        JSON.stringify(this.retainedChannels, null, 2)
-      );
-      console.log(
-        'retainedCounters:toset',
-        JSON.stringify(this.retainedCounters, null, 2)
-      );
-      console.log(
-        'retainedRestrictions:toset',
-        JSON.stringify(this.retainedRestrictions, null, 2)
-      );
-      console.log(
-        'retainedConditions:toset',
-        JSON.stringify(this.retainedConditions, null, 2)
-      );
-      console.log(
-        'retainedCommunicationServices:toset',
-        JSON.stringify(this.retainedCommunicationServices, null, 2)
-      );
-      // Restore retained form values
-      this.addNewTransactionTypeFormGroup.patchValue({
-        code: this.retainedCode,
-        transactionTypeIdentifier: this.retainedTransactionTypeIdentifier,
-        name: this.retainedName,
-        description: this.retainedDescription,
-        paymentType: this.retainedPaymentType,
-        classificationType: this.retainedClassificationType,
-        contra: this.retainedContra,
-        overidePaymentType: this.retainedOveridePaymentType,
-        cashSettle: this.retainedCashSettle,
-        isReverse: this.retainedIsReverse,
-        externalSysId: this.retainedExternalSysId,
-        balanceReq: this.retainedBalanceReq,
-        cashTransaction: this.retainedCashTransaction,
-        chargEligible: this.retainedChargEligible,
-        optionalityType: this.reatainedoptionalityType,
-        eventType: this.retainedEventType,
-        postingCategory: this.retainedpostingCategory,
-        psamName: this.retainedPSAMName
-        // Add other fields as needed
-      });
-      if (this.retainedPSAMName) {
-        this.onPsamNameChange(Number(this.retainedPSAMName));
-      } else {
-        this.psamInstrData.datasource.data = [];
-      }
-
-      // Restore Posting Text Table
-      this.dataWithPostingTextvalues = [...this.retainedPostingTextValues];
-      if (this.postingTexttabledata && this.postingTexttabledata.datasource) {
-        this.postingTexttabledata.datasource.data = [
-          ...this.dataWithPostingTextvalues
-        ];
-      }
-
-      // Restore External Transaction Table
-      this.dataWithExternalTransactionValues = [
-        ...this.retainedExternalTransactionValues
-      ];
-      if (
-        this.externalTransactiontabledata &&
-        this.externalTransactiontabledata.datasource
-      ) {
-        this.externalTransactiontabledata.datasource.data = [
-          ...this.dataWithExternalTransactionValues
-        ];
-      }
-      // Restore Role Type Table
-      this.dataWithRoleTypevalues = [...this.retainedRoleTypeValues];
-      if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
-        this.roleTypetabledata.datasource.data = [
-          ...this.dataWithRoleTypevalues
-        ];
-      }
-
-      // --- UPDATED CHANNELS/COUNTERS/RESTRICTIONS/CONDITIONS/COMMUNICATIONS RESTORE LOGIC ---
-      // Rebuild channelData and attach retained relations
-      this.channelData = (this.retainedChannels || []).map(retainedChannel => {
-        const channelObj = this.channels?.find(
-          c =>
-            String(c.value) === String(retainedChannel.resourceItemIdentifier)
-        );
-        const channelId = retainedChannel.resourceItemIdentifier;
-        const isAllChannel = String(channelId) === '0';
-
-        return {
-          id: channelId,
-          identifier: String(channelId),
-          code: isAllChannel
-            ? 'All'
-            : channelObj
-            ? channelObj.label
-            : String(channelId),
-          channel: isAllChannel
-            ? 'All'
-            : channelObj
-            ? channelObj.label
-            : String(channelId),
-          option: retainedChannel.optionalityType || '',
-          attributeForChannel: '',
-          counters: (enrichedRetainedCounters || []).filter(
-            c => String(c.channelidentifier) === String(channelId)
-          ),
-          restrictions: (enrichedRetainedRestrictions || []).filter(
-            r => String(r.channelidentifier) === String(channelId)
-          ),
-          conditions: (enrichedRetainedConditions || []).filter(
-            c => String(c.channelidentifier) === String(channelId)
-          ),
-          communications: (enrichedRetainedCommunicationServices || []).filter(
-            c => String(c.channelidentifier) === String(channelId)
-          )
-        };
-      });
-
-      // Restore the flat arrays for the tables
-      this.counterData = [];
-      this.restrictionData = [];
-      this.conditionData = [];
-      this.communicationData = [];
-      this.channelData.forEach(channel => {
-        if (channel.counters) this.counterData.push(...channel.counters);
-        if (channel.restrictions)
-          this.restrictionData.push(...channel.restrictions);
-        if (channel.conditions) this.conditionData.push(...channel.conditions);
-        if (channel.communications)
-          this.communicationData.push(...channel.communications);
-      });
-
-      // Update the child tables (ChannelsMainTableComponent)
-      if (this.channelsMainTable) {
-        if (this.channelsMainTable.tableWithSimpleEdit) {
-          this.channelsMainTable.tableWithSimpleEdit.datasource.data = [
-            ...this.channelData
-          ];
-        }
-
-        // Populate maps from channelData
-        (this.channelData || []).forEach(row => {
-          if (
-            row.id !== undefined &&
-            Array.isArray(row.counters) &&
-            row.counters.length > 0
-          ) {
-            this.channelsMainTable.counterMap[row.id] = [...row.counters];
-          }
-          if (
-            row.id !== undefined &&
-            Array.isArray(row.conditions) &&
-            row.conditions.length > 0
-          ) {
-            this.channelsMainTable.conditionMap[row.id] = [...row.conditions];
-          }
-          if (
-            row.id !== undefined &&
-            Array.isArray(row.restrictions) &&
-            row.restrictions.length > 0
-          ) {
-            this.channelsMainTable.restrictionMap[row.id] = [
-              ...row.restrictions
-            ];
-          }
-          if (
-            row.id !== undefined &&
-            Array.isArray(row.communications) &&
-            row.communications.length > 0
-          ) {
-            this.channelsMainTable.communicationMap[row.id] = [
-              ...row.communications
-            ];
-          }
-          // Set data for counters table
-          if (this.channelsMainTable.tableWithSimpleCounter) {
-            const firstChannelWithCounters = this.channelData.find(
-              ch => ch.counters && ch.counters.length > 0
-            );
-            this.channelsMainTable.tableWithSimpleCounter.datasource.data =
-              firstChannelWithCounters?.counters
-                ? [...firstChannelWithCounters.counters]
-                : [];
-          }
-          // Set data for restrictions table
-          if (this.channelsMainTable.tableWithSimpleRestriction) {
-            const firstChannelWithRestrictions = this.channelData.find(
-              ch => ch.restrictions && ch.restrictions.length > 0
-            );
-            this.channelsMainTable.tableWithSimpleRestriction.datasource.data =
-              firstChannelWithRestrictions?.restrictions
-                ? [...firstChannelWithRestrictions.restrictions]
-                : [];
-          }
-          // Set data for conditions table
-          if (this.channelsMainTable.tableWithSimpleCondition) {
-            const firstChannelWithConditions = this.channelData.find(
-              ch => ch.conditions && ch.conditions.length > 0
-            );
-            this.channelsMainTable.tableWithSimpleCondition.datasource.data =
-              firstChannelWithConditions?.conditions
-                ? [...firstChannelWithConditions.conditions]
-                : [];
-          }
-          // Set data for communications table
-          if (this.channelsMainTable.tableWithSimpleCommunication) {
-            const firstChannelWithCommunications = this.channelData.find(
-              ch => ch.communications && ch.communications.length > 0
-            );
-            this.channelsMainTable.tableWithSimpleCommunication.datasource.data =
-              firstChannelWithCommunications?.communications
-                ? [...firstChannelWithCommunications.communications]
-                : [];
-          }
-        });
-      }
-
-      this.taxTypeTableData = (this.retainedTaxType || []).map((row, idx) => ({
-        id: idx + 1,
-        taxType: row.taxTypeIdentifier, // label or identifier for display
-        taxTypeIdentifier: row.taxTypeIdentifier, // <-- required for dropdown/value
-        businessRule: row.transactionEventTypeIdentifier,
-        transactionEventTypeIdentifier: row.transactionEventTypeIdentifier
-      }));
-      console.log(
-        'Restored Tax Type Table Data:',
-        JSON.stringify(this.taxTypeTableData, null, 2)
-      );
-      console.log(
-        'retained Tax Type Table Data:',
-        JSON.stringify(this.retainedTaxType, null, 2)
-      );
-      // Restore search field inputs
-      setTimeout(() => {
-        this.searchFieldInput = this.retainedSearchFieldInput;
-        this.cdr.detectChanges();
-      }, 0);
-      this.searchFieldInput1 = this.retainedSearchFieldInput1;
-      this.searchFieldInput3 = this.retainedSearchFieldInput3;
-      this.searchFieldInput4 = this.retainedSearchFieldInput4;
-
-      // If you want to keep code and identifier disabled in edit mode:
-      this.addNewTransactionTypeFormGroup.get('code')?.disable();
-      this.addNewTransactionTypeFormGroup
-        .get('transactionTypeIdentifier')
-        ?.disable();
-    } else {
-      // Enable code and identifier in add mode
-      this.addNewTransactionTypeFormGroup.get('code')?.enable();
-      this.addNewTransactionTypeFormGroup
-        .get('transactionTypeIdentifier')
-        ?.enable();
-    }
-
-    this.addNewTransactionTypeFormGroup.markAsPristine();
-    this.addNewTransactionTypeFormGroup.markAsUntouched();
-  }
-
+  public addNewRestrictionFormGroup: UntypedFormGroup;
   formType: BodFormTypes = BodFormTypes.SUBMIT;
+
+  @Input() retainedCode: string = '';
+  @Input() retainedIdentifier: number = 0;
+  @Input() retainedName: string = '';
+  @Input() retainedDescription: string = '';
+
+  @Input() retainedExceptionValue: string = '';
+  @Input() retainedActivityType: string = '';
+  @Input() retainedProcessMode: string = '';
+  @Input() retainedPeriodTypeData: ExceptionTrigger[] = [];
+  @Input() editResitrictionRow: RestrictionList;
+  public childRestriction: any[] = [];
+
+  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
+    NotificationMessage[]
+  >();
+
+  public errorMessages: NotificationMessage[] = [];
+  public modeOptions: ModeOptions = { input: false, reset: false };
+
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+  @ViewChild('periodTypeRef') periodTypeRef: PeriodTypeComponent;
+
+  public messages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+
+  exceptionValues = [
+    { label: 'Warning', value: 'Warning' },
+    { label: 'Error', value: 'Error' },
+    { label: 'Information', value: 'Information' }
+  ];
+
+  processModes = [
+    { label: 'Any', value: 'Any' },
+    { label: 'Automatic', value: 'Automatic' },
+    { label: 'Manual', value: 'Manual' }
+  ];
+
+  activityTypes = [
+    { label: 'Non Monetory', value: 'Non Monetory' },
+    { label: 'Inquiry', value: 'Inquiry' },
+    { label: 'Monetory', value: 'Monetory' }
+  ];
+  statusControl = new FormControl(null);
+  public previousStatus: string | undefined;
+  isAdd = true;
+  isEdit = false;
+  public isTableDirty = false;
+
+  // Period Type table data
+  public periodTypeTableData: ExceptionTrigger[] = [];
+
   constructor(
-    public balanceTypeService: BalanceTypeService,
-    private metadataService: MetadataService,
-    private cdr: ChangeDetectorRef,
-    private fb: UntypedFormBuilder,
-    private http: HttpClient,
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodFormStateService: BodFormStateService,
+    public RestrictionService: RestrictionService,
+    private fb: FormBuilder,
     private bodCommonDialogService: BodCommonDialogService,
-    private transactionTypeService: TransactionTypeService
-  ) {}
+    private metadataService: MetadataService
+  ) { }
 
   ngOnInit() {
     this.initForm();
-    this.loadDropdownData();
-    this.loadTableData();
-    // if (this.editTransactionTypeRow) {
-    //   this.transactionTypeForm(this.editTransactionTypeRow);
-    // }
-
-    // Listen for changes to searchFieldInput1 and set contraname to the identifier from tableDataForInputBinding1
-    // This works if [(ngModel)]="searchFieldInput1" is used in the template
-    Object.defineProperty(this, 'searchFieldInput1', {
-      get: () => this._searchFieldInput1,
-      set: (value: string) => {
-        this._searchFieldInput1 = value;
-        const data = (
-          this.tableDataForInputBinding1.datasource as MatTableDataSource<any>
-        ).data;
-        const selected = data.find(item => item.code === value);
-        if (selected) {
-          this.addNewTransactionTypeFormGroup
-            .get('contraname')
-            ?.setValue(selected.name);
-          this.addNewTransactionTypeFormGroup
-            .get('contrapaymentType')
-            ?.setValue(selected.paymentTypeValue || '');
-        } else {
-          this.addNewTransactionTypeFormGroup.get('contraname')?.setValue('');
-          this.addNewTransactionTypeFormGroup
-            .get('contrapaymentType')
-            ?.setValue('');
-        }
-      },
-      configurable: true,
-      enumerable: true
+    this.loadDropDownData(() => {
+      if (this.editResitrictionRow) {
+        this.restrictionForm(this.editResitrictionRow);
+      }
     });
-    //code to decrypt the above jwt token
-
-    this._searchFieldInput1 = '';
-
-    // Subscribe to contra toggle changes to load table data dynamically
-    this.addNewTransactionTypeFormGroup
-      .get('contra')
-      ?.valueChanges.subscribe(val => {
-        if (val) {
-          this.transactionTypeService
-            .getInternalProdType()
-            .subscribe((data: any[]) => {
-              (
-                this.tableDataForInputBinding
-                  .datasource as MatTableDataSource<any>
-              ).data = data;
-            });
-        } else {
-          // Optionally clear the table data when contra is turned off
-          (
-            this.tableDataForInputBinding.datasource as MatTableDataSource<any>
-          ).data = [];
-        }
-      });
-
-    Object.defineProperty(this, 'searchFieldInput1', {
-      get: () => this._searchFieldInput1,
-      set: (value: string) => {
-        this._searchFieldInput1 = value;
-        this.searchFieldInput = '';
-        const data = (
-          this.tableDataForInputBinding1.datasource as MatTableDataSource<any>
-        ).data;
-        const selected = data.find(item => item.code === value);
-        if (selected) {
-          this.addNewTransactionTypeFormGroup
-            .get('contraname')
-            ?.setValue(selected.name);
-
-          this.addNewTransactionTypeFormGroup
-            .get('contrapaymentType')
-            ?.setValue(selected.paymentTypeValue || '');
-        } else {
-          this.addNewTransactionTypeFormGroup.get('contraname')?.setValue('');
-          this.addNewTransactionTypeFormGroup
-            .get('contrapaymentType')
-            ?.setValue('');
-        }
-      },
-      configurable: true,
-      enumerable: true
+    this.metadataService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW';
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
     });
-    this._searchFieldInput1 = '';
-    this._searchFieldInput = '';
-
-    this.addNewTransactionTypeFormGroup
-      .get('contra')
-      ?.valueChanges.subscribe(val => {
-        if (!this.isEdit) {
-          this.searchFieldInput1 = ''; // Only clear in add mode
-        }
-
-        if (val) {
-          // Load table data when contra is true
-          this.transactionTypeService
-            .getInternalProdType()
-            .subscribe((data: any[]) => {
-              this.tableDataForInputBinding.datasource = new MatTableDataSource(
-                data
-              );
-            });
-        } else {
-          // Optionally clear the table data when contra is turned off
-          (
-            this.tableDataForInputBinding.datasource as MatTableDataSource<any>
-          ).data = [];
-        }
-      });
   }
 
-  private _searchFieldInput1 = '';
-  private _searchFieldInput = '';
+  private childRestrictionMap: { [id: number]: string } = {};
+
+  loadDropDownData(callback?: () => void): void {
+    this.RestrictionService.getRestrictions().subscribe(data => {
+      this.childRestriction = data.map((item: any) => ({
+        label: item.code,
+        value: item.identifier
+      }));
+      // Build a map for quick lookup
+      this.childRestrictionMap = {};
+      data.forEach((item: any) => {
+        this.childRestrictionMap[item.identifier] = item.code;
+      });
+      if (callback) callback();
+    });
+  }
 
   private initForm(): void {
-    this.addNewTransactionTypeFormGroup = this.fb.group({
-      code: new UntypedFormControl('', [
+    this.addNewRestrictionFormGroup = this.fb.group({
+      restrictionCode: new UntypedFormControl('', [
         Validators.required,
         this.noSpecialCharactersValidator(),
         this.maxLengthValidator(32)
       ]),
-      contra: new UntypedFormControl(false),
-      name: new UntypedFormControl('', [
+      restrictionIdentifier: [{ value: '', disabled: true }],
+      restrictionName: new UntypedFormControl('', [
         Validators.required,
         this.maxLengthValidator(120)
       ]),
-      description: new UntypedFormControl('', [this.maxLengthValidator(254)]),
-      paymentType: new UntypedFormControl('', [Validators.required]),
-      classificationType: new UntypedFormControl('', [Validators.required]),
-      contraname: new UntypedFormControl({ value: '', disabled: true }),
-      contrapaymentType: new UntypedFormControl({ value: '', disabled: true }),
-      overidePaymentType: new UntypedFormControl(false),
-      cashSettle: new UntypedFormControl(''),
-      isReverse: new UntypedFormControl(false),
-      externalSysId: new UntypedFormControl('', [this.maxLengthValidator(32)]),
-      balanceReq: new UntypedFormControl(false),
-      cashTransaction: new UntypedFormControl(false),
-      chargEligible: new UntypedFormControl(false),
-      transactionTypeIdentifier: [{ value: '', disabled: true }],
-      postingCategory: new UntypedFormControl(''),
-      optionalityType: new UntypedFormControl(''),
-      eventType: new UntypedFormControl('', [Validators.required]),
-      psamName: new UntypedFormControl('', [Validators.required]),
-      taxTypeIdentifier: new UntypedFormControl(null, [Validators.required]),
-      businessRule: new UntypedFormControl(null)
+      description: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(254)
+      ]),
+      exceptionValue: new UntypedFormControl('', [Validators.required]),
+      processMode: new UntypedFormControl('', [Validators.required]),
+      activityType: new UntypedFormControl('', [Validators.required])
     });
-
-    this.postingTextForm = this.fb.group(
-      {
-        channel: new UntypedFormControl(''),
-        event: new UntypedFormControl(''),
-        language: new UntypedFormControl('', Validators.required),
-        text: new UntypedFormControl('', [
-          Validators.required,
-          this.maxLengthValidator(4000)
-        ])
-      },
-      {
-        validators: [this.duplicatePostingTextValidator()]
-      }
-    );
-    this.externalTransactionForm = this.fb.group(
-      {
-        transactionCode: new UntypedFormControl('', [
-          Validators.required,
-          this.noSpecialCharactersValidator(),
-          this.maxLengthValidator(32)
-        ]),
-        transactionDescription: new UntypedFormControl('', [
-          Validators.required,
-          this.maxLengthValidator(254)
-        ]),
-        type: new UntypedFormControl('', Validators.required),
-        subtype: new UntypedFormControl('', Validators.required)
-      },
-      {
-        validators: [this.duplicateExternalTransactionValidator()]
-      }
-    );
-    this.roleTypeForm = this.fb.group(
-      {
-        roletype: ['', Validators.required]
-      },
-      {
-        validators: [this.duplicateRoleTypeValidator()]
-      }
-    );
-  }
-  private duplicateRoleTypeValidator(): ValidatorFn {
-    return (group: AbstractControl): ValidationErrors | null => {
-      const roleTypeControl = group.get('roletype');
-      if (!roleTypeControl) return null;
-
-      const selectedRoleType = this.roletypes.find(
-        item => item.value === roleTypeControl.value
-      );
-      const roleTypeLabel = selectedRoleType ? selectedRoleType.label : '';
-
-      // Always use the latest array
-      const isDuplicate = this.dataWithRoleTypevalues.some(
-        item => item.type === roleTypeLabel
-      );
-
-      if (isDuplicate) {
-        roleTypeControl.setErrors({ duplicateRoleType: roleTypeLabel });
-        return { duplicateRoleType: roleTypeLabel };
-      } else {
-        if (roleTypeControl.hasError('duplicateRoleType')) {
-          const errors = { ...roleTypeControl.errors };
-          delete errors['duplicateRoleType'];
-          roleTypeControl.setErrors(Object.keys(errors).length ? errors : null);
-        }
-        return null;
-      }
-    };
   }
 
   noSpecialCharactersValidator(): ValidatorFn {
@@ -1951,502 +416,31 @@ export class AddEditTransactiontypeComponent implements OnInit {
         : null;
     };
   }
-  maxLengthValidator(maxLength: number) {
+
+  maxLengthValidator(maxLength: number): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
-      if (value == null) return null;
 
-      const valueStr = value.toString().replace(/^0+/, ''); // Remove leading zeros
-      return valueStr.length > maxLength ? { maxLength: true } : null;
-    };
-  }
-  public getError(control: string, formGroup: UntypedFormGroup): string {
-    if (formGroup) {
-      const fc: AbstractControl = formGroup.get(control);
-      if (fc && fc.errors && fc.touched) {
-        return FormUtilityService.getCommonFCErrorMsg(fc);
-      }
-    }
-  }
-  private duplicatePostingTextValidator(): ValidatorFn {
-    return (group: AbstractControl): ValidationErrors | null => {
-      const channelCtrl = group.get('channel');
-      const eventCtrl = group.get('event');
-      const languageCtrl = group.get('language');
-      const textCtrl = group.get('text');
-
-      if (!languageCtrl?.value || !textCtrl?.value) {
+      if (value === null || value === undefined || value === '') {
         return null;
       }
 
-      const selectedChannel =
-        this.channels.find(item => item.value === channelCtrl?.value)?.label ||
-        '';
-      const selectedEvent =
-        this.events.find(item => item.value === eventCtrl?.value)?.label || '';
-      const selectedLanguage = languageCtrl.value || '';
-      const selectedText = textCtrl.value || '';
+      const stringValue = value.toString();
 
-      // Always use the latest array
-      const exists = this.dataWithPostingTextvalues.some(item => {
-        if (!channelCtrl?.value && !eventCtrl?.value) {
-          return (
-            item.language === selectedLanguage && item.text === selectedText
-          );
-        }
-        if (channelCtrl?.value && !eventCtrl?.value) {
-          return (
-            item.channel === selectedChannel &&
-            item.language === selectedLanguage
-          );
-        }
-        if (channelCtrl?.value && eventCtrl?.value) {
-          return (
-            item.channel === selectedChannel &&
-            item.event === selectedEvent &&
-            item.language === selectedLanguage
-          );
-        }
-        return false;
-      });
-
-      return exists ? { postingTextDuplicate: true } : null;
-    };
-  }
-  private duplicateExternalTransactionValidator(): ValidatorFn {
-    return (group: AbstractControl): ValidationErrors | null => {
-      const typeCtrl = group.get('type');
-      const subtypeCtrl = group.get('subtype');
-      if (!typeCtrl?.value || !subtypeCtrl?.value) {
-        return null;
-      }
-      const exists = this.dataWithExternalTransactionValues.some(
-        item =>
-          item.type === typeCtrl.value && item.subtype === subtypeCtrl.value
-      );
-      return exists ? { externalTransactionDuplicate: true } : null;
+      return stringValue.length > maxLength
+        ? { maxLength: 'Value exceeds allowed digit limit' }
+        : null;
     };
   }
 
-  inputForPostingCategory: BodAutoCompleteMetadata = {
-    options: [],
-    isMultiSelect: true
-  };
-  postingCategoryData = this.inputForPostingCategory;
-
-  loadDropdownData(): void {
-    this.transactionTypeService.getTransactionEvent().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.events = mappedData;
-    });
-
-    this.transactionTypeService.getDeliveryChannel().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.channels = mappedData;
-    });
-
-    this.transactionTypeService.getLocaleCodes().subscribe((data: string[]) => {
-      const mappedData = data.map((code: string) => ({
-        label: code,
-        value: code
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.languages = [...mappedData]; // Add empty option
-    });
-
-    this.transactionTypeService.getpostingCategory().subscribe(data => {
-      const sortedOptions = data
-        .map((item: any) => ({
-          label: item.code,
-          value: item.code
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label));
-      this.inputForPostingCategory = {
-        options: sortedOptions,
-        isMultiSelect: true
-      };
-      this.postingCategoryData = this.inputForPostingCategory;
-    });
-    this.balanceTypeService.getAccntClassification().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.accountclassifications = mappedData;
-      this.roleaccountclassifications = mappedData;
-    });
-    this.balanceTypeService.getRoletype().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.roletypes = mappedData;
-    });
-
-    this.transactionTypeService.getpostingCategory().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.pstgCtgr = mappedData;
-    });
-
-    this.transactionTypeService.getPSAMDetails().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.psam_code,
-        value: item.psam_identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.psamNames = mappedData;
-    });
-
-    this.balanceTypeService.getBalanceType().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-      mappedData.sort((a, b) => a.label.localeCompare(b.label));
-      this.balanceTypes = mappedData;
-    });
-
-    this.transactionTypeService.getCounters().subscribe(data => {
-      const mappedData = data.map((item: any) => ({
-        identifier: item.identifier,
-        code: item.code,
-        classificationType: item.classificationType
-      }));
-      mappedData.sort((a, b) => a.code.localeCompare(b.code));
-      this.counters = mappedData;
-    });
-
-    this.transactionTypeService.getRestrictions().subscribe(data => {
-      this.restrictions = data;
-    });
-    this.transactionTypeService.getCommunicationService().subscribe(data => {
-      this.communications = data;
-      this.communicationsMasterList = data;
-    });
-    this.transactionTypeService.getConditions().subscribe(data => {
-      this.conditions = data;
-    });
-  }
-
-  private loadTableData(): void {
-    forkJoin({
-      prodTypes: this.transactionTypeService.getInternalProdType(),
-      conditions: this.transactionTypeService.getConditions(),
-      financialOps: this.transactionTypeService.getFinancialOperationType(),
-      transactionTypes: this.transactionTypeService.getTransactionType()
-    }).subscribe(
-      ({ prodTypes, conditions, financialOps, transactionTypes }) => {
-        this.transactionListPrdTyp = prodTypes;
-        this.reverseCondition = conditions;
-        this.financialOperatType = financialOps;
-        this.transactionTypeList = transactionTypes;
-
-        this.tableDataForInputBinding.datasource = new MatTableDataSource(
-          prodTypes
-        );
-        this.tableDataForReverseCondition.datasource = new MatTableDataSource(
-          conditions
-        );
-        this.tableDataForFinancialOprType.datasource = new MatTableDataSource(
-          financialOps
-        );
-        this.tableDataForInputBinding1.datasource = new MatTableDataSource(
-          transactionTypes
-        );
-
-        this.cdr.detectChanges(); // ✅ Now safe to call this
-
-        if (this.editTransactionTypeRow) {
-          this.transactionTypeForm(this.editTransactionTypeRow);
-        }
-      }
-    );
-  }
-
-  private columnsForDemoService: Column[] = [
-    { name: 'code' }
-    // { name: 'identifier', disableSorting: true }
-  ];
-
-  private columnsReverseCondition: Column[] = [
-    { name: 'cdarValue' }
-    // { name: 'identifier', disableSorting: true }
-  ];
-  private columnsForDemoService1: Column[] = [
-    { name: 'code' },
-    { name: 'name', disableSorting: true },
-    { name: 'paymentTypeValue' }
-    // { name: 'identifier' }
-  ];
-
-  public searchFieldInput = '';
-  public searchFieldInput1 = '';
-  public searchFieldInput3 = '';
-  public searchFieldInput4 = '';
-
-  public searchFieldDataFinanciaOprType: BodSearchFieldData = {
-    label: 'Financial operation type',
-    fieldName: 'code',
-    descFieldName: '',
-    required: true,
-    allowOtherInputs: false,
-    hideFilterCriteria: true,
-    disableInput: true
-  };
-
-  public searchFieldDataForReverseCondition: BodSearchFieldData = {
-    label: 'Reverse condition',
-    fieldName: 'cdarValue',
-    descFieldName: '',
-    required: false,
-    allowOtherInputs: false,
-    hideFilterCriteria: true,
-    disableInput: true
-  };
-
-  public searchFieldDataForInputBinding: BodSearchFieldData = {
-    label: 'Internal product type',
-    fieldName: 'code',
-    descFieldName: '',
-    required: true,
-    allowOtherInputs: false,
-    hideFilterCriteria: true,
-    disableInput: true
-  };
-  public searchFieldDataForInputBinding1: BodSearchFieldData = {
-    label: 'Code',
-    fieldName: 'code',
-    descFieldName: '',
-    required: false,
-    allowOtherInputs: false,
-    hideFilterCriteria: true,
-    disableInput: true
-  };
-  dialogData?: Partial<BodConfirmDialogModel> = {
-    title: '',
-    message: '',
-    confirm: '',
-    dismiss: ''
-  };
-  public confirmationDialog = false;
-  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
-  public maxLength = 50;
-  public tableDataForInputBinding: BodTableMetadata = {
-    columns: this.columnsForDemoService,
-    datasource: new BodTableDataSource<SampleEC>(
-      new DemoTableDataService(this.http)
-    )
-  };
-
-  public tableDataForInputBinding1: BodTableMetadata = {
-    columns: this.columnsForDemoService1,
-    datasource: new BodTableDataSource<SampleEC>(
-      new DemoTableDataService(this.http)
-    )
-  };
-
-  public tableDataForReverseCondition: BodTableMetadata = {
-    columns: this.columnsReverseCondition,
-    datasource: new BodTableDataSource<SampleEC>(
-      new DemoTableDataService(this.http)
-    )
-  };
-
-  public tableDataForFinancialOprType: BodTableMetadata = {
-    columns: this.columnsForDemoService,
-    datasource: new BodTableDataSource<SampleEC>(
-      new DemoTableDataService(this.http)
-    )
-  };
-
-  public postingTexttableActions: BodTableAction[] = postingTextaction;
-  public onValidTableActionClicked(event: BodTableAction): void {}
-  public postingTextForm: UntypedFormGroup;
-  public externalTransactionForm: UntypedFormGroup;
-  public inlineEditRowActionClick(_event: InlineEditOutput) {}
-  public rowLevelActionsForBasicEdit: BodTableAction[] = PostingTextDelete;
-
-  handleRowLevelActionsforExternalTransaction(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteExtrenalTransaction(index);
-    }
-  }
-  deleteExtrenalTransaction(index: number) {
-    this.dataWithExternalTransactionValues.splice(index, 1);
-    this.externalTransactiontabledata.datasource.data = [
-      ...this.dataWithExternalTransactionValues
-    ];
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  handleRowLevelActionsforPostingText(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteRow(index);
-    }
-  }
-  deleteRow(index: number) {
-    this.dataWithPostingTextvalues.splice(index, 1);
-    this.postingTexttabledata.datasource.data = [
-      ...this.dataWithPostingTextvalues
-    ];
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-  public dataWithPostingTextvalues: PostingTextTable[] = [];
-  onAddPostingText(formValues: any) {
-    this.errorMessages1 = [];
-    if (this.postingTextForm.invalid) {
-      const errors = this.postingTextForm.errors;
-      if (errors?.['postingTextDuplicate']) {
-        this.handleErrorForDuplicatePtgText({
-          errorCode: 'POSTING_TEXT_DUPLICATE',
-          status: 400
-        });
-      }
-      // Optionally handle other errors (like required fields)
-      return;
-    }
-
-    const selectedRoleType = this.channels.find(
-      item => item.value === formValues.channel
-    );
-    const postingChannel = selectedRoleType ? selectedRoleType.label : '';
-
-    const selectedPostingEvent = this.events.find(
-      item => item.value === formValues.event
-    );
-    const postingEvent = selectedPostingEvent ? selectedPostingEvent.label : '';
-
-    this.dataWithPostingTextvalues = this.dataWithPostingTextvalues || [];
-    const newValidValue: PostingTextTable = {
-      channel: postingChannel,
-      event: postingEvent,
-      language: formValues.language || '',
-      text: formValues.text || ''
-    };
-
-    this.dataWithPostingTextvalues.push(newValidValue);
-    if (this.postingTexttabledata && this.postingTexttabledata.datasource) {
-      this.postingTexttabledata.datasource.data = [
-        ...this.dataWithPostingTextvalues
-      ];
-    }
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-
-    // Re-apply the validator with the updated array
-    this.postingTextForm.setValidators([this.duplicatePostingTextValidator()]);
-    this.postingTextForm.updateValueAndValidity();
-    this.postingTextForm.reset();
-  }
-  private handleErrorForDuplicatePtgText(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'POSTING_TEXT_DUPLICATE':
-        errorMsg =
-          'Posting Text already exists for the selected transaction event type, delivery system and language combination.';
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessages1.push(this.message);
-    setTimeout(() => {
-      this.errorMessages1 = this.errorMessages1.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
-  }
-  public dataWithExternalTransactionValues: TransactionTypeTable[] = [];
-  public onAddexternalTransaction(formValues: any) {
-    this.errorMessagesExternalTransaction = [];
-    if (this.externalTransactionForm.invalid) {
-      const errors = this.externalTransactionForm.errors;
-      if (errors?.['externalTransactionDuplicate']) {
-        this.handleErrorForExternalTransaction({
-          errorCode: 'EXTERNAL_TRANSACTION_DUPLICATE',
-          duplicateType: formValues.type,
-          duplicateSubtype: formValues.subtype
-        });
-      }
-      // Optionally handle other errors (like required fields)
-      return;
-    }
-    const newValidValue: TransactionTypeTable = {
-      code: formValues.transactionCode,
-      description: formValues.transactionDescription,
-      type: formValues.type || '',
-      subtype: formValues.subtype || ''
-    };
-
-    this.dataWithExternalTransactionValues.push(newValidValue);
-    if (
-      this.externalTransactiontabledata &&
-      this.externalTransactiontabledata.datasource
-    ) {
-      this.externalTransactiontabledata.datasource.data = [
-        ...this.dataWithExternalTransactionValues
-      ];
-    }
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-
-    // Re-apply the validator with the updated array
-    this.externalTransactionForm.setValidators([
-      this.duplicateExternalTransactionValidator()
-    ]);
-    this.externalTransactionForm.updateValueAndValidity();
-    this.externalTransactionForm.reset();
-  }
-  public postingTexttabledata: BodTableMetadata = {
-    title: 'Posting Text(Mandatory)',
-    columns: [...this.transactionTypeService.postingTextColumn],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<PostingTextTable>(
-      this.dataWithPostingTextvalues
-    ),
-    noRecordsMessage: 'No Posting Text Defined'
-  };
-
-  public externalTransactiontabledata: BodTableMetadata = {
-    title: 'External Transaction',
-    columns: [...this.transactionTypeService.externalTransactionColumn],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<TransactionTypeTable>(
-      this.dataWithExternalTransactionValues
-    ),
-    noRecordsMessage: 'No External Transaction Defined'
-  };
   identifierSearch(field: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.metadataService.idfrSearch().subscribe(
         (response: string) => {
-          if (field === 'transactionTypeIdentifier') {
-            this.addNewTransactionTypeFormGroup.controls[
-              'transactionTypeIdentifier'
-            ].setValue(response);
-            this.addNewTransactionTypeFormGroup.controls[
-              'transactionTypeIdentifier'
-            ].disable();
+          if (field === 'restrictionIdentifier') {
+            this.addNewRestrictionFormGroup.controls['restrictionIdentifier'].setValue(response);
           }
+          this.addNewRestrictionFormGroup.markAsDirty();
           resolve();
         },
         error => {
@@ -2457,634 +451,204 @@ export class AddEditTransactiontypeComponent implements OnInit {
     });
   }
 
-  isAdd = true;
-  isEdit = false;
-
-  onAddNewTransactionType(isAdd: boolean) {
-    if (isAdd) {
-      this.identifierSearch('transactionTypeIdentifier').then(() => {
-        this.submitForm(isAdd);
-      });
-    } else {
-      this.submitForm(isAdd);
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
     }
   }
 
-  @ViewChild('searchFieldInputModel') searchFieldInputModel: NgModel;
-  @ViewChild('taxTypeRef') taxTypeRef: TaxTypeTableComponent;
-  public taxTypeTableData: TaxType[] = [];
+  public onTableDirty(): void {
+    this.isTableDirty = true;
+    this.addNewRestrictionFormGroup.markAsDirty();
+  }
+
+  // Handle period type table data changes
+  public completeDeltaPeriodTypeData: any;
+  handleCompleteDeltaChangePeriodType(data: any) {
+    this.completeDeltaPeriodTypeData = data;
+
+  }
+
+  onAddNewRestriction(isAdd: boolean) {
+    const promises = [];
+
+    if (isAdd) {
+      promises.push(this.identifierSearch('restrictionIdentifier'));
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        this.submitForm(isAdd);
+      })
+      .catch(error => {
+        console.error('Error during identifier search:', error);
+      });
+  }
 
   submitForm(isAdd: boolean) {
-    // Force the child to emit the latest data
-    this.channelsMainTable?.emitCompleteDelta();
-
-    // Now channelData, counterData, etc. will be up to date
     this.errorMessages = [];
-    this.errorMessages1 = [];
-    this.errorMessagesExternalTransaction = [];
-    this.errorMessagesRoleType = [];
 
-    const requiredFields = [
-      'code',
-      'name',
-      'paymentType',
-      'classificationType',
-      'eventType',
-      'psamName',
-      'optionalityType'
-    ];
-
-    let hasError = false;
-
-    requiredFields.forEach(field => {
-      const control = this.addNewTransactionTypeFormGroup.get(field);
-      if (
-        control?.invalid ||
-        control?.value === '' ||
-        control?.value === null ||
-        control?.value === undefined
-      ) {
-        control?.markAsTouched();
-        hasError = true;
-      }
-    });
-
-    if (hasError) {
-      return; // Stop submission if any required field is invalid
-    }
-
-    if (!this.searchFieldInput4) {
-      this.searchFieldInputModel.control.markAsTouched();
-      hasError = true;
-    }
-
-    if (this.addNewTransactionTypeFormGroup.get('contra')?.value) {
-      if (!this.searchFieldInput) {
-        this.searchFieldInputModel?.control?.markAsTouched();
-        hasError = true;
-      }
-    }
-   if (Array.isArray(this.taxTypeTableData) && this.taxTypeTableData.length > 0) {
-  const seen = new Set<string>();
-  let duplicateTaxTypeValue: string | null = null;
-  const duplicate = this.taxTypeTableData.some(row => {
-    const taxTypeStr = String(row.taxType);
-    if (row.taxType && seen.has(taxTypeStr)) {
-      duplicateTaxTypeValue = taxTypeStr;
-      return true;
-    }
-    seen.add(taxTypeStr);
-    return false;
-  });
-  if (duplicate) {
-    this.errorMessages.push({
-      code: 'DUPLICATE_TAX_TYPE',
-      text: `Duplicate Tax Type "${duplicateTaxTypeValue}" found in the table.`,
-      type: NotificationMessageType.ERROR
-    });
-    return;
-  }
-}
-
-    if (hasError) {
+    if (this.addNewRestrictionFormGroup.invalid) {
+      this.addNewRestrictionFormGroup.markAllAsTouched();
+      const missingFields = this.getInvalidRequiredFields(this.addNewRestrictionFormGroup);
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        },
+        isAdd
+      );
       return;
     }
 
-    //product identifeir
+    const formValue = this.addNewRestrictionFormGroup.getRawValue();
+    this.addNewRestrictionFormGroup.controls['restrictionIdentifier'].enable();
 
-    // Get channel data
-    const channelData = this.getCurrentChannelData();
-
-    const selectedCode = this.searchFieldInput1; // selected code from search field
-    const selectedItem = this.transactionTypeList.find(
-      item => item.code === selectedCode
-    );
-    const selectedIdentifier = selectedItem?.identifier || null;
-
-    const selectedCodeInternalPrdTyp = this.searchFieldInput; // selected code from search field
-    const selectedItem1 = this.transactionListPrdTyp.find(
-      item => item.code === selectedCodeInternalPrdTyp
-    );
-    const selectedIdentifierForPrdtTyp = selectedItem1?.identifier || null;
-
-    //searchFieldInput3
-
-    const selectedCdarValue = this.searchFieldInput3; // selected code from search field
-    const selectedItem2 = this.reverseCondition.find(
-      item => item.cdarValue === selectedCdarValue
-    );
-    const selectedIdentifierforCondition = selectedItem2?.identifier || null;
-
-    //searchFieldInput4
-
-    const selectedCodeFot = this.searchFieldInput4; // selected code from search field
-    const selectedItem3 = this.financialOperatType.find(
-      item => item.code === selectedCodeFot
-    );
-    const selectedIdentifierforFOT = selectedItem3?.identifier || null;
-
-    const formValue = this.addNewTransactionTypeFormGroup.getRawValue();
-    this.addNewTransactionTypeFormGroup.controls[
-      'transactionTypeIdentifier'
-    ].enable();
-
-    const postingRepeatedTextList =
-      this.dataWithPostingTextvalues?.map(item => ({
-        postingStdIdentifier: formValue.transactionTypeIdentifier,
-        eventTypeIdentifier:
-          this.events.find(e => e.label === item.event)?.value || '',
-        deliveryChannel:
-          this.channels.find(c => c.label === item.channel)?.value || ''
-      })) || [];
-    const postingTextLanguageRltnpList =
-      this.dataWithPostingTextvalues?.map(item => ({
-        isoCode: item.language,
-        text: item.text
-      })) || [];
-
-    const externalTransactionTypePostingSTDRltnpDpList =
-      this.dataWithExternalTransactionValues?.map(item => ({
-        code: item.code,
-        type: item.type,
-        subType: item.subtype,
-        postingStdIdentifier: formValue.transactionTypeIdentifier,
-        description: item.description
-      })) || [];
-
-    //Posting Category
-    const productTypeIdentifiers = this.metadataService.getProductTypeValues();
-    const productTypePostingSTDCategoryRltnpList: any[] = [];
-    // Create channel configuration list
-    const channelConfigurationList =
-      channelData?.map(item => ({
-        channelIdentifier:
-          this.channels.find(c => c.label === item.code)?.value || '',
-        channelCode: item.code,
-        optionType: item.option,
-        transactionTypeIdentifier: formValue.transactionTypeIdentifier
-      })) || [];
-
-    const effectiveProductTypeIdentifiers =
-      formValue.contra && selectedIdentifierForPrdtTyp
-        ? [selectedIdentifierForPrdtTyp]
-        : productTypeIdentifiers;
-
-    if (
-      Array.isArray(formValue.postingCategory) &&
-      formValue.postingCategory.length > 0
-    ) {
-      formValue.postingCategory.forEach((categoryLabel: string) => {
-        const selectedCategory = this.pstgCtgr.find(
-          item => item.label === categoryLabel
-        );
-
-        effectiveProductTypeIdentifiers.forEach(
-          (productTypeIdentifier: any) => {
-            productTypePostingSTDCategoryRltnpList.push({
-              productTypeIdentifier: productTypeIdentifier ?? null,
-              postingStdIdentifier: formValue.transactionTypeIdentifier,
-              postingCategoryIdentifier: selectedCategory?.value ?? null,
-              postingCategoryCode: selectedCategory?.label ?? null
-            });
-          }
-        );
-      });
-    }
-    //product Type Posting STD Relation
-    const productTypePostingSTDRltnpList =
-      effectiveProductTypeIdentifiers.map(productTypeIdentifier => ({
-        productTypeIdentifier: productTypeIdentifier ?? null,
-        postingStdIdentifier: formValue.transactionTypeIdentifier,
-        postingStdCode: formValue.code,
-        optionalityType: formValue.optionalityType
-      })) || [];
-
-    console.log(
-      'taxTypeTableData:',
-      JSON.stringify(this.taxTypeTableData, null, 2)
-    );
-    const hasTaxTypeRows =
-      Array.isArray(this.taxTypeTableData) && this.taxTypeTableData.length > 0;
-
-    const productTypePostingSTDTaxTypeRltnpList = hasTaxTypeRows
-      ? effectiveProductTypeIdentifiers
-          .map(productTypeIdentifier =>
-            this.taxTypeTableData.map(row => ({
-              productTypeIdentifier: productTypeIdentifier ?? null,
-              postingStdIdentifier: formValue.transactionTypeIdentifier,
-              taxTypeIdentifier: row.taxType,
-              transactionEventTypeIdentifier: row.businessRule,
-              optionalityType: formValue.optionalityType
-            }))
-          )
-          .reduce((acc, val) => acc.concat(val), [])
-      : [];
-    console.log('formValue:', JSON.stringify(formValue, null, 2));
-    console.log(
-      'productTypePostingSTDTaxTypeRltnpList:',
-      JSON.stringify(productTypePostingSTDTaxTypeRltnpList, null, 2)
-    );
-    //Role type
-
-    const productTypePostingSTDRoletypeRltnpList =
-      this.dataWithRoleTypevalues.length > 0 &&
-      effectiveProductTypeIdentifiers.length > 0
-        ? this.dataWithRoleTypevalues.reduce((acc, roleType) => {
-            const mapped = productTypeIdentifiers.map(
-              productTypeIdentifier => ({
-                productTypeIdentifier: productTypeIdentifier ?? null,
-                postingStdIdentifier: formValue.transactionTypeIdentifier,
-                roleTypeIdentifier: this.roletypes.find(
-                  rt => rt.label === roleType.type
-                )?.value
-              })
-            );
-            return acc.concat(mapped);
-          }, [])
-        : [];
-
-    //PSAM Relation
-    const productTypePostingSTDPAMRltnpList: any[] = [];
-
-    const selectedName = this.psamNames.find(
-      item =>
-        item.label === formValue.psamName || item.value === formValue.psamName
-    );
-
-    effectiveProductTypeIdentifiers.forEach((productTypeIdentifier: any) => {
-      productTypePostingSTDPAMRltnpList.push({
-        productTypeIdentifier: productTypeIdentifier ?? null,
-        postingStdIdentifier: formValue.transactionTypeIdentifier,
-        postingApplicationMethodIdentifier: selectedName?.value ?? null
-      });
-    });
-
-    //TransEventTypePostingSTDRltnp
-    const productTypeTransEventTypePostingSTDRltnpList: any[] = [];
-
-    const selectedEvent = this.events.find(
-      item =>
-        item.label === formValue.eventType || item.value === formValue.eventType
-    );
-
-    effectiveProductTypeIdentifiers.forEach((productTypeIdentifier: any) => {
-      productTypeTransEventTypePostingSTDRltnpList.push({
-        productTypeIdentifier: productTypeIdentifier ?? null,
-        transactionEventTypeIdentifier: selectedEvent?.value ?? null,
-        postingStdIdentifier: formValue.transactionTypeIdentifier
-      });
-    });
-
-    const multiLingualCodeTranslationList = [
-      {
-        isoCode: 'en',
-        attributeType: 'transaction type code',
-        neutralCode: 'TXN001',
-        translationText: 'Transaction Type Description in English'
-      }
-    ];
-
-    if (
-      (!postingRepeatedTextList || postingRepeatedTextList.length === 0) &&
-      (!postingTextLanguageRltnpList ||
-        postingTextLanguageRltnpList.length === 0)
-    ) {
-      this.handleError1({
-        errorCode: 'POSTING_TEXT_REQUIRED',
-        status: 400
-      });
-      return;
-    }
-
+    // Get product type data from metadata service
     const productTypeKeys = this.metadataService.getProductTypeKeys();
     const productTypeValues = this.metadataService.getProductTypeValues();
 
-    let metadataDependencyRltnpList: any[] = [];
-    const productTypePostingSTDDSCDRltnpList = productTypeIdentifiers
-      .map(productTypeIdentifier =>
-        (this.conditionData || []).map(condition => ({
-          productTypeIdentifier: productTypeIdentifier ?? null,
-          postingStdIdentifier: formValue.transactionTypeIdentifier,
-          resourceItemIdentifier: condition.channelidentifier,
-          conditionIdentifier: condition.identifier,
-          cdarValue: condition.code,
-          optionalityType: condition.relationshipType
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
+    // Get period type data
+    const periodTypeList = this.periodTypeRef?.getCurrentTablePeriodType() || [];
 
-    // Only build the dependency list if there are conditions
-    if (productTypePostingSTDDSCDRltnpList.length > 0) {
-      const parentIdentifier = formValue.transactionTypeIdentifier;
-      metadataDependencyRltnpList = productTypePostingSTDDSCDRltnpList.map(
-        item => ({
-          parentIdentifier: parentIdentifier,
-          parentMetadataType: 'TransactionType',
-          childIdentifier: item.conditionIdentifier,
-          childMetadataType: 'Condition'
-        })
-      );
-    }
-
-  
-
-    // Build the delivery system relation list
-    const productTypePostingSTDDSRltnpList = productTypeIdentifiers
-      .map(productTypeIdentifier =>
-        (this.channelData || []).map(channel => ({
-          productTypeIdentifier: productTypeIdentifier ?? null,
-          postingStdIdentifier: formValue.transactionTypeIdentifier,
-          resourceItemIdentifier: channel.identifier,
-          optionalityType: channel.option
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
-
-    // Only build the dependency list if there are delivery systems
-    if (productTypePostingSTDDSRltnpList.length > 0) {
-      const parentIdentifier = formValue.transactionTypeIdentifier;
-      const deliverySystemDependencies = productTypePostingSTDDSRltnpList.map(
-        item => ({
-          parentIdentifier: parentIdentifier,
-          parentMetadataType: 'TransactionType',
-          childIdentifier: item.resourceItemIdentifier,
-          childMetadataType: 'DeliverySystem'
-        })
-      );
-      metadataDependencyRltnpList = metadataDependencyRltnpList.concat(
-        deliverySystemDependencies
-      );
-    }
-
-    // --- ADD THIS BLOCK FOR COUNTERS ---
-    const productTypePostingSTDDSCounterRltnpList = productTypeIdentifiers
-      .map(productTypeIdentifier =>
-        (this.counterData || []).map(counter => ({
-          productTypeIdentifier: productTypeIdentifier ?? null,
-          postingStdIdentifier: formValue.transactionTypeIdentifier,
-          resourceItemIdentifier: counter.channelidentifier,
-          counterIdentifier: counter.identifier,
-          counterOperationType: counter.operatorType
-        }))
-      )
-      .reduce((acc, val) => acc.concat(val), []);
-
-    // Only build the dependency list if there are counters
-    if (productTypePostingSTDDSCounterRltnpList.length > 0) {
-      const parentIdentifier = formValue.transactionTypeIdentifier;
-      const counterDependencies = productTypePostingSTDDSCounterRltnpList.map(
-        item => ({
-          parentIdentifier: parentIdentifier,
-          parentMetadataType: 'TransactionType',
-          childIdentifier: item.counterIdentifier,
-          childMetadataType: 'Counter'
-        })
-      );
-      metadataDependencyRltnpList =
-        metadataDependencyRltnpList.concat(counterDependencies);
-    }
-
-    if (
-      productTypePostingSTDRoletypeRltnpList &&
-      productTypePostingSTDRoletypeRltnpList.length > 0
-    ) {
-      const parentIdentifier = formValue.transactionTypeIdentifier;
-      const roleTypeDependencies = productTypePostingSTDRoletypeRltnpList.map(
-        item => ({
-          parentIdentifier: parentIdentifier,
-          parentMetadataType: 'TransactionType',
-          childIdentifier: item.roleTypeIdentifier,
-          childMetadataType: 'RoleType'
-        })
-      );
-      metadataDependencyRltnpList =
-        metadataDependencyRltnpList.concat(roleTypeDependencies);
-    }
-
-    const transactionTypeData = {
-      metadataType: 'TransactionType',
-      postingStdList: [
+    // --- ADD THIS BLOCK ---
+   
+    // Check if any row has empty periodType
+    const hasEmptyPeriodType = periodTypeList.some(pt => !pt.childRestriction || pt.childRestriction.trim() === '');
+    if (hasEmptyPeriodType) {
+      this.handleError(
         {
-          postingStd: {
-            identifier: formValue.transactionTypeIdentifier,
-            code: formValue.code,
-            name: formValue.name,
+          errorCode: 'PERIOD_TYPE_REQUIRED',
+          status: 412
+        },
+        isAdd
+      );
+      return;
+    }
+    // Check for duplicate periodType values
+    const periodTypes = periodTypeList.map(pt => pt.childRestriction?.trim());
+    const duplicates = periodTypes.filter((type, idx, arr) => type && arr.indexOf(type) !== idx && arr.lastIndexOf(type) === idx);
+    if (duplicates.length > 0) {
+      this.handleError(
+        {
+          errorCode: 'DUPLICATE_PERIOD_TYPE',
+          status: 413,
+          duplicateNames: duplicates.join(', ')
+        },
+        isAdd
+      );
+      return;
+    }
+    // --- END BLOCK ---
 
-            ...(formValue.description && {
-              description: formValue.description
-            }),
+    // Build productElementExceptionRltnList
+    const productElementExceptionRltnList = productTypeKeys.map((code, index) => ({
+      productTypeIdentifier: productTypeValues[index],
+      exceptionIdentifier: formValue.restrictionIdentifier,
+      exceptionValue: formValue.exceptionValue,
+      processMode: formValue.processMode,
+      exceptionCode: formValue.restrictionCode,
+      activityType: formValue.activityType
+    }));
 
-            paymentType: formValue.paymentType,
-            overridePayment: formValue.overidePaymentType ? 'Y' : 'N',
-            ...(formValue.cashSettle && {
-              settlementDirection: formValue.cashSettle
-            }),
+    const productElementExceptionTriggerList = periodTypeList.map(period => {
+      // Find the dropdown item matching the childRestriction label
+      const dropdownItem = this.childRestriction.find(
+        item => item.label === period.childRestriction
+      );
+      return {
+        productTypeIdentifier: productTypeValues[0], // or map for each product type if needed
+        exceptionParentIdentifier: formValue.restrictionIdentifier,
+        exceptionChildIdentifier: dropdownItem ? dropdownItem.value : null, // Use id from dropdown data
+        exceptionTriggerExclude: period.isExclude ? 'Y' : 'N'
+      };
+    });
 
-            contra: formValue.contra ? 0 : selectedIdentifier,
-            contraTemplateIdentifier: formValue.contra
-              ? selectedIdentifierForPrdtTyp
-              : null,
+    // Build restrictionDetailList
+    const restrictionDetailList = [{
+      exceptionDefinition: {
+        identifier: formValue.restrictionIdentifier,
+        code: formValue.restrictionCode,
+        name: formValue.restrictionName,
+        description: formValue.description,
+        classificationType: formValue.exceptionValue // Store exceptionValue in classificationType
+      },
+      productElementExceptionRltnList,
+      productElementExceptionTriggerList
+    }];
 
-            reversibleAllowed: formValue.isReverse ? 'Y' : 'N',
-            reverseCondition: selectedIdentifierforCondition,
-            classificationType: formValue.classificationType,
+    // Build productTypeList
+    const productTypeList = productTypeKeys.map((code, index) => ({
+      identifier: productTypeValues[index],
+      code: code
+    }));
 
-            ...(formValue.externalSysId && {
-              externalSystemCode: formValue.externalSysId
-            }),
-
-            invSystemBalance: formValue.balanceReq ? 'Y' : 'N',
-            chargeEligible: formValue.chargEligible ? 'Y' : 'N',
-            cashTransactionAllowed: formValue.cashTransaction ? 'Y' : 'N',
-
-            financialOperationType: selectedIdentifierforFOT,
-
-            multiLingualCodeTranslationList: multiLingualCodeTranslationList
-          },
-          postingRepeatedTextList,
-          postingTextLanguageRltnpList,
-          // postingCategoryList: formValue.postingCategoryList || [],
-
-          postingCategoryList: [
-            {
-              code: formValue.code,
-              name: formValue.name
-            }
-          ],
-
-          productTypePostingSTDRltnpList,
-          productTypePostingSTDDSRltnpList: productTypeIdentifiers
-            .map(productTypeIdentifier =>
-              (this.channelData || []).map(channel => ({
-                productTypeIdentifier: productTypeIdentifier ?? null,
-                postingStdIdentifier: formValue.transactionTypeIdentifier,
-                resourceItemIdentifier: channel.identifier,
-                optionalityType: channel.option
-              }))
-            )
-            .reduce((acc, val) => acc.concat(val), []),
-
-          productTypePostingSTDTaxTypeRltnpList,
-          // productTypePostingSTDTaxTypeRltnpList: productTypeIdentifiers
-          //   .map(productTypeIdentifier =>
-          //     (this.channelData || []).map(tax => ({
-          //       productTypeIdentifier: productTypeIdentifier ?? null,
-          //       postingStdIdentifier: formValue.transactionTypeIdentifier,
-          //       taxTypeIdentifier: tax.identifier,
-          //       transactionEventTypeIdentifier: formValue.eventType,
-          //       optionalityType: tax.option
-          //     }))
-          //   )
-          //   .reduce((acc, val) => acc.concat(val), []),
-
-          productTypePostingSTDDSCounterRltnp: productTypeIdentifiers
-            .map(productTypeIdentifier =>
-              (this.counterData || []).map(counter => ({
-                productTypeIdentifier: productTypeIdentifier ?? null,
-                postingStdIdentifier: formValue.transactionTypeIdentifier,
-                resourceItemIdentifier: counter.channelidentifier,
-                counterIdentifier: counter.identifier,
-                counterOperationType: counter.operatorType
-              }))
-            )
-            .reduce((acc, val) => acc.concat(val), []),
-
-          productTypePostingSTDDSRestrcitionRltnp: productTypeIdentifiers
-            .map(productTypeIdentifier =>
-              (this.restrictionData || []).map(restriction => ({
-                productTypeIdentifier: productTypeIdentifier ?? null,
-                postingStdIdentifier: formValue.transactionTypeIdentifier,
-                resourceItemIdentifier: restriction.channelidentifier,
-                restrictionIdentifier: restriction.identifier,
-                restrictionClassificationType: restriction.type
-              }))
-            )
-            .reduce((acc, val) => acc.concat(val), []),
-
-          productTypePostingSTDDSCDRltnpList: productTypeIdentifiers
-            .map(productTypeIdentifier =>
-              (this.conditionData || []).map(condition => ({
-                productTypeIdentifier: productTypeIdentifier ?? null,
-                postingStdIdentifier: formValue.transactionTypeIdentifier,
-                resourceItemIdentifier: condition.channelidentifier,
-                conditionIdentifier: condition.identifier,
-                cdarValue: condition.code,
-                optionalityType: condition.relationshipType
-              }))
-            )
-            .reduce((acc, val) => acc.concat(val), []),
-
-          // ...existing code...
-          productTypePostingSTDDSComsRltnp: productTypeIdentifiers
-            .map(productTypeIdentifier =>
-              (this.communicationData || []).map(communication => {
-                // Find the master entry by commServiceIdentifier or code
-                const master = this.communicationsMasterList.find(
-                  m => m.code === communication.communicationServices
-                );
-                return {
-                  productTypeIdentifier: productTypeIdentifier ?? null,
-                  postingStdIdentifier: formValue.transactionTypeIdentifier,
-                  resourceItemIdentifier: communication.channelidentifier,
-                  // Use the identifier from master, not the code
-                  serviceElementIdentifier:
-                    master?.serviceElementIdentifier ?? null,
-                  commServiceIdentifier: communication.identifier
-                };
-              })
-            )
-            // ...existing code...
-            .reduce((acc, val) => acc.concat(val), []),
-          productTypePostingSTDCategoryRltnpList,
-
-          productTypePostingSTDPAMRltnpList,
-          productTypePostingSTDRoletypeRltnpList,
-          productTypeTransEventTypePostingSTDRltnpList,
-          externalTransactionTypePostingSTDRltnpDpList
-        }
-      ],
-
-      metadataDependencyRltnpList,
-
-      productTypeList:
-        formValue.contra && selectedIdentifierForPrdtTyp
-          ? [
-              {
-                identifier: selectedIdentifierForPrdtTyp,
-                code: this.searchFieldInput // or selectedCodeInternalPrdTyp if you want the code
-              }
-            ]
-          : productTypeKeys.map((code, index) => ({
-              identifier: productTypeValues[index],
-              code: code
-            }))
+    // Final request object
+    const restrictionData = {
+      metadataType: 'Restriction',
+      restrictionDetailList,
+      productTypeList
     };
-    console.log(
-      'transactionTypeData(JSON):\n',
-      JSON.stringify(transactionTypeData, null, 2)
-    );
-
     const serviceCall = isAdd
-      ? this.transactionTypeService.saveTransactionType(transactionTypeData)
-      : this.transactionTypeService.updateTransactiionType(transactionTypeData);
+      ? this.RestrictionService.saveRestriction(restrictionData)
+      : this.RestrictionService.updateRestriction(restrictionData);
 
     serviceCall.subscribe({
-      next: resp => this.successResponse(resp, transactionTypeData, isAdd),
+      next: resp => this.successResponse(resp, restrictionData, isAdd),
       error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
     });
 
-    this.addNewTransactionTypeFormGroup.controls[
-      'transactionTypeIdentifier'
-    ].disable();
+    this.addNewRestrictionFormGroup.controls['restrictionIdentifier'].disable();
   }
 
-  @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
-    NotificationMessage[]
-  >();
 
-  private successResponse(resp, transactionTypeData, isAdd) {
-    const transactionTypeCode =
-      transactionTypeData.postingStdList[0].postingStd.code;
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+    const invalidFields: string[] = [];
+
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control && control.errors?.['required']) {
+        invalidFields.push(key);
+      }
+    });
+
+    return invalidFields;
+  }
+
+  private successResponse(resp, restrictionData, isAdd) {
+    const restrictionCode = restrictionData.restrictionDetailList[0].exceptionDefinition.code;
     const SuccessMsg = isAdd
-      ? `${transactionTypeCode} Added successfully`
-      : `${transactionTypeCode} Updated successfully`;
-    this.apiResponse.emit({ ...transactionTypeData, SuccessMsg });
+      ? `${restrictionCode} Added successfully`
+      : `${restrictionCode} Updated successfully`;
+    this.apiResponse.emit({ ...restrictionData, SuccessMsg });
   }
 
-  public errorMessages: NotificationMessage[] = [];
-  public errorMessages1: NotificationMessage[] = [];
-
-  public message: NotificationMessage | undefined;
   private handleError(error: any, isAdd: boolean) {
-    const errorMsg =
-      error?.error?.errorDescription || 'An unexpected error occurred.';
-
-    this.message = {
-      code: error?.error?.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-
-    if (errorMsg) {
-      this.errorMessages.push(this.message);
-    }
-
-    setTimeout(() => {
-      this.errorMessages = this.errorMessages.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
-  }
-
-  private handleError1(error: any) {
     let errorMsg = '';
-    switch (error.errorCode) {
-      case 'POSTING_TEXT_REQUIRED':
-        errorMsg = 'Posting text is required.';
-        break;
 
-      default:
-        errorMsg = 'Unknown error occurred.';
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.errorCode === 'PERIOD_TYPE_REQUIRED') {
+      errorMsg = 'Child Restriction required.';
+    } else if (error.errorCode === 'DUPLICATE_PERIOD_TYPE') {
+      errorMsg = 'Duplicate Child Restriction found: ' +
+        (error.duplicateNames ? error.duplicateNames : '');
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_048") {
+      errorMsg = error.error?.errorDescription || 'This Metadata cannot be created.';
+    } else {
+      errorMsg = 'Unknown error occurred.';
     }
 
     this.message = {
@@ -3093,896 +657,111 @@ export class AddEditTransactiontypeComponent implements OnInit {
       type: NotificationMessageType.ERROR
     };
     this.errorMessages.push(this.message);
+
+    // Auto-remove error messages after 10 seconds
     setTimeout(() => {
-      this.errorMessages = this.errorMessages.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
+      this.errorMessages = this.errorMessages.filter(msg => msg.text !== errorMsg);
+    }, 10000);
   }
-  private initialRetainedState: any = null;
 
-  transactionTypeForm(element: TransactionTypeList) {
-    console.log(
-      'transactionTypeForm element:',
-      JSON.stringify(element, null, 2)
-    );
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
+
+    // Reset error messages
+    this.errorMessages = [];
+
+    // Reset the form
+    this.addNewRestrictionFormGroup.reset();
+    this.addNewRestrictionFormGroup.markAsPristine();
+    this.addNewRestrictionFormGroup.markAsUntouched();
+
+    // Reset table dirty state
+    this.isTableDirty = false;
+
+    if (isEditMode) {
+      // Restore retained values for edit mode
+      this.addNewRestrictionFormGroup.get('restrictionCode')?.setValue(this.retainedCode);
+      this.addNewRestrictionFormGroup.get('restrictionCode')?.disable();
+      this.addNewRestrictionFormGroup.get('restrictionIdentifier')?.setValue(this.retainedIdentifier);
+      this.addNewRestrictionFormGroup.get('restrictionIdentifier')?.disable();
+      this.addNewRestrictionFormGroup.get('restrictionName')?.setValue(this.retainedName);
+      this.addNewRestrictionFormGroup.get('description')?.setValue(this.retainedDescription);
+      this.addNewRestrictionFormGroup.get('classificationtype')?.setValue(this.retainedExceptionValue);
+      this.addNewRestrictionFormGroup.get('activityType')?.setValue(this.retainedActivityType);
+      this.addNewRestrictionFormGroup.get('processMode')?.setValue(this.retainedProcessMode);
+
+      // Reset period type data to retained values
+      this.periodTypeTableData = [...this.retainedPeriodTypeData];
+
+      // Reset the period type table if it exists
+      if (this.periodTypeRef) {
+        this.periodTypeRef.reset();
+      }
+    } else {
+      this.addNewRestrictionFormGroup.get('restrictionCode')?.enable();
+      this.addNewRestrictionFormGroup.get('restrictionIdentifier')?.enable();
+
+      // Clear period type data for new additions
+      this.periodTypeTableData = [];
+    }
+
+    this.changeDetectorRef.detectChanges();
+  }
+
+  private mapPeriodTypeData(exceptionTriggers: ExceptionTrigger[]): any[] {
+    return exceptionTriggers.map(trigger => {
+      // Find the dropdown item by identifier (number or string)
+      const dropdownItem = this.childRestriction.find(
+        item => String(item.value) === String(trigger.exceptionChildIdentifier)
+      );
+      const code = dropdownItem ? dropdownItem.label : trigger.exceptionChildIdentifier;
+      return {
+        childRestriction: dropdownItem ? dropdownItem.label : String(trigger.exceptionChildIdentifier), // for display
+        childRestrictionId: dropdownItem ? dropdownItem.value : trigger.exceptionChildIdentifier,      // for API 
+        isExclude: trigger.exceptionTriggerExclude === 'Y'
+      };
+    });
+  }
+
+  private restrictionForm(element: RestrictionList): void {
     this.isAdd = false;
+    this.isEdit = true;
 
-    const postingCategories =
-      Array.from(
-        new Set(
-          element.productTypePostingSTDCategoryRltnpList
-            ?.filter(item => item.postingStdIdentifier === element.identifier)
-            .map(item => item.postingCategoryCode)
-        )
-      ) || [];
-
-    this.retainedTransactionTypeIdentifier = element.identifier ?? 0;
+    // Store retained values
     this.retainedCode = element.code || '';
+    this.retainedIdentifier = element.identifier || 0;
     this.retainedName = element.name || '';
     this.retainedDescription = element.description || '';
-    this.retainedPaymentType = element.paymentType || '';
-    this.retainedClassificationType = element.classificationType || '';
-    this.reatainedoptionalityType =
-      element.productTypePostingSTDRltnpList?.[0]?.optionalityType || '';
-    this.retainedEventType =
-      element.productTypeTransEventTypePostingSTDRltnpList?.[0]
-        ?.transactionEventTypeIdentifier || '';
-    this.retainedpostingCategory = postingCategories;
-    this.retainedChannels = element.productTypePostingSTDDSRltnpList || [];
-    this.retainedCounters = element.productTypePostingSTDDSCounterRltnp || [];
-    this.retainedRestrictions =
-      element.productTypePostingSTDDSRestrcitionRltnp || [];
-    this.retainedConditions = element.productTypePostingSTDDSCDRltnpList || [];
-    this.retainedCommunicationServices =
-      element.productTypePostingSTDDSComsRltnp || [];
-    this.retainedTaxType = element.productTypePostingSTDTaxTypeRltnpList || [];
+    this.retainedExceptionValue = element.exceptionValue || '';
+    this.retainedActivityType = element.activityType || '';
+    this.retainedActivityType = element.activityType || '';
 
-    this.initialRetainedState = {
-      retainedChannels: JSON.parse(JSON.stringify(this.retainedChannels)),
-      retainedCounters: JSON.parse(JSON.stringify(this.retainedCounters)),
-      retainedRestrictions: JSON.parse(
-        JSON.stringify(this.retainedRestrictions)
-      ),
-      retainedConditions: JSON.parse(JSON.stringify(this.retainedConditions)),
-      retainedCommunicationServices: JSON.parse(
-        JSON.stringify(this.retainedCommunicationServices)
-      )
-      // Add other retained fields as needed
-    };
+    this.retainedPeriodTypeData = element.exceptionTrigger
+      ? element.exceptionTrigger.map((item) => ({
+        productTypeIdentifier: item.productTypeIdentifier,
+        exceptionParentIdentifier: item.exceptionParentIdentifier,
+        exceptionChildIdentifier: item.exceptionChildIdentifier,
+        exceptionTriggerExclude: item.exceptionTriggerExclude
+      }))
+      : [];
 
-    console.log(
-      'retainedChannels:',
-      JSON.stringify(this.retainedChannels, null, 2)
-    );
-    console.log(
-      'retainedCounters:',
-      JSON.stringify(this.retainedCounters, null, 2)
-    );
-    console.log(
-      'retainedRestrictions:',
-      JSON.stringify(this.retainedRestrictions, null, 2)
-    );
-    console.log(
-      'retainedConditions:',
-      JSON.stringify(this.retainedConditions, null, 2)
-    );
-    console.log(
-      'retainedCommunicationServices:',
-      JSON.stringify(this.retainedCommunicationServices, null, 2)
-    );
-    console.log(
-      'retainedTaxType:',
-      JSON.stringify(this.retainedTaxType, null, 2)
-    );
-    //contra
+    console.log('retainedPeriodTypeData:', JSON.stringify(this.retainedPeriodTypeData, null, 2));
 
-    function determineRetainedContra(element) {
-      if (element.contraTemplateIdentifier) return true;
-      if (!element.contra && !element.contraTemplateIdentifier) return false;
-      if (element.contra) return false;
-      return true;
-    }
-    this.retainedContra = determineRetainedContra(element);
-
-    this.retainedOveridePaymentType =
-      element.overridePayment === 'Y' ? true : false;
-    this.retainedCashSettle = element.settlementDirection || '';
-    this.retainedIsReverse = element.reversibleAllowed === 'Y' ? true : false;
-
-    this.retainedExternalSysId = element.externalSystemCode || '';
-    this.retainedBalanceReq = element.invSystemBalance === 'Y' ? true : false;
-    this.retainedCashTransaction =
-      element.cashTransactionAllowed === 'Y' ? true : false;
-    this.retainedChargEligible = element.chargeEligible === 'Y' ? true : false;
-    //Posting text
-    this.retainedPostingTextValues = (
-      element.postingRepeatedTextList || []
-    ).map((repeatedText, i) => {
-      const languageEntry = (element.postingTextLanguageRltnpList || [])[i];
-      return {
-        channel:
-          this.channels.find(c => c.value === repeatedText.deliveryChannel)
-            ?.label || repeatedText.deliveryChannel,
-        event:
-          this.events.find(e => e.value === repeatedText.eventTypeIdentifier)
-            ?.label || repeatedText.eventTypeIdentifier,
-        language: languageEntry?.isoCode || '',
-        text: languageEntry?.text || ''
-      } as PostingTextTable;
-    });
-    // External Transaction
-    this.retainedExternalTransactionValues = (
-      element.externalTransactionTypePostingSTDRltnpDpList || []
-    ).map(transaction => ({
-      code: transaction.code,
-      description: transaction.description,
-      type: transaction.type,
-      subtype: transaction.subType
-    })) as TransactionTypeTable[];
-
-    //Role type
-    this.retainedRoleTypeValues =
-      element.productTypePostingSTDRoletypeRltnpList?.map(element => {
-        let obj = {} as RoleTypeSampleTableForTransaction;
-        obj.type = element.roleTypeIdentifier
-          ? this.roletypes.find(
-              item => item.value === element.roleTypeIdentifier
-            )?.label || ''
-          : '';
-
-        return obj;
-      }) || [];
-    //searchFieldInput1
-    if (element.contra) {
-      const contraTypeItem = this.transactionTypeList.find(
-        item => item.identifier === element.contra
-      );
-      this.searchFieldInput1 = contraTypeItem ? contraTypeItem.code : '';
-      this.retainedSearchFieldInput1 = this.searchFieldInput1;
-    } else {
-      const contraItem = this.transactionListPrdTyp.find(
-        item => item.identifier === element.contraTemplateIdentifier
-      );
-      this.searchFieldInput = contraItem ? contraItem.code : '';
-      this.retainedSearchFieldInput = this.searchFieldInput;
-    }
-    //searchFieldInput3
-    const reverseConditionItem = this.reverseCondition.find(
-      item => item.identifier === element.reverseCondition
-    );
-    this.searchFieldInput3 = reverseConditionItem
-      ? reverseConditionItem.cdarValue
-      : '';
-    this.retainedSearchFieldInput3 = this.searchFieldInput3;
-
-    //searchFieldInput4
-
-    const financialOprTypeItem1 = this.financialOperatType.find(
-      item => item.identifier === element.financialOperationType
-    );
-    this.searchFieldInput4 = financialOprTypeItem1
-      ? financialOprTypeItem1.code
-      : '';
-    this.retainedSearchFieldInput4 = this.searchFieldInput4;
-
-    //Psam
-    this.retainedPSAMName =
-      element.productTypePostingSTDPAMRltnpList?.[0]?.postingApplicationMethodIdentifier;
-
-    //setting values while editing
-
-    this.addNewTransactionTypeFormGroup.patchValue({
-      code: element.code,
-      transactionTypeIdentifier: element.identifier,
-
-      contra: element.contraTemplateIdentifier
-        ? true
-        : !element.contra && !element.contraTemplateIdentifier
-        ? false
-        : element.contra
-        ? false
-        : true,
-
-      name: element.name,
-      description: element.description,
-      paymentType: element.paymentType,
-      classificationType: element.classificationType,
-      // contraname: element.contra ? false : true,
-      // contrapaymentType: element.contrapaymentType,
-      overidePaymentType: element.overridePayment === 'Y',
-      cashSettle: element.settlementDirection,
-      isReverse: element.reversibleAllowed === 'Y',
-      externalSysId: element.externalSystemCode,
-      balanceReq: element.invSystemBalance === 'Y',
-      cashTransaction: element.cashTransactionAllowed === 'Y',
-      chargEligible: element.chargeEligible === 'Y',
-      optionalityType:
-        element.productTypePostingSTDRltnpList?.[0]?.optionalityType || '',
-      eventType:
-        element.productTypeTransEventTypePostingSTDRltnpList?.[0]
-          ?.transactionEventTypeIdentifier || '',
-      postingCategory: postingCategories,
-      psamName: element.productTypePostingSTDPAMRltnpList?.[0]
-        ? element.productTypePostingSTDPAMRltnpList[0]
-            .postingApplicationMethodIdentifier
-        : ''
-
-      // ...existing code...
-      // ...add other fields as needed...
-    });
-    const psamNameValue =
-      element.productTypePostingSTDPAMRltnpList?.[0]
-        ?.postingApplicationMethodIdentifier;
-    if (psamNameValue) {
-      this.onPsamNameChange(psamNameValue);
-    }
-
-    // Set the code to the search field input based on the identifier
-
-    if (element.contra) {
-      const contraTypeItem = this.transactionTypeList.find(
-        item => item.identifier === element.contra
-      );
-      this.searchFieldInput1 = contraTypeItem ? contraTypeItem.code : '';
-    } else {
-      const contraItem = this.transactionListPrdTyp.find(
-        item => item.identifier === element.contraTemplateIdentifier
-      );
-      this.searchFieldInput = contraItem ? contraItem.code : '';
-    }
-
-    // Set searchFieldInput3
-    const reverseConditionItem2 = this.reverseCondition.find(
-      item => item.identifier === element.reverseCondition
-    );
-
-    this.searchFieldInput3 = reverseConditionItem2
-      ? reverseConditionItem2.cdarValue
-      : '';
-    this.retainedSearchFieldInput3 = this.searchFieldInput3;
-
-    // Set searchFieldInput4
-    const financialOprTypeItem = this.financialOperatType.find(
-      item => item.identifier === element.financialOperationType
-    );
-    this.searchFieldInput4 = financialOprTypeItem
-      ? financialOprTypeItem.code
-      : '';
-    console.log('Financial Operation Type', this.searchFieldInput4);
-
-    //PostingText
-
-    this.postingTexttabledata.datasource.data = [];
-    this.dataWithPostingTextvalues = [];
-
-    const repeatedTextList = element.postingRepeatedTextList || [];
-    const languageEntryList = element.postingTextLanguageRltnpList || [];
-
-    // Assuming each repeatedText corresponds to a languageEntry by index
-    for (let i = 0; i < repeatedTextList.length; i++) {
-      const repeatedText = repeatedTextList[i];
-      const languageEntry = languageEntryList[i];
-
-      if (repeatedText && languageEntry) {
-        const channelObj = this.channels.find(
-          c => c.value === repeatedText.deliveryChannel
-        );
-        const channelCode = channelObj
-          ? channelObj.label
-          : repeatedText.deliveryChannel;
-
-        const eventObj = this.events.find(
-          e => e.value === repeatedText.eventTypeIdentifier
-        );
-        const eventCode = eventObj
-          ? eventObj.label
-          : repeatedText.eventTypeIdentifier;
-
-        const obj: PostingTextTable = {
-          channel: channelCode,
-          event: eventCode,
-          language: languageEntry.isoCode,
-          text: languageEntry.text
-        };
-
-        this.dataWithPostingTextvalues.push(obj);
-      }
-    }
-
-    // Refresh table
-    this.postingTexttabledata.datasource.data = [
-      ...this.dataWithPostingTextvalues
-    ];
-
-    // External Transaction (assuming it's a list now)
-    this.dataWithExternalTransactionValues = [];
-    const externalTransactionList =
-      element.externalTransactionTypePostingSTDRltnpDpList || [];
-
-    for (const transaction of externalTransactionList) {
-      const obj: TransactionTypeTable = {
-        code: transaction.code,
-        description: transaction.description,
-        type: transaction.type,
-        subtype: transaction.subType
-      };
-
-      this.dataWithExternalTransactionValues.push(obj);
-    }
-
-    // Refresh external transaction table
-    this.externalTransactiontabledata.datasource.data = [
-      ...this.dataWithExternalTransactionValues
-    ];
-
-    //Role type Table
-    this.roleTypetabledata.datasource.data = [];
-    this.dataWithRoleTypevalues = [];
-    element.productTypePostingSTDRoletypeRltnpList?.forEach(rt => {
-      let obj = {} as RoleTypeSampleTableForTransaction;
-      // Find the label (code) for the roleTypeIdentifier
-      const roleType = this.roletypes.find(
-        r => r.value === rt.roleTypeIdentifier
-      );
-      obj.type = roleType ? roleType.label : rt.roleTypeIdentifier;
-      this.roleTypetabledata.datasource.data.push(obj);
-      this.dataWithRoleTypevalues.push(obj);
+    this.addNewRestrictionFormGroup.patchValue({
+      restrictionIdentifier: element.identifier,
+      restrictionCode: element.code,
+      restrictionName: element.name, // Use description for name if that's your field mapping
+      exceptionValue: element.classificationType, // Use classificationType for exceptionValue
+      activityType: element.exceptionRltn?.[0]?.activityType || '', // Get from first exceptionRltn
+      processMode: element.exceptionRltn?.[0]?.processMode || '', // Get from first exceptionRltn
+      description: element.description // If you have a description field in your form
     });
 
-    // Refresh Role type  table
-    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
+    // Set period type data
+    this.periodTypeTableData = this.mapPeriodTypeData(this.retainedPeriodTypeData);
 
-    // Channel Data (for display only unique channels)
-    const seen = new Set();
-    this.channelData = (element.productTypePostingSTDDSRltnpList || [])
-      .filter(item => {
-        if (seen.has(item.resourceItemIdentifier)) return false;
-        seen.add(item.resourceItemIdentifier);
-        return true;
-      })
-      .map(item => {
-        if (item.resourceItemIdentifier === 0) {
-          return {
-            id: 0,
-            identifier: 0,
-            code: 'All',
-            channel: 'All',
-            option: item.optionalityType
-          };
-        }
-        const channelObj = this.channels?.find(
-          c => String(c.value) === String(item.resourceItemIdentifier)
-        );
-        return {
-          id: item.resourceItemIdentifier,
-          identifier: item.resourceItemIdentifier,
-          code: channelObj
-            ? channelObj.label
-            : String(item.resourceItemIdentifier),
-          channel: channelObj
-            ? channelObj.label
-            : String(item.resourceItemIdentifier),
-          option: item.optionalityType
-        };
-      });
-
-    // After building this.channelData from element.productTypePostingSTDDSRltnpList
-    const countersList = element.productTypePostingSTDDSCounterRltnp || [];
-    const restrictionsList =
-      element.productTypePostingSTDDSRestrcitionRltnp || [];
-    const conditionsList = element.productTypePostingSTDDSCDRltnpList || [];
-    const communicationsList = element.productTypePostingSTDDSComsRltnp || [];
-
-    this.channelData = this.channelData.map(channel => {
-      // Find counters for this channel
-      const countersForChannel = countersList
-        .filter(
-          counter =>
-            String(counter.resourceItemIdentifier) ===
-            String(channel.identifier)
-        )
-        .map(counter => {
-          const counterObj = this.counters?.find(
-            c => String(c.identifier) === String(counter.counterIdentifier)
-          );
-          return {
-            id: counter.counterIdentifier,
-            code: counterObj
-              ? counterObj.code
-              : String(counter.counterIdentifier),
-            identifier: counter.counterIdentifier,
-            classificationType: counterObj ? counterObj.classificationType : '', // <-- always from master list
-            operatorType: counter.counterOperationType || '',
-            channelidentifier: counter.resourceItemIdentifier
-          };
-        })
-        // Deduplicate by identifier
-        .filter(
-          (item, index, arr) =>
-            arr.findIndex(i => i.identifier === item.identifier) === index
-        );
-
-      // Find restrictions for this channel
-      const restrictionsForChannel = (restrictionsList || [])
-        .filter(
-          restriction =>
-            String(restriction.resourceItemIdentifier) ===
-            String(channel.identifier)
-        )
-        .map(restriction => {
-          const restrictionObj = this.restrictions?.find(
-            r =>
-              String(r.identifier) === String(restriction.restrictionIdentifier)
-          );
-          return {
-            id: restriction.restrictionIdentifier,
-            code: restrictionObj
-              ? restrictionObj.code
-              : String(restriction.restrictionIdentifier),
-            identifier: restriction.restrictionIdentifier,
-            type: restriction.restrictionClassificationType || '',
-            channelidentifier: restriction.resourceItemIdentifier
-          };
-        })
-        // Deduplicate by identifier
-        .filter(
-          (item, index, arr) =>
-            arr.findIndex(i => i.identifier === item.identifier) === index
-        );
-
-      const conditionsForChannel = (conditionsList || [])
-        .filter(
-          condition =>
-            String(condition.resourceItemIdentifier) ===
-            String(channel.identifier)
-        )
-        .map(condition => {
-          // Find the master condition object by identifier
-          const conditionObj = this.conditions?.find(
-            c => String(c.identifier) === String(condition.conditionIdentifier)
-          );
-          return {
-            id: condition.conditionIdentifier,
-            code: conditionObj
-              ? conditionObj.cdarValue
-              : String(condition.conditionIdentifier), // <-- Add code here
-            identifier: condition.conditionIdentifier,
-            relationshipType: condition.optionalityType || '',
-            channelidentifier: condition.resourceItemIdentifier
-          };
-        })
-        // Deduplicate by identifier
-        .filter(
-          (item, index, arr) =>
-            arr.findIndex(i => i.identifier === item.identifier) === index
-        );
-
-      // Find communications for this channel
-      const communicationsForChannel = (communicationsList || [])
-        .filter(
-          comm =>
-            String(comm.resourceItemIdentifier) === String(channel.identifier)
-        )
-        .map(comm => {
-          console.log('comm:', JSON.stringify(comm, null, 2));
-          const commObj = this.communications?.find(
-            c => String(c.identifier) === String(comm.commServiceIdentifier)
-          );
-          // Find the master communication entry for serviceElementCode
-          const commMaster = this.communicationsMasterList?.find(
-            c =>
-              String(c.serviceElementIdentifier) ===
-              String(comm.serviceElementIdentifier)
-          );
-          const result = {
-            id: comm.commServiceIdentifier,
-            identifier: comm.commServiceIdentifier,
-            serviceElement: commMaster ? commMaster.serviceElementCode : '',
-            serviceElementCode: comm.serviceElementIdentifier,
-            communicationServices: commObj
-              ? commObj.code
-              : String(comm.commServiceIdentifier),
-            channelidentifier: comm.resourceItemIdentifier
-          };
-          console.log('returning:', JSON.stringify(result, null, 2));
-          return result;
-        })
-        .filter(
-          (item, index, arr) => arr.findIndex(i => i.id === item.id) === index
-        );
-      // Set attributeForChannel to 'Restrictions' if restrictions exist for this channel
-      return {
-        ...channel,
-        counters: countersForChannel,
-        restrictions: restrictionsForChannel,
-        conditions: conditionsForChannel,
-        communications: communicationsForChannel,
-        attributeForChannel:
-          restrictionsForChannel.length > 0
-            ? 'Restrictions'
-            : countersForChannel.length > 0
-            ? 'Counters'
-            : conditionsForChannel.length > 0
-            ? 'Conditions'
-            : communicationsForChannel.length > 0
-            ? 'CommunicationServices'
-            : channel.attributeForChannel
-      };
-    });
-    this.counterData = [];
-    this.restrictionData = [];
-    this.conditionData = [];
-    this.communicationData = [];
-
-    // Populate the separate arrays from all channels
-    this.channelData.forEach(channel => {
-      if (channel.counters) {
-        this.counterData.push(...channel.counters);
-      }
-      if (channel.restrictions) {
-        this.restrictionData.push(...channel.restrictions);
-      }
-      if (channel.conditions) {
-        this.conditionData.push(...channel.conditions);
-      }
-      if (channel.communications) {
-        this.communicationData.push(...channel.communications);
-      }
-    });
-
-    // ...existing code...
-    this.communicationData = this.communicationData.map(comm => {
-      const master = this.communicationsMasterList.find(
-        m => String(m.identifier) === String(comm.identifier)
-      );
-      const serviceElementCode = master
-        ? master.serviceElementCode
-        : comm.serviceElement;
-      return {
-        ...comm,
-        serviceElement: serviceElementCode
-      };
-    });
-
-    // Update the table's datasource so the UI reflects the mapped values
-    if (
-      this.channelsMainTable &&
-      this.channelsMainTable.tableWithSimpleCommunication
-    ) {
-      this.channelsMainTable.tableWithSimpleCommunication.datasource.data = [
-        ...this.communicationData
-      ];
-    }
-    // ...existing code...
-
-    // ✅ ADD THIS: Log the updated arrays to verify they're populated correctly
-    console.log(
-      'Updated counterData:',
-      JSON.stringify(this.counterData, null, 2)
-    );
-    console.log(
-      'Updated restrictionData:',
-      JSON.stringify(this.restrictionData, null, 2)
-    );
-    console.log(
-      'Updated conditionData:',
-      JSON.stringify(this.conditionData, null, 2)
-    );
-    console.log(
-      'Updated communicationData:',
-      JSON.stringify(this.communicationData, null, 2)
-    );
-
-    // Update the ChannelsMainTableComponent tables
-    if (this.channelsMainTable) {
-      if (this.channelsMainTable.tableWithSimpleEdit) {
-        this.channelsMainTable.tableWithSimpleEdit.datasource.data = [
-          ...this.channelData
-        ];
-      }
-      // --- Set the internal maps for nested data ---
-      // Clear existing maps
-      this.channelsMainTable.counterMap = {};
-      this.channelsMainTable.conditionMap = {};
-      this.channelsMainTable.restrictionMap = {};
-      this.channelsMainTable.communicationMap = {};
-
-      // Populate maps from channelData
-      (this.channelData || []).forEach(row => {
-        if (row.id !== undefined && Array.isArray(row.counters)) {
-          this.channelsMainTable.counterMap[row.id] = [...row.counters];
-        }
-        if (row.id !== undefined && Array.isArray(row.conditions)) {
-          this.channelsMainTable.conditionMap[row.id] = [...row.conditions];
-        }
-        if (row.id !== undefined && Array.isArray(row.restrictions)) {
-          this.channelsMainTable.restrictionMap[row.id] = [...row.restrictions];
-        }
-        if (row.id !== undefined && Array.isArray(row.communications)) {
-          this.channelsMainTable.communicationMap[row.id] = [
-            ...row.communications
-          ];
-        }
-      });
-
-      // Optionally, update the visible sub-tables for the first channel (if needed)
-      if (this.channelsMainTable.tableWithSimpleCounter) {
-        const firstChannelWithCounters = this.channelData.find(
-          ch => ch.counters && ch.counters.length > 0
-        );
-        this.channelsMainTable.tableWithSimpleCounter.datasource.data =
-          firstChannelWithCounters?.counters
-            ? [...firstChannelWithCounters.counters]
-            : [];
-      }
-      if (this.channelsMainTable.tableWithSimpleRestriction) {
-        const firstChannelWithRestrictions = this.channelData.find(
-          ch => ch.restrictions && ch.restrictions.length > 0
-        );
-        this.channelsMainTable.tableWithSimpleRestriction.datasource.data =
-          firstChannelWithRestrictions?.restrictions
-            ? [...firstChannelWithRestrictions.restrictions]
-            : [];
-      }
-      // Set data for conditions table
-      if (this.channelsMainTable.tableWithSimpleCondition) {
-        const firstChannelWithConditions = this.channelData.find(
-          ch => ch.conditions && ch.conditions.length > 0
-        );
-        this.channelsMainTable.tableWithSimpleCondition.datasource.data =
-          firstChannelWithConditions?.conditions
-            ? [...firstChannelWithConditions.conditions]
-            : [];
-      }
-      // Set data for communications table
-      if (this.channelsMainTable.tableWithSimpleCommunication) {
-        const firstChannelWithCommunications = this.channelData.find(
-          ch => ch.communications && ch.communications.length > 0
-        );
-        this.channelsMainTable.tableWithSimpleCommunication.datasource.data =
-          firstChannelWithCommunications?.communications
-            ? [...firstChannelWithCommunications.communications]
-            : [];
-      }
-    }
-
-    this.taxTypeTableData = (
-      element.productTypePostingSTDTaxTypeRltnpList || []
-    ).map((taxRel, idx) => ({
-      id: idx + 1,
-      taxType: taxRel.taxTypeIdentifier, // label or identifier for display
-      taxTypeIdentifier: taxRel.taxTypeIdentifier, // <-- required for dropdown/value
-      businessRule: taxRel.transactionEventTypeIdentifier, // or taxRel.transactionEventTypeIdentifier
-      transactionEventTypeIdentifier: taxRel.transactionEventTypeIdentifier // <-- add this line
-    }));
-    this.isEdit = true;
-  }
-  getCounterCodeById(id: number | string): string {
-    const counterObj = this.counters?.find(
-      c => String(c.identifier) === String(id)
-    );
-    return counterObj ? counterObj.code : String(id);
-  }
-
-  onInternalProductTypeChange(value: string) {
-    this.searchFieldInput = value;
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  onReverseConditionChange(value: string) {
-    this.searchFieldInput3 = value;
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  onFinancialOperationTypeChange(value: string) {
-    this.searchFieldInput4 = value;
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  onContraCodeChange(value: string) {
-    this.searchFieldInput1 = value;
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  public handleCompleteDeltaChangeTaxType(data: any) {
-    console.log(
-      'handleCompleteDeltaChangeTaxType received:',
-      JSON.stringify(data, null, 2)
-    );
-
-    // Update taxTypeTableData with the latest rows from the child table
-    this.taxTypeTableData = Array.isArray(data) ? data : [];
-
-    if (Array.isArray(data) && data.length > 0) {
-      const selectedTax = data[0];
-      // Patch the main form with taxTypeIdentifier and businessRule
-      this.addNewTransactionTypeFormGroup.patchValue({
-        taxTypeIdentifier: selectedTax.taxType,
-        businessRule: selectedTax.businessRule
-      });
-    } else {
-      // Clear if nothing selected
-      this.addNewTransactionTypeFormGroup.patchValue({
-        taxTypeIdentifier: null,
-        businessRule: null
-      });
-    }
-
-    // Log to verify assignment
-    console.log(
-      'Updated taxTypeTableData:',
-      JSON.stringify(this.taxTypeTableData, null, 2)
-    );
-  }
-  //role type tabel
-  public roleTypeForm: UntypedFormGroup;
-  public roletypes: any[] = [];
-  public roleaccountclassifications: any[] = [];
-  public accountclassifications: any[] = [];
-  public dataWithRoleTypevalues: any[] = [];
-  public roleTypetableActions: BodTableAction[] = roletypeaction;
-
-  onAddRoleType(formValues: any) {
-    this.errorMessagesRoleType = [];
-    if (this.roleTypeForm.invalid) {
-      const errors = this.roleTypeForm.errors;
-      if (errors?.['duplicateRoleType']) {
-        this.handleErrorforRole({
-          errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
-          status: 400,
-          duplicateValue: errors['duplicateRoleType']
-        });
-      }
-      // Optionally handle other errors (like required fields)
-      return;
-    }
-
-    const selectedRoleType = this.roletypes.find(
-      item => item.value === formValues.roletype
-    );
-    const roleTypeCode = selectedRoleType ? selectedRoleType.label : '';
-
-    // Duplicate check before adding
-    const isDuplicate = this.dataWithRoleTypevalues.some(
-      item => item.type === roleTypeCode
-    );
-
-    if (isDuplicate) {
-      this.handleErrorforRole({
-        errorCode: 'ROLE_TYPE_ALREADY_EXISTS',
-        status: 400,
-        duplicateValue: roleTypeCode
-      });
-      return;
-    }
-
-    const newValidValue: RoleTypeSampleTableForTransaction = {
-      type: roleTypeCode || ''
-    };
-
-    this.dataWithRoleTypevalues.push(newValidValue);
-
-    if (this.roleTypetabledata && this.roleTypetabledata.datasource) {
-      this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
-    }
-
-    if (this.roleTypeForm) {
-      this.roleTypeForm.reset();
-    }
-
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-  public errorMessagesRoleType: NotificationMessage[] = [];
-  private handleErrorforRole(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'ROLE_TYPE_ALREADY_EXISTS':
-        errorMsg = `Role type "${error.duplicateValue}" already exists.`;
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessagesRoleType.push(this.message);
-    setTimeout(() => {
-      this.errorMessagesRoleType = this.errorMessagesRoleType.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
-  }
-  public errorMessagesExternalTransaction: NotificationMessage[] = [];
-
-  private handleErrorForExternalTransaction(error: any) {
-    let errorMsg = '';
-    switch (error.errorCode) {
-      case 'EXTERNAL_TRANSACTION_DUPLICATE':
-        errorMsg = `External transaction with Type ${error.duplicateType} and Subtype ${error.duplicateSubtype} already exists.`;
-        break;
-      default:
-        errorMsg = 'Unknown error occurred.';
-    }
-
-    this.message = {
-      code: error.errorCode,
-      text: errorMsg,
-      type: NotificationMessageType.ERROR
-    };
-    this.errorMessagesExternalTransaction =
-      this.errorMessagesExternalTransaction || [];
-    this.errorMessagesExternalTransaction.push(this.message);
-    setTimeout(() => {
-      this.errorMessagesExternalTransaction =
-        this.errorMessagesExternalTransaction.filter(
-          msg => msg.text !== errorMsg
-        );
-    }, 20000);
-  }
-  public roleTypetabledata: BodTableMetadata = {
-    title: 'Role Type',
-    columns: [...this.balanceTypeService.roletypecolumns1],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<RoleTypeSampleTableForTransaction>(
-      this.dataWithRoleTypevalues
-    ),
-    noRecordsMessage: 'No Role Type Data Defined'
-  };
-  handleRowLevelActionsforRoletype(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteRoleType(index);
-    }
-  }
-  deleteRoleType(index: number) {
-    this.dataWithRoleTypevalues.splice(index, 1);
-    this.roleTypetabledata.datasource.data = [...this.dataWithRoleTypevalues];
-    this.addNewTransactionTypeFormGroup.markAsDirty();
-  }
-
-  //PSAM
-  public psamInstrData: BodTableMetadata = {
-    title: 'Instructions',
-    columns: [...this.transactionTypeService.psamCol],
-    enablePagination: false,
-
-    datasource: new MatTableDataSource<PSAMTable>(this.dataWithRoleTypevalues),
-    noRecordsMessage: 'No Posting Application Method Selected'
-  };
-  onPsamNameChange(psamIdentifier: number) {
-    this.transactionTypeService.getPSAMDetails().subscribe((data: any[]) => {
-      const selectedPsam = data.find(
-        item => item.psam_identifier === psamIdentifier
-      );
-      if (selectedPsam && selectedPsam.postingInstructionList) {
-        this.psamInstrData.datasource.data =
-          selectedPsam.postingInstructionList.map(instr => ({
-            ...instr,
-            balance_type_identifier: this.convertBalanceTypeIdfrToCode(
-              instr.balance_type_identifier
-            ),
-            posting_identifier: this.convertPostingIdentifierToCode(
-              instr.posting_identifier
-            )
-          }));
-      } else {
-        this.psamInstrData.datasource.data = [];
-      }
-    });
-  }
-  private convertBalanceTypeIdfrToCode(identifier: number): string {
-    const item = this.balanceTypes.find(bt => bt.value === identifier);
-    return item ? item.label : '';
-  }
-  private convertPostingIdentifierToCode(identifier: number): string {
-    const item = this.transactionTypeList.find(
-      tt => tt.identifier === identifier
-    );
-    return item ? item.code : '';
+    // Disable code field in edit mode
+    this.addNewRestrictionFormGroup.get('restrictionCode')?.disable();
   }
 }
 
@@ -4001,254 +780,107 @@ export class AddEditTransactiontypeComponent implements OnInit {
 
 
 
-import { Injectable } from '@angular/core';
-import { Column } from '@bod/common';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AddEditransactiontypeService {
-  public postingCol: Column[] = [
-    {
-      name: 'event',
-      title: 'Event',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'channel',
-      title: 'Channel',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-     {
-      name: 'language',
-      title: 'Language',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'text',
-      title: 'Text',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    }
-  ];
 
-   public externalTransactionCol: Column[] = [
-     {
-      name: 'code',
-      title: 'Code',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-     {
-      name: 'type',
-      title: 'Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'subtype',
-      title: 'Sub Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-  ]
-  public psamTable: Column[] = [
-      {
-      name: 'order',
-      title: 'Order',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'value',
-      title: 'Method',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'balance_type_identifier',
-      title: 'Balance Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'posting_identifier',
-      title: 'Sub Transaction',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'sub_balance_type',
-      title: 'Sub Balance Type',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'customization_type_value',
-      title: 'Custom Logic',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-  ]
-  public roleTpeCol: Column[] = [
-     {
-      name: 'type',
-      title: 'Type',
-      truncate: true,
-      noOverflow: true,
-      width: 10,
-      widthUnit: 'rem'
-    }
-  ]
 
-  public channelsTable: Column[] = [
-    {
-      name: 'channel',
-      title: 'Channel',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    },
-     {
-      name: 'option',
-      title: 'Option',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    }
-  ];
 
-  public categorychannelsTable: Column[] = [
-    {
-      name: 'channel',
-      title: 'Channel',
-      truncate: true,
-      noOverflow: true,
-      width: 7,
-      widthUnit: 'rem'
-    }
-  ];
-  public countersTable: Column[] = [
-    {
-      name: 'code',
-      title: 'Counters',
-      truncate: true,
-      noOverflow: true,
-      width: 4,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'classificationType',
-      title: 'Classification Type',
-      truncate: true,
-      noOverflow: true,
-      width: 4,
-      widthUnit: 'rem'
-    },
-     {
-      name: 'operatorType',
-      title: 'Operator Type',
-      truncate: true,
-      noOverflow: true,
-      width: 4,
-      widthUnit: 'rem'
-    }
-  ];
-  // ...existing code...
 
-public restrictionsTable: Column[] = [
-  {
-    name: 'code',
-    title: 'Restriction',
-    truncate: true,
-    noOverflow: true,
-    width: 7,
-    widthUnit: 'rem'
-  },
-  {
-    name: 'type',
-    title: 'Type',
-    truncate: true,
-    noOverflow: true,
-    width: 7,
-    widthUnit: 'rem'
-  }
-];
 
-public conditionsTable: Column[] = [
-  {
-    name: 'cdarValue',
-    title: 'Condition',
-    truncate: true,
-    noOverflow: true,
-    width: 7,
-    widthUnit: 'rem'
-  },
-  {
-    name: 'relationshipType',
-    title: 'Relationship Type',
-    truncate: true,
-    noOverflow: true,
-    width: 7,
-    widthUnit: 'rem'
-  }
-];
 
-public communicationServiceTable: Column[] = [
-  {
-    name: 'serviceElement',
-    title: 'Service Element',
-    truncate: true,
-    noOverflow: true,
-    width: 7,
-    widthUnit: 'rem'
-  },
-  {
-    name: 'communicationServices',
-    title: 'Communication Services',
-    truncate: true,
-    noOverflow: true,
-    width: 7,
-    widthUnit: 'rem'
-  }
-];
+
+
+
+
+
+
+
+export interface RestrictionList {
+  identifier?: number;
+  code?: string;
+  name?: string;
+  description?: string;
+  exceptionValue?: string;
+  processMode?: string;
+  activityType?: string;
+  restrictionRelationshipList?: RestrictionRelationship[];
+  restrictionInquiry?: RestrictionInquiry[];
+  exceptionTrigger?:ExceptionTrigger[];
+  classificationType?:string;
+    exceptionRltn?: ExceptionRltn[]; // <-- Added this line
+
+  
+  
 }
+export interface ExceptionRltn {
+  activityType?: string;
+  exceptionCode?: string | null;
+  exceptionIdentifier?: number;
+  exceptionValue?: string;
+  processMode?: string;
+  productTypeIdentifier?: number;
+}
+export interface ExceptionTrigger {
+  productTypeIdentifier?: number;
+  exceptionParentIdentifier?: number;
+  exceptionChildIdentifier?: number | string;
+  exceptionTriggerExclude?: string;
+}
+
+export interface RestrictionInquiry {
+  id: number;
+  label: string;
+  value: string;
+}
+
+export interface RestrictionRelationship {
+  childRestriction: string;
+  isExclude: boolean;
+}
+
+export interface RestrictionData {
+  metadataType: string;
+  restrictionList: RestrictionListItem[];
+  productTypeList: ProductType[];
+}
+
+export interface RestrictionListItem {
+  restriction: Restriction;
+  periodTypeList?: RestrictionRelationship[];
+}
+
+export interface Restriction {
+  identifier: number;
+  code: string;
+  name: string;
+  systemRestriction?: string;
+  classificationType: string;
+  ruleCheck: string;
+}
+
+export interface ProductType {
+  identifier: number;
+  code: string;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
