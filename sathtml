@@ -1,0 +1,776 @@
+<bod-page-container
+  [pageMode]="pageModeSimple"
+  (pageAction)="onPageAction($event)"
+  [messages]="messages"
+  *ngIf="showEdit"
+>
+  <bod-table
+    [data]="tableWithSimpleEdit"
+    [tableActions]="showActionsForSimple ? actionsForSimple : []"
+    [modeOptions]="modeOptionsSimple"
+    [singleRowEdit]="singleRowEdit"
+    [customColumnTemplates]="[
+      { columnName: 'actions', templateName: editActionsTemplate1 }
+    ]"
+    (inputValidationStatus)="checkStatus($event)"
+    (editTableEvent)="onEditTableAction($event)"
+    (onTableActionClick)="addTableData()"
+    [primaryColumnName]="'id'"
+    #simpleEditTableRef
+  >
+    <ng-template
+      #editActionsTemplate1
+      let-element="element"
+      let-column="column"
+      let-index="index"
+    >
+      <div
+        *ngIf="
+          !this.singleRowEdit.modeOptions?.input ||
+          (this.singleRowEdit?.modeOptions?.input &&
+            this.singleRowEdit?.index !== index)
+        "
+      >
+        <bod-table-actions
+          [actions]="rowLevelActionsForBasicEdit"
+          (onActionClick)="handleRowLevelActions($event.icon, index)"
+        >
+        </bod-table-actions>
+      </div>
+      <div
+        *ngIf="
+          this.singleRowEdit?.modeOptions?.input &&
+          this.singleRowEdit?.index === index
+        "
+      >
+        <button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.save' | translate }}"
+          [matTooltipPosition]="'below'"
+          rufId
+          mat-mini-fab
+          color="primary"
+          fisStyle
+          (click)="handleRowLevelActions('save', index)"
+        >
+          <mat-icon fisStyle rufIconStyle="md" rufIcon="check"></mat-icon>
+        </button>
+        <button
+          rufId
+          fisStyle
+          mat-icon-button
+          matTooltip="{{ 'mbpBod.demo.microsite.buttons.cancel' | translate }}"
+          [matTooltipPosition]="'below'"
+          class="ruf-ghost-button"
+          (click)="handleRowLevelActions('reset', index)"
+        >
+          <mat-icon rufIconStyle="sm" fisIcon="close"></mat-icon>
+        </button>
+      </div>
+    </ng-template>
+  </bod-table>
+</bod-page-container>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { 
+  AfterViewInit, 
+  Component, 
+  EventEmitter, 
+  Input, 
+  OnDestroy, 
+  OnInit, 
+  Output, 
+  ViewChild 
+} from '@angular/core';
+import { 
+  FormsModule, 
+  ReactiveFormsModule, 
+  UntypedFormBuilder, 
+  UntypedFormControl, 
+  UntypedFormGroup, 
+  Validators 
+} from '@angular/forms';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  BodCommonModule,
+  BodConfirmAlertDialogsService,
+  BodConfirmDialogModel,
+  BodFormModule,
+  BodPageContainerModule,
+  BodTableAction,
+  BodTableActionsModule,
+  BodTableComponent,
+  BodTableMetadata,
+  BodTableModule,
+  Column,
+  ColumnType,
+  ControlGroupModule,
+  DirectivesModule,
+  InputLayoutModule,
+  MaxLengthStrategy,
+  MessageContainerModule,
+  ModeOptions,
+  NotificationMessage,
+  NotificationMessageType,
+  PageAction,
+  PageMode,
+  SingleRowEdit
+} from '@bod/common';
+
+import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { RufIconModule } from '@ruf/shell/icon';
+import { Subscription, take } from 'rxjs';
+
+// Define interface for Service Element Condition Relationship table data
+export interface ServiceElementCondTable {
+  id: number;
+  conditionCode?: string;
+  optionality?: string;
+}
+
+@Component({
+  selector: 'bod-service-element-condition-relationship',
+  imports: [
+    BodTableModule,
+    TranslateModule,
+    MatTableModule,
+    BodTableActionsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    CommonModule,
+    ControlGroupModule,
+    ReactiveFormsModule,
+    MessageContainerModule,
+    DirectivesModule,
+    MatButtonModule,
+    BodPageContainerModule,
+    FormsModule,
+    InputLayoutModule,
+    BodFormModule,
+    MatIconModule,
+    RufIconModule,
+    BodCommonModule
+  ],
+  templateUrl: './service-element-condition-relationship.component.html',
+  styleUrl: './service-element-condition-relationship.component.scss'
+})
+export class ServiceElementConditionRelationshipComponent implements OnInit, OnDestroy, AfterViewInit {
+
+  private subscriptions: Subscription = new Subscription();
+  public messages: NotificationMessage[] = [];
+  public modeOptions: ModeOptions = { input: false, reset: false };
+  public modeOptionsSimple = this.modeOptions;
+  showEdit = true;
+  public lastModifiedIndex: number;
+  
+  @ViewChild('simpleEditTableRef', { static: false })
+  simpleEditTableRef: BodTableComponent;
+  
+  public pageMode = PageMode.INQUIRY;
+  public pageModeSimple = this.pageMode;
+  private dataForReset: ServiceElementCondTable[] = [];
+  selectedStrategy: MaxLengthStrategy = MaxLengthStrategy.exceedWithError;
+  public formStatus = false;
+  public showActionsForSimple: boolean = false;
+
+  @Output() tableDirty = new EventEmitter<boolean>();
+  @Output() completeDeltaChange = new EventEmitter<any>();
+  @Output() conditionRelationshipDetails = new EventEmitter<any>();
+  
+  @Input() set serviceElementConditionData(data: ServiceElementCondTable[]) {
+    this.dataWithSimpleEdit = data || [];
+    this.tableWithSimpleEdit.datasource.data = this.dataWithSimpleEdit;
+    console.log("ServiceElementCondition dataWithSimpleEdit: ", this.dataWithSimpleEdit);
+  }
+
+  // Available conditions (will be populated from service)
+  public conditions: { label: string, value: string }[] = [];
+
+  // Hardcoded optionality values
+  public optionalityOptions = [
+    { label: 'Locked', value: 'Locked' },
+    { label: 'Mandatory', value: 'Mandatory' },
+    { label: 'Optional', value: 'Optional' },
+    { label: 'Proposed', value: 'Proposed' }
+  ];
+
+  public onPageAction(event) {
+    if (event === PageAction.EDIT) {
+      this.messages = [];
+      this.modeOptionsSimple = { input: true, reset: false };
+      this.pageModeSimple = PageMode.INPUT;
+      this.showActionsForSimple = true;
+    } else {
+      this.checkStatus(false);
+      this.modeOptionsSimple = { input: false, reset: true };
+      this.pageModeSimple = PageMode.INQUIRY;
+      this.showActionsForSimple = false;
+    }
+  }
+
+  public ConfirmData: BodConfirmDialogModel = {
+    title: 'BOD.metadataconfig.title',
+    message: 'BOD.metadataconfig.message',
+    confirm: 'BOD.metadataconfig.delete',
+    dismiss: 'BOD.metadataconfig.cancel'
+  };
+
+  public rowLevelActionsForBasicEdit: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'trash',
+      label: 'mbpBod.demo.microsite.tableActions.labels.delete',
+      mostCommon: false
+    }
+  ];
+
+  public actionsForSimple: BodTableAction[] = [
+    {
+      id: 1,
+      icon: 'add',
+      label: 'Add',
+      mostCommon: false
+    }
+  ];
+
+  public columns: Column[] = [
+    {
+      name: 'conditionCode',
+      title: 'Condition',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: [],
+        validators: {
+          required: true,
+          max: 50,
+          maxLengthStrategy: this.selectedStrategy
+        },
+      }
+    },
+    {
+      name: 'optionality',
+      title: 'Optionality',
+      width: 2,
+      inputModeOptions: {
+        type: ColumnType.select,
+        model: this.optionalityOptions.map(opt => opt.value),
+        validators: {
+          required: true,
+          max: 20,
+          maxLengthStrategy: this.selectedStrategy
+        }
+      }
+    },
+    {
+      name: 'actions',
+      title: ' ',
+      hasAction: true,
+      width: 7
+    }
+  ];
+  
+  public columnSimpleEdit = this.columns;
+
+  public getCurrentTableData(): ServiceElementCondTable[] {
+    return this.tableWithSimpleEdit?.datasource?.data || [];
+  }
+
+  public successMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant(
+      'mbpBod.demo.microsite.table.messages.success'
+    ),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+  
+  public resetMsg: NotificationMessage = {
+    code: '200',
+    text: this.translate.instant('mbpBod.demo.microsite.table.messages.reset'),
+    type: NotificationMessageType.SUCCESS,
+    closeable: true,
+    expandable: false
+  };
+
+  constructor(
+    private http: HttpClient,
+    private formBuilder: UntypedFormBuilder,
+    private translate: TranslateService,
+    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
+    // Inject your condition service here - replace with actual service
+    // private conditionService: ConditionDetailService,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDropdownData();
+    this.onPageAction("");
+
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length;
+    
+    this.subscriptions.add(
+      this.translate.onTranslationChange.subscribe(lang => {
+        const keys = [
+          'mbpBod.demo.microsite.table.messages.success',
+          'mbpBod.demo.microsite.table.messages.reset'
+        ];
+        this.translate
+          .get(keys)
+          .pipe(take(1))
+          .subscribe(value => {
+            this.successMsg.text = value[keys[0]];
+            this.resetMsg.text = value[keys[1]];
+          });
+      })
+    );
+  }
+
+  loadDropdownData(): void {
+    // Replace this with your actual condition service call
+    // this.conditionService.getConditions().subscribe((conditions: any[]) => {
+    //   const conditionValues = conditions.map(condition => condition.cdarValue);
+    //   this.columns[0].inputModeOptions.model = conditionValues;
+    // });
+
+    // Mock data for now - replace with actual service call
+    this.conditions = [
+      { label: 'COND001', value: 'COND001' },
+      { label: 'COND002', value: 'COND002' },
+      { label: 'COND003', value: 'COND003' }
+    ];
+    this.columns[0].inputModeOptions.model = this.conditions.map(c => c.value);
+  }
+
+  ngAfterViewInit() {
+    // Initialize table reference if needed
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  public singleRowEdit: SingleRowEdit = {
+    modeOptions: { input: false, reset: false },
+    index: 0
+  };
+
+  public dataWithSimpleEdit: ServiceElementCondTable[] = [];
+
+  public tableWithSimpleEdit: BodTableMetadata = {
+    title: 'Service Element Condition Relationship',
+    columns: this.columnSimpleEdit,
+    datasource: new MatTableDataSource<ServiceElementCondTable>(
+      this.dataWithSimpleEdit
+    ),
+    noRecordsMessage: 'No Service Element Condition Relationship Defined'
+  };
+
+  public reset() {
+    this.modeOptionsSimple = { input: true, reset: true };
+    this.updateMsgArr(this.resetMsg);
+  }
+
+  updateMsgArr(resetMsg: NotificationMessage) {
+    this.messages.push(resetMsg);
+    setTimeout(() => {
+      this.messages = this.messages.filter(msg => msg.text !== resetMsg.text);
+    }, 4000);
+  }
+
+  generateUniqueId(array: { id: number }[]): number {
+    const existingIds = array.map(item => item.id);
+    let newId = 1;
+
+    while (existingIds.includes(newId)) {
+      newId++;
+    }
+
+    return newId;
+  }
+
+  public addTableData() {
+    this.lastModifiedIndex = this.tableWithSimpleEdit.datasource.data.length < 1 
+      ? this.tableWithSimpleEdit.datasource.data.length 
+      : this.generateUniqueId(this.tableWithSimpleEdit.datasource.data);
+
+    const updatedData = {
+      id: this.lastModifiedIndex,
+    };
+
+    this.simpleEditTableRef.addRow(updatedData);
+
+    if (!this.modeOptionsSimple?.input) {
+      this.singleRowEdit = {
+        modeOptions: { input: true, reset: false },
+        index: this.tableWithSimpleEdit.datasource.data.length - 1
+      };
+      this.setDataForSingleLineEditMode(this.singleRowEdit.index);
+    }
+  }
+
+  setDataForSingleLineEditMode(editIndex: number) {
+    this.dataForReset = this.tableWithSimpleEdit.datasource.data.map(obj => ({
+      ...obj
+    }));
+    this.singleRowEdit = {
+      modeOptions: { input: true, reset: false },
+      index: editIndex
+    };
+    this.pageModeSimple = PageMode.NONE;
+  }
+
+  public checkStatus(status: any) {
+    this.formStatus = status;
+  }
+
+  public onEditTableAction(event) {
+    console.log('ServiceElementCondition CompleteDelta::', event.completeDelta);
+    this.completeDeltaChange.emit(event.completeDelta);
+    this.tableDirty.emit(true);
+  }
+
+  public resetTableForm() {
+    this.dataWithSimpleEdit = [];
+    this.tableWithSimpleEdit.datasource.data = [];
+
+    setTimeout(() => {
+      this.simpleEditTableRef?.tableFormGroup.reset();
+    });
+    console.log("resetting service element condition relationship table");
+  }
+
+  handleRowLevelActions($event: any, index: any) {
+    if ($event === 'edit') {
+      this.setDataForSingleLineEditMode(index);
+    } else if ($event === 'trash') {
+      if (this.modeOptionsSimple?.input) {
+        this.deleteTableData(index);
+      } else {
+        this.subscriptions.add(
+          this.bodConfirmAlertDialogsService
+            .confirm(this.ConfirmData)
+            .subscribe(val => {
+              if (val) {
+                this.deleteTableData(index);
+              }
+            })
+        );
+      }
+    } else if ($event === 'save') {
+      this.singleRowEdit = {
+        modeOptions: { input: false, reset: false },
+        index: 0
+      };
+      this.pageModeSimple = PageMode.INQUIRY;
+
+      // Get current table data and emit it
+      const currentData = this.getCurrentTableData();
+      this.conditionRelationshipDetails.emit(currentData);
+
+      this.updateFormStateAsPristine();
+    }
+  }
+
+  private updateFormStateAsPristine() {
+    this.simpleEditTableRef?.tableFormGroup.markAsPristine();
+  }
+
+  public deleteTableData(index) {
+    this.simpleEditTableRef.deleteRow(index);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // Example of how to integrate the ServiceElementConditionRelationshipComponent 
+// into your add-edit-service-element.component.ts and existing-service-element.component.ts
+
+// 1. First, import the component in your parent component:
+
+import { ServiceElementConditionRelationshipComponent, ServiceElementCondTable } from './path-to-component/service-element-condition-relationship.component';
+
+// 2. Add it to your component imports array:
+@Component({
+  selector: 'bod-add-edit-service-element',
+  imports: [
+    // ... other imports
+    ServiceElementConditionRelationshipComponent
+  ],
+  templateUrl: './add-edit-service-element.component.html',
+  styleUrl: './add-edit-service-element.component.scss'
+})
+
+// 3. In your component class, add properties to handle the data:
+export class AddEditServiceElementComponent implements OnInit {
+  
+  // Data for the condition relationship table
+  public serviceElementConditionData: ServiceElementCondTable[] = [];
+  
+  // ViewChild reference to access the component methods
+  @ViewChild('serviceElementConditionRef') 
+  serviceElementConditionRef: ServiceElementConditionRelationshipComponent;
+
+  // Handle when table data changes
+  public onServiceElementConditionChange(data: ServiceElementCondTable[]) {
+    this.serviceElementConditionData = data;
+    console.log('Service Element Condition Relationship Data:', data);
+    
+    // Mark form as dirty or handle validation
+    this.markFormAsDirty();
+  }
+
+  // Handle when table becomes dirty (user made changes)
+  public onServiceElementConditionTableDirty(isDirty: boolean) {
+    if (isDirty) {
+      this.markFormAsDirty();
+    }
+  }
+
+  // Method to get current condition relationship data
+  public getCurrentServiceElementConditionData(): ServiceElementCondTable[] {
+    return this.serviceElementConditionRef?.getCurrentTableData() || [];
+  }
+
+  // Method to reset the condition relationship table
+  public resetServiceElementConditionTable() {
+    this.serviceElementConditionRef?.resetTableForm();
+    this.serviceElementConditionData = [];
+  }
+
+  // Method to validate condition relationships
+  public validateConditionRelationships(): boolean {
+    const data = this.getCurrentServiceElementConditionData();
+    
+    // Check for duplicate conditions
+    const conditionCodes = data.map(item => item.conditionCode);
+    const hasDuplicates = conditionCodes.length !== new Set(conditionCodes).size;
+    
+    if (hasDuplicates) {
+      console.error('Duplicate conditions found in service element condition relationships');
+      return false;
+    }
+
+    // Check if all required fields are filled
+    const hasEmptyFields = data.some(item => !item.conditionCode || !item.optionality);
+    if (hasEmptyFields) {
+      console.error('Some condition relationships have empty required fields');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Example of form submission with condition relationship data
+  public onSubmitForm() {
+    if (!this.validateConditionRelationships()) {
+      return;
+    }
+
+    const formData = {
+      // ... your other form data
+      conditionRelationships: this.getCurrentServiceElementConditionData(),
+    };
+
+    // Submit your form data
+    console.log('Submitting form with condition relationships:', formData);
+  }
+
+  private markFormAsDirty() {
+    // Implement your form dirty logic here
+    console.log('Form marked as dirty due to condition relationship changes');
+  }
+}
+
+// 4. In your HTML template (add-edit-service-element.component.html):
+/* 
+<!-- Add this wherever you want the condition relationship table to appear -->
+<bod-service-element-condition-relationship
+  #serviceElementConditionRef
+  [serviceElementConditionData]="serviceElementConditionData"
+  (conditionRelationshipDetails)="onServiceElementConditionChange($event)"
+  (tableDirty)="onServiceElementConditionTableDirty($event)"
+  (completeDeltaChange)="onServiceElementConditionChange($event)"
+></bod-service-element-condition-relationship>
+*/
+
+// 5. Example of pre-populating data (when editing existing service element):
+export class EditExistingServiceElementComponent extends AddEditServiceElementComponent {
+  
+  ngOnInit() {
+    super.ngOnInit();
+    
+    // When loading existing service element data, populate the condition relationships
+    this.loadExistingServiceElementData();
+  }
+
+  private loadExistingServiceElementData() {
+    // Example of loading existing data
+    this.serviceElementService.getServiceElement(this.serviceElementId)
+      .subscribe(serviceElement => {
+        // Map your existing condition relationship data
+        this.serviceElementConditionData = serviceElement.conditionRelationships?.map((rel, index) => ({
+          id: index,
+          conditionCode: rel.conditionCode,
+          optionality: rel.optionality
+        })) || [];
+        
+        // Other form population logic...
+      });
+  }
+}
+
+// 6. Example service method to save condition relationships:
+export class ServiceElementService {
+  
+  saveServiceElementWithConditions(serviceElementData: any): Observable<any> {
+    const payload = {
+      serviceElement: {
+        // ... service element basic data
+        name: serviceElementData.name,
+        description: serviceElementData.description,
+        // ... other fields
+      },
+      conditionRelationships: serviceElementData.conditionRelationships?.map(rel => ({
+        conditionCode: rel.conditionCode,
+        optionality: rel.optionality,
+        // Add any additional mapping as needed
+      })) || []
+    };
+
+    return this.http.post(`${this.apiUrl}/service-elements`, payload);
+  }
+}
+
+// 7. Example of form validation that includes condition relationships:
+export class ServiceElementFormValidator {
+  
+  static validateServiceElementForm(formData: any): ValidationResult {
+    const errors: string[] = [];
+    
+    // Validate condition relationships
+    if (formData.conditionRelationships) {
+      const conditionErrors = this.validateConditionRelationships(formData.conditionRelationships);
+      errors.push(...conditionErrors);
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    };
+  }
+  
+  private static validateConditionRelationships(relationships: ServiceElementCondTable[]): string[] {
+    const errors: string[] = [];
+    
+    // Check for duplicates
+    const conditionCodes = relationships.map(r => r.conditionCode);
+    const duplicates = conditionCodes.filter((code, index) => conditionCodes.indexOf(code) !== index);
+    
+    if (duplicates.length > 0) {
+      errors.push(`Duplicate conditions found: ${duplicates.join(', ')}`);
+    }
+    
+    // Check for empty required fields
+    relationships.forEach((rel, index) => {
+      if (!rel.conditionCode) {
+        errors.push(`Condition is required for row ${index + 1}`);
+      }
+      if (!rel.optionality) {
+        errors.push(`Optionality is required for row ${index + 1}`);
+      }
+    });
+    
+    return errors;
+  }
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- In your service element component template -->
+<bod-service-element-condition-relationship
+  #serviceElementConditionRef
+  [serviceElementConditionData]="serviceElementConditionData"
+  (conditionRelationshipDetails)="onConditionRelationshipChange($event)"
+  (tableDirty)="onConditionTableDirty($event)"
+></bod-service-element-condition-relationship>
