@@ -1,506 +1,83 @@
-export interface PaymentTypeInquiry {
-  id: number;
-  label: string;
-  value: string;
-}
-
-export interface PaymentTypeList {
-  identifier: number;
-  code: string;
-  name: string;
-  paymentTypeInquiry: PaymentTypeInquiry[];
-  productTypePaymentTypeDSCounterRltnp: any[];
-  productTypePaymentTypeDSRestrcitionRltnp: any[];
-  productTypePaymentTypeDSCDRltnpList: any[];
-  productTypePaymentTypeDSComsRltnp: any[];
-  status?: string;
-}
-
-export interface PaymentTypeChannelTable {
-  id: number;
-  code: string;
-  option: string;
-  identifier?: string;
-  attributeForChannel?: string;
-  counters?: any[];
-  conditions?: any[];
-  restrictions?: any[];
-  communications?: any[];
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import { BodTableAction, BodTableActionType } from "@bod/common";
-
-export const PaymentTypeTableActions: BodTableAction[] = [
-  {
-    id: BodTableActionType.FILTER,
-    icon: 'filter',
-    label: 'Filter',
-    mostCommon: true
-  }
-];
-
-export const editActions: BodTableAction[] = [
-  {
-    id: 4,
-    icon: 'edit',
-    label: 'Edit',
-    mostCommon: true
-  }
-];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Column, InquiryLayoutInput, UIContextService } from '@bod/common';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { PaymentTypeList } from './payment-type.model';
-import { DataSharingService } from '../../data-sharing-service.service';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class PaymentTypeService {
-  public columns: Column[] = [
-    {
-      name: 'code',
-      title: 'Payment Type Code',
-      truncate: true,
-      noOverflow: true,
-      width: 20,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'name',
-      title: 'Name',
-      truncate: true,
-      noOverflow: true,
-      width: 15,
-      widthUnit: 'rem'
-    },
-    {
-      name: 'actions',
-      title: ' ',
-      hasAction: true
-    }
-  ];
-
-  private baseUrl = '';
-  private saveUrl = '';
-  private updateUrl = '';
-  private retrieveUrl = '';
-  private deleteUrl = '';
-  private retrieveAllUrl = '';
-  private currentStatus: string = 'NEW';
-  
-  private reqDfnId = '';
-  private clientCode = '';
-  private countryCode = '';
-  private productLines: any[] = [];
-  private productTypes: any[] = [];
-  private productTypeValues: number[] = [];
-  private businessProductLine: any[] = [];
-
-  constructor(
-    private http: HttpClient,
-    private uiContextService: UIContextService,
-    private readonly dataSharingService: DataSharingService
-  ) {
-    let url = this.uiContextService.getModuleDataById('fis.nextgen.sdkit').valueMap.sdkServiceUrl.value;
-
-    this.dataSharingService.data$.subscribe(data => {
-      if (data) {
-        this.reqDfnId = data.reqDfnId;
-        this.businessProductLine = data.reqDfnResponseDTO.businessProductLine;
-        this.countryCode = data.countryCode;
-        this.clientCode = data.countryCode;
-        this.productLines = [...new Set(this.businessProductLine.map(obj => obj.value))];
-        this.productTypes = [...new Set(this.businessProductLine.map(obj => obj.type))];
-        
-        if (data.identifier) {
-          try {
-            const parsedIdentifiers: { key: string; value: number }[] = JSON.parse(data.identifier);
-            this.productTypeValues = parsedIdentifiers.map((item: { key: string; value: number }) => item.value);
-          } catch (e) {
-            console.error('Failed to parse identifier JSON:', e);
-          }
-        }
-
-        this.saveUrl = url + '/metadata/create/' + this.reqDfnId;
-        this.updateUrl = url + '/metadata/update/' + this.reqDfnId;
-        this.retrieveUrl = url + '/metadata/retrieve/' + this.reqDfnId + '?metadata-config-type=PaymentType';
-        this.deleteUrl = url + '/metadata/delete/' + this.reqDfnId;
-        this.baseUrl = url ?? '';
-        this.retrieveAllUrl = url + '/metadata/retrieve/' + this.reqDfnId;
-      }
-    });
-  }
-
-  retrieveAll(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<any[]>(this.retrieveAllUrl, { headers }).pipe(
-      tap((response: any) => {
-        const firstStatus = response?.data && response.data.length > 0 && response.data[0]?.MetadataStatus
-          ? response.data[0].MetadataStatus
-          : 'NEW';
-        this.currentStatus = firstStatus;
-      })
-    );
-  }
-
-  updateCurrentStatus(status: string): void {
-    this.currentStatus = status;
-  }
-
-  private getCreateUrlWithStatus(status: string): string {
-    return `${this.baseUrl}/metadata/create/${this.reqDfnId}?status=${status}`;
-  }
-
-  savePaymentType(request: any, status?: string): Observable<any> {
-    const headers = this.createHeaders();
-    const statusToUse = status || this.currentStatus;
-    const url = this.getCreateUrlWithStatus(statusToUse);
-    return this.http.post(url, request, { headers });
-  }
-
-  updatePaymentType(request: any): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.put(this.updateUrl, request, { headers });
-  }
-
-  deletePaymentType(metadataConfigType: string, metadataConfigIdfr: number): Observable<any> {
-    const headers = this.createHeaders();
-    const params = {
-      'metadata-config-type': metadataConfigType,
-      'metadata-config-idfr': metadataConfigIdfr
-    };
-    return this.http.delete(this.deleteUrl, { headers, params });
-  }
-
-  retrievePaymentType(): Observable<any> {
-    const headers = this.createHeaders();
-    return this.http.get<PaymentTypeList[]>(this.retrieveUrl, { headers });
-  }
-
-  createHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      'country-code': this.countryCode,
-      'client-code': this.clientCode,
-      'product-line': this.productLines,
-      fe_id: this.uiContextService.getTenantId(),
-      'user-id': this.uiContextService.getUserProfile().userId?.toString(),
-      uuid: this.generateUUID(),
-      'requirement-id': this.reqDfnId
-    });
-  }
-
-  generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      const r = (Math.random() * 16) | 0,
-        v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
-
-  public getProductTypeValues(): number[] {
-    return this.productTypeValues;
-  }
-
-  public getPaymentTypeData(element: PaymentTypeList): Observable<InquiryLayoutInput[]> {
-    const groups: InquiryLayoutInput[] = [];
-    let setIsLink = false;
-    for (let i = 0; i < element.paymentTypeInquiry.length; i++) {
-      groups.push({
-        id: element.paymentTypeInquiry[i].id,
-        label: element.paymentTypeInquiry[i].label,
-        value: element.paymentTypeInquiry[i].value,
-        isLink: setIsLink
-      });
-    }
-    const $groups = new BehaviorSubject<InquiryLayoutInput[]>(groups);
-    return $groups;
-  }
-
-  // Initialize default payment types
-  public getDefaultPaymentTypes(): PaymentTypeList[] {
-    return [
-      {
-        identifier: 1,
-        code: 'Credit',
-        name: 'Credit Payment Type',
-        paymentTypeInquiry: [
-          { id: 0, label: 'Code', value: 'Credit' },
-          { id: 1, label: 'Name', value: 'Credit Payment Type' }
-        ],
-        productTypePaymentTypeDSCounterRltnp: [],
-        productTypePaymentTypeDSRestrcitionRltnp: [],
-        productTypePaymentTypeDSCDRltnpList: [],
-        productTypePaymentTypeDSComsRltnp: []
-      },
-      {
-        identifier: 2,
-        code: 'Debit',
-        name: 'Debit Payment Type',
-        paymentTypeInquiry: [
-          { id: 0, label: 'Code', value: 'Debit' },
-          { id: 1, label: 'Name', value: 'Debit Payment Type' }
-        ],
-        productTypePaymentTypeDSCounterRltnp: [],
-        productTypePaymentTypeDSRestrcitionRltnp: [],
-        productTypePaymentTypeDSCDRltnpList: [],
-        productTypePaymentTypeDSComsRltnp: []
-      }
-    ];
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<bod-message-container rufId [messages]="messages"></bod-message-container>
-
-<bod-table
-  #customTable
-  [customColumnTemplates]="[
-    {
-      columnName: 'actions',
-      templateName: editActionTemplate
-    }
-  ]"
-  [data]="PaymentTypeMetaData"
-  [tableActions]="isStatusEditable() ? paymentTypeTableActions : []"
-  [expandedRowTemplate]="expandedRowTemplate"
-  (onRowExpand)="rowExpanded($event)"
->
-  <ng-template
-    #editActionTemplate
-    let-element="element"
-    let-column="column"
-    let-index="index"
-  >
-    <bod-table-actions
-      sectionActions
-      [actions]="isStatusEditable() ? editactions : []"
-      (onActionClick)="isStatusEditable() && iconActionClicked($event, element)"
-    >
-    </bod-table-actions>
-  </ng-template>
-  
-  <ng-template #expandedRowTemplate let-context="context">
-    <div fullwidth>
-      
-        <bod-inquiry-layout
-          [columns]="2"
-          [groups]="paymentTypeService.getPaymentTypeData(context.element)"
-          [softSeparator]="false"
-          [direction]="direction"
-          [information]="[]"
-          (linkClick)="commonDataService.inquiryLayoutClick($event)"
-        >
-        </bod-inquiry-layout>
-
-        <h1>Channel Configuration</h1>
-        <!-- Display channel data similar to transaction category -->
-        <ng-container>
-          <bod-table
-            [data]="getChannelsTableForPaymentType(context.element)"
-            [alignContent]="'top'"
-            [innerTableContext]="context"
-            [expandedRowTemplate]="expandedChannelRowTemplate"
-          >
-          </bod-table>
-        </ng-container>
-      
-    </div>
-  </ng-template>
-   <ng-template #expandedChannelRowTemplate
-    let-channel="element"
-    let-context="context"
-  >
-    <div style="margin-left: 32px">
-      <bod-table
-        *ngIf="context.element?.counters?.length"
-        [data]="getCountersTableForChannel(context.element)"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      ></bod-table>
-      <bod-table
-        *ngIf="context.element?.restrictions?.length"
-        [data]="getRestrictionsTableForChannel(context.element)"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      ></bod-table>
-      <bod-table
-        *ngIf="context.element?.conditions?.length"
-        [data]="getConditionsTableForChannel(context.element)"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      ></bod-table>
-      <bod-table
-        *ngIf="context.element?.communications?.length"
-        [data]="getCommunicationsTableForChannel(context.element)"
-        [alignContent]="'top'"
-        [innerTableContext]="context"
-        [expandedRowTemplate]="expandedRowTemplateTable"
-      ></bod-table>
-    </div>
-  </ng-template>
-</bod-table>
-
-<ng-template #editPaymentTypeTemplate>
-  <bod-edit-paymenttype
-    (apiResponse)="editPaymentTypeEvent($event)"
-    [editPaymentTypeRow]="editPaymentType"
-  ></bod-edit-paymenttype>
-</ng-template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// add-edit-service-element.component.ts
 
 import {
-  Component,
-  CUSTOM_ELEMENTS_SCHEMA,
-  Input,
-  TemplateRef,
-  ViewChild,
-  OnInit,
   ChangeDetectorRef,
+  Component,
   EventEmitter,
-  Output
+  Input,
+  OnInit,
+  Output,
+  ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  BodCommonDialogModel,
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { TranslationKey } from '../../metadat-config/codegen-config.constant';
+import { ServiceElementService } from '../service-element.service';
+import { MetadataService } from '../../metadat-config/metada-config.service';
+import {
   BodCommonDialogService,
   BodCommonModule,
-  BodConfirmAlertDialogsService,
-  BodConfirmDialogModel,
   BodCurrencyControlModule,
   BodDynamicFormModule,
   BodFormModule,
+  BodFormStateService,
+  BodFormTypes,
   BodPageContainerModule,
   BodTableAction,
   BodTableActionsModule,
   BodTableActionType,
-  BodTableFilterType,
+  BodTableComponent,
   BodTableMetadata,
   BodTableModule,
   CommonDialogComponent,
   ControlGroupModule,
   DirectivesModule,
+  EditTableAction,
+  EditTableEventData,
+  InlineEditOutput,
   InputLayoutModule,
   InquiryLayoutModule,
   MessageContainerModule,
+  ModeOptions,
   NotificationMessage,
   NotificationMessageType,
   RowLeftAction,
   SearchFieldModule,
   SectionContainerModule
 } from '@bod/common';
-import {
-  editActions,
-  PaymentTypeTableActions
-} from './payment-type-constants';
-import { MatTableDataSource } from '@angular/material/table';
-import { EditPaymentTypeComponent } from './edit-paymenttype/edit-paymenttype.component';
+import { ServiceElementDetailsComponent } from '../service-element-details.component';
 import { MatIconModule } from '@angular/material/icon';
 import { RufIconModule } from '@ruf/shell/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormUtilityService } from '../../metadat-config/form-utility.service';
 import { MatDialogRef } from '@angular/material/dialog';
-import { PaymentTypeList } from './payment-type.model';
-import { MetadataService } from '../../metadat-config/metada-config.service';
-import { TransactionTypeService } from '../transaction-type.service';
-import { PaymentTypeService } from './payment-type-service';
-import { AddEditransactiontypeService } from '../add-edit-transactiontype/add-edit-transactiontype-service';
-import { BodSampleTable } from '../../bod-table-demo.model';
-import { forkJoin } from 'rxjs';
+import { ServiceElementList } from './add-edit-service-element.model';
 
 @Component({
-  selector: 'bod-payment-type',
+  selector: 'bod-add-edit-service-element',
   standalone: true,
   imports: [
-    CommonModule,
-    EditPaymentTypeComponent,
     InquiryLayoutModule,
     SearchFieldModule,
     MatIconModule,
@@ -533,1442 +110,311 @@ import { forkJoin } from 'rxjs';
     MatDatepickerModule,
     BodCommonModule
   ],
-  templateUrl: './payment-type.component.html',
-  styleUrl: './payment-type.component.scss',
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  templateUrl: './add-edit-service-element.component.html',
+  styleUrl: './add-edit-service-element.component.scss'
 })
-export class PaymentTypeComponent implements OnInit {
-  public editactions: BodTableAction[] = editActions;
-  public channels: any[] = [];
-  public counters: any[] = [];
-  public restrictions: any[] = [];
-  public conditions: any[] = [];
-  public communications: any[] = [];
-  public countersMasterList: any[] = [];
-  public restrictionsMasterList: any[] = [];
-  public communicationsMasterList: any[] = [];
-  public conditionsMasterList: any[] = [];
-
-  @ViewChild('systemMessage', { static: true }) systemMessage: any;
-  @Input() status = '';
-  @ViewChild('editPaymentTypeTemplate')
-  public editPaymentTypeTemp: TemplateRef<any>;
-
-  constructor(
-    private bodConfirmAlertDialogsService: BodConfirmAlertDialogsService,
-    private metadataService: MetadataService,
-    private paymentTypeService: PaymentTypeService,
-    private transactionTypeService: TransactionTypeService,
-    private addEditTransactiontypeservice: AddEditransactiontypeService,
-    private cdr: ChangeDetectorRef,
-    private bodCommonDialogService: BodCommonDialogService
-  ) {}
-
-  public paymentTypeTableActions: BodTableAction[] = PaymentTypeTableActions;
-
-  public PaymentTypeMetaData: BodTableMetadata = {
-    title: 'Payment Type',
-    columns: [...this.paymentTypeService.columns],
-    enablePagination: true,
-    paginationOptions: {
-      pageSize: 4,
-      length: 12,
-      pageSizeOptions: [2, 3, 4, 6],
-      showLastButton: true,
-      showPageSizeOptions: true
-    },
-    datasource: new MatTableDataSource<any>(),
-    noRecordsMessage: 'No Payment Type Data Defined',
-    rowLeftAction: RowLeftAction.expandableRows,
-    enableSorting: true
-  };
-
-  public channelsTable: BodTableMetadata = {
-    title: 'Channels',
-    columns: [...this.addEditTransactiontypeservice.categorychannelsTable],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    rowLeftAction: RowLeftAction.expandableRows,
-    noRecordsMessage: 'No Channels Defined'
-  };
-
-  public countersTable: BodTableMetadata = {
-    title: 'Counters',
-    columns: [...this.addEditTransactiontypeservice.countersTable],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Channels Defined'
-  };
-
-  public restrictionsTable: BodTableMetadata = {
-    title: 'Restrictions',
-    columns: [...this.addEditTransactiontypeservice.restrictionsTable],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Restrictions Defined'
-  };
-
-  public conditionsTable: BodTableMetadata = {
-    title: 'Conditions',
-    columns: [...this.addEditTransactiontypeservice.conditionsTable],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Conditions Defined'
-  };
-
-  public communicationsTable: BodTableMetadata = {
-    title: 'Communication Services',
-    columns: [...this.addEditTransactiontypeservice.communicationServiceTable],
-    enablePagination: false,
-    datasource: new MatTableDataSource<BodSampleTable>(),
-    noRecordsMessage: 'No Communication Services Defined'
-  };
-
-  ngOnInit() {
-    this.loadDropdownData();
-    this.paymentTypeService.retrieveAll().subscribe((response: any) => {
-      const firstStatus = response?.data?.[0]?.MetadataStatus;
-      const statusToSet = firstStatus || 'NEW';
-      this.statusControl.setValue(statusToSet);
-      this.previousStatus = statusToSet;
-      this.paymentTypeService.updateCurrentStatus(statusToSet);
-      console.log('PaymentType - Initial status set to:', statusToSet);
-    });
-    this.initializePaymentTypes();
-  }
-
-  loadDropdownData() {
-    forkJoin({
-      channels: this.transactionTypeService.getDeliveryChannel(),
-      counters: this.transactionTypeService.getCounters(),
-      restrictions: this.transactionTypeService.getRestrictions(),
-      conditions: this.transactionTypeService.getConditions(),
-      communications: this.transactionTypeService.getCommunicationService()
-    }).subscribe(results => {
-      this.channels = results.channels
-        .map((item: any) => ({
-          label: item.code,
-          value: item.identifier
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label));
-
-      this.counters = results.counters
-        .map((item: any) => ({
-          identifier: item.identifier,
-          code: item.code,
-          classificationType: item.classificationType
-        }))
-        .sort((a, b) => a.code.localeCompare(b.code));
-      this.countersMasterList = results.counters;
-
-      this.restrictions = results.restrictions;
-      this.restrictionsMasterList = results.restrictions;
-
-      this.conditions = results.conditions;
-      this.conditionsMasterList = results.conditions;
-
-      this.communications = results.communications;
-      this.communicationsMasterList = results.communications;
-    });
-  }
-
-  isStatusEditable(): boolean {
-    return this.status !== 'READY' && this.status !== 'GENERATED';
-  }
-
-  public commonDialogSize: string = 'Large';
-  public closeOnCloseIconClick: boolean = false;
-
-  private onCloseClick() {
-    this.systemMessage.message = 'Custom Function called on close';
-    this.systemMessage.show();
-    this.dialogRef$.close();
-  }
-
-  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
-
-  private openDialog(dialogModel: any) {
-    let onClose = this.closeOnCloseIconClick
-      ? this.onCloseClick.bind(this)
-      : undefined;
-    this.dialogRef$ = this.bodCommonDialogService.commonDialog(
-      dialogModel,
-      onClose,
-      this.commonDialogSize
-    );
-  }
-
-  isEdit = false;
-  public messages: NotificationMessage[] = [];
-
-  public msg: NotificationMessage | undefined;
-  statusControl = new FormControl(null);
-  public previousStatus: string | undefined;
-  @Output() statusChanged = new EventEmitter<string>();
-
-  editPaymentTypeEvent(event: any) {
-    if (event) {
-      this.loadDropdownData();
-      this.getPaymentTypes();
-      const SuccessMsg = event.SuccessMsg;
-      this.msg = {
-        code: '',
-        text: SuccessMsg,
-        type: NotificationMessageType.SUCCESS
-      };
-      this.messages.push(this.msg);
-      setTimeout(() => {
-        this.messages = this.messages.filter(msg => msg.text !== SuccessMsg);
-      }, 20000);
-    }
-    this.dialogRef$.close();
-
-    this.metadataService.retrieveAll().subscribe((response: any) => {
-      const firstStatus =
-        response?.data &&
-        response.data.length > 0 &&
-        response.data[0]?.MetadataStatus
-          ? response.data[0].MetadataStatus
-          : null;
-      const statusToSet = firstStatus || 'NEW';
-      this.statusControl.setValue(statusToSet);
-      this.previousStatus = statusToSet;
-      this.statusChanged.emit(statusToSet);
-      this.paymentTypeService.updateCurrentStatus(statusToSet);
-      console.log('PaymentType - Status updated to:', statusToSet);
-    });
-  }
-
-  public rowExpanded(element: PaymentTypeList) {
-    // 1. Collect all unique resourceItemIdentifiers from all relationship lists
-    const channelIds = new Set<string | number>();
-
-    [
-      ...(element.productTypePaymentTypeDSCounterRltnp || []),
-      ...(element.productTypePaymentTypeDSRestrcitionRltnp || []),
-      ...(element.productTypePaymentTypeDSCDRltnpList || []),
-      ...(element.productTypePaymentTypeDSComsRltnp || [])
-    ].forEach(rel => {
-      if (
-        rel.resourceItemIdentifier !== undefined &&
-        rel.resourceItemIdentifier !== null
-      ) {
-        channelIds.add(rel.resourceItemIdentifier);
-      }
-    });
-
-    // Always add "All" channel id (0) if not present
-    if (![...channelIds].some(id => String(id) === '0')) {
-      channelIds.add('0');
-    }
-
-    // 2. Build channel objects for each unique channelId
-    const mappedChannels = Array.from(channelIds).map(channelId => {
-      // Find label for channel (from this.channels loaded in dropdown)
-      let channelLabel =
-        this.channels.find(c => String(c.value) === String(channelId))?.label ??
-        channelId;
-      if (channelId === 0 || channelId === '0') channelLabel = 'All';
-
-      // Filter relationships for this channel
-      const countersForChannel = (
-        element.productTypePaymentTypeDSCounterRltnp || []
-      )
-        .filter(c => String(c.resourceItemIdentifier) === String(channelId))
-        .map(counter => ({
-          code: counter.counterIdentifier,
-          classificationType: counter.classificationType || '',
-          operatorType: counter.counterOperationType || ''
-        }));
-
-      const restrictionsForChannel = (
-        element.productTypePaymentTypeDSRestrcitionRltnp || []
-      )
-        .filter(r => String(r.resourceItemIdentifier) === String(channelId))
-        .map(restriction => ({
-          restrictionIdentifier: restriction.restrictionIdentifier,
-          restrictionClassificationType:
-            restriction.restrictionClassificationType || ''
-        }));
-
-      const conditionsForChannel = (
-        element.productTypePaymentTypeDSCDRltnpList || []
-      )
-        .filter(
-          cond => String(cond.resourceItemIdentifier) === String(channelId)
-        )
-        .map(condition => ({
-          conditionIdentifier: condition.conditionIdentifier,
-          cdarValue: condition.cdarValue || '',
-          optionalityType: condition.optionalityType || ''
-        }));
-
-      const communicationsForChannel = (
-        element.productTypePaymentTypeDSComsRltnp || []
-      )
-        .filter(
-          comm => String(comm.resourceItemIdentifier) === String(channelId)
-        )
-        .map(communication => {
-          const commMaster = this.communications?.find(
-            c =>
-              String(c.serviceElementIdentifier) ===
-              String(communication.serviceElementIdentifier)
-          );
-          return {
-            serviceElementIdentifier: communication.serviceElementIdentifier,
-            commServiceIdentifier: communication.commServiceIdentifier,
-            serviceElementCode: commMaster ? commMaster.serviceElementCode : ''
-          };
-        });
-
-      return {
-        channel: channelLabel,
-        option: '', // Option not available, set empty or default
-        counters: countersForChannel,
-        restrictions: restrictionsForChannel,
-        conditions: conditionsForChannel,
-        communications: communicationsForChannel
-      };
-    });
-
-    const sortedChannels = mappedChannels.sort((a, b) => {
-      if (a.channel === 'All') return -1;
-      if (b.channel === 'All') return 1;
-      return 0;
-    });
-
-    // 3. Set channelsTable data
-    this.channelsTable.datasource.data = sortedChannels;
-
-    this.cdr.detectChanges();
-  }
-
-  paymentTypeData: PaymentTypeList[] = [];
-
-  initializePaymentTypes(): void {
-    // First, try to get payment types from API
-    this.paymentTypeService.retrievePaymentType().subscribe(
-      response => {
-        if (response.status === 'SUCCESS' && response.data && response.data.length > 0) {
-          // API has data, use it
-          this.getPaymentTypes();
-        } else {
-          // No data from API, initialize with default Credit/Debit
-          this.paymentTypeData = this.paymentTypeService.getDefaultPaymentTypes();
-          this.PaymentTypeMetaData.datasource.data = this.paymentTypeData;
-        }
-      },
-      error => {
-        // Error getting data, use defaults
-        this.paymentTypeData = this.paymentTypeService.getDefaultPaymentTypes();
-        this.PaymentTypeMetaData.datasource.data = this.paymentTypeData;
-      }
-    );
-  }
-
-  getPaymentTypes(): void {
-    this.paymentTypeService.retrievePaymentType().subscribe(response => {
-      console.log(
-        'Payment Type API response:',
-        JSON.stringify(response, null, 2)
-      );
-      if (response.status === 'SUCCESS' && response.data) {
-        this.paymentTypeData = response.data.map((item: any) => {
-          const paymentType = item.PaymentType?.paymentType || {};
-          const relationships = item.PaymentType || {};
-
-          const paymentTypeData: PaymentTypeList = {
-            identifier: paymentType.identifier,
-            code: paymentType.code || '',
-            name: paymentType.name || '',
-            paymentTypeInquiry: [
-              {
-                id: 0,
-                label: 'Code',
-                value: paymentType.code
-              },
-              {
-                id: 1,
-                label: 'Name',
-                value: paymentType.name
-              }
-            ],
-            productTypePaymentTypeDSCounterRltnp:
-              relationships.productTypePaymentTypeDSCounterRltnpList || [],
-            productTypePaymentTypeDSRestrcitionRltnp:
-              relationships.productTypePaymentTypeDSRestrcitionRltnpList || [],
-            productTypePaymentTypeDSCDRltnpList:
-              relationships.productTypePaymentTypeDSCDRltnpList || [],
-            productTypePaymentTypeDSComsRltnp:
-              relationships.productTypePaymentTypeDSComsRltnpList || []
-          };
-          console.log(
-            'Mapped PaymentTypeData:',
-            JSON.stringify(paymentTypeData, null, 2)
-          );
-          return paymentTypeData;
-        });
-
-        this.PaymentTypeMetaData.datasource.data = this.paymentTypeData;
-      } else {
-        // If no data from API, show default Credit/Debit
-        this.paymentTypeData = this.paymentTypeService.getDefaultPaymentTypes();
-        this.PaymentTypeMetaData.datasource.data = this.paymentTypeData;
-      }
-    });
-  }
-
-  getChannelsTableForPaymentType(element: PaymentTypeList): BodTableMetadata {
-    console.log(
-      'PaymentType Element:',
-      JSON.stringify(element, null, 2)
-    );
-    const tableData: BodTableMetadata = {
-      ...this.channelsTable,
-      datasource: new MatTableDataSource(
-        Array.isArray(this.channelsTable.datasource.data)
-          ? [...this.channelsTable.datasource.data]
-          : []
-      )
-    };
-    return tableData;
-  }
-
-  getCountersTableForChannel(channel: any): BodTableMetadata {
-    const seen = new Set<string>();
-    const mappedCounters = (channel.counters || [])
-      .filter(counter => {
-        const key = String(counter.identifier ?? counter.code);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map(counter => {
-        const master = this.countersMasterList?.find(
-          c => String(c.identifier) === String(counter.identifier ?? counter.code)
-        );
-        return {
-          ...counter,
-          code: master ? master.code : counter.code,
-          classificationType: master
-            ? master.classificationType
-            : counter.classificationType
-        };
-      });
-
-    return {
-      ...this.countersTable,
-      datasource: new MatTableDataSource(mappedCounters)
-    };
-  }
-
-  getRestrictionsTableForChannel(channel: any): BodTableMetadata {
-    const seen = new Set<string>();
-    const mappedRestrictions = (channel.restrictions || [])
-      .filter(restriction => {
-        const key = String(restriction.restrictionIdentifier);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map(restriction => {
-        const master = this.restrictionsMasterList?.find(
-          r => String(r.identifier) === String(restriction.restrictionIdentifier)
-        );
-        return {
-          code: master ? master.code : restriction.restrictionIdentifier,
-          type: restriction.restrictionClassificationType
-        };
-      });
-
-    return {
-      ...this.restrictionsTable,
-      datasource: new MatTableDataSource(mappedRestrictions)
-    };
-  }
-
-  getConditionsTableForChannel(channel: any): BodTableMetadata {
-    const seen = new Set<string>();
-    const mappedConditions = (channel.conditions || [])
-      .filter(condition => {
-        const key = String(condition.conditionIdentifier);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map(condition => {
-        const master = this.conditionsMasterList?.find(
-          c => String(c.identifier) === String(condition.conditionIdentifier)
-        );
-        return {
-          cdarValue: master
-            ? master.cdarValue
-            : condition.cdarValue || condition.conditionIdentifier,
-          relationshipType: condition.optionalityType || ''
-        };
-      });
-
-    return {
-      ...this.conditionsTable,
-      datasource: new MatTableDataSource(mappedConditions)
-    };
-  }
-
-  getCommunicationsTableForChannel(channel: any): BodTableMetadata {
-    const seen = new Set<string>();
-    const mappedCommunications = (channel.communications || [])
-      .filter(comm => {
-        const key = String(comm.commServiceIdentifier);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map(comm => {
-        const master = this.communicationsMasterList?.find(
-          c => String(c.identifier) === String(comm.commServiceIdentifier)
-        );
-        return {
-          serviceElement: comm.serviceElementCode,
-          communicationServices: master
-            ? master.code
-            : comm.commServiceIdentifier
-        };
-      });
-
-    return {
-      ...this.communicationsTable,
-      datasource: new MatTableDataSource(mappedCommunications)
-    };
-  }
-
-  iconActionClicked(event: BodTableAction, element: PaymentTypeList) {
-    this.isEdit = true;
-    this.messages = [];
-    if (event.id === BodTableActionType.EDIT) {
-      this.editPaymentTypeRow(element);
-    }
-  }
-
-  editPaymentType: PaymentTypeList | undefined;
-
-  private editPaymentTypeRow(element: PaymentTypeList) {
-    this.editPaymentType = element;
-    const dialogModel: BodCommonDialogModel = {
-      formTemplate: this.editPaymentTypeTemp,
-      title: `Edit ${element.code} Payment Type`
-    };
-    this.openDialog(dialogModel);
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<bod-message-container [messages]="errorMessages"></bod-message-container>
-
-<bod-form
-  [formGroup]="editPaymentTypeFormGroup"
-  rufId
-  [type]="formType"
-  (onSubmit)="onEditPaymentType()"
-  (onReset)="onReset()"
-  fisStyle
->
-  <bod-input-layout col="2">
-    <!-- Code input - Read only -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.code'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <div>
-        {{ editPaymentTypeFormGroup.get('code')?.value }}
-      </div>
-    </bod-control-group>
-
-    <!-- Name input - Read only -->
-    <bod-control-group
-      [truncate]="false"
-      [label]="translationKey + 'metadataconfig.name'"
-      [forTextOnly]="true"
-      [required]="false"
-    >
-      <div>
-        {{ editPaymentTypeFormGroup.get('name')?.value }}
-      </div>
-    </bod-control-group>
-
-  </bod-input-layout>
-
-  <!-- Channel Configuration Section -->
-  <bod-payment-type-channels-main-table
-    #channelsMainTable
-    [channelData]="channelData"
-    [counterData]="counterData"
-    [parentFormGroup]="editPaymentTypeFormGroup" 
-    (completeDeltaChange)="handleChannelDataChange($event)"
-    (tableDirty)="onChannelTableDirty()"
-    (channelDetails)="handleChannelDataChange($event)"
-  ></bod-payment-type-channels-main-table>
-</bod-form>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import {
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  AbstractControl,
-  FormsModule,
-  ReactiveFormsModule,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
-import {
-  BodCommonDialogService,
-  BodCommonModule,
-  BodCurrencyControlModule,
-  BodDynamicFormModule,
-  BodFormModule,
-  BodFormTypes,
-  BodPageContainerModule,
-  BodTableMetadata,
-  BodTableModule,
-  ControlGroupModule,
-  DirectivesModule,
-  InputLayoutModule,
-  InquiryLayoutModule,
-  MessageContainerModule,
-  NotificationMessage,
-  NotificationMessageType,
-  SearchFieldModule,
-  SectionContainerModule
-} from '@bod/common';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { TranslateModule } from '@ngx-translate/core';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatButtonModule } from '@angular/material/button';
-import { RufIconModule } from '@ruf/shell/icon';
-import { MatIconModule } from '@angular/material/icon';
-import { MatRadioModule } from '@angular/material/radio';
-
-import { HttpClient } from '@angular/common/http';
-
-import {
-  PaymentTypeList,
-  PaymentTypeChannelTable
-} from '../payment-type.model';
-import { MatTableDataSource } from '@angular/material/table';
-import { TranslationKey } from '../../../metadat-config/codegen-config.constant';
-import { FormUtilityService } from '../../../metadat-config/form-utility.service';
-import { MetadataService } from '../../../metadat-config/metada-config.service';
-import {
-  ChannelTable,
-  CounterTable,
-  RestrictionTable,
-  ConditionTable,
-  CommunicationTable
-} from '../../transaction-type.model';
-import { TransactionTypeService } from '../../transaction-type.service';
-import { PaymentTypeService } from '../payment-type-service';
-import { PaymentTypeChannelsMainTableComponent } from '../payment-type-channels-main-table/payment-type-channels-main-table.component';
-
-@Component({
-  selector: 'bod-edit-paymenttype',
-  standalone: true,
-  imports: [
-    PaymentTypeChannelsMainTableComponent,
-    MatRadioModule,
-    CommonModule,
-    InquiryLayoutModule,
-    SearchFieldModule,
-    MatIconModule,
-    RufIconModule,
-    DirectivesModule,
-    MatButtonModule,
-    MatSlideToggleModule,
-    MatTabsModule,
-    CommonModule,
-    TranslateModule,
-    BodPageContainerModule,
-    BodTableModule,
-    TranslateModule,
-    FormsModule,
-    InputLayoutModule,
-    BodFormModule,
-    ControlGroupModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    ReactiveFormsModule,
-    BodDynamicFormModule,
-    SectionContainerModule,
-    MatInputModule,
-    TranslateModule,
-    MessageContainerModule,
-    MatButtonToggleModule,
-    BodCurrencyControlModule,
-    BodCommonModule
-  ],
-  templateUrl: './edit-paymenttype.component.html',
-  styleUrl: './edit-paymenttype.component.scss'
-})
-export class EditPaymentTypeComponent implements OnInit {
-  @Input() editPaymentTypeRow: PaymentTypeList;
-
+export class AddEditServiceElementComponent implements OnInit {
   public translationKey = TranslationKey;
-  public editPaymentTypeFormGroup: UntypedFormGroup;
-
-  public channelData: ChannelTable[] = [];
-  public isChannelTableDirty = false;
-
-  public counterData: CounterTable[] = [];
-  public restrictionData: RestrictionTable[] = [];
-  public conditionData: ConditionTable[] = [];
-  public communicationData: CommunicationTable[] = [];
-
-  public channels: any[] = [];
-  public counters: any[] = [];
-  public restrictions: any[] = [];
-  public conditions: any[] = [];
-  public communications: any[] = [];
-  public communicationsMasterList: any[] = [];
-
-  @ViewChild('channelsMainTable')
-  channelsMainTable: PaymentTypeChannelsMainTableComponent;
-
-  // Retained values for edit mode
-  @Input() retainedCode = '';
-  @Input() retainedPaymentTypeIdentifier = 0;
-  @Input() retainedName = '';
-  @Input() retainedChannels: any[] = [];
-  @Input() retainedCounters: any[] = [];
-  @Input() retainedRestrictions: any[] = [];
-  @Input() retainedConditions: any[] = [];
-  @Input() retainedCommunicationServices: any[] = [];
-
+  public addNewServiceElementFormGroup: UntypedFormGroup;
   formType: BodFormTypes = BodFormTypes.SUBMIT;
-  isEdit = true; // Always in edit mode
 
-  constructor(
-    private metadataService: MetadataService,
-    private cdr: ChangeDetectorRef,
-    private fb: UntypedFormBuilder,
-    private http: HttpClient,
-    private bodCommonDialogService: BodCommonDialogService,
-    private paymentTypeService: PaymentTypeService,
-    private transactionTypeService: TransactionTypeService
-  ) {}
-
-  ngOnInit() {
-    this.initForm();
-
-    // Load all dropdowns first, then call paymentTypeForm
-    const dropdownsLoaded$ = [
-      this.transactionTypeService.getDeliveryChannel(),
-      this.transactionTypeService.getCounters(),
-      this.transactionTypeService.getRestrictions(),
-      this.transactionTypeService.getConditions(),
-      this.transactionTypeService.getCommunicationService()
-    ];
-
-    // Use forkJoin to wait for all dropdowns
-    import('rxjs').then(rxjs => {
-      rxjs.forkJoin(dropdownsLoaded$).subscribe(
-        ([channels, counters, restrictions, conditions, communications]) => {
-          this.channels = channels.map((item: any) => ({
-            label: item.code,
-            value: item.identifier
-          }));
-          this.counters = counters.map((item: any) => ({
-            identifier: item.identifier,
-            code: item.code,
-            classificationType: item.classificationType
-          }));
-          this.restrictions = restrictions;
-          this.conditions = conditions;
-          this.communications = communications;
-          this.communicationsMasterList = communications;
-
-          // Now safe to call paymentTypeForm
-          if (this.editPaymentTypeRow) {
-            this.paymentTypeForm(this.editPaymentTypeRow);
-          }
-        }
-      );
-    });
-  }
-
-  private initForm(): void {
-    this.editPaymentTypeFormGroup = this.fb.group({
-      code: new UntypedFormControl({ value: '', disabled: true }),
-      name: new UntypedFormControl({ value: '', disabled: true }),
-      paymentTypeIdentifier: [{ value: '', disabled: true }]
-    });
-  }
-
-  /**
-   * Handle channel table dirty state
-   */
-  public onChannelTableDirty(): void {
-    this.isChannelTableDirty = true;
-    this.editPaymentTypeFormGroup.markAsDirty();
-  }
-
-  /**
-   * Handle channel data changes
-   */
-  public handleChannelDataChange(data: any) {
-    this.channelData = data.channels;
-    this.counterData = data.counters;
-    this.restrictionData = data.restrictions;
-    this.conditionData = data.conditions;
-    this.communicationData = data.communications;
-
-    console.log(
-      'Received All Counters with Channel Identifier (JSON):\n',
-      JSON.stringify(this.counterData, null, 2)
-    );
-    console.log(
-      'Received All Restrictions with Channel Identifier (JSON):\n',
-      JSON.stringify(this.restrictionData, null, 2)
-    );
-    console.log(
-      'Received All Conditions with Channel Identifier (JSON):\n',
-      JSON.stringify(this.conditionData, null, 2)
-    );
-    console.log(
-      'Received All Communications with Channel Identifier (JSON):\n',
-      JSON.stringify(this.communicationData, null, 2)
-    );
-  }
-
-  /**
-   * Get current channel table data
-   */
-  public getCurrentChannelData(): ChannelTable[] {
-    return this.channelsMainTable?.getCurrentTableData() || [];
-  }
-
-  onReset(): void {
-    console.log('retainedCounters:', JSON.stringify(this.retainedCounters, null, 2));
-    console.log('retainedRestrictions:', JSON.stringify(this.retainedRestrictions, null, 2));
-    console.log('retainedConditions:', JSON.stringify(this.retainedConditions, null, 2));
-    console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommunicationServices, null, 2));
-
-    this.editPaymentTypeFormGroup.reset();
-    this.channelData = [];
-    this.counterData = [];
-    this.restrictionData = [];
-    this.conditionData = [];
-    this.communicationData = [];
-    this.isChannelTableDirty = false;
-
-    if (this.channelsMainTable) {
-      this.channelsMainTable.resetTableForm();
-    }
-
-    // Restore retained form values
-    this.editPaymentTypeFormGroup.patchValue({
-      code: this.retainedCode,
-      paymentTypeIdentifier: this.retainedPaymentTypeIdentifier,
-      name: this.retainedName
-    });
-
-    // Restore channel data
-    this.restoreChannelDataFromRetained();
-
-    this.editPaymentTypeFormGroup.markAsPristine();
-    this.editPaymentTypeFormGroup.markAsUntouched();
-  }
-
-  private restoreChannelDataFromRetained() {
-    function dedupeBy<T>(arr: T[], key: (item: T) => string): T[] {
-      const seen = new Set<string>();
-      return arr.filter(item => {
-        const k = key(item);
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
-    }
-
-    // Enrich and dedupe retainedCounters
-    const enrichedRetainedCounters = dedupeBy(
-      (this.retainedCounters || []).map(counter => {
-        const counterObj = this.counters?.find(
-          c => String(c.identifier) === String(counter.counterIdentifier)
-        );
-        return {
-          id: counter.counterIdentifier,
-          code: counterObj ? counterObj.code : String(counter.counterIdentifier),
-          identifier: counter.counterIdentifier,
-          classificationType: counterObj ? counterObj.classificationType : '',
-          operatorType: counter.counterOperationType || '',
-          channelidentifier: counter.resourceItemIdentifier
-        };
-      }),
-      c => `${c.channelidentifier}_${c.identifier}`
-    );
-
-    // Similar for restrictions, conditions, communications
-    const enrichedRetainedRestrictions = dedupeBy(
-      (this.retainedRestrictions || []).map(restriction => {
-        const restrictionObj = this.restrictions?.find(
-          r => String(r.identifier) === String(restriction.restrictionIdentifier)
-        );
-        return {
-          id: restriction.restrictionIdentifier,
-          code: restrictionObj ? restrictionObj.code : String(restriction.restrictionIdentifier),
-          identifier: restriction.restrictionIdentifier,
-          type: restriction.restrictionClassificationType || '',
-          channelidentifier: restriction.resourceItemIdentifier
-        };
-      }),
-      r => `${r.channelidentifier}_${r.identifier}`
-    );
-
-    const enrichedRetainedConditions = dedupeBy(
-      (this.retainedConditions || []).map(condition => {
-        const conditionObj = this.conditions?.find(
-          c => String(c.identifier) === String(condition.conditionIdentifier)
-        );
-        return {
-          id: condition.conditionIdentifier,
-          code: conditionObj ? conditionObj.cdarValue : String(condition.conditionIdentifier),
-          identifier: condition.conditionIdentifier,
-          relationshipType: condition.optionalityType || '',
-          channelidentifier: condition.resourceItemIdentifier
-        };
-      }),
-      c => `${c.channelidentifier}_${c.identifier}`
-    );
-
-    const enrichedRetainedCommunicationServices = dedupeBy(
-      (this.retainedCommunicationServices || []).map(comm => {
-        const commObj = this.communications?.find(
-          c => String(c.identifier) === String(comm.commServiceIdentifier)
-        );
-        const commMaster = this.communicationsMasterList?.find(
-          m => String(m.serviceElementIdentifier) === String(comm.serviceElementIdentifier)
-        );
-        return {
-          id: comm.commServiceIdentifier,
-          identifier: comm.commServiceIdentifier,
-          serviceElement: commMaster ? commMaster.serviceElementCode : '',
-          serviceElementCode: comm.serviceElementIdentifier,
-          communicationServices: commObj ? commObj.code : String(comm.commServiceIdentifier),
-          channelidentifier: comm.resourceItemIdentifier
-        };
-      }),
-      c => `${c.channelidentifier}_${c.identifier}`
-    );
-
-    // Rebuild channelData
-    let channelIds = (this.retainedChannels || []).map(c => c.resourceItemIdentifier);
-    if (!channelIds.includes(0)) {
-      channelIds.unshift(0);
-    }
-
-    this.channelData = channelIds.map(channelId => {
-      const channelObj = this.channels?.find(
-        c => String(c.value) === String(channelId)
-      );
-      const isAllChannel = String(channelId) === '0';
-      return {
-        id: channelId,
-        identifier: String(channelId),
-        code: isAllChannel
-          ? 'All'
-          : channelObj
-          ? channelObj.label
-          : String(channelId),
-        channel: isAllChannel
-          ? 'All'
-          : channelObj
-          ? channelObj.label
-          : String(channelId),
-        option: '',
-        attributeForChannel: '',
-        counters: enrichedRetainedCounters.filter(
-          c => String(c.channelidentifier) === String(channelId)
-        ),
-        restrictions: enrichedRetainedRestrictions.filter(
-          r => String(r.channelidentifier) === String(channelId)
-        ),
-        conditions: enrichedRetainedConditions.filter(
-          c => String(c.channelidentifier) === String(channelId)
-        ),
-        communications: enrichedRetainedCommunicationServices.filter(
-          c => String(c.channelidentifier) === String(channelId)
-        )
-      };
-    });
-
-    // Restore flat arrays
-    this.counterData = [];
-    this.restrictionData = [];
-    this.conditionData = [];
-    this.communicationData = [];
-    this.channelData.forEach(channel => {
-      if (channel.counters) this.counterData.push(...channel.counters);
-      if (channel.restrictions) this.restrictionData.push(...channel.restrictions);
-      if (channel.conditions) this.conditionData.push(...channel.conditions);
-      if (channel.communications) this.communicationData.push(...channel.communications);
-    });
-
-    // Update child tables
-    if (this.channelsMainTable && this.channelsMainTable.tableWithSimpleEdit) {
-      this.channelsMainTable.tableWithSimpleEdit.datasource.data = [...this.channelData];
-    }
-  }
-
-  onEditPaymentType() {
-    // Force the child to emit the latest data
-    this.channelsMainTable?.emitCompleteDelta();
-
-    this.errorMessages = [];
-
-    // Validate that non-All channels have at least one relationship
-    const emptyNonAllChannels = (this.channelData || []).filter(channel =>
-      (String(channel.id) !== '0' && String(channel.identifier) !== '0') && // Exclude "All"
-      (!channel.counters || channel.counters.length === 0) &&
-      (!channel.conditions || channel.conditions.length === 0) &&
-      (!channel.restrictions || channel.restrictions.length === 0) &&
-      (!channel.communications || channel.communications.length === 0)
-    );
-
-    if (emptyNonAllChannels.length > 0) {
-      this.errorMessages.push({
-        code: 'CHANNEL_RELATIONSHIP_REQUIRED',
-        text: 'Each channel (other than All) must have at least one Counter, Condition, Restriction, or Communication.',
-        type: NotificationMessageType.ERROR
-      });
-      return;
-    }
-
-    const formValue = this.editPaymentTypeFormGroup.getRawValue();
-    
-    // Get all relationship data
-    const productTypeIdentifiers = this.metadataService.getProductTypeValues();
-
-    // Build relationship lists
-    const buildList = (arr: any[], keyMap: Record<string, any> = {}) =>
-      productTypeIdentifiers
-        .map(productTypeIdentifier =>
-          (arr || []).map(item => ({
-            productTypeIdentifier: productTypeIdentifier ?? null,
-            paymentTypeIdentifier: formValue.paymentTypeIdentifier || this.editPaymentTypeRow.identifier,
-            ...item,
-            resourceItemIdentifier:
-              item.resourceItemIdentifier !== undefined
-                ? Number(item.resourceItemIdentifier)
-                : undefined
-          }))
-        )
-        .reduce((acc, val) => acc.concat(val), []);
-
-    const counterList = buildList(
-      this.counterData.map(counter => ({
-        resourceItemIdentifier: counter.channelidentifier,
-        counterIdentifier: counter.identifier,
-        counterOperationType: counter.operatorType
-      }))
-    );
-
-    const restrictionList = buildList(
-      this.restrictionData.map(restriction => ({
-        resourceItemIdentifier: restriction.channelidentifier,
-        restrictionIdentifier: restriction.identifier,
-        restrictionClassificationType: restriction.type
-      }))
-    );
-
-    const conditionList = buildList(
-      this.conditionData.map(condition => ({
-        resourceItemIdentifier: condition.channelidentifier,
-        conditionIdentifier: condition.identifier,
-        cdarValue: condition.code,
-        optionalityType: condition.relationshipType
-      }))
-    );
-
-    const communicationList = buildList(
-      this.communicationData.map(communication => {
-        const master = this.communicationsMasterList.find(
-          m => m.code === communication.communicationServices
-        );
-        return {
-          resourceItemIdentifier: communication.channelidentifier,
-          serviceElementIdentifier: master?.serviceElementIdentifier ?? null,
-          commServiceIdentifier: communication.identifier
-        };
-      })
-    );
-
-    // Build the payload
-    const paymentTypeData = {
-      metadataType: 'PaymentType',
-      paymentTypeDetailList: [
-        {
-          paymentType: {
-            identifier: formValue.paymentTypeIdentifier || this.editPaymentTypeRow.identifier,
-            code: formValue.code || this.editPaymentTypeRow.code,
-            name: formValue.name || this.editPaymentTypeRow.name,
-            isExisting: "true"
-          },
-          productTypePaymentTypeDSCDRltnpList: conditionList,
-          productTypePaymentTypeDSComsRltnpList: communicationList,
-          productTypePaymentTypeDSCounterRltnpList: counterList,
-          productTypePaymentTypeDSRestrcitionRltnpList: restrictionList
-        }
-      ]
-    };
-
-    console.log(
-      'paymentTypeData(JSON):\n',
-      JSON.stringify(paymentTypeData, null, 2)
-    );
-
-    // Always use update for edit mode
-    this.paymentTypeService.updatePaymentType(paymentTypeData).subscribe({
-      next: resp => this.successResponse(resp, paymentTypeData),
-      error: (err: NotificationMessage[]) => this.handleError(err)
-    });
-  }
+  @Input() retainedCode: string = '';
+  @Input() retainedIdentifier: number = 0;
+  @Input() retainedName: string = '';
+  @Input() retainedOptionality: string = '';
+  
+  @Input() editServiceElementRow: ServiceElementList;
 
   @Output() apiResponse: EventEmitter<NotificationMessage[]> = new EventEmitter<
     NotificationMessage[]
   >();
 
-  private successResponse(resp, paymentTypeData) {
-    const paymentTypeCode =
-      paymentTypeData.paymentTypeDetailList[0].paymentType.code;
-    const SuccessMsg = `${paymentTypeCode} Updated successfully`;
-    this.apiResponse.emit({ ...paymentTypeData, SuccessMsg });
+  public errorMessages: NotificationMessage[] = [];
+  public modeOptions: ModeOptions = { input: false, reset: false };
+
+  @ViewChild('systemMessage', { static: true }) systemMessage: any;
+
+  public messages: NotificationMessage[] = [];
+  public message: NotificationMessage | undefined;
+  private dialogRef$: MatDialogRef<CommonDialogComponent, any>;
+
+  // Optionality dropdown options
+  optionalityOptions = [
+    { label: 'Locked', value: 'Locked' },
+    { label: 'Mandatory', value: 'Mandatory' },
+    { label: 'Optional', value: 'Optional' },
+    { label: 'Proposed', value: 'Proposed' }
+  ];
+
+  statusControl = new FormControl(null);
+  public previousStatus: string | undefined;
+  isAdd = true;
+  isEdit = false;
+
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef,
+    private bodFormStateService: BodFormStateService,
+    public ServiceElementService: ServiceElementService,
+    private fb: FormBuilder,
+    private bodCommonDialogService: BodCommonDialogService,
+    private metadataService: MetadataService
+  ) { }
+
+  ngOnInit() {
+    this.initForm();
+    if (this.editServiceElementRow) {
+      this.serviceElementForm(this.editServiceElementRow);
+    }
+    this.metadataService.retrieveAll().subscribe((response: any) => {
+      const firstStatus = response?.data?.[0]?.MetadataStatus;
+      const statusToSet = firstStatus || 'NEW';
+      this.statusControl.setValue(statusToSet);
+      this.previousStatus = statusToSet;
+    });
   }
 
-  public errorMessages: NotificationMessage[] = [];
-  public message: NotificationMessage | undefined;
+  private initForm(): void {
+    this.addNewServiceElementFormGroup = this.fb.group({
+      serviceElementCode: new UntypedFormControl('', [
+        Validators.required,
+        this.noSpecialCharactersValidator(),
+        this.maxLengthValidator(32)
+      ]),
+      serviceElementIdentifier: [{ value: '', disabled: true }],
+      serviceElementName: new UntypedFormControl('', [
+        Validators.required,
+        this.maxLengthValidator(120)
+      ]),
+      optionality: new UntypedFormControl('', [Validators.required])
+    });
+  }
 
-  private handleError(error: any) {
-    const errorMsg =
-      error?.error?.errorDescription || 'An unexpected error occurred.';
+  noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      const forbidden = /[^a-zA-Z0-9]/.test(control.value);
+      return forbidden
+        ? { noSpecialCharacters: { value: control.value } }
+        : null;
+    };
+  }
+
+  maxLengthValidator(maxLength: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+
+      const stringValue = value.toString();
+
+      return stringValue.length > maxLength
+        ? { maxLength: 'Value exceeds allowed digit limit' }
+        : null;
+    };
+  }
+
+  identifierSearch(field: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.metadataService.idfrSearch().subscribe(
+        (response: string) => {
+          if (field === 'serviceElementIdentifier') {
+            this.addNewServiceElementFormGroup.controls['serviceElementIdentifier'].setValue(response);
+          }
+          this.addNewServiceElementFormGroup.markAsDirty();
+          resolve();
+        },
+        error => {
+          console.error('Error:', error);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  public getError(control: string, formGroup: UntypedFormGroup): string {
+    if (formGroup) {
+      const fc: AbstractControl = formGroup.get(control);
+      if (fc && fc.errors && fc.touched) {
+        return FormUtilityService.getCommonFCErrorMsg(fc);
+      }
+    }
+  }
+
+  onAddNewServiceElement(isAdd: boolean) {
+    const promises = [];
+
+    if (isAdd) {
+      promises.push(this.identifierSearch('serviceElementIdentifier'));
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        this.submitForm(isAdd);
+      })
+      .catch(error => {
+        console.error('Error during identifier search:', error);
+      });
+  }
+
+  submitForm(isAdd: boolean) {
+    this.errorMessages = [];
+
+    if (this.addNewServiceElementFormGroup.invalid) {
+      this.addNewServiceElementFormGroup.markAllAsTouched();
+      const missingFields = this.getInvalidRequiredFields(this.addNewServiceElementFormGroup);
+      this.handleError(
+        {
+          errorCode: 'FORM_INVALID',
+          status: 400,
+          missingFields
+        },
+        isAdd
+      );
+      return;
+    }
+
+    const formValue = this.addNewServiceElementFormGroup.getRawValue();
+    this.addNewServiceElementFormGroup.controls['serviceElementIdentifier'].enable();
+
+    // Get product type data from metadata service
+    const productTypeKeys = this.metadataService.getProductTypeKeys();
+    const productTypeValues = this.metadataService.getProductTypeValues();
+
+    // Build serviceElementList
+    const serviceElementList = [{
+      serviceElement: {
+        identifier: formValue.serviceElementIdentifier,
+        code: formValue.serviceElementCode,
+        name: formValue.serviceElementName,
+        optionality: formValue.optionality
+      }
+    }];
+
+    // Build productTypeList
+    const productTypeList = productTypeKeys.map((code, index) => ({
+      identifier: productTypeValues[index],
+      code: code
+    }));
+
+    // Final request object
+    const serviceElementData = {
+      metadataType: 'ServiceElement',
+      serviceElementList,
+      productTypeList
+    };
+
+    const serviceCall = isAdd
+      ? this.ServiceElementService.saveServiceElement(serviceElementData)
+      : this.ServiceElementService.updateServiceElement(serviceElementData);
+
+    serviceCall.subscribe({
+      next: resp => this.successResponse(resp, serviceElementData, isAdd),
+      error: (err: NotificationMessage[]) => this.handleError(err, isAdd)
+    });
+
+    this.addNewServiceElementFormGroup.controls['serviceElementIdentifier'].disable();
+  }
+
+  private getInvalidRequiredFields(formGroup: FormGroup): string[] {
+    const invalidFields: string[] = [];
+
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control && control.errors?.['required']) {
+        invalidFields.push(key);
+      }
+    });
+
+    return invalidFields;
+  }
+
+  private successResponse(resp, serviceElementData, isAdd) {
+    const serviceElementCode = serviceElementData.serviceElementList[0].serviceElement.code;
+    const SuccessMsg = isAdd
+      ? `${serviceElementCode} Added successfully`
+      : `${serviceElementCode} Updated successfully`;
+    this.apiResponse.emit({ ...serviceElementData, SuccessMsg });
+  }
+
+  private handleError(error: any, isAdd: boolean) {
+    let errorMsg = '';
+
+    if (error.errorCode === 'FORM_INVALID' || error.status === 400) {
+      if (error.missingFields?.length) {
+        errorMsg = `Please fill the required fields.`;
+      } else {
+        errorMsg = 'Please fill the required fields.';
+      }
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_005") {
+      errorMsg = 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_004") {
+      errorMsg = error.error?.errorDescription || 'Code already exists.';
+    } else if (error.error?.errorCode === "MBP_SDK_BUS_ERR_048") {
+      errorMsg = error.error?.errorDescription || 'This Metadata cannot be created.';
+    } else {
+      errorMsg = 'Unknown error occurred.';
+    }
+
     this.message = {
-      code: error?.error?.errorCode,
+      code: error.errorCode,
       text: errorMsg,
       type: NotificationMessageType.ERROR
     };
+    this.errorMessages.push(this.message);
 
-    if (errorMsg) {
-      this.errorMessages.push(this.message);
-    }
-
+    // Auto-remove error messages after 10 seconds
     setTimeout(() => {
-      this.errorMessages = this.errorMessages.filter(
-        msg => msg.text !== errorMsg
-      );
-    }, 20000);
+      this.errorMessages = this.errorMessages.filter(msg => msg.text !== errorMsg);
+    }, 10000);
   }
 
-  paymentTypeForm(element: PaymentTypeList) {
-    console.log(
-      'paymentTypeForm element:',
-      JSON.stringify(element, null, 2)
-    );
+  onReset(isAdd: boolean): void {
+    const isEditMode = this.isEdit;
 
-    // Retain basic fields
-    this.retainedPaymentTypeIdentifier = element.identifier ?? 0;
+    // Reset error messages
+    this.errorMessages = [];
+
+    // Reset the form
+    this.addNewServiceElementFormGroup.reset();
+    this.addNewServiceElementFormGroup.markAsPristine();
+    this.addNewServiceElementFormGroup.markAsUntouched();
+
+    if (isEditMode) {
+      // Restore retained values for edit mode
+      this.addNewServiceElementFormGroup.get('serviceElementCode')?.setValue(this.retainedCode);
+      this.addNewServiceElementFormGroup.get('serviceElementCode')?.disable();
+      this.addNewServiceElementFormGroup.get('serviceElementIdentifier')?.setValue(this.retainedIdentifier);
+      this.addNewServiceElementFormGroup.get('serviceElementIdentifier')?.disable();
+      this.addNewServiceElementFormGroup.get('serviceElementName')?.setValue(this.retainedName);
+      this.addNewServiceElementFormGroup.get('optionality')?.setValue(this.retainedOptionality);
+    } else {
+      this.addNewServiceElementFormGroup.get('serviceElementCode')?.enable();
+      this.addNewServiceElementFormGroup.get('serviceElementIdentifier')?.enable();
+    }
+
+    this.changeDetectorRef.detectChanges();
+  }
+
+  private serviceElementForm(element: ServiceElementList): void {
+    this.isAdd = false;
+    this.isEdit = true;
+
+    // Store retained values
     this.retainedCode = element.code || '';
+    this.retainedIdentifier = element.identifier || 0;
     this.retainedName = element.name || '';
+    this.retainedOptionality = element.optionality || '';
 
-    // Retain relationship lists
-    const allResourceItems = [
-      ...(element.productTypePaymentTypeDSCounterRltnp || []),
-      ...(element.productTypePaymentTypeDSRestrcitionRltnp || []),
-      ...(element.productTypePaymentTypeDSCDRltnpList || []),
-      ...(element.productTypePaymentTypeDSComsRltnp || [])
-    ].map(rel => rel.resourceItemIdentifier);
-
-    this.retainedChannels = Array.from(new Set(allResourceItems)).map(id => ({ resourceItemIdentifier: id }));
-
-    // Always keep resourceItemIdentifier: 0 at the top
-    this.retainedChannels.sort((a, b) => {
-      if (a.resourceItemIdentifier === 0) return -1;
-      if (b.resourceItemIdentifier === 0) return 1;
-      return 0;
+    this.addNewServiceElementFormGroup.patchValue({
+      serviceElementIdentifier: element.identifier,
+      serviceElementCode: element.code,
+      serviceElementName: element.name,
+      optionality: element.optionality
     });
 
-    this.retainedCounters = element.productTypePaymentTypeDSCounterRltnp || [];
-    this.retainedRestrictions = element.productTypePaymentTypeDSRestrcitionRltnp || [];
-    this.retainedConditions = element.productTypePaymentTypeDSCDRltnpList || [];
-    this.retainedCommunicationServices = element.productTypePaymentTypeDSComsRltnp || [];
-
-    console.log('retainedChannels:', JSON.stringify(this.retainedChannels, null, 2));
-    console.log('retainedCounters:', JSON.stringify(this.retainedCounters, null, 2));
-    console.log('retainedRestrictions:', JSON.stringify(this.retainedRestrictions, null, 2));
-    console.log('retainedConditions:', JSON.stringify(this.retainedConditions, null, 2));
-    console.log('retainedCommunicationServices:', JSON.stringify(this.retainedCommunicationServices, null, 2));
-
-    // Patch form values
-    this.editPaymentTypeFormGroup.patchValue({
-      code: element.code,
-      paymentTypeIdentifier: element.identifier,
-      name: element.name
-    });
-
-    // Build channelData with nested relationships
-    const channelIds = new Set<string | number>();
-    [
-      ...(element.productTypePaymentTypeDSCounterRltnp || []),
-      ...(element.productTypePaymentTypeDSRestrcitionRltnp || []),
-      ...(element.productTypePaymentTypeDSCDRltnpList || []),
-      ...(element.productTypePaymentTypeDSComsRltnp || [])
-    ].forEach(rel => {
-      if (rel.resourceItemIdentifier !== undefined && rel.resourceItemIdentifier !== null) {
-        channelIds.add(rel.resourceItemIdentifier);
-      }
-    });
-    
-    // Always ensure "All" channel (id 0) is present
-    channelIds.add(0);
-
-    function dedupeBy<T>(arr: T[], key: (item: T) => string | number): T[] {
-      const seen = new Set<string | number>();
-      return arr.filter(item => {
-        const k = key(item);
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
-    }
-
-    this.channelData = Array.from(channelIds).map(channelIdRaw => {
-      const channelId = typeof channelIdRaw === 'string' ? Number(channelIdRaw) : channelIdRaw;
-      let channelLabel =
-        this.channels.find(c => String(c.value) === String(channelId))?.label ?? channelId;
-      if (channelId === 0) channelLabel = 'All';
-
-      // Map counters (deduplicate by counterIdentifier)
-      const countersForChannel = dedupeBy(
-        (element.productTypePaymentTypeDSCounterRltnp || [])
-          .filter(c => Number(c.resourceItemIdentifier) === channelId)
-          .map(counter => {
-            const counterObj = this.counters?.find(
-              c => String(c.identifier) === String(counter.counterIdentifier)
-            );
-            return {
-              id: Number(counter.counterIdentifier),
-              code: counterObj ? counterObj.code : String(counter.counterIdentifier),
-              identifier: counter.counterIdentifier,
-              classificationType: counterObj ? counterObj.classificationType : '',
-              operatorType: counter.counterOperationType || '',
-              channelidentifier: counter.resourceItemIdentifier
-            };
-          }),
-        c => c.identifier
-      );
-
-      // Map restrictions (deduplicate by restrictionIdentifier)
-      const restrictionsForChannel = dedupeBy(
-        (element.productTypePaymentTypeDSRestrcitionRltnp || [])
-          .filter(r => Number(r.resourceItemIdentifier) === channelId)
-          .map(restriction => {
-            const restrictionObj = this.restrictions?.find(
-              r => String(r.identifier) === String(restriction.restrictionIdentifier)
-            );
-            return {
-              id: Number(restriction.restrictionIdentifier),
-              code: restrictionObj ? restrictionObj.code : String(restriction.restrictionIdentifier),
-              identifier: restriction.restrictionIdentifier,
-              type: restriction.restrictionClassificationType || '',
-              channelidentifier: restriction.resourceItemIdentifier
-            };
-          }),
-        r => r.identifier
-      );
-
-      // Map conditions (deduplicate by conditionIdentifier)
-      const conditionsForChannel = dedupeBy(
-        (element.productTypePaymentTypeDSCDRltnpList || [])
-          .filter(cond => Number(cond.resourceItemIdentifier) === channelId)
-          .map(condition => {
-            const conditionObj = this.conditions?.find(
-              c => String(c.identifier) === String(condition.conditionIdentifier)
-            );
-            return {
-              id: Number(condition.conditionIdentifier),
-              code: conditionObj ? conditionObj.cdarValue : String(condition.conditionIdentifier),
-              identifier: condition.conditionIdentifier,
-              relationshipType: condition.optionalityType || '',
-              channelidentifier: condition.resourceItemIdentifier
-            };
-          }),
-        c => c.identifier
-      );
-
-      // Map communications (deduplicate by commServiceIdentifier)
-      const communicationsForChannel = dedupeBy(
-        (element.productTypePaymentTypeDSComsRltnp || [])
-          .filter(comm => Number(comm.resourceItemIdentifier) === channelId)
-          .map(comm => {
-            const commObj = this.communications?.find(
-              c => String(c.identifier) === String(comm.commServiceIdentifier)
-            );
-            const commMaster = this.communicationsMasterList?.find(
-              c => String(c.serviceElementIdentifier) === String(comm.serviceElementIdentifier)
-            );
-            return {
-              id: Number(comm.commServiceIdentifier),
-              identifier: comm.commServiceIdentifier,
-              serviceElement: commMaster ? commMaster.serviceElementCode : '',
-              serviceElementCode: comm.serviceElementIdentifier,
-              communicationServices: commObj ? commObj.code : String(comm.commServiceIdentifier),
-              channelidentifier: comm.resourceItemIdentifier
-            };
-          }),
-        c => c.identifier
-      );
-
-      return {
-        id: channelId,
-        identifier: String(channelId),
-        code: channelLabel,
-        channel: channelLabel,
-        option: '',
-        attributeForChannel:
-          restrictionsForChannel.length > 0
-            ? 'Restrictions'
-            : countersForChannel.length > 0
-            ? 'Counters'
-            : conditionsForChannel.length > 0
-            ? 'Conditions'
-            : communicationsForChannel.length > 0
-            ? 'CommunicationServices'
-            : '',
-        counters: countersForChannel,
-        restrictions: restrictionsForChannel,
-        conditions: conditionsForChannel,
-        communications: communicationsForChannel
-      } as ChannelTable;
-    })
-    // Sort so "All" channel is always first
-    .sort((a, b) => {
-      if (String(a.id) === '0') return -1;
-      if (String(b.id) === '0') return 1;
-      return 0;
-    });
-
-    // Populate flat arrays for child tables
-    this.counterData = [];
-    this.restrictionData = [];
-    this.conditionData = [];
-    this.communicationData = [];
-    this.channelData.forEach(channel => {
-      if (channel.counters) this.counterData.push(...channel.counters);
-      if (channel.restrictions) this.restrictionData.push(...channel.restrictions);
-      if (channel.conditions) this.conditionData.push(...channel.conditions);
-      if (channel.communications) this.communicationData.push(...channel.communications);
-    });
-
-    // Update child tables/maps if needed
-    if (this.channelsMainTable) {
-      if (this.channelsMainTable.tableWithSimpleEdit) {
-        this.channelsMainTable.tableWithSimpleEdit.datasource.data = [...this.channelData];
-      }
-      // Set up maps for nested tables
-      this.channelsMainTable.counterMap = {};
-      this.channelsMainTable.conditionMap = {};
-      this.channelsMainTable.restrictionMap = {};
-      this.channelsMainTable.communicationMap = {};
-      (this.channelData || []).forEach(row => {
-        if (row.id !== undefined && Array.isArray(row.counters)) {
-          this.channelsMainTable.counterMap[row.id] = [...row.counters];
-        }
-        if (row.id !== undefined && Array.isArray(row.conditions)) {
-          this.channelsMainTable.conditionMap[row.id] = [...row.conditions];
-        }
-        if (row.id !== undefined && Array.isArray(row.restrictions)) {
-          this.channelsMainTable.restrictionMap[row.id] = [...row.restrictions];
-        }
-        if (row.id !== undefined && Array.isArray(row.communications)) {
-          this.channelsMainTable.communicationMap[row.id] = [...row.communications];
-        }
-      });
-    }
-
-    // Log for debugging
-    console.log('Updated channelData:', JSON.stringify(this.channelData, null, 2));
-    console.log('Updated counterData:', JSON.stringify(this.counterData, null, 2));
-    console.log('Updated restrictionData:', JSON.stringify(this.restrictionData, null, 2));
-    console.log('Updated conditionData:', JSON.stringify(this.conditionData, null, 2));
-    console.log('Updated communicationData:', JSON.stringify(this.communicationData, null, 2));
-  }
-
-  public getError(control: string, formGroup: UntypedFormGroup): string {
-    if (formGroup) {
-      const fc: AbstractControl = formGroup.get(control);
-      if (fc && fc.errors && fc.touched) {
-        return FormUtilityService.getCommonFCErrorMsg(fc);
-      }
-    }
+    // Disable code field in edit mode
+    this.addNewServiceElementFormGroup.get('serviceElementCode')?.disable();
   }
 }
 
@@ -1996,1343 +442,87 @@ export class EditPaymentTypeComponent implements OnInit {
 
 
 
-import {
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  AbstractControl,
-  FormsModule,
-  ReactiveFormsModule,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
-import {
-  BodCommonModule,
-  BodTableAction,
-  BodTableActionsModule,
-  BodTableMetadata,
-  BodTableModule,
-  ControlGroupModule,
-  DirectivesModule,
-  InlineEditOutput,
-  InputLayoutModule,
-  MessageContainerModule,
-  NotificationMessage,
-  NotificationMessageType,
-  RowLeftAction
-} from '@bod/common';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { RufIconModule } from '@ruf/shell/icon';
-import { TranslateModule } from '@ngx-translate/core';
 
-import {
-  ChannelTable,
-  CounterTable,
-  RestrictionTable,
-  ConditionTable,
-  CommunicationTable
-} from '../../transaction-type.model';
-
-import { TransactionTypeService } from '../../transaction-type.service';
-import { FormUtilityService } from '../../../metadat-config/form-utility.service';
-import { forkJoin } from 'rxjs';
-
-// Table actions
-const channelActions: BodTableAction[] = [
-  { id: 2, icon: 'add', label: 'add', mostCommon: true }
-];
-
-const deleteActions: BodTableAction[] = [
-  { id: 1, icon: 'trash', label: 'delete', mostCommon: true }
-];
-
-@Component({
-  selector: 'bod-payment-type-channels-main-table',
-  standalone: true,
-  imports: [
-    CommonModule,
-    BodTableModule,
-    BodTableActionsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatSelectModule,
-    RufIconModule,
-    TranslateModule,
-    FormsModule,
-    ReactiveFormsModule,
-    InputLayoutModule,
-    ControlGroupModule,
-    DirectivesModule,
-    MessageContainerModule,
-    BodCommonModule
-  ],
-  template: `
-    <div style="height: 32px"></div>
-    <bod-message-container [messages]="errorMessages"></bod-message-container>
-
-    <!-- Channels Table -->
-    <bod-table
-      #channelTable
-      [data]="tableWithSimpleEdit"
-      [tableActions]="channelTableActions"
-      (onTableActionClick)="onChannelTableActionClicked($event)"
-      [inlineModal]="{
-        addNewInlineRowTitle: 'New Channel' | translate,
-        formGroup: channelForm,
-        formTemplateName: channelTemplate
-      }"
-      (onInlineFormAddSubmit)="onAddChannel(channelForm.value)"
-      (onInlineFormEditSubmit)="onEditChannel(channelForm.value)"
-      (onInlineEditRowActionClick)="inlineEditRowActionClick($event)"
-      (onInlineAddRowActionClick)="inlineAddRowActionClick()"
-      [customColumnTemplates]="[
-        {
-          columnName: 'actions',
-          templateName: channelDeleteActionTemplate
-        }
-      ]"
-      [expandedRowTemplate]="expandedChannelRowTemplate"
-      (onRowExpand)="onChannelRowExpand($event)"
-      [alignContent]="'top'"
+<!-- add-edit-service-element.component.html -->
+<bod-message-container [messages]="errorMessages"></bod-message-container>
+<bod-form
+  [formGroup]="addNewServiceElementFormGroup"
+  rufId
+  [type]="formType"
+  (onSubmit)="onAddNewServiceElement(isAdd)"
+  (onReset)="onReset(isAdd)"
+  fisStyle
+>
+  <bod-input-layout col="2">
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.code'"
+      [forTextOnly]="true"
+      [required]="true"
     >
-      <ng-template
-        #channelDeleteActionTemplate
-        let-element="element"
-        let-column="column"
-        let-index="index"
-      >
-        <bod-table-actions
-          [actions]="rowLevelActionsForBasicEdit"
-          (onActionClick)="handleChannelRowActions($event.icon, index)"
+    <div *ngIf="isEdit">
+      {{ addNewServiceElementFormGroup.get('serviceElementCode')?.value }}
+    </div>
+      <mat-form-field appearance="outline" fisStyle *ngIf="!isEdit">
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="serviceElementCode"
+          name="serviceElementCode"
+        />
+        
+        <mat-error>
+         {{ getError('serviceElementCode', addNewServiceElementFormGroup) | translate }}
+        </mat-error> 
+        <mat-error *ngIf="addNewServiceElementFormGroup.get('serviceElementCode').hasError('noSpecialCharacters')">
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+   
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.name'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <input
+          type="text"
+          matInput
+          fisStyle
+          formControlName="serviceElementName"
+          name="serviceElementName"
+        />
+        <mat-error>
+          {{ getError('serviceElementName', addNewServiceElementFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+
+    <bod-control-group
+      [truncate]="false"
+      [label]="translationKey + 'metadataconfig.optionality'"
+      [forTextOnly]="true"
+      [required]="true"
+    >
+      <mat-form-field appearance="outline" fisStyle>
+        <mat-select
+          panelClass="fis-style"
+          formControlName="optionality"
+          name="optionality"
         >
-        </bod-table-actions>
-      </ng-template>
-
-      <!-- Expanded row template for channels -->
-      <ng-template #expandedChannelRowTemplate let-context="context">
-        <div style="margin-left: 32px">
-          <!-- Counters Table -->
-          <bod-table
-            #counterTable
-            [data]="tableWithSimpleCounter"
-            [tableActions]="counterTableActions"
-            (onTableActionClick)="onCounterTableActionClicked($event)"
-            [inlineModal]="{
-              addNewInlineRowTitle: 'New Counter',
-              formGroup: counterForm,
-              formTemplateName: counterTemplate
-            }"
-            (onInlineFormAddSubmit)="onAddCounter(counterForm.value, context.element)"
-            (onInlineFormEditSubmit)="onEditCounter(counterForm.value, context.element)"
-            (onInlineAddRowActionClick)="inlineAddCounterRowActionClick()"
-            [customColumnTemplates]="[
-              {
-                columnName: 'actions',
-                templateName: counterDeleteActionTemplate
-              }
-            ]"
-            [alignContent]="'top'"
+          <mat-option
+            *ngFor="let optionality of optionalityOptions"
+            [value]="optionality.value"
           >
-            <ng-template
-              #counterDeleteActionTemplate
-              let-element="element"
-              let-column="column"
-              let-index="index"
-            >
-              <bod-table-actions
-                [actions]="rowLevelActionsForBasicEdit"
-                (onActionClick)="handleCounterRowActions($event.icon, index, context.element)"
-              >
-              </bod-table-actions>
-            </ng-template>
-          </bod-table>
-
-          <!-- Restrictions Table -->
-          <bod-table
-            #restrictionTable
-            [data]="tableWithSimpleRestriction"
-            [tableActions]="restrictionTableActions"
-            (onTableActionClick)="onRestrictionTableActionClicked($event)"
-            [inlineModal]="{
-              addNewInlineRowTitle: 'New Restriction',
-              formGroup: restrictionForm,
-              formTemplateName: restrictionTemplate
-            }"
-            (onInlineFormAddSubmit)="onAddRestriction(restrictionForm.value, context.element)"
-            (onInlineFormEditSubmit)="onEditRestriction(restrictionForm.value, context.element)"
-            (onInlineAddRowActionClick)="inlineAddRestrictionRowActionClick()"
-            [customColumnTemplates]="[
-              {
-                columnName: 'actions',
-                templateName: restrictionDeleteActionTemplate
-              }
-            ]"
-            [alignContent]="'top'"
-          >
-            <ng-template
-              #restrictionDeleteActionTemplate
-              let-element="element"
-              let-column="column"
-              let-index="index"
-            >
-              <bod-table-actions
-                [actions]="rowLevelActionsForBasicEdit"
-                (onActionClick)="handleRestrictionRowActions($event.icon, index, context.element)"
-              >
-              </bod-table-actions>
-            </ng-template>
-          </bod-table>
-
-          <!-- Conditions Table -->
-          <bod-table
-            #conditionTable
-            [data]="tableWithSimpleCondition"
-            [tableActions]="conditionTableActions"
-            (onTableActionClick)="onConditionTableActionClicked($event)"
-            [inlineModal]="{
-              addNewInlineRowTitle: 'New Condition',
-              formGroup: conditionForm,
-              formTemplateName: conditionTemplate
-            }"
-            (onInlineFormAddSubmit)="onAddCondition(conditionForm.value, context.element)"
-            (onInlineFormEditSubmit)="onEditCondition(conditionForm.value, context.element)"
-            (onInlineAddRowActionClick)="inlineAddConditionRowActionClick()"
-            [customColumnTemplates]="[
-              {
-                columnName: 'actions',
-                templateName: conditionDeleteActionTemplate
-              }
-            ]"
-            [alignContent]="'top'"
-          >
-            <ng-template
-              #conditionDeleteActionTemplate
-              let-element="element"
-              let-column="column"
-              let-index="index"
-            >
-              <bod-table-actions
-                [actions]="rowLevelActionsForBasicEdit"
-                (onActionClick)="handleConditionRowActions($event.icon, index, context.element)"
-              >
-              </bod-table-actions>
-            </ng-template>
-          </bod-table>
-
-          <!-- Communications Table -->
-          <bod-table
-            #communicationTable
-            [data]="tableWithSimpleCommunication"
-            [tableActions]="communicationTableActions"
-            (onTableActionClick)="onCommunicationTableActionClicked($event)"
-            [inlineModal]="{
-              addNewInlineRowTitle: 'New Communication',
-              formGroup: communicationForm,
-              formTemplateName: communicationTemplate
-            }"
-            (onInlineFormAddSubmit)="onAddCommunication(communicationForm.value, context.element)"
-            (onInlineFormEditSubmit)="onEditCommunication(communicationForm.value, context.element)"
-            (onInlineAddRowActionClick)="inlineAddCommunicationRowActionClick()"
-            [customColumnTemplates]="[
-              {
-                columnName: 'actions',
-                templateName: communicationDeleteActionTemplate
-              }
-            ]"
-            [alignContent]="'top'"
-          >
-            <ng-template
-              #communicationDeleteActionTemplate
-              let-element="element"
-              let-column="column"
-              let-index="index"
-            >
-              <bod-table-actions
-                [actions]="rowLevelActionsForBasicEdit"
-                (onActionClick)="handleCommunicationRowActions($event.icon, index, context.element)"
-              >
-              </bod-table-actions>
-            </ng-template>
-          </bod-table>
-        </div>
-      </ng-template>
-    </bod-table>
-
-    <!-- Form Templates -->
-    <form [formGroup]="channelForm">
-      <ng-template #channelTemplate>
-        <bod-input-layout col="2">
-          <bod-control-group
-            [truncate]="false"
-            label="Channel"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="channel"
-                name="channel"
-              >
-                <mat-option *ngFor="let channel of channels" [value]="channel.value">
-                  {{ channel.label }}
-                </mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('channel', channelForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-        </bod-input-layout>
-      </ng-template>
-    </form>
-
-    <form [formGroup]="counterForm">
-      <ng-template #counterTemplate>
-        <bod-input-layout col="2">
-          <bod-control-group
-            [truncate]="false"
-            label="Counter"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="counter"
-                name="counter"
-              >
-                <mat-option *ngFor="let counter of counters" [value]="counter.identifier">
-                  {{ counter.code }}
-                </mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('counter', counterForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-          <bod-control-group
-            [truncate]="false"
-            label="Operator Type"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="operatorType"
-                name="operatorType"
-              >
-                <mat-option value="Locked">Locked</mat-option>
-                <mat-option value="Mandatory">Mandatory</mat-option>
-                <mat-option value="Optional">Optional</mat-option>
-                <mat-option value="Proposed">Proposed</mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('operatorType', counterForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-        </bod-input-layout>
-      </ng-template>
-    </form>
-
-    <form [formGroup]="restrictionForm">
-      <ng-template #restrictionTemplate>
-        <bod-input-layout col="2">
-          <bod-control-group
-            [truncate]="false"
-            label="Restriction"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="restriction"
-                name="restriction"
-              >
-                <mat-option *ngFor="let restriction of restrictions" [value]="restriction.identifier">
-                  {{ restriction.code }}
-                </mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('restriction', restrictionForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-          <bod-control-group
-            [truncate]="false"
-            label="Type"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="type"
-                name="type"
-              >
-                <mat-option value="ERROR">ERROR</mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('type', restrictionForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-        </bod-input-layout>
-      </ng-template>
-    </form>
-
-    <form [formGroup]="conditionForm">
-      <ng-template #conditionTemplate>
-        <bod-input-layout col="2">
-          <bod-control-group
-            [truncate]="false"
-            label="Condition"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="condition"
-                name="condition"
-              >
-                <mat-option *ngFor="let condition of conditions" [value]="condition.identifier">
-                  {{ condition.cdarValue }}
-                </mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('condition', conditionForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-          <bod-control-group
-            [truncate]="false"
-            label="Relationship Type"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="relationshipType"
-                name="relationshipType"
-              >
-                <mat-option value="Locked">Locked</mat-option>
-                <mat-option value="Mandatory">Mandatory</mat-option>
-                <mat-option value="Optional">Optional</mat-option>
-                <mat-option value="Proposed">Proposed</mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('relationshipType', conditionForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-        </bod-input-layout>
-      </ng-template>
-    </form>
-
-    <form [formGroup]="communicationForm">
-      <ng-template #communicationTemplate>
-        <bod-input-layout col="2">
-          <bod-control-group
-            [truncate]="false"
-            label="Service Element"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="serviceElement"
-                name="serviceElement"
-                (selectionChange)="onServiceElementChange($event.value)"
-              >
-                <mat-option *ngFor="let comm of communications" [value]="comm.serviceElementIdentifier">
-                  {{ comm.serviceElementCode }}
-                </mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('serviceElement', communicationForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-          <bod-control-group
-            [truncate]="false"
-            label="Communication Services"
-            [forTextOnly]="true"
-            [required]="true"
-          >
-            <mat-form-field appearance="outline">
-              <mat-select
-                panelClass="fis-style"
-                formControlName="communicationServices"
-                name="communicationServices"
-              >
-                <mat-option *ngFor="let service of filteredCommunicationServices" [value]="service.identifier">
-                  {{ service.code }}
-                </mat-option>
-              </mat-select>
-              <mat-error>
-                {{ getError('communicationServices', communicationForm) }}
-              </mat-error>
-            </mat-form-field>
-          </bod-control-group>
-        </bod-input-layout>
-      </ng-template>
-    </form>
-  `,
-  styleUrls: []
-})
-export class PaymentTypeChannelsMainTableComponent implements OnInit {
-  @Input() channelData: ChannelTable[] = [];
-  @Input() counterData: CounterTable[] = [];
-  @Input() parentFormGroup: UntypedFormGroup;
-
-  @Output() completeDeltaChange = new EventEmitter<any>();
-  @Output() tableDirty = new EventEmitter<void>();
-  @Output() channelDetails = new EventEmitter<any>();
-
-  // Form groups
-  public channelForm: UntypedFormGroup;
-  public counterForm: UntypedFormGroup;
-  public restrictionForm: UntypedFormGroup;
-  public conditionForm: UntypedFormGroup;
-  public communicationForm: UntypedFormGroup;
-
-  // Dropdown data
-  public channels: any[] = [];
-  public counters: any[] = [];
-  public restrictions: any[] = [];
-  public conditions: any[] = [];
-  public communications: any[] = [];
-  public filteredCommunicationServices: any[] = [];
-
-  // Table actions
-  public channelTableActions: BodTableAction[] = channelActions;
-  public counterTableActions: BodTableAction[] = channelActions;
-  public restrictionTableActions: BodTableAction[] = channelActions;
-  public conditionTableActions: BodTableAction[] = channelActions;
-  public communicationTableActions: BodTableAction[] = channelActions;
-  public rowLevelActionsForBasicEdit: BodTableAction[] = deleteActions;
-
-  // Error messages
-  public errorMessages: NotificationMessage[] = [];
-
-  // Table metadata
-  public tableWithSimpleEdit: BodTableMetadata;
-  public tableWithSimpleCounter: BodTableMetadata;
-  public tableWithSimpleRestriction: BodTableMetadata;
-  public tableWithSimpleCondition: BodTableMetadata;
-  public tableWithSimpleCommunication: BodTableMetadata;
-
-  // Maps to store nested data
-  public counterMap: { [channelId: string]: CounterTable[] } = {};
-  public restrictionMap: { [channelId: string]: RestrictionTable[] } = {};
-  public conditionMap: { [channelId: string]: ConditionTable[] } = {};
-  public communicationMap: { [channelId: string]: CommunicationTable[] } = {};
-
-  private currentExpandedChannelId: string | number | null = null;
-
-  constructor(
-    private fb: UntypedFormBuilder,
-    private transactionTypeService: TransactionTypeService,
-    private cdr: ChangeDetectorRef
-  ) {
-    this.initForms();
-    this.initTables();
-  }
-
-  ngOnInit() {
-    this.loadDropdownData();
-    if (this.channelData && this.channelData.length > 0) {
-      this.updateChannelTable();
-    }
-  }
-
-  private initForms() {
-    this.channelForm = this.fb.group({
-      channel: ['', Validators.required]
-    });
-
-    this.counterForm = this.fb.group({
-      counter: ['', Validators.required],
-      operatorType: ['', Validators.required]
-    });
-
-    this.restrictionForm = this.fb.group({
-      restriction: ['', Validators.required],
-      type: ['', Validators.required]
-    });
-
-    this.conditionForm = this.fb.group({
-      condition: ['', Validators.required],
-      relationshipType: ['', Validators.required]
-    });
-
-    this.communicationForm = this.fb.group({
-      serviceElement: ['', Validators.required],
-      communicationServices: ['', Validators.required]
-    });
-  }
-
-  private initTables() {
-    this.tableWithSimpleEdit = {
-      title: 'Channels',
-      columns: [
-        { name: 'rowLeftAction', title: ' ', width: 2, widthUnit: 'rem' },
-        { name: 'channel', title: 'Channel', width: 15, widthUnit: 'rem' },
-        { name: 'actions', title: ' ', hasAction: true }
-      ],
-      enablePagination: false,
-      datasource: new MatTableDataSource<ChannelTable>([]),
-      noRecordsMessage: 'No Channels Defined',
-      rowLeftAction: RowLeftAction.expandableRows
-    };
-
-    this.tableWithSimpleCounter = {
-      title: 'Counters',
-      columns: [
-        { name: 'code', title: 'Counter', width: 10, widthUnit: 'rem' },
-        { name: 'classificationType', title: 'Classification Type', width: 8, widthUnit: 'rem' },
-        { name: 'operatorType', title: 'Operator Type', width: 8, widthUnit: 'rem' },
-        { name: 'actions', title: ' ', hasAction: true }
-      ],
-      enablePagination: false,
-      datasource: new MatTableDataSource<CounterTable>([]),
-      noRecordsMessage: 'No Counters Defined'
-    };
-
-    this.tableWithSimpleRestriction = {
-      title: 'Restrictions',
-      columns: [
-        { name: 'code', title: 'Restriction', width: 10, widthUnit: 'rem' },
-        { name: 'type', title: 'Type', width: 8, widthUnit: 'rem' },
-        { name: 'actions', title: ' ', hasAction: true }
-      ],
-      enablePagination: false,
-      datasource: new MatTableDataSource<RestrictionTable>([]),
-      noRecordsMessage: 'No Restrictions Defined'
-    };
-
-    this.tableWithSimpleCondition = {
-      title: 'Conditions',
-      columns: [
-        { name: 'code', title: 'Condition', width: 10, widthUnit: 'rem' },
-        { name: 'relationshipType', title: 'Relationship Type', width: 8, widthUnit: 'rem' },
-        { name: 'actions', title: ' ', hasAction: true }
-      ],
-      enablePagination: false,
-      datasource: new MatTableDataSource<ConditionTable>([]),
-      noRecordsMessage: 'No Conditions Defined'
-    };
-
-    this.tableWithSimpleCommunication = {
-      title: 'Communication Services',
-      columns: [
-        { name: 'serviceElement', title: 'Service Element', width: 10, widthUnit: 'rem' },
-        { name: 'communicationServices', title: 'Communication Services', width: 10, widthUnit: 'rem' },
-        { name: 'actions', title: ' ', hasAction: true }
-      ],
-      enablePagination: false,
-      datasource: new MatTableDataSource<CommunicationTable>([]),
-      noRecordsMessage: 'No Communication Services Defined'
-    };
-  }
-
-  private loadDropdownData() {
-    forkJoin({
-      channels: this.transactionTypeService.getDeliveryChannel(),
-      counters: this.transactionTypeService.getCounters(),
-      restrictions: this.transactionTypeService.getRestrictions(),
-      conditions: this.transactionTypeService.getConditions(),
-      communications: this.transactionTypeService.getCommunicationService()
-    }).subscribe(results => {
-      this.channels = results.channels.map((item: any) => ({
-        label: item.code,
-        value: item.identifier
-      }));
-
-      this.counters = results.counters.map((item: any) => ({
-        identifier: item.identifier,
-        code: item.code,
-        classificationType: item.classificationType
-      }));
-
-      this.restrictions = results.restrictions;
-      this.conditions = results.conditions;
-      this.communications = results.communications;
-      this.filteredCommunicationServices = results.communications;
-    });
-  }
-
-  // Channel methods
-  public onChannelTableActionClicked(event: BodTableAction): void {
-    if (event.id === 2) {
-      // Add action
-    }
-  }
-
-  public inlineAddRowActionClick() {
-    this.channelForm.reset();
-  }
-
-  public inlineEditRowActionClick(event: InlineEditOutput) {
-    // Handle edit
-  }
-
-  public onAddChannel(formValues: any) {
-    if (this.channelForm.invalid) return;
-
-    const selectedChannel = this.channels.find(c => c.value === formValues.channel);
-    if (!selectedChannel) return;
-
-    // Check for duplicates
-    const isDuplicate = this.tableWithSimpleEdit.datasource.data.some(
-      (channel: ChannelTable) => channel.identifier === selectedChannel.value.toString()
-    );
-
-    if (isDuplicate) {
-      this.showError('Channel already exists');
-      return;
-    }
-
-    const newChannel: ChannelTable = {
-      id: selectedChannel.value,
-      identifier: selectedChannel.value.toString(),
-      code: selectedChannel.label,
-      channel: selectedChannel.label,
-      option: '',
-      attributeForChannel: '',
-      counters: [],
-      restrictions: [],
-      conditions: [],
-      communications: []
-    };
-
-    const currentData = [...this.tableWithSimpleEdit.datasource.data];
-    currentData.push(newChannel);
-    this.tableWithSimpleEdit.datasource.data = currentData;
-
-    // Initialize maps
-    this.counterMap[newChannel.id] = [];
-    this.restrictionMap[newChannel.id] = [];
-    this.conditionMap[newChannel.id] = [];
-    this.communicationMap[newChannel.id] = [];
-
-    this.channelForm.reset();
-    this.emitCompleteDelta();
-    this.tableDirty.emit();
-  }
-
-  public onEditChannel(formValues: any) {
-    // Handle edit logic
-  }
-
-  public handleChannelRowActions(action: string, index: number) {
-    if (action === 'trash') {
-      this.deleteChannel(index);
-    }
-  }
-
-  private deleteChannel(index: number) {
-    const currentData = [...this.tableWithSimpleEdit.datasource.data];
-    const channelToDelete = currentData[index];
-    
-    if (channelToDelete) {
-      // Remove from maps
-      delete this.counterMap[channelToDelete.id];
-      delete this.restrictionMap[channelToDelete.id];
-      delete this.conditionMap[channelToDelete.id];
-      delete this.communicationMap[channelToDelete.id];
-      
-      currentData.splice(index, 1);
-      this.tableWithSimpleEdit.datasource.data = currentData;
-      
-      this.emitCompleteDelta();
-      this.tableDirty.emit();
-    }
-  }
-
-  // Channel row expand
-  public onChannelRowExpand(channel: ChannelTable) {
-    this.currentExpandedChannelId = channel.id;
-    
-    // Update nested tables with data for this channel
-    this.tableWithSimpleCounter.datasource.data = this.counterMap[channel.id] || [];
-    this.tableWithSimpleRestriction.datasource.data = this.restrictionMap[channel.id] || [];
-    this.tableWithSimpleCondition.datasource.data = this.conditionMap[channel.id] || [];
-    this.tableWithSimpleCommunication.datasource.data = this.communicationMap[channel.id] || [];
-  }
-
-  // Counter methods
-  public onCounterTableActionClicked(event: BodTableAction): void {
-    if (event.id === 2) {
-      // Add action
-    }
-  }
-
-  public inlineAddCounterRowActionClick() {
-    this.counterForm.reset();
-  }
-
-  public onAddCounter(formValues: any, channel: ChannelTable) {
-    if (this.counterForm.invalid || !channel) return;
-
-    const selectedCounter = this.counters.find(c => c.identifier === formValues.counter);
-    if (!selectedCounter) return;
-
-    // Check for duplicates within this channel
-    const existingCounters = this.counterMap[channel.id] || [];
-    const isDuplicate = existingCounters.some(
-      counter => counter.identifier === selectedCounter.identifier
-    );
-
-    if (isDuplicate) {
-      this.showError('Counter already exists for this channel');
-      return;
-    }
-
-    const newCounter: CounterTable = {
-      id: selectedCounter.identifier,
-      identifier: selectedCounter.identifier,
-      code: selectedCounter.code,
-      classificationType: selectedCounter.classificationType,
-      operatorType: formValues.operatorType,
-      channelidentifier: channel.id
-    };
-
-    // Add to map
-    if (!this.counterMap[channel.id]) {
-      this.counterMap[channel.id] = [];
-    }
-    this.counterMap[channel.id].push(newCounter);
-
-    // Update table if this channel is currently expanded
-    if (this.currentExpandedChannelId === channel.id) {
-      this.tableWithSimpleCounter.datasource.data = [...this.counterMap[channel.id]];
-    }
-
-    this.counterForm.reset();
-    this.emitCompleteDelta();
-    this.tableDirty.emit();
-  }
-
-  public onEditCounter(formValues: any, channel: ChannelTable) {
-    // Handle edit logic
-  }
-
-  public handleCounterRowActions(action: string, index: number, channel: ChannelTable) {
-    if (action === 'trash') {
-      this.deleteCounter(index, channel);
-    }
-  }
-
-  private deleteCounter(index: number, channel: ChannelTable) {
-    if (this.counterMap[channel.id]) {
-      this.counterMap[channel.id].splice(index, 1);
-      
-      // Update table if this channel is currently expanded
-      if (this.currentExpandedChannelId === channel.id) {
-        this.tableWithSimpleCounter.datasource.data = [...this.counterMap[channel.id]];
-      }
-      
-      this.emitCompleteDelta();
-      this.tableDirty.emit();
-    }
-  }
-
-  // Restriction methods
-  public onRestrictionTableActionClicked(event: BodTableAction): void {}
-
-  public inlineAddRestrictionRowActionClick() {
-    this.restrictionForm.reset();
-  }
-
-  public onAddRestriction(formValues: any, channel: ChannelTable) {
-    if (this.restrictionForm.invalid || !channel) return;
-
-    const selectedRestriction = this.restrictions.find(r => r.identifier === formValues.restriction);
-    if (!selectedRestriction) return;
-
-    // Check for duplicates
-    const existingRestrictions = this.restrictionMap[channel.id] || [];
-    const isDuplicate = existingRestrictions.some(
-      restriction => restriction.identifier === selectedRestriction.identifier
-    );
-
-    if (isDuplicate) {
-      this.showError('Restriction already exists for this channel');
-      return;
-    }
-
-    const newRestriction: RestrictionTable = {
-      id: selectedRestriction.identifier,
-      identifier: selectedRestriction.identifier,
-      code: selectedRestriction.code,
-      type: formValues.type,
-      channelidentifier: channel.id
-    };
-
-    if (!this.restrictionMap[channel.id]) {
-      this.restrictionMap[channel.id] = [];
-    }
-    this.restrictionMap[channel.id].push(newRestriction);
-
-    if (this.currentExpandedChannelId === channel.id) {
-      this.tableWithSimpleRestriction.datasource.data = [...this.restrictionMap[channel.id]];
-    }
-
-    this.restrictionForm.reset();
-    this.emitCompleteDelta();
-    this.tableDirty.emit();
-  }
-
-  public onEditRestriction(formValues: any, channel: ChannelTable) {}
-
-  public handleRestrictionRowActions(action: string, index: number, channel: ChannelTable) {
-    if (action === 'trash') {
-      this.deleteRestriction(index, channel);
-    }
-  }
-
-  private deleteRestriction(index: number, channel: ChannelTable) {
-    if (this.restrictionMap[channel.id]) {
-      this.restrictionMap[channel.id].splice(index, 1);
-      
-      if (this.currentExpandedChannelId === channel.id) {
-        this.tableWithSimpleRestriction.datasource.data = [...this.restrictionMap[channel.id]];
-      }
-      
-      this.emitCompleteDelta();
-      this.tableDirty.emit();
-    }
-  }
-
-  // Condition methods
-  public onConditionTableActionClicked(event: BodTableAction): void {}
-
-  public inlineAddConditionRowActionClick() {
-    this.conditionForm.reset();
-  }
-
-  public onAddCondition(formValues: any, channel: ChannelTable) {
-    if (this.conditionForm.invalid || !channel) return;
-
-    const selectedCondition = this.conditions.find(c => c.identifier === formValues.condition);
-    if (!selectedCondition) return;
-
-    // Check for duplicates
-    const existingConditions = this.conditionMap[channel.id] || [];
-    const isDuplicate = existingConditions.some(
-      condition => condition.identifier === selectedCondition.identifier
-    );
-
-    if (isDuplicate) {
-      this.showError('Condition already exists for this channel');
-      return;
-    }
-
-    const newCondition: ConditionTable = {
-      id: selectedCondition.identifier,
-      identifier: selectedCondition.identifier,
-      code: selectedCondition.cdarValue,
-      relationshipType: formValues.relationshipType,
-      channelidentifier: channel.id
-    };
-
-    if (!this.conditionMap[channel.id]) {
-      this.conditionMap[channel.id] = [];
-    }
-    this.conditionMap[channel.id].push(newCondition);
-
-    if (this.currentExpandedChannelId === channel.id) {
-      this.tableWithSimpleCondition.datasource.data = [...this.conditionMap[channel.id]];
-    }
-
-    this.conditionForm.reset();
-    this.emitCompleteDelta();
-    this.tableDirty.emit();
-  }
-
-  public onEditCondition(formValues: any, channel: ChannelTable) {}
-
-  public handleConditionRowActions(action: string, index: number, channel: ChannelTable) {
-    if (action === 'trash') {
-      this.deleteCondition(index, channel);
-    }
-  }
-
-  private deleteCondition(index: number, channel: ChannelTable) {
-    if (this.conditionMap[channel.id]) {
-      this.conditionMap[channel.id].splice(index, 1);
-      
-      if (this.currentExpandedChannelId === channel.id) {
-        this.tableWithSimpleCondition.datasource.data = [...this.conditionMap[channel.id]];
-      }
-      
-      this.emitCompleteDelta();
-      this.tableDirty.emit();
-    }
-  }
-
-  // Communication methods
-  public onCommunicationTableActionClicked(event: BodTableAction): void {}
-
-  public inlineAddCommunicationRowActionClick() {
-    this.communicationForm.reset();
-  }
-
-  public onServiceElementChange(serviceElementId: any) {
-    // Filter communication services based on selected service element
-    this.filteredCommunicationServices = this.communications.filter(
-      comm => comm.serviceElementIdentifier === serviceElementId
-    );
-    
-    // Clear the communication services selection
-    this.communicationForm.get('communicationServices')?.setValue('');
-  }
-
-  public onAddCommunication(formValues: any, channel: ChannelTable) {
-    if (this.communicationForm.invalid || !channel) return;
-
-    const selectedServiceElement = this.communications.find(
-      c => c.serviceElementIdentifier === formValues.serviceElement
-    );
-    const selectedCommService = this.communications.find(
-      c => c.identifier === formValues.communicationServices
-    );
-
-    if (!selectedServiceElement || !selectedCommService) return;
-
-    // Check for duplicates
-    const existingCommunications = this.communicationMap[channel.id] || [];
-    const isDuplicate = existingCommunications.some(
-      comm => comm.identifier === selectedCommService.identifier
-    );
-
-    if (isDuplicate) {
-      this.showError('Communication service already exists for this channel');
-      return;
-    }
-
-    const newCommunication: CommunicationTable = {
-      id: selectedCommService.identifier,
-      identifier: selectedCommService.identifier,
-      serviceElement: selectedServiceElement.serviceElementCode,
-      serviceElementCode: selectedServiceElement.serviceElementIdentifier,
-      communicationServices: selectedCommService.code,
-      channelidentifier: channel.id
-    };
-
-    if (!this.communicationMap[channel.id]) {
-      this.communicationMap[channel.id] = [];
-    }
-    this.communicationMap[channel.id].push(newCommunication);
-
-    if (this.currentExpandedChannelId === channel.id) {
-      this.tableWithSimpleCommunication.datasource.data = [...this.communicationMap[channel.id]];
-    }
-
-    this.communicationForm.reset();
-    this.emitCompleteDelta();
-    this.tableDirty.emit();
-  }
-
-  public onEditCommunication(formValues: any, channel: ChannelTable) {}
-
-  public handleCommunicationRowActions(action: string, index: number, channel: ChannelTable) {
-    if (action === 'trash') {
-      this.deleteCommunication(index, channel);
-    }
-  }
-
-  private deleteCommunication(index: number, channel: ChannelTable) {
-    if (this.communicationMap[channel.id]) {
-      this.communicationMap[channel.id].splice(index, 1);
-      
-      if (this.currentExpandedChannelId === channel.id) {
-        this.tableWithSimpleCommunication.datasource.data = [...this.communicationMap[channel.id]];
-      }
-      
-      this.emitCompleteDelta();
-      this.tableDirty.emit();
-    }
-  }
-
-  // Utility methods
-  public getError(control: string, formGroup: UntypedFormGroup): string {
-    if (formGroup) {
-      const fc: AbstractControl = formGroup.get(control);
-      if (fc && fc.errors && fc.touched) {
-        return FormUtilityService.getCommonFCErrorMsg(fc);
-      }
-    }
-    return '';
-  }
-
-  private showError(message: string) {
-    this.errorMessages = [{
-      code: 'VALIDATION_ERROR',
-      text: message,
-      type: NotificationMessageType.ERROR
-    }];
-    
-    setTimeout(() => {
-      this.errorMessages = [];
-    }, 5000);
-  }
-
-  public getCurrentTableData(): ChannelTable[] {
-    return this.tableWithSimpleEdit.datasource.data as ChannelTable[];
-  }
-
-  public emitCompleteDelta() {
-    const channels = this.getCurrentTableData();
-    const allCounters: CounterTable[] = [];
-    const allRestrictions: RestrictionTable[] = [];
-    const allConditions: ConditionTable[] = [];
-    const allCommunications: CommunicationTable[] = [];
-
-    // Collect all data from maps
-    Object.keys(this.counterMap).forEach(channelId => {
-      allCounters.push(...this.counterMap[channelId]);
-    });
-
-    Object.keys(this.restrictionMap).forEach(channelId => {
-      allRestrictions.push(...this.restrictionMap[channelId]);
-    });
-
-    Object.keys(this.conditionMap).forEach(channelId => {
-      allConditions.push(...this.conditionMap[channelId]);
-    });
-
-    Object.keys(this.communicationMap).forEach(channelId => {
-      allCommunications.push(...this.communicationMap[channelId]);
-    });
-
-    const deltaData = {
-      channels,
-      counters: allCounters,
-      restrictions: allRestrictions,
-      conditions: allConditions,
-      communications: allCommunications
-    };
-
-    this.completeDeltaChange.emit(deltaData);
-    this.channelDetails.emit(deltaData);
-  }
-
-  public resetTableForm() {
-    this.tableWithSimpleEdit.datasource.data = [];
-    this.tableWithSimpleCounter.datasource.data = [];
-    this.tableWithSimpleRestriction.datasource.data = [];
-    this.tableWithSimpleCondition.datasource.data = [];
-    this.tableWithSimpleCommunication.datasource.data = [];
-    
-    this.counterMap = {};
-    this.restrictionMap = {};
-    this.conditionMap = {};
-    this.communicationMap = {};
-    
-    this.currentExpandedChannelId = null;
-  }
-
-  private updateChannelTable() {
-    this.tableWithSimpleEdit.datasource.data = [...this.channelData];
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Payment Type Implementation Guide
-
-## Overview
-This implementation creates a Payment Type screen similar to Transaction Category but with these key differences:
-
-1. **No Add Button**: Only Credit and Debit rows are pre-populated
-2. **Edit Only**: Clicking edit opens a form to add channel relationships
-3. **Channel Configuration**: Same channel table structure as Transaction Category
-4. **Form in Dialog**: Opens in a popup window for editing
-
-## Components Created
-
-### 1. `payment-type.model.ts`
-- Defines the data structure for Payment Type
-- Similar to Transaction Category but with PaymentType-specific naming
-
-### 2. `payment-type-constants.ts`
-- Defines table actions (only Filter, no Add button)
-- Edit-only actions for row level
-
-### 3. `payment-type-service.ts`
-- Service for API calls
-- Includes `getDefaultPaymentTypes()` to initialize Credit/Debit rows
-- CRUD operations for Payment Type metadata
-
-### 4. `payment-type.component.html` & `payment-type.component.ts`
-- Main component showing the Payment Type table
-- No Add button in table actions
-- Pre-populates Credit and Debit rows
-- Edit button opens dialog form
-
-### 5. `edit-paymenttype.component.html` & `edit-paymenttype.component.ts`
-- Edit form component (no add functionality)
-- Code and Name are read-only
-- Contains the channels table for configuration
-
-### 6. `payment-type-channels-main-table.component.ts`
-- Reusable channels table component
-- Handles Counters, Restrictions, Conditions, Communications
-- Same functionality as Transaction Category channels table
-
-## Key Features
-
-### Pre-populated Rows
-```typescript
-public getDefaultPaymentTypes(): PaymentTypeList[] {
-  return [
-    {
-      identifier: 1,
-      code: 'Credit',
-      name: 'Credit Payment Type',
-      // ... other properties
-    },
-    {
-      identifier: 2,
-      code: 'Debit', 
-      name: 'Debit Payment Type',
-      // ... other properties
-    }
-  ];
-}
-```
-
-### Edit-Only Workflow
-1. User clicks Edit button on Credit or Debit row
-2. Dialog opens with `edit-paymenttype.component`
-3. Code and Name are read-only (displayed as text)
-4. User can configure channel relationships
-5. Save updates the specific Payment Type
-
-### Channel Configuration
-The channels table supports:
-- **Channels**: Delivery channels (All, ATM, Online, etc.)
-- **Counters**: With classification and operator types
-- **Restrictions**: With restriction types
-- **Conditions**: With relationship types
-- **Communications**: Service elements and communication services
-
-## Integration Steps
-
-### 1. Add to Transaction Type Module
-```typescript
-// In your main routing module
-{
-  path: 'payment-type',
-  component: PaymentTypeComponent
-}
-```
-
-### 2. Update Segment Navigation
-```typescript
-public segments = [
-  { label: 'Transaction Type', value: 'TransactionType' },
-  { label: 'Transaction Category', value: 'TransactionCategory' },
-  { label: 'Payment Type', value: 'PaymentType' }, // Add this
-  { label: 'PSAM', value: 'PSAM' },
-  { label: 'Delivery System', value: 'DeliverySystem'}
-];
-```
-
-### 3. Add to Main Component Template
-```html
-<bod-payment-type
-  *ngIf="selectedSegment === 'PaymentType'"
-  [status]="status"
-  (statusChanged)="statusChanged.emit($event)"
-></bod-payment-type>
-```
-
-## API Payload Structure
-
-### Save/Update Payload
-```json
-{
-  "metadataType": "PaymentType",
-  "paymentTypeDetailList": [
-    {
-      "paymentType": {
-        "identifier": 1,
-        "code": "Credit",
-        "name": "Credit Payment Type",
-        "isExisting": "true"
-      },
-      "productTypePaymentTypeDSCDRltnpList": [...],
-      "productTypePaymentTypeDSComsRltnpList": [...],
-      "productTypePaymentTypeDSCounterRltnpList": [...],
-      "productTypePaymentTypeDSRestrcitionRltnpList": [...]
-    }
-  ]
-}
-```
-
-## Styling
-- Uses same styling patterns as Transaction Category
-- Responsive design with proper spacing
-- Error handling and validation messages
-- Consistent with existing design system
-
-## Error Handling
-- Validates channel relationships
-- Prevents duplicate entries
-- Shows meaningful error messages
-- Handles API errors gracefully
-
-## Data Flow
-1. **Initialize**: Load default Credit/Debit rows
-2. **Edit**: Open dialog
-
+            {{ optionality.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>
+          {{ getError('optionality', addNewServiceElementFormGroup) | translate }}
+        </mat-error>
+      </mat-form-field>
+    </bod-control-group>
+  </bod-input-layout>
+</bod-form>
